@@ -7,22 +7,28 @@ import AvatarPiloto from "./AvatarPiloto";
 import ChipVuelo from "./ChipVuelo";
 import { useAvisos } from "@/components/dashboard/Avisos";
 import { ImagenIlegible, comprimirImagen } from "@/lib/imagen-cliente";
-import type { VueloChip, VueloParaCompartir } from "@/types";
+import { recorridoDelVuelo } from "@/actions/recorrido";
+import { formaDelRecorrido } from "@/lib/recorrido";
+import type { RecorridoPublicado, VueloChip, VueloParaCompartir } from "@/types";
 
 /** Los mismos topes que el backend (`TEXTO_MAX`, `FOTOS_MAX`). */
 const TEXTO_MAX = 1000;
 const FOTOS_MAX = 4;
 
-type Dato = "ruta" | "duracion" | "aeronave" | "fecha";
+type Dato = "ruta" | "duracion" | "aeronave" | "fecha" | "recorrido";
 
-/** Por decisión de Federico: ruta y duración prendidas; avión y fecha, apagadas. */
-const MOSTRAR_POR_DEFECTO: Record<Dato, boolean> = { ruta: true, duracion: true, aeronave: false, fecha: false };
+/**
+ * Por decisión de Federico: ruta y duración prendidas; avión y fecha, apagadas. El recorrido
+ * (2.37.0) también arranca apagado: dice por dónde voló el piloto, punto por punto.
+ */
+const MOSTRAR_POR_DEFECTO: Record<Dato, boolean> = { ruta: true, duracion: true, aeronave: false, fecha: false, recorrido: false };
 
 const DATOS: { clave: Dato; etiqueta: string }[] = [
   { clave: "ruta", etiqueta: "Ruta" },
   { clave: "duracion", etiqueta: "Duración" },
   { clave: "aeronave", etiqueta: "Avión" },
   { clave: "fecha", etiqueta: "Fecha" },
+  { clave: "recorrido", etiqueta: "Recorrido" },
 ];
 
 interface FotoElegida {
@@ -89,11 +95,29 @@ export default function ComposerPublicacion({
   }, []);
 
   const vuelo = vuelos.find((v) => v.id === vueloId) ?? null;
+
+  // El recorrido ADS-B del vuelo elegido, si tiene: se pregunta al elegirlo, desde el
+  // navegador. `undefined` mientras no se sabe.
+  const [recorridos, setRecorridos] = useState<Record<string, RecorridoPublicado | null>>({});
+  const recorrido = vuelo ? recorridos[vuelo.id] : undefined;
+  useEffect(() => {
+    if (!vuelo?.puede_tener_recorrido || vuelo.id in recorridos) return;
+    let vigente = true;
+    const id = vuelo.id;
+    recorridoDelVuelo(id)
+      .then((d) => vigente && setRecorridos((r) => ({ ...r, [id]: formaDelRecorrido(d?.recorrido) })))
+      .catch(() => vigente && setRecorridos((r) => ({ ...r, [id]: null })));
+    return () => {
+      vigente = false;
+    };
+  }, [vuelo, recorridos]);
+
   const tiene: Record<Dato, boolean> = {
     ruta: !!vuelo?.ruta,
     duracion: vuelo?.duracion != null && vuelo.duracion > 0,
     aeronave: !!vuelo?.aeronave,
     fecha: !!vuelo?.fecha,
+    recorrido: !!recorrido,
   };
   const datosPrendidos = DATOS.filter((d) => mostrar[d.clave] && tiene[d.clave]).length;
 
@@ -104,6 +128,7 @@ export default function ComposerPublicacion({
         aeronave: mostrar.aeronave ? vuelo.aeronave : null,
         fecha_texto: mostrar.fecha ? vuelo.fecha : null,
         puntos_mapa: mostrar.ruta ? vuelo.puntos_mapa : undefined,
+        recorrido: mostrar.recorrido && recorrido ? recorrido : null,
       }
     : null;
 
@@ -324,7 +349,7 @@ export default function ComposerPublicacion({
             <fieldset>
               <legend className="sr-only">Qué datos del vuelo mostrar</legend>
               <div className="flex flex-wrap gap-1.5">
-                {DATOS.map((d) => {
+                {DATOS.filter((d) => d.clave !== "recorrido" || tiene.recorrido).map((d) => {
                   const prendido = mostrar[d.clave] && tiene[d.clave];
                   return (
                     <label
@@ -359,6 +384,7 @@ export default function ComposerPublicacion({
             )}
             <p className="text-[12px] text-zinc-400 dark:text-zinc-500">
               Se publica sólo lo que está prendido. La matrícula, nunca.
+              {mostrar.recorrido && tiene.recorrido && " El recorrido muestra por dónde volaste, de ADS-B, sin los horarios."}
             </p>
           </div>
         )}

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { Loader2, Radio } from "lucide-react";
+import { Loader2, Radio, Share } from "lucide-react";
+import { compartirImagen } from "@/components/dashboard/compartir-imagen";
 import { recorridoDelVuelo, type RecorridoDelVuelo as Datos } from "@/actions/recorrido";
 
 /** Leaflet toca `window` al importarse: entra por `dynamic`, como los otros mapas. */
@@ -21,6 +22,23 @@ const num = (n: number, d = 0) => n.toFixed(d).replace(".", ",").replace(/\B(?=(
 export default function RecorridoDelVuelo({ flightId }: { flightId: string }) {
   const [estado, setEstado] = useState<"cargando" | "listo">("cargando");
   const [datos, setDatos] = useState<Datos | null>(null);
+  const [compartiendo, setCompartiendo] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
+
+  // La imagen la arma `/api/recorrido/[id]` con la sesión: el mapa, el recorrido y estos números.
+  async function compartir() {
+    setAviso(null);
+    setCompartiendo(true);
+    try {
+      const res = await fetch(`/api/recorrido/${encodeURIComponent(flightId)}`);
+      if (!res.ok) throw new Error();
+      await compartirImagen(await res.blob(), "vector-recorrido.png");
+    } catch {
+      setAviso("No pudimos armar la imagen. Probá de nuevo.");
+    } finally {
+      setCompartiendo(false);
+    }
+  }
 
   useEffect(() => {
     let vigente = true;
@@ -72,6 +90,21 @@ export default function RecorridoDelVuelo({ flightId }: { flightId: string }) {
           {r.minutos_sin_senal} min sin señal, en punteado: lejos de las antenas que reciben ADS-B, o volando bajo, el avión no se escucha.
         </p>
       )}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            void compartir();
+          }}
+          disabled={compartiendo}
+          className="inline-flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold disabled:opacity-60"
+        >
+          {compartiendo ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Share className="w-4 h-4" aria-hidden="true" />}
+          {compartiendo ? "Armando la imagen…" : "Compartir la imagen"}
+        </button>
+        {aviso && <p className="text-xs text-red-600 dark:text-red-400">{aviso}</p>}
+      </div>
       <p className="text-[11px] text-zinc-400 leading-relaxed">
         Grabado por Vector con ADS-B mientras el avión transmitía. Las horas son de la primera y la última posición en el aire, segundos después de despegar y antes de aterrizar: la carrera en tierra no llega a los receptores.
       </p>

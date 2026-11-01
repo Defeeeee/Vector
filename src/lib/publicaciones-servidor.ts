@@ -2,6 +2,7 @@ import { apiFetch } from "@/lib/api";
 import { catalogoServidor } from "@/lib/catalogo-servidor";
 import { normalizarHandle } from "@/lib/handle";
 import { aerodromosDelChip, fechaCompleta, fechaDeVuelo, fechaRelativa, rutaLegible } from "@/lib/social";
+import { DESDE_RECORRIDOS } from "@/lib/recorrido";
 import type {
   Aircraft,
   Comentario,
@@ -154,6 +155,9 @@ export async function leerVuelosParaCompartir(incluir?: string | null): Promise<
           aeronave: tipo,
           fecha,
           puntos_mapa: puntosDeLaRuta(ruta),
+          // Si de verdad lo tiene lo pregunta el composer al elegirlo: buscarlo es una
+          // lectura que puede guardarlo, y esta lista se arma al dibujar (invariante 15).
+          puede_tener_recorrido: String(v.date ?? "") >= DESDE_RECORRIDOS,
         };
       })
   );

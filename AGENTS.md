@@ -142,7 +142,8 @@ Actividad.
 14. **De la red social sale sólo lo que el piloto eligió.** Del perfil, cinco números de
     horas agregadas; de la bitácora, **nada solo**: una publicación lleva un vuelo sólo si
     el piloto lo adjunta, y de ese vuelo sólo los datos que prendió (ruta como origen y
-    destino, duración, tipo de avión, fecha). Es una copia (`resumen_de_vuelo` del
+    destino, duración, tipo de avión, fecha y, desde la 2.37.0, la forma del recorrido ADS-B,
+    **sin horas**: `recorrido_publicable` del backend). Es una copia (`resumen_de_vuelo` del
     backend) y **nunca lleva la matrícula**. Ninguna fila de `flights` ni ningún
     `user_id` cruza la API.
     - Una publicación la ve quien puede ver el perfil de su autor, y lo impone el RLS
@@ -330,8 +331,8 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     más vieja que `extension/manifest.json` (`lib/extension-cad.ts`; antes de la 1.1.0 no es puente y sólo
     se ofrece bajar la nueva): **al cambiar algo de `extension/`, subir su versión.** "Pasar al CAD" ofrece la extensión sólo en Chrome, Edge y Brave; en Safari y Firefox, el marcador; en el
     teléfono, que se haga desde la compu (`navegadorParaCad`, `SegunNavegador`; Federico, 2026-10-30). Se instala
-    descomprimida: **falta publicarla en la Chrome Web Store** (US$5, decisión de Federico); Safari
-    necesita convertirla con Xcode.
+    descomprimida: **no se publica en la Chrome Web Store** (Federico, 2026-11-01). El marcador en Safari
+    anda contra el CAD real (Federico, 2026-11-01).
   - **"Desde Vector" está apagado** (2026-10-29, `CAD_DESDE_VECTOR` del backend, apagado por defecto):
     ANAC bloqueó cada IP desde la que entró el backend, la última con un solo login. Lo que sigue
     describe cómo era.
@@ -398,7 +399,12 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     escuela);
   - adsb.fi es "para uso no comercial" y pide cita: si Vector cobra, hay que escribirles o
     tener un receptor propio;
-  - falta la imagen para compartir y el mapa en la publicación de la red.
+  - **la imagen para compartir** (2.37.0, `/api/recorrido/[id]`, `lib/recorrido-imagen.ts`): satori
+    con los tiles de OSM armados a mano (al doble, cache de una semana, atribución en la imagen),
+    sin la matrícula, desde "Compartir la imagen" en la tarjeta del vuelo;
+  - **el recorrido en la publicación** (2.37.0): el interruptor "Recorrido" del composer, apagado por
+    defecto, aparece si el vuelo tiene recorrido (se pregunta al elegirlo, invariante 15). El backend
+    publica sólo la forma (lat, lon, altura; sin horas ni velocidad) y `MiniMapaRutaInner` la dibuja.
 - **El libro en PDF no es "oficial" y no se lo llama así.** Desde el 1/11/2025 cada vuelo
   se declara en el CAD de ANAC (Res. 470/2025); el PDF es el libro en papel que convive
   con eso, y lo anotado tiene que coincidir. Si ANAC aclara que los tiempos van en horas

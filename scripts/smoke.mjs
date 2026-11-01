@@ -163,6 +163,8 @@ const ROUTES = [
   // 401 es lo que comprueba que la comprobación de auth sigue ahí: es una imagen
   // con horas de vuelo de una persona, y "simplificar" ese chequeo la publicaría.
   { path: "/api/share-card", expect: (s) => s === 401 },
+  // La imagen del recorrido de un vuelo (2.37.0): lo mismo, sale de la sesión.
+  { path: "/api/recorrido/00000000-0000-4000-8000-000000000000", expect: (s) => s === 401 },
   // Lo que gasta la cuota de Gemini del proyecto no se toca sin sesión. Hasta el
   // 2026-09-23 el importador de PDF lo hacía: cualquiera podía gastarla.
   { path: "/api/parse-logbook", method: "POST", expect: (s) => s === 401 },

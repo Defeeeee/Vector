@@ -448,6 +448,17 @@ export interface FotoPublicacion {
  * El chip del vuelo de una publicación: **una copia** de los campos que el autor prendió
  * al publicar. Nunca trae la matrícula.
  */
+/**
+ * La forma del recorrido ADS-B de un vuelo, como la publica el backend (`recorrido_publicable`,
+ * 2.37.0): lat, lon y altura de cada punto, **sin horas ni velocidad**. `cortes` son los
+ * índices a los que se llega después de más de un minuto sin señal.
+ */
+export interface RecorridoPublicado {
+  p: [number, number, number][];
+  cortes?: number[];
+  fuente?: string;
+}
+
 export interface VueloChip {
   ruta?: string | null;
   duracion?: number | null;
@@ -459,6 +470,8 @@ export interface VueloChip {
   fecha_texto?: string | null;
   /** Lo arma el server de Vector con el catálogo de aeródromos, para el mapa. */
   puntos_mapa?: { codigo: string; label: string; lat: number; lon: number }[];
+  /** Si el piloto lo prendió: por dónde voló, de ADS-B. */
+  recorrido?: RecorridoPublicado | null;
 }
 
 export interface Publicacion {
@@ -535,4 +548,6 @@ export interface VueloParaCompartir {
   fecha: string | null;
   /** Para que la vista previa muestre el mismo mapa que va a salir. */
   puntos_mapa?: VueloChip["puntos_mapa"];
+  /** Desde el 23/10 y en avión: puede tener recorrido ADS-B, y el composer lo pregunta. */
+  puede_tener_recorrido?: boolean;
 }

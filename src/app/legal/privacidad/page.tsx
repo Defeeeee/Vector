@@ -143,8 +143,8 @@ export default function PrivacidadPage() {
         <p>
           <strong>Nada de tu bitácora se publica solo.</strong> Sólo sale lo que vos
           compartís en una publicación: un texto, fotos, y de un vuelo, únicamente los datos
-          que elijas —la ruta como origen y destino, la duración, el tipo de avión y la
-          fecha—. <strong>La matrícula nunca se publica</strong>, ni tus documentos, horarios
+          que elijas —la ruta como origen y destino, la duración, el tipo de avión, la fecha y,
+          si lo tiene, <a href="#adsb">el recorrido</a>—. <strong>La matrícula nunca se publica</strong>, ni tus documentos, horarios
           o cualquier otro dato de tu cuenta. Lo que se publica de un vuelo es una copia:
           editar o borrar el vuelo después no lo cambia. Las horas son las que cargaste vos;
           no son una certificación de ANAC.
@@ -322,6 +322,12 @@ export default function PrivacidadPage() {
             cargaste, y los horarios de los vuelos que hizo tu avión el día que estás cargando. Un
             avión de escuela lo vuelan varios pilotos: nunca te mostramos el recorrido de un vuelo que
             no cargaste vos.
+          </li>
+          <li>
+            <strong>Qué se comparte:</strong> nada, salvo que vos lo elijas. En una publicación podés
+            prender el recorrido de un vuelo: sale su forma y su altura, sin horarios ni velocidad. Y
+            desde el vuelo podés armar una imagen del recorrido para compartirla donde quieras; lleva la
+            fecha, el tipo de avión y los horarios en el aire, pero nunca la matrícula.
           </li>
           <li>
             <strong>Cuánto se guarda:</strong> las posiciones sueltas se borran a los 30 días. El

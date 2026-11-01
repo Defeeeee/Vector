@@ -8,6 +8,8 @@
  * se redondea para abajo y el aterrizaje para arriba.
  */
 
+import type { RecorridoPublicado } from "@/types";
+
 /** Lo que guarda el backend: segundos desde `t0`, lat, lon, pies, nudos. */
 export interface RecorridoCompacto {
   t0: number;
@@ -28,6 +30,38 @@ export interface ResumenRecorrido {
   posiciones: number;
   inicio: [number, number];
   fin: [number, number];
+}
+
+/** Lo mismo que el backend (`RECORRIDO_PUNTOS_MAX`): para una tarjeta alcanzan. */
+export const RECORRIDO_PUNTOS_MAX = 400;
+
+/**
+ * La forma del recorrido que se publica, igual que `recorrido_publicable` del backend: sin
+ * horas ni velocidad, lat y lon a 4 decimales, la altura de a 100 ft y los cortes de señal
+ * marcados. La usa la vista previa del composer, para mostrar lo que va a salir.
+ */
+export function formaDelRecorrido(r: RecorridoCompacto | null | undefined, maximo = RECORRIDO_PUNTOS_MAX): RecorridoPublicado | null {
+  const p = r?.p ?? [];
+  if (p.length < 2) return null;
+  const paso = Math.max(1, Math.ceil(p.length / maximo));
+  const indices: number[] = [];
+  for (let i = 0; i < p.length; i += paso) indices.push(i);
+  if (indices[indices.length - 1] !== p.length - 1) indices.push(p.length - 1);
+  const puntos: [number, number, number][] = [];
+  const cortes: number[] = [];
+  indices.forEach((i, k) => {
+    const [, lat, lon, alt] = p[i];
+    puntos.push([Math.round(lat * 1e4) / 1e4, Math.round(lon * 1e4) / 1e4, Math.round((alt ?? 0) / 100) * 100]);
+    if (k > 0) {
+      for (let m = indices[k - 1] + 1; m <= i; m++) {
+        if (p[m][0] - p[m - 1][0] > 60) {
+          cortes.push(k);
+          break;
+        }
+      }
+    }
+  });
+  return { p: puntos, cortes, fuente: r?.fuente || "adsb.fi" };
 }
 
 /** El desde ya dicho, para que no lo recalcule cada componente. */

@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v2.37.0 — Mostrá por dónde volaste
+
+_1 de noviembre de 2026_
+
+- **La imagen de tu recorrido** — Abrí un vuelo con recorrido real y tocá "Compartir la imagen": el mapa con tu recorrido coloreado por altura, el tiempo en el aire, las millas, la altura y la velocidad máximas, listo para mandar. Nunca lleva la matrícula.
+- **El recorrido en tus publicaciones** — Al compartir un vuelo en la red, prendé "Recorrido" y la publicación muestra por dónde volaste, en lugar de una línea recta. Sale sólo la forma, sin horarios.
+
 ## v2.36.0 — Tu CAD, desde Vector
 
 _29 de octubre de 2026_

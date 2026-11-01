@@ -10,7 +10,7 @@ const MiniMapaRutaInner = dynamic(() => import("./MiniMapaRutaInner"), { ssr: fa
 
 /**
  * El vuelo de una publicación: la línea con los datos que el autor eligió mostrar y,
- * si la ruta tiene aeródromos conocidos, un mapa chico.
+ * si la ruta tiene aeródromos conocidos o el autor prendió el recorrido ADS-B, un mapa chico.
  *
  * El mapa se monta **recién cuando la tarjeta está por entrar en pantalla**: un feed de
  * quince publicaciones no tiene por qué levantar quince mapas y pedir cien tiles de
@@ -23,12 +23,14 @@ export default function ChipVuelo({ vuelo }: { vuelo: VueloChip }) {
     vuelo.fecha_texto ?? vuelo.fecha,
   ].filter(Boolean) as string[];
   const puntos = vuelo.puntos_mapa ?? [];
+  const recorrido = vuelo.recorrido && vuelo.recorrido.p.length > 1 ? vuelo.recorrido : null;
 
-  if (!vuelo.ruta && datos.length === 0) return null;
+  if (!vuelo.ruta && datos.length === 0 && !recorrido) return null;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/10">
-      {puntos.length > 0 && <MapaCuandoSeVe puntos={puntos} ruta={vuelo.ruta ?? ""} />}
+      {(puntos.length > 0 || recorrido) && <MapaCuandoSeVe puntos={puntos} recorrido={recorrido} ruta={vuelo.ruta ?? ""} />}
+      {(vuelo.ruta || datos.length > 0) && (
       <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-zinc-50 dark:bg-white/[0.03] min-w-0">
         <Plane className="w-4 h-4 shrink-0 text-aviation-blue dark:text-aviation-cyan" aria-hidden="true" />
         <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[13px] min-w-0">
@@ -45,11 +47,20 @@ export default function ChipVuelo({ vuelo }: { vuelo: VueloChip }) {
           ))}
         </p>
       </div>
+      )}
     </div>
   );
 }
 
-function MapaCuandoSeVe({ puntos, ruta }: { puntos: NonNullable<VueloChip["puntos_mapa"]>; ruta: string }) {
+function MapaCuandoSeVe({
+  puntos,
+  recorrido,
+  ruta,
+}: {
+  puntos: NonNullable<VueloChip["puntos_mapa"]>;
+  recorrido: VueloChip["recorrido"];
+  ruta: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -80,9 +91,9 @@ function MapaCuandoSeVe({ puntos, ruta }: { puntos: NonNullable<VueloChip["punto
       ref={ref}
       role="img"
       aria-label={ruta ? `Mapa del vuelo ${ruta}` : "Mapa del vuelo"}
-      className="relative isolate h-32 md:h-40 w-full bg-zinc-100 dark:bg-white/[0.04] border-b border-zinc-200 dark:border-white/10"
+      className={`relative isolate ${recorrido ? "h-48 md:h-60" : "h-32 md:h-40"} w-full bg-zinc-100 dark:bg-white/[0.04] border-b border-zinc-200 dark:border-white/10`}
     >
-      {visible && <MiniMapaRutaInner puntos={puntos} />}
+      {visible && <MiniMapaRutaInner puntos={puntos} recorrido={recorrido} />}
     </div>
   );
 }

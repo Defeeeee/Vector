@@ -244,6 +244,11 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     res.writeHead(l ? 200 : 404, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(l ?? {}));
   }
+  if (req.method === "GET" && /^\/api\/flights\/[\w-]{20,}$/.test(ruta)) {
+    const f = vuelos.find((x) => x.id === ruta.split("/").pop());
+    res.writeHead(f ? 200 : 404, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(f ?? {}));
+  }
   if (req.method === "PATCH" && /^\/api\/flights\/[^/]+$/.test(ruta)) {
     const f = vuelos.find((x) => x.id === ruta.split("/").pop());
     if (f) Object.assign(f, json, json.cad_vuelo_id ? { cad_cargado_at: new Date().toISOString() } : {});

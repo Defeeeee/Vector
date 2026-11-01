@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "2.37.0",
+    fecha: "2026-11-01",
+    titulo: "Mostrá por dónde volaste",
+    novedades: [
+      {
+        icono: "compartir",
+        titulo: "La imagen de tu recorrido",
+        texto: "Abrí un vuelo con recorrido real y tocá \"Compartir la imagen\": el mapa con tu recorrido coloreado por altura, el tiempo en el aire, las millas, la altura y la velocidad máximas, listo para mandar. Nunca lleva la matrícula.",
+        href: "/dashboard/history",
+        cta: "Ver mis vuelos",
+      },
+      {
+        icono: "avion",
+        titulo: "El recorrido en tus publicaciones",
+        texto: "Al compartir un vuelo en la red, prendé \"Recorrido\" y la publicación muestra por dónde volaste, en lugar de una línea recta. Sale sólo la forma, sin horarios.",
+        href: "/dashboard/pilotos/publicar",
+        cta: "Publicar",
+      },
+    ],
+  },
+  {
     version: "2.36.0",
     fecha: "2026-10-29",
     titulo: "Tu CAD, desde Vector",

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Share2, X, Download, Loader2 } from "lucide-react";
+import { compartirImagen } from "@/components/dashboard/compartir-imagen";
 import { MAX_TILES, TILES, TILES_POR_DEFECTO, serializeTiles, type TileId } from "@/lib/share-card";
 
 /**
@@ -54,23 +55,7 @@ export default function CompartirTarjeta() {
     try {
       const res = await fetch(url(seleccion));
       if (!res.ok) throw new Error("No se pudo generar la tarjeta");
-      const blob = await res.blob();
-      const file = new File([blob], "vector.png", { type: "image/png" });
-
-      // `canShare({files})` y no `share` a secas: Chrome de escritorio expone
-      // `share` pero rechaza archivos, así que preguntar por `share` solo haría
-      // fallar la operación **después** de que el piloto tocó el botón.
-      if (navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file] });
-        } catch (e: any) {
-          // Cancelar la hoja de compartir no puede terminar en una descarga
-          // sorpresa: si abortó, no pasa nada.
-          if (e?.name !== "AbortError") descargar(blob);
-        }
-      } else {
-        descargar(blob);
-      }
+      await compartirImagen(await res.blob(), "vector.png");
     } catch (e: any) {
       setAviso(e?.message || "No se pudo generar la tarjeta");
     } finally {
@@ -194,16 +179,4 @@ export default function CompartirTarjeta() {
 
 function url(ids: TileId[]): string {
   return `/api/share-card?tiles=${serializeTiles(ids)}`;
-}
-
-function descargar(blob: Blob) {
-  const href = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = href;
-  a.download = "vector.png";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  // Sin esto el blob queda vivo hasta que se recarga la pestaña.
-  URL.revokeObjectURL(href);
 }
