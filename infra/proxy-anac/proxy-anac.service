@@ -1,0 +1,18 @@
+# El proxy a ANAC de oraclex64, para la web (MADHEL y NOTAM). Ver proxy-anac.py.
+#   sudo cp proxy-anac.service /etc/systemd/system/ && sudo systemctl enable --now proxy-anac
+[Unit]
+Description=Proxy CONNECT a ANAC para la web de Vector (sólo Tailscale)
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+Environment=ESCUCHA=100.71.80.77:8899
+Environment=ORIGENES=100.78.13.108
+Environment=DESTINOS=datos.anac.gob.ar:443,ais.anac.gob.ar:443
+ExecStart=/usr/bin/python3 /home/ubuntu/proxy-anac/proxy-anac.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

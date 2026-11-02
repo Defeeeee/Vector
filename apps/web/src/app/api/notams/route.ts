@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { anacIndicator } from "@/lib/madhel-reference";
 import { componerFicha, datosAip } from "@/lib/aip";
+import { fetchAnac } from "@/lib/anac";
 
 
 
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest) {
 
   // 1. Fetch MADHEL General Info
   try {
-    const madhelRes = await fetch(`https://datos.anac.gob.ar/madhel/api/v2/airports/${indicator}/`, {
+    const madhelRes = await fetchAnac(`https://datos.anac.gob.ar/madhel/api/v2/airports/${indicator}/`, {
       method: "GET",
       headers: {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -133,7 +134,7 @@ export async function GET(req: NextRequest) {
 
   // 2. Fetch NOTAMs from official ANAC JSON service
   try {
-    const notamRes = await fetch("https://ais.anac.gob.ar/notam/json", {
+    const notamRes = await fetchAnac("https://ais.anac.gob.ar/notam/json", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

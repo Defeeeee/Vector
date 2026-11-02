@@ -32,6 +32,7 @@ El repo es un monorepo:
 | `apps/api/` | **El backend**: Python + Litestar + Supabase, con su `AGENTS.md` para lo propio. Todo cambio de modelo de datos se hace ahí, con su migración en `apps/api/migrations/`. La autenticación también sale de ahí (`NEXT_PUBLIC_AUTH_URL`). |
 | `apps/extension/` | La extensión "Vector → CAD". La empaqueta el build de la web (`scripts/build-extension.mjs`). |
 | `docs/` | La bitácora, la normativa citada en el código y los planes. Es de todo el repo. |
+| `infra/` | Lo que corre fuera de las apps: el proxy a ANAC (`infra/proxy-anac/`). |
 
 - Cada app tiene sus dependencias, su CI y su deploy (ver Deploy). No hay workspace de
   npm en la raíz: la web y la API no comparten código, se hablan por HTTP.
@@ -251,6 +252,13 @@ deploy le cambiaría el código a la otra app corriendo. Los `.env` están en ca
 de app, y las cartas Jeppesen en `~/Vector/charts-jeppesen` (`JEPPESEN_CHARTS_DIR`).
 Los barridos del crontab (`~/bin/vector-*.sh`) leen el secreto de
 `~/Vector/web/apps/web/.env`.
+
+**ANAC no acepta conexiones del VPS** (el CAD desde el 2026-10-28; MADHEL y los NOTAM,
+desde el 2026-11-02 a más tardar). Todo lo que la web le pide a ANAC pasa por `fetchAnac`
+(`lib/anac.ts`), que con `ANAC_PROXY` sale por el proxy de **oraclex64**
+(100.71.80.77:8899, por Tailscale, sólo `datos.anac.gob.ar` y `ais.anac.gob.ar`; script y
+servicio en `infra/proxy-anac/`). El CAD del backend sale por el de DefeServer
+(`CAD_PROXY`). **Una llamada nueva a ANAC desde la web tiene que usar `fetchAnac`.**
 
 No copiar archivos ni reiniciar PM2 a mano. Para desplegar sin esperar al CI está el
 botón de `workflow_dispatch` de cada deploy.

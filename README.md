@@ -17,6 +17,8 @@ docs/
 ├── bitacora/    Qué se cambió, cuándo y por qué (la de la API vieja, en bitacora/api/)
 ├── normativa/   Las secciones de la RAAC y del AIP que cita el código
 └── brief/       Los planes, tal como se escribieron
+infra/
+└── proxy-anac/  El proxy a ANAC, que no acepta conexiones del VPS
 ```
 
 ## Desarrollo

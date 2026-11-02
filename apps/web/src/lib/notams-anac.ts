@@ -1,5 +1,6 @@
 import { anacIndicator } from "./madhel-reference";
 import type { NotamAnac } from "./meteo-plan";
+import { fetchAnac } from "./anac";
 
 /**
  * Los NOTAM de un aeródromo, del servicio JSON de ANAC (el mismo que lee `/api/notams`).
@@ -13,7 +14,7 @@ import type { NotamAnac } from "./meteo-plan";
  */
 export async function notamsDeAnac(codigo: string): Promise<(NotamAnac & { textoEsp: string })[] | null> {
   try {
-    const res = await fetch("https://ais.anac.gob.ar/notam/json", {
+    const res = await fetchAnac("https://ais.anac.gob.ar/notam/json", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

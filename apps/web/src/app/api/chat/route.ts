@@ -10,6 +10,7 @@ import { calculateFlightDuration, documentStatus } from "@/lib/utils";
 import { anacIndicator } from "@/lib/madhel-reference";
 import { componerFicha, datosAip } from "@/lib/aip";
 import { DECLARACION_RAAC, REGLAS_RAAC, respuestaRaac } from "@/lib/raac-copiloto";
+import { fetchAnac } from "@/lib/anac";
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
@@ -165,7 +166,7 @@ async function getAirportInfoHelper(icao: string) {
 
   // Fetch MADHEL
   try {
-    const madhelRes = await fetch(`https://datos.anac.gob.ar/madhel/api/v2/airports/${indicator}/`, {
+    const madhelRes = await fetchAnac(`https://datos.anac.gob.ar/madhel/api/v2/airports/${indicator}/`, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
       }
@@ -242,7 +243,7 @@ async function getAirportInfoHelper(icao: string) {
 
   // Fetch NOTAMs
   try {
-    const notamRes = await fetch("https://ais.anac.gob.ar/notam/json", {
+    const notamRes = await fetchAnac("https://ais.anac.gob.ar/notam/json", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

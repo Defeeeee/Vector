@@ -24,6 +24,7 @@ import {
   writeProposedFlight,
   yaAvisadoDelLimite,
 } from "@/lib/copilot-guards";
+import { fetchAnac } from "@/lib/anac";
 
 // Compares the caller-supplied secret against the configured one without leaking timing info,
 // and without throwing when lengths differ (timingSafeEqual requires equal-length buffers).
@@ -88,7 +89,7 @@ async function getAirportInfoHelper(icao: string) {
 
   // Fetch MADHEL
   try {
-    const madhelRes = await fetch(`https://datos.anac.gob.ar/madhel/api/v2/airports/${indicator}/`, {
+    const madhelRes = await fetchAnac(`https://datos.anac.gob.ar/madhel/api/v2/airports/${indicator}/`, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
       }
@@ -165,7 +166,7 @@ async function getAirportInfoHelper(icao: string) {
 
   // Fetch NOTAMs
   try {
-    const notamRes = await fetch("https://ais.anac.gob.ar/notam/json", {
+    const notamRes = await fetchAnac("https://ais.anac.gob.ar/notam/json", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
