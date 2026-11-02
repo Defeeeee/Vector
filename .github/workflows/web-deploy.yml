@@ -1,0 +1,100 @@
+name: Deploy web
+
+# **Se despliega cuando el CI de `main` pasa, no cuando llega el push.**
+#
+# Antes el deploy corría en cada push, en paralelo con el CI y sin mirarlo. El
+# 2026-09-22 entraron once commits seguidos con el CI en rojo —tests, tipos y el
+# smoke rotos— y los once llegaron a producción igual. Ahora un commit que no pasa
+# `tsc`, los tests, el build y el smoke con sesión no se despliega.
+#
+# `workflow_dispatch` sigue para desplegar a mano (por ejemplo, para reintentar un
+# deploy que falló por la red del VPS) sin esperar otra corrida del CI.
+on:
+  workflow_run:
+    workflows: [CI web]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    # Sólo el CI de `main` que terminó en verde: el de un push, o el que pide `aip.yml`
+    # después de commitear el AIP nuevo. Un CI cancelado —porque
+    # llegó otro push y lo reemplazó— no despliega: lo hace la corrida nueva.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Desplegar por SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 15m
+          script_stop: true
+          script: |
+            set -euo pipefail
+            # PM2 arranca este proceso con `start -- -p 3010`, y en este server
+            # hay cinco Next escuchando en 3000..3003 y 3010. La variable existe
+            # para poder moverlo sin tocar el workflow, pero el default es el
+            # puerto real, no uno teórico.
+            APP_PORT="${{ vars.FRONTEND_PORT || '3010' }}"
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            # Un clon del monorepo sólo para la web (sparse: `apps/web` y `apps/extension`).
+            # La API tiene el suyo, `~/Vector/api`: con un clon compartido, el
+            # `reset --hard` de acá le cambiaría el código a la API corriendo.
+            cd ~/Vector/web/apps/web
+
+            ANTERIOR=$(git rev-parse HEAD)
+            git fetch origin main
+            # El commit que el CI aprobó, no "lo último de main": si entró otro push
+            # mientras corría el CI, ése todavía no pasó por el CI. Desde
+            # `workflow_dispatch` no hay CI de por medio y va lo último.
+            DESTINO="${{ github.event.workflow_run.head_sha || 'origin/main' }}"
+            git reset --hard "$DESTINO"
+            npm ci --omit=dev --no-audit --no-fund || npm install --no-audit --no-fund
+
+            # `rm -rf .next` NO es opcional. Turbopack reusa caché entre builds y
+            # el bundle puede seguir sirviendo un valor viejo compilado adentro
+            # aunque el código fuente esté correcto. Nos pasó dos veces: una con
+            # CSS y otra con un secreto, y la segunda costó una hora y media
+            # porque el `git pull` decía "Already up to date" y el build decía
+            # "Compiled successfully".
+            #
+            # Deja el sitio sin archivos ~15 s. Es el precio de un deploy simple.
+            rm -rf .next
+            npm run build
+
+            pm2 restart vector-frontend --update-env
+
+            # El check tiene que probar que contesta **Vector**, no que algo
+            # contesta. En este server conviven doce apps de PM2: un `curl` a un
+            # puerto equivocado devuelve 200 de otra cosa y el rollback nunca se
+            # dispara, con lo cual el deploy queda en verde y el sitio roto.
+            #
+            # /api/airports/search es propio de Vector, no pide sesión y además
+            # lee los TSV del disco: si el build no los copió, esto lo agarra.
+            for i in $(seq 1 20); do
+              if curl -fsS "http://localhost:${APP_PORT}/api/airports/search?q=SADM" \
+                   | grep -q '"icao":"SADM"'; then
+                echo "Health OK tras ${i}s (Vector respondiendo en ${APP_PORT})"
+                exit 0
+              fi
+              sleep 1
+            done
+
+            echo "El health check falló. Volviendo a $ANTERIOR"
+            git reset --hard "$ANTERIOR"
+            rm -rf .next && npm run build
+            pm2 restart vector-frontend --update-env
+            exit 1

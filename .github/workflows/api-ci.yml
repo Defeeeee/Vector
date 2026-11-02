@@ -1,0 +1,116 @@
+name: CI api
+
+# Sólo cuando cambia algo de la API.
+on:
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/api-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/api-ci.yml"
+
+concurrency:
+  group: ci-api-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: apps/api
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - run: pip install -r requirements.txt
+
+      # Que la app se pueda importar. Atrapa imports rotos, decoradores mal
+      # puestos y modelos que no validan — sin levantar el server.
+      - name: Importar la app
+        env:
+          SUPABASE_URL: "https://dummy.supabase.co"
+          SUPABASE_PUBLISHABLE_KEY: "dummy-key"
+        run: python -c "import src.app"
+
+      # Corre offline: las reglas toman diccionarios y devuelven hallazgos, sin
+      # base ni server. Sale con código 1 si algún check falla.
+      - name: Motor de auditoría
+        run: python test_audit_engine.py
+
+      # Offline. El check que más importa es la matriz de `puede_ver_horas`: es la
+      # única línea entre un perfil privado y cualquiera que tenga el link.
+      - name: Red social
+        run: python test_social.py
+
+      # Offline: fabrica las fotos en memoria. El check que más importa es que una
+      # foto de teléfono, que trae la ubicación GPS, salga de acá sin EXIF.
+      - name: Publicaciones y fotos
+        run: python test_publicaciones.py
+
+      # Offline. El panel de administración: los días en hora argentina, que el admin
+      # no infle los números y que de las últimas altas no salga más que el @.
+      - name: Estadísticas del panel
+        run: python test_estadisticas.py
+
+      # Offline. A quién se le manda el mail del día siguiente al alta: una sola vez, sólo
+      # con el mail confirmado y sólo si todavía no cargó vuelos.
+      - name: Recordatorio del primer vuelo
+        run: python test_recordatorios.py
+
+      # Offline. A quién se le manda el resumen del mes: con vuelos, sin baja, uno por mes.
+      - name: Resumen mensual
+        run: python test_resumen_mensual.py
+
+      # Offline. A quién le toca el mail de novedades, y las métricas de aperturas y
+      # clics del panel: por envío, sin contar al administrador y sin dividir por cero.
+      - name: Seguimiento de mails
+        run: python test_mails.py
+
+      - name: Planes de vuelo guardados
+        run: python test_planes_de_vuelo.py
+
+      - name: Pegatinas con QR
+        run: python test_qr.py
+
+      - name: Grabador ADS-B
+        run: python test_adsb.py
+
+      - name: Pasar al CAD desde Vector (login de ANAC falso, cifrado, Crear)
+        env:
+          SUPABASE_URL: "https://dummy.supabase.co"
+          SUPABASE_PUBLISHABLE_KEY: "dummy-key"
+        run: python test_cad_anac.py
+
+      # También offline. Atrapa la clase de bug que estuvo viva desde la migración
+      # 009: un campo tipado `NoneType` porque se llama igual que un tipo importado.
+      # No rompe el import ni el arranque, así que el paso de arriba no lo ve.
+      - name: Modelos
+        env:
+          SUPABASE_URL: "https://dummy.supabase.co"
+          SUPABASE_PUBLISHABLE_KEY: "dummy-key"
+        run: python test_models.py
+
+      # Offline: arma su propio árbol de PDF en un directorio temporal. Lo que
+      # importa de verdad es que no se pueda escapar de la carpeta configurada
+      # con `../` en la categoría o el nombre de archivo.
+      - name: Cartas Jeppesen
+        run: python test_charts_service.py
+
+      # OJO: `test_registration.py` NO se corre acá y no debería. Pega contra un
+      # server en localhost:8000 y **crea un usuario de verdad** en Supabase.
+      # Es un script manual, no un test.
+
+      - name: Lint
+        run: |
+          pip install ruff
+          ruff check src/ --select=E9,F --output-format=github

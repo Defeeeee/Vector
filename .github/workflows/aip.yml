@@ -32,6 +32,10 @@ concurrency:
   group: aip
   cancel-in-progress: false
 
+defaults:
+  run:
+    working-directory: apps/web
+
 jobs:
   actualizar:
     runs-on: ubuntu-latest
@@ -47,6 +51,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: apps/web/package-lock.json
 
       - run: npm ci
 
@@ -94,18 +99,18 @@ jobs:
             echo
             echo "### $ahora UTC — GitHub Actions (aip.yml) — El AIP, edición $EDICION"
             echo
-            echo "**Qué cambié:** \`src/data/\` con los scripts del AIP (\`build:aip\`, \`build:horarios-aro\`, \`build:fixes\`, \`build:aerovias\`): $resumen."
+            echo "**Qué cambié:** \`apps/web/src/data/\` con los scripts del AIP (\`build:aip\`, \`build:horarios-aro\`, \`build:fixes\`, \`build:aerovias\`): $resumen."
             echo "**Por qué:** ANAC publicó datos nuevos en el AIP. Lo hace solo el workflow semanal."
             echo "**Estado:** terminado; se despliega si pasa el CI."
             echo "**Verificación:** \`tsc\` y \`npm test\` en verde, con cada dato contrastado contra el PDF recién bajado."
-          } >> "docs/bitacora/$mes.md"
+          } >> "../../docs/bitacora/$mes.md"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data "docs/bitacora/$mes.md"
+          git add src/data "../../docs/bitacora/$mes.md"
           git commit -q -m "AIP: edición $EDICION, y la lista de LAD (actualización automática)"
           git push -q origin HEAD:main
           # Un push con este token no dispara el CI: se lo pide a mano. El deploy sale del CI.
-          gh workflow run ci.yml --ref main
+          gh workflow run web-ci.yml --ref main
           [ -n "$NTFY_TOPIC" ] && curl -s -H "Title: Vector: AIP actualizado" -d "Edición $EDICION. $resumen. Se despliega si pasa el CI." "https://ntfy.sh/$NTFY_TOPIC" > /dev/null || true
 
       - name: Abrir un PR para revisar

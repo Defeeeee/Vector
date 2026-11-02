@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+.venv
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE
+.idea/
+.vscode/
+
+# Supabase / Local keys (just in case)
+.env
+.venv/
+.DS_Store
+
+# Las cartas Jeppesen son contenido pago (invariante 11): viven en el VPS, nunca en git.
+Charts/

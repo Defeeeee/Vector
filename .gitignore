@@ -1,48 +1,7 @@
-.gemini/
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
+# Cada app tiene su propio .gitignore (apps/web, apps/api). Acá, sólo lo de todo el repo.
 .DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
 .env
-.env.production
-.env*.local
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# idea
+.env.*
+!.env.example
 .idea/
-
-# El service worker se genera en cada build: lleva adentro la versión y, en cuanto
-# haya precache, los nombres con hash de `.next/static`. Commitearlo garantizaría
-# que quede viejo. Lo produce `npm run build`; ver `scripts/build-sw.mjs`.
-/public/sw.js
-/public/cad/puente.js
-/public/cad/vector-cad.zip
+.vscode/

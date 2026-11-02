@@ -1,0 +1,91 @@
+name: Deploy api
+
+# **Se despliega cuando el CI de `main` pasa, no cuando llega el push.**
+#
+# Hasta el 2026-09-23 el deploy corría en cada push, en paralelo con el CI y sin
+# mirarlo: un commit con los tests en rojo llegaba a producción igual (ese día pasó con
+# 1f6a318, que se desplegó antes de que terminaran sus tests). Es el mismo cambio que
+# se le hizo al frontend el día anterior, después de once commits en rojo desplegados.
+#
+# `workflow_dispatch` sigue para desplegar a mano sin esperar otra corrida del CI.
+on:
+  workflow_run:
+    workflows: [CI api]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+# Nunca dos deploys pisándose. Sin `cancel-in-progress`: un deploy a medias es
+# peor que uno encolado.
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    # Sólo el CI de un push a `main` que terminó en verde. Uno cancelado —porque llegó
+    # otro push— no despliega: lo hace la corrida nueva.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Desplegar por SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            # Un clon del monorepo sólo para la API (sparse: `apps/api`). La web tiene el
+            # suyo, `~/Vector/web`: ver `web-deploy.yml`.
+            cd ~/Vector/api/apps/api
+
+            # Para volver si el health check falla.
+            ANTERIOR=$(git rev-parse HEAD)
+            git fetch origin main
+            # El commit que aprobó el CI, no "lo último de main": un push que llegó
+            # mientras corría todavía no pasó por el CI. Desde `workflow_dispatch`, lo
+            # último.
+            DESTINO="${{ github.event.workflow_run.head_sha || 'origin/main' }}"
+            git reset --hard "$DESTINO"
+
+            # SERVER_SETUP.md dice ./venv y en otras máquinas es .venv. Se
+            # detecta en vez de asumirse: un deploy que instala con el intérprete
+            # equivocado falla mucho más tarde y peor.
+            if   [ -x venv/bin/pip ];  then PIP=venv/bin/pip
+            elif [ -x .venv/bin/pip ]; then PIP=.venv/bin/pip
+            else echo "No encuentro el virtualenv"; exit 1
+            fi
+            $PIP install -q -r requirements.txt
+
+            # --update-env o el proceso se queda con el entorno viejo. Esto ya
+            # tiró la auditoría abajo una vez y costó una hora encontrarlo.
+            pm2 restart flightlog-7477 --update-env
+
+            # Health check con reintentos: uvicorn tarda unos segundos.
+            for i in $(seq 1 15); do
+              if curl -fsS http://localhost:7477/api/health > /dev/null; then
+                echo "Health OK tras ${i}s"
+                # El grabador ADS-B (migración 034): su propio proceso de PM2, al lado del
+                # backend. La primera vez se crea; después se reinicia con el código nuevo.
+                if pm2 describe grabador-adsb > /dev/null 2>&1; then
+                  pm2 restart grabador-adsb --update-env
+                else
+                  pm2 start grabador_adsb.py --name grabador-adsb --interpreter "$PWD/$(dirname "$PIP")/python" --cwd "$PWD"
+                fi
+                pm2 save > /dev/null || true
+                exit 0
+              fi
+              sleep 1
+            done
+
+            echo "El health check falló. Volviendo a $ANTERIOR"
+            git reset --hard "$ANTERIOR"
+            $PIP install -q -r requirements.txt
+            pm2 restart flightlog-7477 --update-env
+            exit 1

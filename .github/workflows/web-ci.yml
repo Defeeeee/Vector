@@ -1,0 +1,79 @@
+name: CI web
+
+# Sólo cuando cambia algo de la web: un commit de la API no la reconstruye ni la
+# despliega. La extensión del CAD entra porque la web la empaqueta en el build.
+on:
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "apps/extension/**"
+      - ".github/workflows/web-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "apps/extension/**"
+      - ".github/workflows/web-ci.yml"
+  # Lo dispara `aip.yml` después de commitear el AIP nuevo: un push con el token de Actions
+  # no dispara workflows.
+  workflow_dispatch:
+
+# Una sola corrida por rama: si empujás dos veces seguidas, la vieja se cancela.
+concurrency:
+  group: ci-web-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: apps/web
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+
+      - name: Tipos
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # Levanta el build y comprueba que las rutas respondan. `tsc` no ve los
+      # errores de runtime: la página Registrar estuvo rota en producción con
+      # los tipos en verde.
+      #
+      # Con la cuenta de prueba configurada, además entra al dashboard y comprueba
+      # que cada pantalla renderice. Si los secrets no están —un PR desde un fork
+      # no los recibe— el script omite esa tanda y sigue pasando, en vez de dar
+      # rojo por una credencial que ese PR no puede tener.
+      - name: Smoke
+        run: npm run smoke
+        env:
+          # El runner no tiene backend: el default del código es
+          # `http://127.0.0.1:7477/api`, que acá da ECONNREFUSED y tira abajo toda
+          # ruta con SSR. Ese default es el correcto en el VPS —donde el backend
+          # vive al lado— así que el caso especial es CI y se arregla acá.
+          #
+          # **Sin `/api` al final**, al revés que el default local: por el dominio
+          # público ese prefijo lo pone el proxy (Traefik). Poner los dos da 404 en todo; no
+          # poner ninguno también. Esa asimetría ya causó un corte en producción.
+          #
+          # Alcanza con esta variable en este paso y no hace falta tocar `Build`:
+          # en el bundle del servidor la expresión queda como lectura de runtime
+          # (`process.env.API_URL||"http://127.0.0.1:7477/api"` literal en los
+          # chunks), así que se resuelve cuando el smoke levanta la app.
+          API_URL: https://api.flightlog.fdiaznem.com.ar
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
