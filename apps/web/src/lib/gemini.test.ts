@@ -163,3 +163,60 @@ describe("tope de espera", () => {
     expect(pdf.llamadas.map((l) => l.config?.httpOptions?.timeout)).toEqual([120_000, 120_000]);
   });
 });
+
+describe("chatConRespaldo, de a pedazos", () => {
+  /** Cada modelo: un error antes de empezar, o sus pedazos (y quizás un error a mitad). */
+  function geminiQueEscribe(guion: Record<string, { antes?: Error; pedazos?: string[]; despues?: Error }>) {
+    const creados: string[] = [];
+    const ai = {
+      chats: {
+        create: vi.fn(({ model, history = [] }: { model: string; history?: unknown[] }) => {
+          creados.push(model);
+          return {
+            getHistory: () => history,
+            sendMessage: async () => ({ text: "" }),
+            sendMessageStream: async () => {
+              const g = guion[model] ?? {};
+              if (g.antes) throw g.antes;
+              return (async function* () {
+                for (const p of g.pedazos ?? []) yield { text: p };
+                if (g.despues) throw g.despues;
+              })();
+            },
+          };
+        }),
+      },
+      models: { generateContent: vi.fn() },
+    };
+    return { genAI: ai as never, creados };
+  }
+
+  const leer = async (gen: AsyncGenerator<{ text?: string }>) => {
+    let t = "";
+    for await (const p of gen) t += p.text ?? "";
+    return t;
+  };
+
+  it("entrega los pedazos a medida que llegan", async () => {
+    const { genAI } = geminiQueEscribe({ [PRINCIPAL]: { pedazos: ["Tenés ", "6,4 h ", "de noche."] } });
+    expect(await leer(chatConRespaldo(genAI, {}).sendMessageStream("x") as never)).toBe("Tenés 6,4 h de noche.");
+  });
+
+  it("si el principal está saturado antes de escribir, contesta el respaldo", async () => {
+    const { genAI, creados } = geminiQueEscribe({
+      [PRINCIPAL]: { antes: errorDeGoogle(503, "overloaded") },
+      [RESPALDO]: { pedazos: ["hola"] },
+    });
+    expect(await leer(chatConRespaldo(genAI, {}).sendMessageStream("x") as never)).toBe("hola");
+    expect(creados).toEqual([PRINCIPAL, RESPALDO]);
+  });
+
+  it("si ya empezó a escribir, un error no lo cambia de modelo: llega a la ruta", async () => {
+    const { genAI, creados } = geminiQueEscribe({
+      [PRINCIPAL]: { pedazos: ["Ten"], despues: errorDeGoogle(503, "overloaded") },
+      [RESPALDO]: { pedazos: ["otra respuesta"] },
+    });
+    await expect(leer(chatConRespaldo(genAI, {}).sendMessageStream("x") as never)).rejects.toThrow("503");
+    expect(creados).toEqual([PRINCIPAL]);
+  });
+});

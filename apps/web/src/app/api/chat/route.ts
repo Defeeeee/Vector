@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI, Type, type GenerateContentConfig } from "@google/genai";
+import { GoogleGenAI, Type, type FunctionCall, type GenerateContentConfig, type GenerateContentResponse, type PartListUnion } from "@google/genai";
 import { chatConRespaldo } from "@/lib/gemini";
 import { getSessionToken } from "@/actions/auth";
 import { apiFetch } from "@/lib/api";
@@ -10,28 +10,19 @@ import { calculateFlightDuration, documentStatus } from "@/lib/utils";
 import { anacIndicator } from "@/lib/madhel-reference";
 import { componerFicha, datosAip } from "@/lib/aip";
 import { DECLARACION_RAAC, REGLAS_RAAC, respuestaRaac } from "@/lib/raac-copiloto";
+import {
+  TIPO_NDJSON,
+  estadoDeHerramienta,
+  lineaDeEvento,
+  parteSegura,
+  propuestaVigente,
+  stripInternalIds,
+  type EventoCopiloto,
+} from "@/lib/copiloto-stream";
+import { revalidarLoQueCambiaUnVuelo } from "@/lib/revalidar-vuelo";
 import { fetchAnac } from "@/lib/anac";
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
-
-const UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
-
-/**
- * Scrubs internal database IDs out of anything the pilot will read. The model
- * needs the UUIDs in its context to call update_flight/delete_flight, and it
- * used to echo them back ("... [ID: d8342011-...]"), which is an implementation
- * detail leaking into the product.
- */
-function stripInternalIds(text: string): string {
-  return text
-    // "[ID: uuid]", "(ID: uuid)" and bare "ID: uuid" — with any surrounding space.
-    .replace(new RegExp(`\\s*[\\[(]\\s*ID:\\s*${UUID}\\s*[\\])]`, "gi"), "")
-    .replace(new RegExp(`\\s*\\bID:\\s*${UUID}\\b`, "gi"), "")
-    // Anything that still slipped through as a naked UUID.
-    .replace(new RegExp(UUID, "gi"), "")
-    .replace(/[ \t]{2,}/g, " ")
-    .trim();
-}
 
 function buildFlightContext(
   flights: Flight[],
@@ -281,46 +272,98 @@ async function getAirportInfoHelper(icao: string) {
   };
 }
 
+/** Lo que manda el navegador por cada mensaje anterior (`ConversacionCopiloto`). */
+type MensajeDelHistorial = { role?: string; content?: string; pendingFlight?: Record<string, unknown> };
+
+/** Tope de vueltas modelo → herramienta → modelo por mensaje: un bucle no puede quedar girando. */
+const MAX_VUELTAS = 6;
+
+/** El texto de un pedazo de la respuesta, sin los pensamientos del modelo ni las llamadas. */
+function textoDelPedazo(pedazo: GenerateContentResponse): string {
+  return (pedazo.candidates?.[0]?.content?.parts ?? [])
+    .filter((parte) => typeof parte.text === "string" && !parte.thought)
+    .map((parte) => parte.text)
+    .join("");
+}
+
+/**
+ * El copiloto de la web: contesta **de a pedazos**, en NDJSON (`lib/copiloto-stream.ts`).
+ *
+ * Lo que se puede rechazar sin pensar —sin sesión, sin mensaje, sin clave— vuelve como
+ * siempre, JSON con su código. Todo lo demás corre adentro del stream, que arranca al
+ * instante: el piloto ve "Leyendo tu bitácora…" mientras se lee, el nombre de cada
+ * herramienta mientras corre y la respuesta mientras Gemini la escribe. Antes esperaba
+ * todo eso junto, con un indicador quieto.
+ */
 export async function POST(req: NextRequest) {
   // Primero la sesión, antes que nada: sin ella no se gasta la cuota de Gemini del
   // proyecto, ni se contesta nada que dependa de la configuración del servidor.
   if (!(await getSessionToken())) {
     return NextResponse.json({ error: "Tu sesión venció. Volvé a entrar." }, { status: 401 });
   }
+  const cuerpo = await req.json().catch(() => null);
+  const message = typeof cuerpo?.message === "string" ? cuerpo.message.trim() : "";
+  const history: MensajeDelHistorial[] = Array.isArray(cuerpo?.history) ? cuerpo.history : [];
+  if (!message) {
+    return NextResponse.json({ error: "Mensaje vacío" }, { status: 400 });
+  }
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json({ error: "API key de Gemini no configurada" }, { status: 500 });
+  }
+
+  return new Response(
+    new ReadableStream<Uint8Array>({ start: (controller) => conversar(controller, message, history) }),
+    // `X-Accel-Buffering: no`: que ningún proxy junte los renglones antes de mandarlos.
+    { headers: { "Content-Type": TIPO_NDJSON, "Cache-Control": "no-store", "X-Accel-Buffering": "no" } },
+  );
+}
+
+async function conversar(
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  message: string,
+  history: MensajeDelHistorial[],
+) {
+  const codificador = new TextEncoder();
+  const emitir = (e: EventoCopiloto) => controller.enqueue(codificador.encode(lineaDeEvento(e)));
   try {
-    const { message, history } = await req.json();
-
     /**
-     * Propuesta de vuelo esperando confirmación.
-     *
-     * Este chat no persiste el historial: lo manda el cliente en cada turno. La
-     * propuesta viaja con él y vuelve acá, que es el mismo mecanismo que el de
-     * WhatsApp con otra caja. Si el cliente la pierde, el vuelo no se escribe —
-     * falla del lado seguro.
+     * El "sí" a un vuelo propuesto. Corre ANTES del modelo, como en WhatsApp: si
+     * dependiera de que el modelo vuelva a llamar a `log_flight` al leer "dale", un turno
+     * en que contestara "¡listo!" sin llamar a nada dejaría al piloto creyendo que su vuelo
+     * quedó registrado. Se escribe la propuesta tal cual la vio, no lo que el modelo
+     * reconstruya ahora. Hasta el 2026-11-02 esto faltaba acá: el copiloto de la web
+     * proponía vuelos que nunca se escribían.
      */
-    const propuestaPendiente = (history || [])
-      .slice()
-      .reverse()
-      .find((m: { pendingFlight?: Record<string, unknown> }) => m?.pendingFlight)?.pendingFlight as
-      | Record<string, any>
-      | undefined;
-
-    if (!message?.trim()) {
-      return NextResponse.json({ error: "Mensaje vacío" }, { status: 400 });
+    const propuesta = propuestaVigente(history);
+    if (propuesta && isAffirmation(message)) {
+      emitir({ tipo: "estado", texto: "Guardando el vuelo…" });
+      const vuelo = buildFlightBody(propuesta as Record<string, any>);
+      const res = await apiFetch("/flights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(vuelo),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        emitir({ tipo: "fin", texto: `❌ No se pudo registrar el vuelo: ${err.detail || "error del servidor"}` });
+        return;
+      }
+      revalidarLoQueCambiaUnVuelo();
+      emitir({ tipo: "fin", texto: `✅ Vuelo registrado: ${vuelo.route} · ${propuesta.duration} h · ${propuesta.date}` });
+      return;
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json({ error: "API key de Gemini no configurada" }, { status: 500 });
-    }
-
+    emitir({ tipo: "estado", texto: "Leyendo tu bitácora…" });
     // Fetch pilot data in a consolidated call to dashboard
     const dashboardRes = await apiFetch("/dashboard");
     // Sin sesión válida el backend contesta 401: se corta acá, antes de llamar a Gemini.
     if (dashboardRes.status === 401) {
-      return NextResponse.json({ error: "Tu sesión venció. Volvé a entrar." }, { status: 401 });
+      emitir({ tipo: "error", error: "Tu sesión venció. Volvé a entrar." });
+      return;
     }
     if (!dashboardRes.ok) {
-      return NextResponse.json({ error: "No se pudieron obtener los datos de la bitácora" }, { status: 500 });
+      emitir({ tipo: "error", error: "No se pudieron obtener los datos de la bitácora" });
+      return;
     }
 
     const data = await dashboardRes.json();
@@ -506,10 +549,13 @@ ${flightContext}`;
       ]
     };
 
-    const formattedHistory = (history || []).map((m: { role: string; content: string }) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    }));
+    // Sin los mensajes vacíos: una pregunta que se quedó sin respuesta por un error viaja sola.
+    const formattedHistory = history
+      .filter((m) => typeof m.content === "string" && m.content.trim())
+      .map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content as string }],
+      }));
 
     // Gemini requires the history to start with a 'user' message.
     const firstUserIndex = formattedHistory.findIndex((h: any) => h.role === "user");
@@ -517,19 +563,49 @@ ${flightContext}`;
 
     const chat = chatConRespaldo(genAI, parametrosModelo, cleanHistory);
 
-    let result = await chat.sendMessage(message);
-    let functionCalls = result.functionCalls;
-
     // La propuesta que quedó lista en este turno, si el modelo pidió registrar.
     // Fuera del bucle porque se resuelve al terminarlo.
     let propuestaNueva: Record<string, any> | null = null;
     let propuestaLabel = "";
+    // Si se editó o borró un vuelo, al final se revalida (invariante 8).
+    let cambioLaBitacora = false;
+
+    // Lo que lee el piloto, de todas las vueltas: si el modelo dice algo antes de usar
+    // una herramienta ("dejame ver…"), queda. Se manda entero cada vez, y sólo la parte
+    // que no puede ser un ID a medio escribir (`parteSegura`).
+    let respuesta = "";
+    let mostrado = "";
+    const mostrar = (texto: string) => {
+      const visible = parteSegura(texto);
+      if (visible && visible !== mostrado) {
+        mostrado = visible;
+        emitir({ tipo: "texto", texto: visible });
+      }
+    };
+
+    emitir({ tipo: "estado", texto: "Pensando…" });
+    let mensaje: PartListUnion = message;
 
     // Loop to handle potential multiple sequential function calls (multi-turn tool use)
-    while (functionCalls && functionCalls.length > 0) {
+    for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
+      const functionCalls: FunctionCall[] = [];
+      const previo = respuesta ? `${respuesta}\n\n` : "";
+      let escrito = "";
+      for await (const pedazo of chat.sendMessageStream(mensaje)) {
+        functionCalls.push(...(pedazo.functionCalls ?? []));
+        const texto = textoDelPedazo(pedazo);
+        if (!texto) continue;
+        escrito += texto;
+        // Con un vuelo propuesto, lo que se muestra es el resumen que arma el código.
+        if (!propuestaNueva) mostrar(previo + escrito);
+      }
+      if (escrito.trim()) respuesta = previo + escrito;
+      if (functionCalls.length === 0) break;
+
       const toolResults: any[] = [];
 
       for (const call of functionCalls) {
+        emitir({ tipo: "estado", texto: estadoDeHerramienta(call.name ?? "", call.args) });
         const args: any = call.args;
 
         try {
@@ -582,6 +658,7 @@ ${flightContext}`;
                 response: { error: errData.detail || "Error al eliminar el vuelo del servidor" }
               });
             } else {
+              cambioLaBitacora = true;
               toolResults.push({
                 name: call.name,
                 response: { result: "Vuelo eliminado exitosamente" }
@@ -679,6 +756,7 @@ ${flightContext}`;
               });
             } else {
               const resData = await response.json();
+              cambioLaBitacora = true;
               toolResults.push({
                 name: call.name,
                 response: { result: `Vuelo actualizado exitosamente (duración calculada: ${duration}h)`, flight: resData }
@@ -728,26 +806,29 @@ ${flightContext}`;
         }
       }));
 
-      result = await chat.sendMessage(toolParts);
-      functionCalls = result.functionCalls;
+      mensaje = toolParts;
     }
 
-    // Belt and braces on the "never show internal IDs" rule above: a system
-    // prompt is guidance, not a guarantee, and a leaked UUID is user-visible.
+    if (cambioLaBitacora) revalidarLoQueCambiaUnVuelo();
+
     // Una propuesta pendiente corta el turno: el resumen lo arma el código y no el
     // modelo, porque tiene que describir exactamente lo que se va a escribir
     // cuando el piloto conteste que sí.
     if (propuestaNueva) {
-      return NextResponse.json({
-        reply: proposalSummary(propuestaNueva, propuestaLabel),
-        pendingFlight: propuestaNueva,
-      });
+      emitir({ tipo: "fin", texto: proposalSummary(propuestaNueva, propuestaLabel), pendingFlight: propuestaNueva });
+      return;
     }
 
-    const text = stripInternalIds((result.text ?? ""));
-    return NextResponse.json({ reply: text });
+    // Belt and braces on the "never show internal IDs" rule above: a system
+    // prompt is guidance, not a guarantee, and a leaked UUID is user-visible.
+    emitir({
+      tipo: "fin",
+      texto: stripInternalIds(respuesta) || "No me salió una respuesta para eso. ¿Me lo preguntás de otra forma?",
+    });
   } catch (err: any) {
     console.error("Chat API error:", err);
-    return NextResponse.json({ error: err.message || "Error interno" }, { status: 500 });
+    emitir({ tipo: "error", error: err?.message || "Error interno" });
+  } finally {
+    controller.close();
   }
 }

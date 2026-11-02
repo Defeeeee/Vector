@@ -122,6 +122,30 @@ export function chatConRespaldo(
         }
       }
     },
+    /**
+     * Lo mismo, pero de a pedazos, a medida que el modelo escribe (el copiloto de la web).
+     * Se cambia de modelo **sólo si el principal falla antes del primer pedazo**: una vez
+     * que el piloto empezó a leer una respuesta, empezar otra de otro modelo sería peor que
+     * el error.
+     */
+    async *sendMessageStream(message: PartListUnion): AsyncGenerator<GenerateContentResponse> {
+      for (;;) {
+        let empezo = false;
+        try {
+          for await (const pedazo of await chat.sendMessageStream({ message })) {
+            empezo = true;
+            yield pedazo;
+          }
+          return;
+        } catch (err) {
+          if (empezo || i === MODELOS_GEMINI.length - 1 || !convieneOtroModelo(err)) throw err;
+          avisarCambio(MODELOS_GEMINI[i], MODELOS_GEMINI[i + 1], err);
+          const anterior = chat.getHistory();
+          i++;
+          chat = ai.chats.create({ model: MODELOS_GEMINI[i], config, history: anterior });
+        }
+      }
+    },
   };
 }
 

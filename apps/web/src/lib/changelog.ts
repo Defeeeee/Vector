@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "2.39.0",
+    fecha: "2026-11-02",
+    titulo: "El copiloto, al instante",
+    novedades: [
+      {
+        icono: "conversacion",
+        titulo: "Te contesta mientras escribe",
+        texto: "El copiloto te dice qué está haciendo (leyendo tu bitácora, buscando en la RAAC, consultando un aeródromo) y la respuesta aparece a medida que la escribe. La barra para preguntar queda abajo, como en cualquier chat.",
+        href: "/dashboard",
+        cta: "Ir al inicio",
+      },
+      {
+        icono: "avion",
+        titulo: "Cargá un vuelo charlando",
+        texto: "Contale al copiloto el vuelo: te muestra el resumen y, cuando le decís que sí, queda en tu bitácora. Antes, en la web, la confirmación no lo guardaba.",
+        href: "/dashboard/history",
+        cta: "Ver mis vuelos",
+      },
+    ],
+  },
+  {
     version: "2.38.0",
     fecha: "2026-11-02",
     titulo: "Buscá como lo dirías",

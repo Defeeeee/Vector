@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, BookOpen, CornerDownLeft, LayoutGrid, MapPin, Plane, RotateCcw, Search, Sparkles, X } from "lucide-react";
 import { buscarEnVector, type AerodromoEncontrado, type VueloEncontrado } from "@/actions/buscador";
@@ -39,6 +40,9 @@ const SUGERIDOS: Item[] = [
   { clave: "s3", grupo: "Pantallas", titulo: "Plan de vuelo", detalle: "Preparar vuelo", href: "/dashboard/plan-de-vuelo" },
   { clave: "s4", grupo: "Pantallas", titulo: "Clima", detalle: "Preparar vuelo", href: "/dashboard/clima" },
 ];
+
+/** La barra que baja y el diálogo que crece: un resorte corto, sin rebote. */
+const TRANSICION = { type: "spring", bounce: 0, duration: 0.35 } as const;
 
 const ICONOS = { Pantallas: LayoutGrid, Vuelos: Plane, "Aeródromos": MapPin, "Guías": BookOpen, Copiloto: Sparkles } as const;
 
@@ -258,15 +262,32 @@ export default function BuscadorGlobal({ variante }: { variante: "barra" | "icon
               if (e.target === e.currentTarget) setAbierto(false);
             }}
           >
-            <div
+            {/*
+              En modo conversación la barra donde se escribe **baja** y el chat aparece
+              arriba, como en cualquier chat (Federico, 2026-11-02). El diálogo crece hacia
+              abajo con el borde de arriba fijo y el mismo ancho: es el mismo lugar donde se abrió.
+              La barra se reordena con `order` y no se vuelve a montar: no pierde el foco. Se
+              anima sólo al cambiar de modo (`layoutDependency`): si no, cada resultado nuevo de
+              la búsqueda estiraba la lista.
+            */}
+            <motion.div
+              layout
+              transition={TRANSICION}
+              layoutDependency={conversando}
+              style={{ borderRadius: 24 }}
               role="dialog"
               aria-modal="true"
               aria-label={conversando ? "Copiloto" : "Buscar en Vector"}
-              className={`w-full overflow-hidden rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 shadow-2xl flex flex-col transition-[max-width] duration-200 ${
-                conversando ? "max-w-2xl" : "max-w-xl"
+              className={`w-full max-w-xl overflow-hidden border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 shadow-2xl flex flex-col ${
+                conversando ? "h-[min(72dvh,38rem)]" : ""
               }`}
             >
-              <div className="flex items-center gap-3 px-5 border-b border-zinc-100 dark:border-white/10">
+              <motion.div
+                layout="position"
+                transition={TRANSICION}
+              layoutDependency={conversando}
+                className={`flex items-center gap-3 px-5 border-zinc-100 dark:border-white/10 ${conversando ? "order-2 border-t" : "border-b"}`}
+              >
                 {conversando ? (
                   <button
                     type="button"
@@ -310,17 +331,26 @@ export default function BuscadorGlobal({ variante }: { variante: "barra" | "icon
                 >
                   <X className="w-4 h-4" />
                 </button>
-              </div>
+              </motion.div>
 
               {conversando ? (
-                <div className="h-[min(60dvh,32rem)] overflow-y-auto custom-scrollbar">
-                  <ConversacionCopiloto
-                    mensajes={copiloto.mensajes}
-                    pensando={copiloto.pensando}
-                    error={copiloto.error}
-                    alSugerir={(p) => void copiloto.enviar(p)}
-                  />
-                </div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2, delay: 0.1 }}
+                  className="order-1 flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col"
+                >
+                  {/* Pegado a la barra, como un chat: con pocos mensajes, quedan abajo. */}
+                  <div className="mt-auto">
+                    <ConversacionCopiloto
+                      mensajes={copiloto.mensajes}
+                      pensando={copiloto.pensando}
+                      estado={copiloto.estado}
+                      error={copiloto.error}
+                      alSugerir={(p) => void copiloto.enviar(p)}
+                    />
+                  </div>
+                </motion.div>
               ) : (
                 <div ref={lista} id="buscador-resultados" role="listbox" className="max-h-[min(60vh,28rem)] overflow-y-auto p-2">
                   {texto.length < 2 && <p className="px-3 pt-2 pb-1 text-xs font-semibold text-zinc-400">Lo más buscado</p>}
@@ -370,8 +400,11 @@ export default function BuscadorGlobal({ variante }: { variante: "barra" | "icon
                 </div>
               )}
 
-              <div
-                className={`${conversando ? "flex" : "hidden md:flex"} items-center gap-4 px-5 py-2.5 border-t border-zinc-100 dark:border-white/10 text-[11px] text-zinc-400`}
+              <motion.div
+                layout="position"
+                transition={TRANSICION}
+              layoutDependency={conversando}
+                className={`${conversando ? "flex" : "hidden md:flex"} order-3 items-center gap-4 px-5 py-2.5 border-t border-zinc-100 dark:border-white/10 text-[11px] text-zinc-400`}
               >
                 {conversando ? (
                   <>
@@ -403,8 +436,8 @@ export default function BuscadorGlobal({ variante }: { variante: "barra" | "icon
                     {buscando && texto.length >= 2 && <span className="ml-auto">Buscando vuelos…</span>}
                   </>
                 )}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>,
           document.body
         )}

@@ -107,9 +107,15 @@ Actividad.
 - **El copiloto de la web vive adentro del buscador** (2.38.0, Federico): no hay panel ni
   botón flotante. ⌘K ofrece siempre "Preguntale al copiloto", primero cuando no encuentra
   nada o lo escrito es una pregunta (`copilotoPrimero`), y el diálogo pasa a modo
-  conversación (`ConversacionCopiloto`, contra `/api/chat`). La conversación dura lo que la
-  pestaña. En el teléfono, el pie es la píldora de secciones más el + de Nuevo vuelo, en una
-  fila.
+  conversación (`ConversacionCopiloto`, contra `/api/chat`): la barra baja y el chat aparece
+  arriba, con el mismo ancho y el borde de arriba fijo. La conversación dura lo que la pestaña.
+  En el teléfono, el pie es la píldora de secciones más el + de Nuevo vuelo, en una fila.
+- **`/api/chat` contesta de a pedazos** (2.39.0, NDJSON, `lib/copiloto-stream.ts`): estados
+  ("Leyendo tu bitácora…", el de cada herramienta) y el texto mientras Gemini lo escribe
+  (`sendMessageStream` de `chatConRespaldo`, que cambia de modelo sólo antes del primer
+  pedazo). Lo que se muestra pasa por `parteSegura`: nunca medio ID. El "sí" a un vuelo
+  propuesto se resuelve **antes** del modelo y escribe la propuesta tal cual, como en WhatsApp
+  (`propuestaVigente`: sólo la del último mensaje); hasta la 2.39.0 la web no lo escribía.
 - **Los filtros de Aeropuertos** (2.38.0, `lib/filtro-aerodromos.ts`, `/api/airports/filtrar`):
   distancia, pista, superficie, combustible, control, uso y provincia, en la URL. Una frase
   ("con 100LL a menos de 100 NM de San Fernando") la pasa Gemini a esos filtros

@@ -5,35 +5,13 @@ import { autoridadDelFormulario } from "@/lib/cad";
 import { apiFetch } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 import { esErrorDeRedirect } from "@/lib/redirect-error";
+import { revalidarLoQueCambiaUnVuelo } from "@/lib/revalidar-vuelo";
 
 function getNumber(val: any): number | null {
   const n = parseFloat(val);
   return isNaN(n) ? null : n;
 }
 
-/**
- * Las pantallas que un vuelo nuevo, editado o borrado también cambia.
- *
- * Compartida por `logFlight`, `updateFlight`, `deleteFlight` y `bulkLogFlights`
- * porque las cuatro tocan la misma bitácora y hasta ahora cada una revalidaba un
- * subconjunto distinto —ninguna incluía resumen, balance, aeródromos, auditoría
- * ni ajustes—, así que un vuelo cargado podía verse en Historial y seguir
- * faltando en el promedio mensual de Resumen hasta que algo más revalidara esa
- * ruta. Mismo patrón que `revalidateEverythingThatCounts` en `logbook.ts` y
- * `revalidarProgramados` en `planned-flight.ts`.
- */
-function revalidarLoQueCambiaUnVuelo() {
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/history");
-  revalidatePath("/dashboard/summary");
-  revalidatePath("/dashboard/balance");
-  revalidatePath("/dashboard/airports");
-  revalidatePath("/dashboard/audit");
-  revalidatePath("/dashboard/settings");
-  // El plan que se acaba de cerrar tiene que desaparecer del calendario sin que
-  // el piloto refresque a mano.
-  revalidatePath("/dashboard/calendario");
-}
 
 export async function logFlight(
   formData: FormData

@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v2.39.0 — El copiloto, al instante
+
+_2 de noviembre de 2026_
+
+- **Te contesta mientras escribe** — El copiloto te dice qué está haciendo (leyendo tu bitácora, buscando en la RAAC, consultando un aeródromo) y la respuesta aparece a medida que la escribe. La barra para preguntar queda abajo, como en cualquier chat.
+- **Cargá un vuelo charlando** — Contale al copiloto el vuelo: te muestra el resumen y, cuando le decís que sí, queda en tu bitácora. Antes, en la web, la confirmación no lo guardaba.
+
 ## v2.38.0 — Buscá como lo dirías
 
 _2 de noviembre de 2026_
