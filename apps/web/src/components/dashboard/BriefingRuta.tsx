@@ -162,7 +162,7 @@ export default function BriefingRuta({ puntos }: { puntos: Punto[] }) {
               qnhHpa: typeof c.altimHpa === "number" ? c.altimHpa : null,
               estacionCercana: c.nearestStation ?? null,
               // `null` y no `[]`: "no pudimos preguntar" no es "no hay NOTAMs".
-              notams: notams.status === "fulfilled" ? notams.value.notams ?? [] : null,
+              notams: notams.status === "fulfilled" && Array.isArray(notams.value.notams) ? notams.value.notams : null,
               madhel: notams.status === "fulfilled" ? notams.value.madhel ?? null : null,
               respondio: true,
             },

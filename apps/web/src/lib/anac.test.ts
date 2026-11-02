@@ -8,7 +8,7 @@ const { fetchUndici, ProxyAgent } = vi.hoisted(() => ({
 }));
 vi.mock("undici", () => ({ fetch: fetchUndici, ProxyAgent }));
 
-import { fetchAnac, olvidarGuardadosAnac } from "./anac";
+import { ESPERA_ANAC_MS, fetchAnac, olvidarGuardadosAnac } from "./anac";
 
 const MADHEL = "https://datos.anac.gob.ar/madhel/api/v2/airports/FDO/";
 
@@ -30,8 +30,39 @@ describe("fetchAnac", () => {
     const global = vi.fn(async () => new Response("x"));
     vi.stubGlobal("fetch", global);
     await fetchAnac(MADHEL, { next: { revalidate: 3600 } });
-    expect(global).toHaveBeenCalledWith(MADHEL, { next: { revalidate: 3600 } });
+    expect(global).toHaveBeenCalledWith(MADHEL, expect.objectContaining({ next: { revalidate: 3600 }, signal: expect.any(AbortSignal) }));
     expect(fetchUndici).not.toHaveBeenCalled();
+  });
+
+  it("si ANAC no contesta, se rinde a los ESPERA_ANAC_MS, por el proxy y sin él", async () => {
+    vi.useFakeTimers();
+    try {
+      const colgado = (_url: string, init: { signal: AbortSignal }) =>
+        new Promise<Response>((_, rechazar) => init.signal.addEventListener("abort", () => rechazar(init.signal.reason)));
+      for (const proxy of ["", "http://100.71.80.77:8899"]) {
+        vi.stubEnv("ANAC_PROXY", proxy);
+        vi.stubGlobal("fetch", vi.fn(colgado));
+        fetchUndici.mockImplementation(colgado);
+        const pedido = fetchAnac(MADHEL);
+        const resultado = expect(pedido).rejects.toThrow();
+        await vi.advanceTimersByTimeAsync(ESPERA_ANAC_MS + 10);
+        await resultado;
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("respeta además la señal de quien llama", async () => {
+    vi.stubEnv("ANAC_PROXY", "http://100.71.80.77:8899");
+    const corte = new AbortController();
+    fetchUndici.mockImplementation(
+      (_url: string, init: { signal: AbortSignal }) =>
+        new Promise((_, rechazar) => init.signal.addEventListener("abort", () => rechazar(new Error("cortado")))),
+    );
+    const pedido = fetchAnac(MADHEL, { signal: corte.signal });
+    corte.abort();
+    await expect(pedido).rejects.toThrow("cortado");
   });
 
   it("con ANAC_PROXY sale por el proxy, sin las opciones que sólo entiende Next", async () => {

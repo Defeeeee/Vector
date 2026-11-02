@@ -927,6 +927,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "2.39.1",
+    fecha: "2026-11-02",
+    motivo: "Con ANAC caído, la ficha del aeródromo se rinde a los 6 s en vez de más de 30, y dice que los NOTAM no se pudieron consultar en vez de \"No hay NOTAMs vigentes\" (invariante 2). Arreglo, sin anuncio aparte.",
+  },
+  {
     version: "2.36.3",
     fecha: "2026-10-30",
     motivo: "\"Pasar al CAD\" ofrece la extensión sólo en Chrome, Edge y Brave; en Safari y Firefox, el marcador; en el teléfono, hacerlo desde la compu. Ajuste de la 2.36.0, sin anuncio aparte.",

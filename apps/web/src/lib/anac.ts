@@ -15,6 +15,11 @@ import { ProxyAgent, fetch as fetchUndici } from "undici";
  * versión. El costo es que ese `fetch` no pasa por la cache de datos de Next, así que
  * `next.revalidate` se respeta acá, en memoria. Además cuida la IP de oraclex64: si ANAC
  * bloquea por exceso de pedidos, como hizo con el CAD, no hay otra.
+ *
+ * **Con tope de espera** (`ESPERA_ANAC_MS`). El 2026-11-02 ANAC se cayó para todos, y sin
+ * tope la ficha de un aeródromo tardaba más de 30 s en rendirse: esperaba a MADHEL y
+ * después a los NOTAM, cada uno hasta que se cortara la conexión. Con el tope, la ficha dice
+ * "no se pudo consultar" enseguida. El tope cubre también la lectura del cuerpo.
  */
 type Opciones = RequestInit & { next?: { revalidate?: number } };
 
@@ -25,6 +30,9 @@ interface Guardado {
   cuerpo: string;
 }
 
+/** Lo que se espera a ANAC por pedido. MADHEL y los NOTAM contestan en menos de 1 s por el proxy. */
+export const ESPERA_ANAC_MS = 6_000;
+
 const MAX_GUARDADOS = 500;
 const guardados = new Map<string, Guardado>();
 let agente: ProxyAgent | null = null;
@@ -33,7 +41,21 @@ function respuesta(g: Pick<Guardado, "status" | "tipo" | "cuerpo">): Response {
   return new Response(g.cuerpo, { status: g.status, headers: g.tipo ? { "content-type": g.tipo } : {} });
 }
 
+/** El tope de espera, sumado a la señal que haya traído quien llama. */
+function conTope(signal: AbortSignal | null | undefined): AbortSignal {
+  // Con `setTimeout` y no `AbortSignal.timeout`: hace lo mismo y los tests lo pueden adelantar.
+  const corte = new AbortController();
+  const reloj = setTimeout(
+    () => corte.abort(new DOMException("ANAC no contestó a tiempo", "TimeoutError")),
+    ESPERA_ANAC_MS,
+  );
+  // No retiene el proceso por un pedido que ya terminó.
+  (reloj as { unref?: () => void }).unref?.();
+  return signal ? AbortSignal.any([signal, corte.signal]) : corte.signal;
+}
+
 export async function fetchAnac(url: string, init: Opciones = {}): Promise<Response> {
+  init = { ...init, signal: conTope(init.signal) };
   const proxy = process.env.ANAC_PROXY?.trim();
   if (!proxy) return fetch(url, init);
 

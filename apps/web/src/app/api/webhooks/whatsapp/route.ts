@@ -85,7 +85,8 @@ async function getAirportInfoHelper(icao: string) {
 
 
   let madhelSummary = "No se encontraron datos MADHEL para este aeródromo.";
-  let notamSummary = "Sin NOTAMs activos.";
+  // Hasta que ANAC conteste: si no contesta, el copiloto no puede decir "no hay" (invariante 2).
+  let notamSummary = "No se pudieron consultar los NOTAM: ANAC no contestó. No digas que no hay; recomendá revisarlos en ais.anac.gob.ar antes de volar.";
 
   // Fetch MADHEL
   try {

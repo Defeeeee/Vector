@@ -135,7 +135,8 @@ export default function AirportsClient({
   const [results, setResults] = useState<AirportRef[]>([]);
   const [selected, setSelected] = useState<AirportRef | null>(null);
   const [weather, setWeather] = useState<Weather | null>(null);
-  const [notams, setNotams] = useState<NotamItem[]>([]);
+  // `null`: no se pudo preguntar a ANAC, que no es "no hay NOTAM" (invariante 2).
+  const [notams, setNotams] = useState<NotamItem[] | null>([]);
   const [madhelFull, setMadhelFull] = useState<MadhelFull | null>(null);
   const [jeppesenCharts, setJeppesenCharts] = useState<CartaJeppesen[]>([]);
   const [loadingWx, setLoadingWx] = useState(false);
@@ -197,7 +198,7 @@ export default function AirportsClient({
     setResults([]);
     if (clearSearch) setQuery("");
     setWeather(null);
-    setNotams([]);
+    setNotams(null);
     setMadhelFull(null);
     setJeppesenCharts([]);
 
@@ -226,7 +227,7 @@ export default function AirportsClient({
       }
       if (notamRes && notamRes.ok) {
         const notamData = await notamRes.json();
-        setNotams(notamData.notams || []);
+        setNotams(Array.isArray(notamData.notams) ? notamData.notams : null);
         setMadhelFull(notamData.madhel || null);
       }
       if (chartsRes && chartsRes.ok) {
@@ -738,6 +739,10 @@ export default function AirportsClient({
                   <span className="text-xs text-zinc-400 flex items-center gap-1.5 font-mono">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" /> ANAC...
                   </span>
+                ) : notams === null ? (
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> Sin consultar
+                  </span>
                 ) : notams.length > 0 ? (
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                     {notams.length} {notams.length === 1 ? "NOTAM activo" : "NOTAMs activos"}
@@ -752,6 +757,10 @@ export default function AirportsClient({
               {loadingNotams ? (
                 <p className="text-sm text-zinc-400 flex items-center gap-2 py-4">
                   <Loader2 className="w-4 h-4 animate-spin" /> Obteniendo NOTAMs vigentes desde el servicio ANAC…
+                </p>
+              ) : notams === null ? (
+                <p className="text-sm text-amber-700 dark:text-amber-400 py-2">
+                  No se pudieron consultar los NOTAM: ANAC no contestó. Revisalos en ais.anac.gob.ar antes de volar.
                 </p>
               ) : notams.length > 0 ? (
                 <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
