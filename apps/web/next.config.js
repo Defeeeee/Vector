@@ -9,9 +9,19 @@
   y un test obliga a que sean la misma: si alguien sube `package.json` sin escribir las
   novedades, CI lo frena en vez de dejar la app mintiendo en silencio.
 */
+const path = require("node:path");
 const { version } = require("./package.json");
 
+/*
+  La raíz del monorepo, dos carpetas arriba. Sin esto Turbopack toma `apps/web` como
+  raíz y no resuelve nada de afuera: `lib/extension-cad.ts` lee la versión de
+  `apps/extension/manifest.json`. El tracing usa la misma, como pide Next.
+*/
+const RAIZ_MONOREPO = path.join(__dirname, "..", "..");
+
 module.exports = {
+  turbopack: { root: RAIZ_MONOREPO },
+  outputFileTracingRoot: RAIZ_MONOREPO,
   allowedDevOrigins: ["100.78.13.108"],
   env: {
     NEXT_PUBLIC_APP_VERSION: version,

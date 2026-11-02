@@ -16,7 +16,8 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://vector.fdiaznem.com.
 const jiti = createJiti(import.meta.url, { alias: { "@": join(RAIZ, "src") } });
 const { mailConfirmarCuenta, mailRecuperarContrasena } = await jiti.import(join(RAIZ, "src/lib/mails-auth.ts"));
 
-const SALIDA = join(RAIZ, "docs", "mails-supabase");
+// `docs/` es del monorepo entero, dos carpetas arriba de `apps/web`.
+const SALIDA = join(RAIZ, "..", "..", "docs", "mails-supabase");
 mkdirSync(SALIDA, { recursive: true });
 
 const mails = [

@@ -1,0 +1,7 @@
+# Cada app tiene su propio .gitignore (apps/web, apps/api). Acá, sólo lo de todo el repo.
+.DS_Store
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/

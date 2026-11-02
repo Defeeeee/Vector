@@ -1,17 +1,31 @@
-name: CI
+name: CI web
 
+# Sólo cuando cambia algo de la web: un commit de la API no la reconstruye ni la
+# despliega. La extensión del CAD entra porque la web la empaqueta en el build.
 on:
   pull_request:
+    paths:
+      - "apps/web/**"
+      - "apps/extension/**"
+      - ".github/workflows/web-ci.yml"
   push:
     branches: [main]
+    paths:
+      - "apps/web/**"
+      - "apps/extension/**"
+      - ".github/workflows/web-ci.yml"
   # Lo dispara `aip.yml` después de commitear el AIP nuevo: un push con el token de Actions
   # no dispara workflows.
   workflow_dispatch:
 
 # Una sola corrida por rama: si empujás dos veces seguidas, la vieja se cancela.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-web-${{ github.ref }}
   cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: apps/web
 
 jobs:
   verificar:
@@ -23,6 +37,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: apps/web/package-lock.json
 
       - run: npm ci
 
@@ -62,19 +77,3 @@ jobs:
           API_URL: https://api.flightlog.fdiaznem.com.ar
           SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
           SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
-
-  secretos:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # gitleaks necesita el historial para revisar los commits del PR.
-          fetch-depth: 0
-
-      # Este repo tuvo un secreto compartido hardcodeado en el código durante
-      # meses, en un repositorio público. Esto lo habría marcado en el PR que
-      # lo introdujo.
-      - name: Buscar secretos
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

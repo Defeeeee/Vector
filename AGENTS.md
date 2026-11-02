@@ -7,6 +7,11 @@ de cada decisión está en la bitácora (`docs/bitacora/`); acá queda lo vigent
 > propio proceso obligaba a leerlo entero. Se partió por mes en `docs/bitacora/`, sin
 > editar una sola entrada. Si un comentario del código dice "ver la entrada X en
 > AGENTS.md", la entrada está ahí: `grep -n "^##" docs/bitacora/*.md`.
+>
+> Hasta el 2026-11-02 la web y la API eran dos repos, `Vector-FrontEnd` y
+> `FlightLog-BackEnd`. Se unieron en éste con la historia de los dos: los hashes viejos
+> siguen valiendo (`git show 1f6a318`). La bitácora del backend está en
+> `docs/bitacora/api/`.
 
 ## Qué es Vector
 
@@ -19,17 +24,24 @@ reportes, invitaciones y avisos push.
 PPA a PCA**: no es dueño del avión, paga por hora o por pack, y abre la app para saber
 si puede volar, cuánto le falta y cuánto le queda.
 
-- **Este repo es sólo el frontend**: Next.js 16 (App Router), React 19, Tailwind v4 (sin
-  `tailwind.config.js`: el tema vive en `@theme` dentro de `src/app/globals.css`),
-  Framer Motion, next-themes.
-- **El backend** es Python + Litestar + Supabase, en `/Users/defeee/Vector/FlightLog-BackEnd`,
-  con su propio `AGENTS.md`. Todo cambio de modelo de datos se hace allá, con su
-  migración en `migrations/`. La autenticación también sale de ahí (`NEXT_PUBLIC_AUTH_URL`).
+El repo es un monorepo:
+
+| Carpeta | Qué |
+|---|---|
+| `apps/web/` | La web: Next.js 16 (App Router), React 19, Tailwind v4 (sin `tailwind.config.js`: el tema vive en `@theme` dentro de `src/app/globals.css`), Framer Motion, next-themes. |
+| `apps/api/` | **El backend**: Python + Litestar + Supabase, con su `AGENTS.md` para lo propio. Todo cambio de modelo de datos se hace ahí, con su migración en `apps/api/migrations/`. La autenticación también sale de ahí (`NEXT_PUBLIC_AUTH_URL`). |
+| `apps/extension/` | La extensión "Vector → CAD". La empaqueta el build de la web (`scripts/build-extension.mjs`). |
+| `docs/` | La bitácora, la normativa citada en el código y los planes. Es de todo el repo. |
+
+- Cada app tiene sus dependencias, su CI y su deploy (ver Deploy). No hay workspace de
+  npm en la raíz: la web y la API no comparten código, se hablan por HTTP.
 - **Uso real al 2026-09-22**, medido en la base: 6 cuentas y **una sola con vuelos** (la de
   Federico, el dueño). Ninguna alta desde el 2026-08-10. Antes de proponer algo "por
   escala", volvé a medir.
 
 ## Mapa del código
+
+Las rutas son relativas a `apps/web/`; las de `docs/` y `apps/extension/`, a la raíz.
 
 | Dónde | Qué |
 |---|---|
@@ -42,7 +54,7 @@ si puede volar, cuánto le falta y cuánto le queda.
 | `src/app/guias/examen-ppa/`, `src/lib/examen-ppa.ts`, `src/data/examen-ppa.json` | La práctica del examen teórico de PPA, pública: las 379 preguntas del banco de ANAC con respuesta (Res. 306/2014), 63 con su figura (`public/examen-ppa/`), por materia, con lo fallado guardado en el navegador. Cómo se armó y qué quedó afuera, en `docs/normativa/examen-ppa-anac.md` (scripts en `scripts/examen-ppa/`). **El banco es de 2014**: la reglamentación lleva un aviso de que manda la RAAC vigente. |
 | `src/lib/libro-anac.ts`, `src/lib/libro-anac-pdf.ts`, `src/app/api/bitacora/libro-anac/` | El libro de vuelo en PDF: qué va en cada casillero y las hojas (puro, testeado), el dibujo con pdf-lib y la ruta. Fuentes en `docs/normativa/libro-de-vuelo-anac.md`. |
 | `src/app/dashboard/plan-de-vuelo/`, `src/components/dashboard/plan-de-vuelo/`, `src/lib/formulario-plan.ts`, `src/lib/plan-de-vuelo.ts`, `src/lib/demora-plan.ts`, `src/lib/plan-de-vuelo-pdf.ts`, `src/lib/oficinas-aro.ts`, `src/actions/plan-de-vuelo.ts` | El plan de vuelo para EANA: los planes guardados (`/planes-de-vuelo` del backend, migración 024) y su editor. El formulario se revisa casilla por casilla (puro, testeado). El PDF es el **formulario de EANA** (`plan-de-vuelo-eana.jpg`, de un plan que EANA aceptó) y la demora el del Apéndice 4 de la ENR 1.10, armados con pdf-lib **en el navegador**. También están las 49 oficinas ARO/AIS de la AIC A 19/2026 y su horario de la AIP AD 2.3 (`npm run build:horarios-aro`), testeados contra su fuente. Fuentes en `docs/normativa/plan-de-vuelo-eana.md`. |
-| `src/lib/cad.ts`, `src/lib/cad-servidor.ts`, `src/lib/enlace-cad.ts`, `src/cad/`, `src/app/dashboard/history/cad/`, `extension/` | Pasar los vuelos al **CAD de ANAC** desde el navegador del piloto. El panel vive en Vector ("Pasar al CAD") y la pestaña del CAD sólo hace de puente: la extensión "Vector → CAD" (`extension/`, empaquetada por `scripts/build-extension.mjs` en `public/cad/vector-cad.zip`; sin permisos) o el marcador (`src/cad/enlace.ts`, compilado por `scripts/build-puente.mjs` a `public/cad/puente.js`) hacen, con la sesión del piloto, las lecturas de una lista blanca y "Crear" (`src/cad/enlace-comun.ts`). **Vector nunca ve la contraseña de ANAC.** La traducción (horas, finalidad, aeródromos, discriminación) es pura y testeada. `flights.cad_vuelo_id` (migración 029) marca los pasados. Para probar: `marketing/recursos/cad-falso.mjs`. |
+| `src/lib/cad.ts`, `src/lib/cad-servidor.ts`, `src/lib/enlace-cad.ts`, `src/cad/`, `src/app/dashboard/history/cad/`, `apps/extension/` | Pasar los vuelos al **CAD de ANAC** desde el navegador del piloto. El panel vive en Vector ("Pasar al CAD") y la pestaña del CAD sólo hace de puente: la extensión "Vector → CAD" (`apps/extension/`, empaquetada por `scripts/build-extension.mjs` en `public/cad/vector-cad.zip`; sin permisos) o el marcador (`src/cad/enlace.ts`, compilado por `scripts/build-puente.mjs` a `public/cad/puente.js`) hacen, con la sesión del piloto, las lecturas de una lista blanca y "Crear" (`src/cad/enlace-comun.ts`). **Vector nunca ve la contraseña de ANAC.** La traducción (horas, finalidad, aeródromos, discriminación) es pura y testeada. `flights.cad_vuelo_id` (migración 029) marca los pasados. Para probar: `marketing/recursos/cad-falso.mjs`. |
 | `src/lib/mail-plantilla.ts`, `src/lib/mail-envio.ts`, `src/lib/mail-seguimiento.ts`, `src/app/api/mail/`, `src/app/api/cron/` | Los mails: la plantilla con la estética de la landing, el envío **con seguimiento propio** (aperturas y clics, firmados) y los barridos que los mandan. Las imágenes viven en `public/hotlink-ok/correo/` (Cloudflare bloquea el hotlinking fuera de esa carpeta). Todo mail sale por `enviarConSeguimiento`; las métricas se ven en el panel de administración. **La excepción es el plan de vuelo** (`lib/plan-de-vuelo-mail.ts`): va a una oficina del Estado, sin imagen de apertura ni links medidos. |
 | `src/app/q/[codigo]/`, `src/lib/pegatinas.ts`, `src/lib/pegatinas-hoja.ts`, `src/app/dashboard/admin/pegatinas/` | Las pegatinas con QR (migración 033 del backend): todas iguales, cada una con su código. **El admin las asigna escaneándolas** en el lugar, y sus escaneos no cuentan. Un visitante se lleva la cookie `vector_qr`, y si se registra dentro de los 30 días la cuenta queda con `origen_qr` (`AnotarOrigenQr`, desde el navegador). Para mandar a hacer, el panel baja un PNG por código en un ZIP (`lib/pegatina-png.tsx`, satori, 600 dpi, fondo transparente; `lib/zip.ts`): en la imprenta, sticker de 8 cm "sin fondo". También hay una hoja A4 para imprimir en casa. La del avión (`/avion/<matrícula>`) está diseñada en `marketing/pegatinas.html` y todavía no existe. |
 | `src/data/raac/`, `scripts/build-raac.mjs`, `src/lib/raac.ts`, `src/lib/raac-copiloto.ts` | "Preguntale a la RAAC" (2.31.0): el texto de la RAAC 61 VI edición (anexo de la Res. ANAC 65/2026, Infoleg) partido por sección y capítulo, buscado con BM25 y sinónimos de piloto. Los dos copilotos (web y WhatsApp) tienen la herramienta `consultar_raac` y contestan **sólo** con ese texto, citando la sección; si no está, lo dicen. **Falta la RAAC 91**: su PDF está en `docs.anac.gob.ar`, que desde la red de Federico no contesta (`npm run build:raac -- 91 <pdf>` cuando se consiga). |
@@ -165,6 +177,8 @@ Actividad.
 
 ## Comandos
 
+La web, desde `apps/web/` (los de la API están en `apps/api/AGENTS.md`):
+
 ```bash
 npm run dev                # http://localhost:3000 (ojo: ver abajo contra qué base escribe)
 npx tsc --noEmit           # mirá el código de salida: `| head && echo ok` miente
@@ -205,13 +219,28 @@ Sin credenciales, y sin tocar producción: un backend falso local y una cookie c
 
 ## Deploy
 
-**Se despliega pusheando a `main`, y sólo si el CI pasa.** `ci.yml` corre `tsc`, tests,
-build y smoke con sesión; cuando termina en verde, `.github/workflows/deploy.yml`
-(`workflow_run`) entra por SSH al VPS, hace `git reset --hard` **al commit que aprobó el
-CI**, `npm ci`, borra `.next`, construye, reinicia con
-`pm2 restart vector-frontend --update-env` y **vuelve solo al commit anterior** si el
-health check falla. No copiar archivos ni reiniciar PM2 a mano. Para desplegar sin
-esperar al CI está el botón de `workflow_dispatch`.
+**Se despliega pusheando a `main`, y sólo si el CI pasa.** Cada app tiene su par de
+workflows y sólo corren si el push toca su carpeta:
+
+- **La web:** `web-ci.yml` corre `tsc`, tests, build y smoke con sesión; cuando termina
+  en verde, `web-deploy.yml` (`workflow_run`) entra por SSH al VPS, hace
+  `git reset --hard` **al commit que aprobó el CI**, `npm ci`, borra `.next`, construye,
+  reinicia con `pm2 restart vector-frontend --update-env` y **vuelve solo al commit
+  anterior** si el health check falla.
+- **La API:** `api-ci.yml` (los `test_*.py`, el import y ruff) y `api-deploy.yml`, que
+  reinicia `flightlog-7477` y `grabador-adsb`, con el mismo rollback.
+- `secretos.yml` (gitleaks) corre sobre todo el repo, y `aip.yml` los martes.
+
+**En el VPS cada app tiene su propio clon** del monorepo, con sparse-checkout:
+`~/Vector/web` (PM2 corre en `~/Vector/web/apps/web`) y `~/Vector/api` (en
+`~/Vector/api/apps/api`, con su `venv`). Con un clon compartido, el `reset --hard` de un
+deploy le cambiaría el código a la otra app corriendo. Los `.env` están en cada carpeta
+de app, y las cartas Jeppesen en `~/Vector/charts-jeppesen` (`JEPPESEN_CHARTS_DIR`).
+Los barridos del crontab (`~/bin/vector-*.sh`) leen el secreto de
+`~/Vector/web/apps/web/.env`.
+
+No copiar archivos ni reiniciar PM2 a mano. Para desplegar sin esperar al CI está el
+botón de `workflow_dispatch` de cada deploy.
 
 Hasta el 2026-09-22 el deploy corría en cada push sin mirar el CI, y así llegaron once
 commits en rojo a producción. El health check pega a `/api/airports/search`, que lee los
@@ -321,15 +350,15 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     volvé a Vector"). El panel está en Vector (`PanelCad` con `fuenteEnlace`, `ConElCad`); la pestaña
     del CAD sólo contesta pedidos de una lista blanca (lecturas y "Crear", nunca la DDJJ:
     `src/cad/enlace-comun.ts`) y muestra "Volvé a Vector". La extensión pasa los pedidos por su service
-    worker (`extension/background.js`, sin permisos); el marcador abre Vector con `?enlace=1` y habla
+    worker (`apps/extension/background.js`, sin permisos); el marcador abre Vector con `?enlace=1` y habla
     por `window.opener` (`src/cad/enlace.ts`, compilado a `public/cad/puente.js`, el archivo de los
     marcadores ya guardados). Del lado de Vector, `lib/enlace-cad.ts`. Al leer, Vector concilia con el
     backend (`POST /cad/conciliar`, sin ANAC) y anota `profiles.cad_leido_at` (migración 038): la
     Bitácora y el inicio dicen "Estado del CAD leído …" y piden actualizar pasados 3 días
     (`leidoDelCad`). El panel viejo adentro del CAD y su ventanita `/cad/conector` se borraron en la
     2.36.2, después de probar el puente contra el CAD real (Federico, 2026-10-29). Vector avisa si la extensión instalada es
-    más vieja que `extension/manifest.json` (`lib/extension-cad.ts`; antes de la 1.1.0 no es puente y sólo
-    se ofrece bajar la nueva): **al cambiar algo de `extension/`, subir su versión.** "Pasar al CAD" ofrece la extensión sólo en Chrome, Edge y Brave; en Safari y Firefox, el marcador; en el
+    más vieja que `apps/extension/manifest.json` (`lib/extension-cad.ts`; antes de la 1.1.0 no es puente y sólo
+    se ofrece bajar la nueva): **al cambiar algo de `apps/extension/`, subir su versión.** "Pasar al CAD" ofrece la extensión sólo en Chrome, Edge y Brave; en Safari y Firefox, el marcador; en el
     teléfono, que se haga desde la compu (`navegadorParaCad`, `SegunNavegador`; Federico, 2026-10-30). Se instala
     descomprimida: **no se publica en la Chrome Web Store** (Federico, 2026-11-01). El marcador en Safari
     anda contra el CAD real (Federico, 2026-11-01).
@@ -344,8 +373,8 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     la DDJJ: el backend tiene una lista blanca de lecturas más "Crear". Con la cuenta conectada,
     Registrar vuelo ofrece "Cargarlo también en tu CAD" (`pasarVueloAlCad`). Está en la política de
     privacidad (`#cad`). Probado con la cuenta real de Federico (2026-10-28). **ANAC no acepta
-    conexiones del VPS**: el backend sale por un proxy en DefeServer (`CAD_PROXY`, ver el AGENTS del
-    backend; hasta el 2026-10-28 22:50 UTC fue amenaba, que ANAC también bloqueó); si DefeServer se
+    conexiones del VPS**: el backend sale por un proxy en DefeServer (`CAD_PROXY`, ver la bitácora
+    del backend en `docs/bitacora/api/`; hasta el 2026-10-28 22:50 UTC fue amenaba, que ANAC también bloqueó); si DefeServer se
     apaga, este modo no anda y queda el marcador. **ANAC bloquea por horas la IP que
     entra varias veces** (el 2026-10-28 cayeron el VPS y después la casa de Federico, con 3 logins en
     media hora): el backend pide como un Chrome en el CAD, reusa la sesión hasta 8 h (en disco, cifrada:
@@ -435,8 +464,10 @@ importa es el del backend (`request_max_body_size`, 30 MB).
 ## La bitácora
 
 Cada tanda coherente de cambios deja una entrada **al final del archivo del mes** en
-`docs/bitacora/AAAA-MM.md` (si no existe, se crea). Es obligatorio, como cargar un
-vuelo en el libro:
+`docs/bitacora/AAAA-MM.md` (si no existe, se crea), toque la web, la API o las dos: un
+cambio que cruza las dos apps va en una sola entrada. La historia del backend hasta el
+2026-11-02 está aparte, en `docs/bitacora/api/`. Es obligatorio, como cargar un vuelo en
+el libro:
 
 1. Antes de empezar, leé las entradas del mes y buscá con `grep` lo que toque tu cambio.
 2. Escribila mientras trabajás, no al final: una sesión cortada deja trabajo huérfano.

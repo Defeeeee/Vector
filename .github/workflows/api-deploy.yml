@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy api
 
 # **Se despliega cuando el CI de `main` pasa, no cuando llega el push.**
 #
@@ -10,7 +10,7 @@ name: Deploy
 # `workflow_dispatch` sigue para desplegar a mano sin esperar otra corrida del CI.
 on:
   workflow_run:
-    workflows: [CI]
+    workflows: [CI api]
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -41,7 +41,9 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-            cd ~/FlightLog-BackEnd
+            # Un clon del monorepo sólo para la API (sparse: `apps/api`). La web tiene el
+            # suyo, `~/Vector/web`: ver `web-deploy.yml`.
+            cd ~/Vector/api/apps/api
 
             # Para volver si el health check falla.
             ANTERIOR=$(git rev-parse HEAD)

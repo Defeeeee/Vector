@@ -1,13 +1,13 @@
 /**
  * Qué versión de la extensión "Vector → CAD" tiene el piloto, contra la que se baja hoy
- * (`extension/manifest.json`). La instalada se lee de `data-vector-cad-extension` en `<html>`,
- * que deja `extension/vector.js`.
+ * (`apps/extension/manifest.json`). La instalada se lee de `data-vector-cad-extension` en
+ * `<html>`, que deja `apps/extension/vector.js`.
  *
  * Una extensión cargada descomprimida no se actualiza sola: Vector avisa cuando hay una nueva
  * (Federico, 2026-10-29). Las anteriores a la 1.1.0 eran un botón en el CAD, no un puente: con
  * ésas "Pasar al CAD" no puede conectarse y sólo ofrece bajar la nueva.
  */
-import manifest from "../../extension/manifest.json";
+import manifest from "../../../extension/manifest.json";
 
 export const VERSION_EXTENSION: string = manifest.version;
 export const VERSION_MINIMA_PUENTE = "1.1.0";

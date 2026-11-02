@@ -9,7 +9,7 @@ name: Configurar avisos push
 #   todas las suscripciones de los navegadores, así que este workflow no lo hace nunca:
 #   para rotarla hay que borrar el PEM a mano, a sabiendas.
 # - **No reinicia.** El backend lee el `.env` al arrancar: después de esto se corre el
-#   Deploy a mano (`workflow_dispatch`), que reinicia con health check y rollback.
+#   Deploy api a mano (`workflow_dispatch`), que reinicia con health check y rollback.
 # - **Si la verificación falla, el `.env` vuelve a como estaba**: un `.env` roto tiraría
 #   el backend en el próximo reinicio.
 #
@@ -70,7 +70,7 @@ jobs:
             PUB=$(openssl ec -in "$PEM" -pubout -outform DER 2>/dev/null | tail -c 65 | base64 -w0 | tr '/+' '_-' | tr -d '=')
             if [ "${#PUB}" -ne 87 ]; then echo "La clave pública no tiene el largo esperado"; exit 1; fi
 
-            cd ~/FlightLog-BackEnd
+            cd ~/Vector/api/apps/api
             COPIA=".env.antes-avisos-$(date -u +%Y%m%d%H%M%S)"
             # La copia hereda el umask: 600, como el original.
             cp .env "$COPIA"
@@ -97,4 +97,4 @@ jobs:
 
             trap - ERR
             echo "Clave pública: $PUB"
-            echo "Falta reiniciar: correr el Deploy a mano."
+            echo "Falta reiniciar: correr el Deploy api a mano."

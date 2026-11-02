@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Empaqueta la extensión "Vector → CAD" (`extension/`) en `public/cad/vector-cad.zip`, el
+ * Empaqueta la extensión "Vector → CAD" (`apps/extension/`) en `public/cad/vector-cad.zip`, el
  * archivo que se baja desde `/dashboard/history/cad` para cargarla en Chrome.
  *
  *   npm run build:extension      (lo corre `npm run build` solo)
@@ -10,7 +10,7 @@
  *
  * `cad.js` (la pestaña del CAD) sale de `src/cad/extension-cad.ts`, que comparte con el
  * marcador lo que se le puede pedir al CAD (`src/cad/enlace-comun.ts`); el resto de
- * `extension/` va tal cual.
+ * `apps/extension/` va tal cual.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -18,7 +18,8 @@ import { fileURLToPath } from "node:url";
 import * as esbuild from "esbuild";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const ORIGEN = path.join(RAIZ, "extension");
+// La extensión vive en `apps/extension`, al lado de la web.
+const ORIGEN = path.join(RAIZ, "..", "extension");
 const SALIDA = path.join(RAIZ, "public", "cad", "vector-cad.zip");
 
 const { outputFiles } = await esbuild.build({

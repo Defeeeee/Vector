@@ -1,7 +1,7 @@
 /**
  * El @ de un piloto: cómo se escribe y cómo se muestra.
  *
- * **El que decide es el backend** (`src/services/social.py` de FlightLog-BackEnd, y el
+ * **El que decide es el backend** (`apps/api/src/services/social.py`, y el
  * CHECK de la migración 018). Esto es la misma regla del lado del formulario, para
  * avisar mientras se tipea en vez de después de mandar. Si cambian allá, cambian acá:
  * un @ que el formulario acepta y el backend rechaza es un error que el piloto ve

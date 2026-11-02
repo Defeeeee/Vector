@@ -5,7 +5,7 @@ aviones que están en algún Hangar.
     venv/bin/python grabador_adsb.py
 
 Corre en el VPS como su propio proceso de PM2 (`grabador-adsb`), al lado del backend; el
-deploy lo reinicia (`.github/workflows/deploy.yml`).
+deploy lo reinicia (`.github/workflows/api-deploy.yml`).
 
 - Cada 10 s pide a adsb.fi (y si falla, a adsb.lol) el tráfico alrededor de cada punto de `ADSB_PUNTOS` (por defecto,
   Buenos Aires con 250 millas), para descubrir aviones del Hangar; y los ya conocidos, por su

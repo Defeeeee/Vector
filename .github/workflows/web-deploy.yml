@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy web
 
 # **Se despliega cuando el CI de `main` pasa, no cuando llega el push.**
 #
@@ -11,7 +11,7 @@ name: Deploy
 # deploy que falló por la red del VPS) sin esperar otra corrida del CI.
 on:
   workflow_run:
-    workflows: [CI]
+    workflows: [CI web]
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -50,7 +50,10 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-            cd ~/Vector-FrontEnd
+            # Un clon del monorepo sólo para la web (sparse: `apps/web` y `apps/extension`).
+            # La API tiene el suyo, `~/Vector/api`: con un clon compartido, el
+            # `reset --hard` de acá le cambiaría el código a la API corriendo.
+            cd ~/Vector/web/apps/web
 
             ANTERIOR=$(git rev-parse HEAD)
             git fetch origin main
