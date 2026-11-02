@@ -927,6 +927,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "2.39.2",
+    fecha: "2026-11-02",
+    motivo: "La ficha del aeródromo y el briefing le piden MADHEL y los NOTAM a ANAC desde el navegador del piloto, porque ANAC bloquea a nuestros servidores. Vuelve a andar lo de siempre, sin anuncio.",
+  },
+  {
     version: "2.39.1",
     fecha: "2026-11-02",
     motivo: "Con ANAC caído, la ficha del aeródromo se rinde a los 6 s en vez de más de 30, y dice que los NOTAM no se pudieron consultar en vez de \"No hay NOTAMs vigentes\" (invariante 2). Arreglo, sin anuncio aparte.",

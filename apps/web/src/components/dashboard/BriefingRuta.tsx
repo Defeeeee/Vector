@@ -22,6 +22,7 @@ import {
 } from "@/lib/briefing";
 import { computeAltitude } from "@/lib/aviation";
 import { fmt } from "./tools/ToolPrimitives";
+import { fichaDesdeElNavegador } from "@/lib/anac-navegador";
 
 /**
  * El briefing meteorológico de la ruta, adentro del planificador.
@@ -142,9 +143,8 @@ export default function BriefingRuta({ puntos }: { puntos: Punto[] }) {
             fetch(`/api/weather?icao=${q}`, { signal: controlador.signal }).then((r) =>
               r.ok ? r.json() : Promise.reject(new Error(String(r.status)))
             ),
-            fetch(`/api/notams?icao=${q}`, { signal: controlador.signal }).then((r) =>
-              r.ok ? r.json() : Promise.reject(new Error(String(r.status)))
-            ),
+            // Le pregunta el navegador a ANAC, que bloquea a nuestros servidores (`lib/anac-navegador.ts`).
+            fichaDesdeElNavegador(icao, undefined, controlador.signal),
           ]);
 
           if (clima.status !== "fulfilled") return [icao, { ...VACIA }];

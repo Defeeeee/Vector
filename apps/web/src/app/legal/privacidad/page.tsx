@@ -222,8 +222,11 @@ export default function PrivacidadPage() {
             portada o las guías. Ver <a href="#meta">Medición de anuncios</a>.
           </li>
           <li>
-            <strong>ANAC</strong> — sólo si pasás tus vuelos al CAD. Ver{" "}
-            <a href="#cad">Tus vuelos en el CAD de ANAC</a>.
+            <strong>ANAC</strong> — si pasás tus vuelos al CAD (ver{" "}
+            <a href="#cad">Tus vuelos en el CAD de ANAC</a>). Además, cuando abrís la ficha de
+            un aeródromo o el briefing de una ruta, tu navegador le pide a ANAC su ficha de
+            MADHEL y sus NOTAM directamente, como si entraras a su sitio: ANAC ve tu IP y qué
+            aeródromo consultaste, y no le mandamos ningún otro dato tuyo.
           </li>
         </ul>
         <p>

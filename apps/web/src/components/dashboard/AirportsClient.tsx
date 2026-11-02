@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { AirportRef } from "@/types";
 import FiltroAerodromos from "./FiltroAerodromos";
+import { fichaDesdeElNavegador } from "@/lib/anac-navegador";
 
 export interface NotamItem {
   code: string;
@@ -213,7 +214,8 @@ export default function AirportsClient({
     try {
       const [wxRes, notamRes, chartsRes] = await Promise.all([
         fetch(`/api/weather?icao=${icao}`).catch(() => null),
-        fetch(`/api/notams?icao=${icao}`).catch(() => null),
+        // Le pregunta el navegador a ANAC, que bloquea a nuestros servidores (`lib/anac-navegador.ts`).
+        fichaDesdeElNavegador(icao, airport.local).catch(() => null),
         // Sin `jeppesenAccess` ni se pide: para casi todos los pilotos el pedido
         // volvería `[]` de todas formas (`/api/charts` lo resuelve así a
         // propósito), pero no tiene sentido gastar el round trip en el caso común.
@@ -225,10 +227,9 @@ export default function AirportsClient({
       if (wxRes && wxRes.ok) {
         setWeather(await wxRes.json());
       }
-      if (notamRes && notamRes.ok) {
-        const notamData = await notamRes.json();
-        setNotams(Array.isArray(notamData.notams) ? notamData.notams : null);
-        setMadhelFull(notamData.madhel || null);
+      if (notamRes) {
+        setNotams(Array.isArray(notamRes.notams) ? notamRes.notams : null);
+        setMadhelFull(notamRes.madhel || null);
       }
       if (chartsRes && chartsRes.ok) {
         const cartas = await chartsRes.json();

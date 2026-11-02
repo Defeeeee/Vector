@@ -259,12 +259,17 @@ de app, y las cartas Jeppesen en `~/Vector/charts-jeppesen` (`JEPPESEN_CHARTS_DI
 Los barridos del crontab (`~/bin/vector-*.sh`) leen el secreto de
 `~/Vector/web/apps/web/.env`.
 
-**ANAC no acepta conexiones del VPS** (el CAD desde el 2026-10-28; MADHEL y los NOTAM,
-desde el 2026-11-02 a más tardar). Todo lo que la web le pide a ANAC pasa por `fetchAnac`
-(`lib/anac.ts`), que con `ANAC_PROXY` sale por el proxy de **oraclex64**
-(100.71.80.77:8899, por Tailscale, sólo `datos.anac.gob.ar` y `ais.anac.gob.ar`; script y
-servicio en `infra/proxy-anac/`). El CAD del backend sale por el de DefeServer
-(`CAD_PROXY`). **Una llamada nueva a ANAC desde la web tiene que usar `fetchAnac`.**
+**ANAC bloquea las IPs de nuestros servidores**, por comportamiento y no por tipo de IP: el
+VPS y DefeServer desde el 2026-10-28 (el CAD, con 1 login alcanzó), oraclex64 a los 45 min de
+usarla como proxy (2026-11-02). Cambiar de IP no sirve y esquivar su protección se descartó.
+Por eso **a ANAC le pregunta el navegador del piloto**, con su IP:
+- la ficha de Aeropuertos y el briefing de la ruta usan `fichaDesdeElNavegador`
+  (`lib/anac-navegador.ts`), que le pide MADHEL y los NOTAM a ANAC (CORS abierto, sin
+  extensión) y los compone con `POST /api/notams` (`lib/ficha-anac.ts`);
+- **una pantalla nueva que necesite ANAC va por ahí**;
+- lo que corre en el servidor (el copiloto, el mail del briefing, la meteo del plan de
+  vuelo) sigue con `fetchAnac` (`lib/anac.ts`, tope de 6 s), y casi siempre dice "no se pudo
+  consultar". El proxy de oraclex64 (`infra/proxy-anac/`, `ANAC_PROXY`) quedó, pero bloqueado.
 
 No copiar archivos ni reiniciar PM2 a mano. Para desplegar sin esperar al CI está el
 botón de `workflow_dispatch` de cada deploy.
