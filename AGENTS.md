@@ -45,7 +45,7 @@ Las rutas son relativas a `apps/web/`; las de `docs/` y `apps/extension/`, a la 
 
 | Dónde | Qué |
 |---|---|
-| `src/app/dashboard/` | Las pantallas logueadas. El layout trae la barra, las pestañas de sección, los carteles de red y el copiloto. |
+| `src/app/dashboard/` | Las pantallas logueadas. El layout trae la barra, las pestañas de sección y los carteles de red. |
 | `src/lib/secciones.ts` | Las **cinco secciones** de la barra y sus pestañas (ver abajo). |
 | `src/app/u/[handle]/` | El perfil público, el link que se comparte: fuera del dashboard, se abre sin cuenta. Quien lo abre con sesión va a `/dashboard/pilotos/[handle]`, el mismo perfil adentro de la app. |
 | `src/app/dashboard/admin/`, `src/lib/admin.ts` | El panel de administración: sólo para los ids de `ADMINS_RED` del backend y 404 para el resto. **Sin link ni novedad a propósito:** se llega por URL. |
@@ -103,6 +103,19 @@ Actividad.
   en el cliente (`lib/buscador.ts`; una pantalla nueva que no sea pestaña se agrega en
   `OTRAS`), vuelos y aeródromos en el server (`actions/buscador.ts`). Abre un vuelo con
   `/dashboard/history?ver=<id>` y un aeródromo con `/dashboard/airports?icao=`.
+- **El copiloto de la web vive adentro del buscador** (2.38.0, Federico): no hay panel ni
+  botón flotante. ⌘K ofrece siempre "Preguntale al copiloto", primero cuando no encuentra
+  nada o lo escrito es una pregunta (`copilotoPrimero`), y el diálogo pasa a modo
+  conversación (`ConversacionCopiloto`, contra `/api/chat`). La conversación dura lo que la
+  pestaña. En el teléfono, el pie es la píldora de secciones más el + de Nuevo vuelo, en una
+  fila.
+- **Los filtros de Aeropuertos** (2.38.0, `lib/filtro-aerodromos.ts`, `/api/airports/filtrar`):
+  distancia, pista, superficie, combustible, control, uso y provincia, en la URL. Una frase
+  ("con 100LL a menos de 100 NM de San Fernando") la pasa Gemini a esos filtros
+  (`/api/airports/frase`); **el aeródromo, las unidades y la búsqueda los resuelve el código**.
+  El combustible sólo está para los 51 aeródromos del AIP y las pistas para 117: lo que no se
+  sabe se cuenta como "sin dato" (invariante 2), nunca se descarta en silencio. Bajar las
+  fichas de MADHEL para completar eso quedó pendiente: no desde el VPS, que ANAC puede bloquear.
 - **Registrar vuelo es una sola página** (`/dashboard/log-flight`). Hubo un modal
   interceptado (`@modal/(.)log-flight`) que se llevó cinco commits de arreglos en un
   mes; se sacó en la 2.18.0. No volver a interceptar esa ruta.

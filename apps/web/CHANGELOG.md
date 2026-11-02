@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v2.38.0 — Buscá como lo dirías
+
+_2 de noviembre de 2026_
+
+- **Aeródromos con filtros, o con una frase** — En Aeropuertos escribí "con 100LL y pista de asfalto, a menos de 100 NM de San Fernando", o usá los filtros: distancia, pista, combustible, control, uso y provincia. Si de un aeródromo no tenemos el dato, lo marcamos "sin dato" en vez de darlo por hecho.
+- **El copiloto, adentro del buscador** — Apretá ⌘K (Ctrl K) o la lupa y escribí tu pregunta: si ninguna pantalla, vuelo o aeródromo la contesta, el copiloto te responde ahí mismo y podés seguir la conversación. Ya no hay botón flotante, y en el teléfono la barra de abajo tiene más lugar.
+
 ## v2.37.0 — Mostrá por dónde volaste
 
 _1 de noviembre de 2026_

@@ -11,7 +11,6 @@ import { apiFetch } from "@/lib/api";
 import { leerResumenSocial } from "@/lib/resumen-social";
 import { AuditSummary, Profile } from "@/types";
 import { AUDITORIA_HREF, ACTIVIDAD_HREF } from "@/lib/secciones";
-import ChatWidget from "@/components/dashboard/ChatWidget";
 import SinConexionBanner from "@/components/dashboard/SinConexionBanner";
 import VistoPorUltimaVez from "@/components/dashboard/VistoPorUltimaVez";
 import { AvisosProvider } from "@/components/dashboard/Avisos";
@@ -239,19 +238,31 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation — fills the space left of the segregated action pill, no fixed/cramped width */}
+      {/*
+        El pie del teléfono: la píldora de las secciones y, al lado, "Nuevo vuelo". Una sola
+        fila, a la misma altura. Hasta el 2026-11-02 el + compartía una píldora con el
+        copiloto y la navegación le dejaba 9,5rem; el copiloto ahora vive en la lupa (⌘K).
+      */}
       <div
-        className="lg:hidden fixed left-4 right-[9.5rem] z-50 pointer-events-auto"
-        style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
+        data-imprimir="no"
+        className="lg:hidden fixed inset-x-4 z-50 flex items-center gap-3 pointer-events-none"
+        style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
       >
-        <DashboardNav variant="mobile" alertas={alertas} />
+        <div className="flex-1 min-w-0 pointer-events-auto">
+          <DashboardNav variant="mobile" alertas={alertas} />
+        </div>
+        <Link
+          href="/dashboard/log-flight"
+          aria-label="Nuevo vuelo"
+          className="pointer-events-auto shrink-0 w-14 h-14 rounded-full bg-aviation-blue text-white flex items-center justify-center shadow-lg shadow-aviation-blue/30 transition-transform active:scale-95"
+        >
+          <Plus className="w-6 h-6" strokeWidth={2.5} />
+        </Link>
       </div>
 
       {/* Onboarding Logic */}
       {!saltearAlta && <OnboardingOverlay profile={profile} estado={estadoAlta} />}
 
-      {/* AI Chat Widget */}
-      <ChatWidget />
       {vinoPorQr && <AnotarOrigenQr />}
       {/* El CAD al día, en segundo plano: sólo con la cuenta de ANAC conectada y cada 12 h. */}
       <SincronizarCad />

@@ -2,6 +2,14 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "backend-falso",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "apps/web/marketing/recursos/backend-falso.mjs"
+      ],
+      "port": 7599
+    },
+    {
       "name": "vector-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": [

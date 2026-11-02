@@ -10,6 +10,7 @@ import {
   type MadhelInfo,
 } from "./busqueda-aerodromos";
 import type { Pista } from "./briefing";
+import type { AerodromoFiltrable } from "./filtro-aerodromos";
 
 /*
   Los tipos y la búsqueda viven en `busqueda-aerodromos.ts`, que **no lee el disco**:
@@ -311,6 +312,39 @@ export function allAirports(): Airport[] {
  */
 export function searchAirports(query: string, limit = 8): Airport[] {
   return buscarEnIndice(load(), query, limit);
+}
+
+let filtrables: AerodromoFiltrable[] | null = null;
+
+/**
+ * Los aeródromos argentinos como los pide el filtro de la pestaña Aeropuertos
+ * (`lib/filtro-aerodromos.ts`), con el combustible del AIP. Se arman una vez.
+ */
+export function aerodromosParaFiltrar(): AerodromoFiltrable[] {
+  filtrables ??= load()
+    .all.filter((a) => a.country === "AR")
+    .map((a) => ({
+      icao: a.icao,
+      local: a.local,
+      label: a.label,
+      provincia: a.madhel?.province ?? "",
+      lat: a.lat,
+      lon: a.lon,
+      helipuerto: a.size === "H" || a.madhel?.kind === "HEL",
+      controlado: a.madhel?.controlled ?? null,
+      uso: a.madhel?.condition ?? "",
+      estado: a.madhel?.status ?? "",
+      pistas: (a.pistas ?? []).map((p) => ({ largoFt: p.largoFt, superficie: p.superficie })),
+      combustible: datosAip(a.icao)?.combustible ?? "",
+    }));
+  return filtrables;
+}
+
+/** Las provincias de MADHEL, para el selector de los filtros. */
+export function provinciasArgentinas(): string[] {
+  return [...new Set(aerodromosParaFiltrar().map((a) => a.provincia).filter(Boolean))].sort((x, y) =>
+    x.localeCompare(y, "es"),
+  );
 }
 
 let lads: Lad[] | null = null;

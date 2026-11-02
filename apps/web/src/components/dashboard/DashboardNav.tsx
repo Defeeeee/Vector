@@ -86,8 +86,8 @@ export default function DashboardNav({
   }
 
   /*
-    Floating pill for the phone. Icon-only, deliberately: the bar only gets ~220 px
-    next to the action pill, and "Preparar vuelo" doesn't fit under a 44 px slot. The
+    Floating pill for the phone. Icon-only, deliberately: it shares the row with the
+    "Nuevo vuelo" button, and "Preparar vuelo" doesn't fit under a ~55 px slot. The
     names live in each icon's `aria-label`, in the rail's tooltips and in the tabs of
     each section.
 

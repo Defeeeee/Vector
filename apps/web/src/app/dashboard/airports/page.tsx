@@ -5,6 +5,7 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import AirportsClient, { AirportHistory } from "@/components/dashboard/AirportsClient";
 import { splitRoute } from "@/lib/summary";
 import { soloVolados } from "@/lib/simulador";
+import { filtrosDeParams, paramsDeFiltros } from "@/lib/filtro-aerodromos";
 
 const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
@@ -87,8 +88,13 @@ function buildHistory(flights: Flight[]): Record<string, AirportHistory> {
   return out;
 }
 
-export default async function AirportsPage({ searchParams }: { searchParams: Promise<{ icao?: string }> }) {
-  const [{ flights, jeppesenAccess }, { icao }] = await Promise.all([getDashboardData(), searchParams]);
+export default async function AirportsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const [{ flights, jeppesenAccess }, params] = await Promise.all([getDashboardData(), searchParams]);
+  const icao = typeof params.icao === "string" ? params.icao : undefined;
+  // Los filtros de la lista (`lib/filtro-aerodromos.ts`) se leen en el cliente; acá sólo se pasan.
+  const filtros = paramsDeFiltros(
+    filtrosDeParams(new URLSearchParams(Object.entries(params).filter((e): e is [string, string] => typeof e[1] === "string")))
+  ).toString();
   const history = buildHistory(flights);
 
   // Abre en el que pidió el buscador (`?icao=`) y, si no, en el que el piloto más usa:
@@ -102,10 +108,10 @@ export default async function AirportsPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-8 md:space-y-10 w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
       <PageHeader
-        eyebrow="Ficha, clima y tu historial en cada aeródromo"
+        eyebrow="Ficha, clima, filtros y tu historial en cada aeródromo"
         title="Aeropuertos"
       />
-      <AirportsClient history={history} initialIcao={initialIcao} jeppesenAccess={jeppesenAccess} />
+      <AirportsClient history={history} initialIcao={initialIcao} jeppesenAccess={jeppesenAccess} filtrosIniciales={filtros} />
     </div>
   );
 }

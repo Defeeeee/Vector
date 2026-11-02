@@ -76,6 +76,22 @@ export function buscarPantallas(q: string, max = 6): Resultado[] {
     .map(({ titulo, detalle, href }) => ({ tipo: "pantalla" as const, titulo, detalle, href }));
 }
 
+/** Cómo empieza una pregunta de verdad: "¿cuántas horas tengo?", "puedo volar con…". */
+const INTERROGATIVAS = /^(¿|que |qué |cual|cuál|cuant|cuánt|cuando|cuándo|como |cómo |donde|dónde|por ?que|por ?qué|puedo|tengo|necesito|me falta|hay )/i;
+
+/**
+ * ¿Lo escrito es algo para preguntarle al copiloto antes que una búsqueda? El copiloto
+ * vive adentro de ⌘K (`BuscadorGlobal`, `ConversacionCopiloto`), así que la opción está
+ * siempre; esto decide si va **primera**: cuando no se encontró nada, o cuando se escribió
+ * una pregunta, aunque alguna pantalla coincida de casualidad con una palabra.
+ */
+export function copilotoPrimero(q: string, resultados: number): boolean {
+  const t = q.trim();
+  if (t.length < 2) return false;
+  if (resultados === 0) return true;
+  return t.endsWith("?") || INTERROGATIVAS.test(t) || t.split(/\s+/).length >= 5;
+}
+
 /** Las guías públicas que coinciden, con el examen de PPA incluido. */
 export function buscarGuias(q: string, max = 4): Resultado[] {
   if (sinTildes(q).length < 2) return [];

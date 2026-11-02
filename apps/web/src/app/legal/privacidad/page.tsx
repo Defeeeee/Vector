@@ -36,7 +36,7 @@ export const metadata: Metadata = {
  */
 export default function PrivacidadPage() {
   return (
-    <LegalShell title="Política de Privacidad" updated="28 de octubre de 2026">
+    <LegalShell title="Política de Privacidad" updated="2 de noviembre de 2026">
       <section>
         <h2>Qué es esto</h2>
         <p>
@@ -193,7 +193,8 @@ export default function PrivacidadPage() {
           <li>
             <strong>Google (Gemini)</strong> — cuando usás el copiloto, tu consulta y el
             contexto necesario para responderla se envían a la API de Gemini. Ese contexto
-            puede incluir datos de tus vuelos, aeronaves y vencimientos.
+            puede incluir datos de tus vuelos, aeronaves y vencimientos. Cuando buscás
+            aeródromos con una frase, se envía sólo esa frase.
           </li>
           <li>
             <strong>Kapso / WhatsApp</strong> — para enviarte los avisos de vencimiento y

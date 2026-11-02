@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "2.38.0",
+    fecha: "2026-11-02",
+    titulo: "Buscá como lo dirías",
+    novedades: [
+      {
+        icono: "lupa",
+        titulo: "Aeródromos con filtros, o con una frase",
+        texto: "En Aeropuertos escribí \"con 100LL y pista de asfalto, a menos de 100 NM de San Fernando\", o usá los filtros: distancia, pista, combustible, control, uso y provincia. Si de un aeródromo no tenemos el dato, lo marcamos \"sin dato\" en vez de darlo por hecho.",
+        href: "/dashboard/airports",
+        cta: "Buscar aeródromos",
+      },
+      {
+        icono: "conversacion",
+        titulo: "El copiloto, adentro del buscador",
+        texto: "Apretá ⌘K (Ctrl K) o la lupa y escribí tu pregunta: si ninguna pantalla, vuelo o aeródromo la contesta, el copiloto te responde ahí mismo y podés seguir la conversación. Ya no hay botón flotante, y en el teléfono la barra de abajo tiene más lugar.",
+        href: "/dashboard",
+        cta: "Ir al inicio",
+      },
+    ],
+  },
+  {
     version: "2.37.0",
     fecha: "2026-11-01",
     titulo: "Mostrá por dónde volaste",

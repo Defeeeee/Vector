@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { buscarGuias, buscarPantallas, sinTildes } from "./buscador";
+import { buscarGuias, buscarPantallas, copilotoPrimero, sinTildes } from "./buscador";
 
 describe("el buscador de la app", () => {
   it("encuentra pestañas por su nombre y por lo que la gente escribe", () => {
@@ -30,5 +30,28 @@ describe("el buscador de la app", () => {
   it("cada pantalla que ofrece existe", () => {
     for (const q of ["inicio", "vuelos", "cad", "importar", "hangar", "novedades", "publicar", "saldo", "plan", "herramientas", "actividad", "registrar"])
       for (const r of buscarPantallas(q, 20)) expect(existsSync(`src/app${r.href}/page.tsx`), r.href).toBe(true);
+  });
+});
+
+describe("cuándo ⌘K ofrece primero el copiloto", () => {
+  it("si no se encontró nada", () => {
+    expect(copilotoPrimero("asdfgh", 0)).toBe(true);
+  });
+
+  it("si es una pregunta, aunque alguna pantalla coincida", () => {
+    expect(copilotoPrimero("¿cuántas horas tengo?", 2)).toBe(true);
+    expect(copilotoPrimero("puedo llevar un pasajero", 1)).toBe(true);
+    expect(copilotoPrimero("cual fue mi vuelo mas largo", 1)).toBe(true);
+  });
+
+  it("no si se buscó algo concreto y apareció", () => {
+    expect(copilotoPrimero("SADF", 3)).toBe(false);
+    expect(copilotoPrimero("plan de vuelo", 1)).toBe(false);
+    expect(copilotoPrimero("LV-S114", 2)).toBe(false);
+  });
+
+  it("no antes de escribir", () => {
+    expect(copilotoPrimero("", 0)).toBe(false);
+    expect(copilotoPrimero("a", 0)).toBe(false);
   });
 });

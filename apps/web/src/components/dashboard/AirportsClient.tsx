@@ -21,6 +21,7 @@ import {
   Lock,
 } from "lucide-react";
 import { AirportRef } from "@/types";
+import FiltroAerodromos from "./FiltroAerodromos";
 
 export interface NotamItem {
   code: string;
@@ -115,7 +116,10 @@ export default function AirportsClient({
   history,
   initialIcao,
   jeppesenAccess = false,
+  filtrosIniciales = "",
 }: {
+  /** Los filtros con que se abrió la pantalla, tal cual vienen en la URL. */
+  filtrosIniciales?: string;
   /** ICAO -> what the pilot flew there. Only codes present in their logbook. */
   history: Record<string, AirportHistory>;
   initialIcao: string | null;
@@ -138,6 +142,16 @@ export default function AirportsClient({
   const [loadingNotams, setLoadingNotams] = useState(false);
   const [searching, setSearching] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const fichaRef = useRef<HTMLDivElement>(null);
+
+  const irALaFicha = useRef(false);
+
+  // Elegido de la lista de los filtros: la ficha está abajo, así que se la trae a la vista
+  // apenas aparece, sin esperar el clima ni los NOTAM, que pueden tardar.
+  function elegirDeLaLista(icao: string) {
+    irALaFicha.current = true;
+    void pick(icao, { clearSearch: false });
+  }
 
   // Open on the pilot's most-flown aerodrome instead of an empty state: the
   // question "what is my home field doing right now" is the common one, and
@@ -227,6 +241,12 @@ export default function AirportsClient({
     }
   }
 
+  useEffect(() => {
+    if (!selected || !irALaFicha.current) return;
+    irALaFicha.current = false;
+    requestAnimationFrame(() => fichaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }, [selected]);
+
   const mine = selected ? history[selected.icao] : undefined;
 
   return (
@@ -271,6 +291,8 @@ export default function AirportsClient({
         )}
       </div>
 
+      <FiltroAerodromos inicial={filtrosIniciales} historial={history} alElegir={elegirDeLaLista} />
+
       {!selected && (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Buscá un aeródromo para ver su ficha, el clima y tu historial ahí.
@@ -278,7 +300,7 @@ export default function AirportsClient({
       )}
 
       {selected && (
-        <div className="space-y-6">
+        <div ref={fichaRef} className="space-y-6 scroll-mt-24">
           <div className="flex flex-wrap items-end gap-x-5 gap-y-2">
             <h2 className="data text-5xl md:text-7xl font-bold text-zinc-900 dark:text-white leading-none tracking-tight">
               {selected.icao}
