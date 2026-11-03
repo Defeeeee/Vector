@@ -1,8 +1,8 @@
 name: Sonda Anexo BRAVO
 
-# **Una sola vez** (2026-11-03): baja de MADHEL el Anexo BRAVO de ENR 1.1 (normas para
+# **Una sola vez** (2026-11-03): baja ENR 1.1 del AIP, con el Anexo BRAVO (normas para
 # aeródromos debajo de una TMA), que las fichas de los aeródromos no controlados citan, para
-# saber qué frecuencia usan. Un pedido, como Vector. Se borra después de usarla.
+# saber qué frecuencia usan. Dos pedidos (el listado y el PDF), como Vector. Se borra después.
 on:
   workflow_dispatch:
 
@@ -14,11 +14,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - run: |
-          mkdir -p out
-          curl -sf -m 30 -A "Vector/1.0 (bitacora de vuelo; https://vector.fdiaznem.com.ar)" -H "Accept: application/json" \
-            -o out/bravo.json "https://datos.anac.gob.ar/madhel/api/v2/documentation/BRAVO?format=json"
-          ls -la out; head -c 400 out/bravo.json
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: ENR 1.1 del AIP (el Anexo BRAVO va adentro)
+        working-directory: apps/web
+        run: |
+          mkdir -p ../../out
+          node --input-type=module - <<'JS'
+          import fs from "node:fs";
+          import { UA_VECTOR } from "./scripts/ua-vector.mjs";
+          const BASE = "https://ais.anac.gob.ar";
+          const html = await (await fetch(`${BASE}/aip/enr`, { headers: { "User-Agent": UA_VECTOR, "X-Requested-With": "XMLHttpRequest" } })).text();
+          for (const fila of html.match(/<tr[\s\S]*?<\/tr>/g) ?? []) {
+            const texto = fila.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+            const href = /href="([^"]+)"/.exec(fila);
+            if (!/ENR-1\.1\b/.test(texto) || !href) continue;
+            await new Promise((r) => setTimeout(r, 2000));
+            const res = await fetch(BASE + href[1], { headers: { "User-Agent": UA_VECTOR } });
+            console.log(res.status, texto.slice(0, 120));
+            if (res.ok) fs.writeFileSync("../../out/ENR-1.1.pdf", Buffer.from(await res.arrayBuffer()));
+            break;
+          }
+          JS
+          ls -la ../../out
       - uses: actions/upload-artifact@v4
         with:
           name: bravo
