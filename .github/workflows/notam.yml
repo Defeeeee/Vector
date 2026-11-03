@@ -16,6 +16,11 @@ name: NOTAM
 # y seguir insistiendo después de un bloqueo sería esquivarlo. Para volver a prenderlo:
 # `gh workflow enable notam.yml`.
 #
+# **Una falla suelta no pone la corrida en rojo** (2026-11-03, Federico): GitHub manda un mail
+# por cada corrida fallida, y ANAC a veces no contesta una vez. De la primera a la tercera falla
+# seguida la corrida termina bien, con una advertencia; en rojo (y con mail) sale sólo la cuarta,
+# la que apaga el workflow. Lo que no es de ANAC (la llave, el VPS) sí falla enseguida.
+#
 # **Lo dispara el crontab del VPS** (`infra/cron/vector-notam.sh`, minutos 7, 22, 37 y 52),
 # no un `schedule:` de GitHub: el 2026-11-03 el programador de GitHub la corrió una sola vez
 # en nueve horas. El VPS sólo la dispara; a ANAC le pide esta corrida, desde GitHub.
@@ -57,15 +62,18 @@ jobs:
           vps() { ssh -i ~/.ssh/vps -o BatchMode=yes "$VPS" "$@"; }
           vps 'mkdir -p ~/Vector/datos'
 
-          # ANAC no contestó: se cuenta, y a la cuarta seguida el workflow se apaga solo.
+          # ANAC no contestó: se cuenta. Hasta la tercera seguida la corrida termina bien, con
+          # una advertencia (sin el mail de GitHub); a la cuarta se apaga sola, avisa y sale en rojo.
           fallo() {
             n=$(vps 'f=~/Vector/datos/notams-anac.fallas; n=$(( $(cat "$f" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$f"; echo "$n"')
-            echo "ANAC falló ($1): $n seguidas."
             if [ "${n:-0}" -ge 4 ]; then
+              echo "::error::ANAC falló ($1): $n veces seguidas. Se apaga la descarga."
               gh workflow disable notam.yml -R "$GITHUB_REPOSITORY" || true
               [ -n "$NTFY_TOPIC" ] && curl -s -H "Title: Vector: NOTAM apagado" -d "ANAC no contestó 4 veces seguidas ($1). La descarga se apagó sola; Vector vuelve a pedirlos como antes. Para prenderla: gh workflow enable notam.yml" "https://ntfy.sh/$NTFY_TOPIC" > /dev/null || true
+              exit 1
             fi
-            exit 1
+            echo "::warning::ANAC falló ($1): $n seguidas. Se reintenta en la próxima corrida."
+            exit 0
           }
 
           html=$(curl -sf -m 20 -A "$UA" https://ais.anac.gob.ar/notam) || fallo "la página"
