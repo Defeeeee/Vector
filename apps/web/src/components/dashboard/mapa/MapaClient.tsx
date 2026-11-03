@@ -8,7 +8,7 @@ import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crossh
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { EspacioAereo } from "@/lib/espacios-aereos";
 import { aMagnetico } from "@/lib/navegacion";
-import { dependenciasDeRuta, dependenciasEn, type Dependencia } from "@/lib/firs";
+import { dependenciasDeRuta, dependenciasEn, type Dependencia, type RadioDeAerodromo } from "@/lib/firs";
 import {
   consultasDeRuta,
   duracionCorta,
@@ -141,9 +141,19 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
   // toma cualquier espacio que te contenga lateralmente.
   const [altitud, setAltitud] = useState("");
   const altitudNum = altitud.trim() ? Number(altitud) : null;
+  // Lo de cada aeródromo para la salida y la llegada, por ICAO y por designador.
+  const radios = useMemo(() => {
+    const mapa = new Map<string, RadioDeAerodromo>();
+    for (const [icao, local, , , , , controlado, llamada, torre] of capas?.aerodromos ?? []) {
+      const r: RadioDeAerodromo = { controlado: controlado ?? null, llamada: llamada?.mhz ?? [], fuenteLlamada: llamada?.fuente, torre: torre ?? null };
+      if (icao) mapa.set(icao, r);
+      if (local) mapa.set(local, r);
+    }
+    return mapa;
+  }, [capas]);
   const cambios = useMemo(
-    () => (capas?.firs && puntos.length > 1 ? dependenciasDeRuta(puntos, altitudNum, capas.espacios, capas.firs) : []),
-    [puntos, altitudNum, capas]
+    () => (capas?.firs && puntos.length > 1 ? dependenciasDeRuta(puntos, altitudNum, capas.espacios, capas.firs, radios) : []),
+    [puntos, altitudNum, capas, radios]
   );
 
   /* --------------------------------------------------------------- vuelo --- */
@@ -199,7 +209,7 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
   const ahora = lectura && capas?.firs ? dependenciasEn(lectura, lectura.altitudFt, capas.espacios, capas.firs)[0] ?? null : null;
   const despues =
     lectura && capas?.firs && destino
-      ? dependenciasDeRuta([lectura, ...puntos.slice(proximo)], lectura.altitudFt, capas.espacios, capas.firs).find(
+      ? dependenciasDeRuta([lectura, ...puntos.slice(proximo)], lectura.altitudFt, capas.espacios, capas.firs, radios, true).find(
           (c) => c.desdeNm > 0 && ahora && c.dependencia.distintivo !== ahora.distintivo
         ) ?? null
       : null;
@@ -557,8 +567,9 @@ function DependenciaFila({ d, grande = false }: { d: Dependencia; grande?: boole
   return (
     <div className="min-w-0">
       <p className={`${grande ? "text-base" : "text-sm"} font-semibold text-zinc-900 dark:text-white leading-snug`}>{d.distintivo}</p>
-      <p className={`${grande ? "text-sm" : "text-xs"} tabular-nums text-zinc-700 dark:text-zinc-300`}>{d.mhz.join(" · ")}</p>
+      {d.mhz.length > 0 && <p className={`${grande ? "text-sm" : "text-xs"} tabular-nums text-zinc-700 dark:text-zinc-300`}>{d.mhz.join(" · ")}</p>}
       <p className="text-[11px] text-zinc-500 leading-snug">{nombreLindo(d.donde)}</p>
+      {d.nota && <p className="text-[11px] text-zinc-500 leading-snug">{d.nota}</p>}
     </div>
   );
 }

@@ -27,7 +27,7 @@ let memo: Todo | null = null;
  * La torre de una CTR o ATZ, de AD 2.18 de su aeródromo: en una ATZ la TWR, en una CTR la APP
  * si la tiene (y si no, la TWR). `null` si el AIP no la da.
  */
-function torreDe(icao: string, tipo: EspacioAereo["tipo"]): Frecuencias | null {
+export function torreDe(icao: string, tipo: EspacioAereo["tipo"]): Frecuencias | null {
   const frecuencias = datosAip(icao)?.frecuencias ?? [];
   const de = (re: RegExp) => frecuencias.filter((f) => re.test(f.servicio));
   const elegidas = (tipo === "CTR" && de(/\bAPP\b/).length ? de(/\bAPP\b/) : de(/\bTWR\b/)).filter((f) => Number(f.mhz) !== 121.5);

@@ -336,6 +336,22 @@ function leerFichasMadhel(): Map<string, { combustible: string; pistas: string[]
 }
 
 /**
+ * El canal de llamada de los aeródromos no controlados, por designador ANAC (3.1.2): el que
+ * publica su ficha de MADHEL (`madhel-fichas.tsv`, normas particulares) y, si no publica, el de
+ * la lista de la zona que pasó Federico (`frecuencias-zona.tsv`). MADHEL gana.
+ */
+export function canalesDeLlamada(): Map<string, { mhz: string[]; fuente: "madhel" | "lista" }> {
+  const mapa = new Map<string, { mhz: string[]; fuente: "madhel" | "lista" }>();
+  const leer = (nombre: string) => {
+    const archivo = path.join(process.cwd(), "src", "data", nombre);
+    return fs.existsSync(archivo) ? fs.readFileSync(archivo, "utf8").split("\n").filter((l) => l && !l.startsWith("#")).map((l) => l.split("\t")) : [];
+  };
+  for (const [designador, , mhz] of leer("frecuencias-zona.tsv")) if (designador && mhz) mapa.set(designador, { mhz: [mhz], fuente: "lista" });
+  for (const c of leer("madhel-fichas.tsv")) if (c[0] && c[4]) mapa.set(c[0], { mhz: c[4].split(","), fuente: "madhel" });
+  return mapa;
+}
+
+/**
  * Los aeródromos argentinos como los pide el filtro de la pestaña Aeropuertos
  * (`lib/filtro-aerodromos.ts`). Se arman una vez.
  *

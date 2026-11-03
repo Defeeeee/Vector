@@ -434,11 +434,36 @@ function aSegmentoNm(p: Punto, a: Punto, b: Punto): number {
 }
 
 export interface Dependencia {
-  /** "ATZ SAN FERNANDO (I)", "TMA BAIRES (I)", "FIR EZEIZA · Sector SUR". */
+  /**
+   * - `torre`: la de la CTR o ATZ, o la de un aeródromo controlado en la salida o la llegada;
+   * - `tma`: el control de la TMA;
+   * - `claseG`: fuera de todo eso y por debajo de FL 245, clase G (ENR 2.1): sin control, y el
+   *   centro sólo como información de vuelo;
+   * - `centro`: por encima de FL 245;
+   * - `aerodromo`: un aeródromo no controlado, en la salida o la llegada.
+   */
+  tipo: "torre" | "tma" | "claseG" | "centro" | "aerodromo";
+  /** "ATZ SAN FERNANDO (I)", "TMA BAIRES (I)", "Clase G · FIR EZEIZA · Sector SUR". */
   donde: string;
   distintivo: string;
   mhz: string[];
+  /** Lo que conviene saber además: la información de vuelo en clase G, de dónde sale un canal. */
+  nota?: string;
 }
+
+/** Lo que el Mapa sabe de un aeródromo para la salida y la llegada. */
+export interface RadioDeAerodromo {
+  /** `null` si MADHEL no lo dice. */
+  controlado: boolean | null;
+  /** El canal de llamada, si es no controlado: de su ficha de MADHEL o de la lista de la zona. */
+  llamada: string[];
+  fuenteLlamada?: "madhel" | "lista";
+  /** La torre de AD 2.18, si es controlado y está en el AIP. */
+  torre: Frecuencias | null;
+}
+
+/** Por encima de esto la FIR es clase A o F (ENR 2.1): ahí sí se habla con el centro. */
+const TECHO_CLASE_G = 24500;
 
 /** El espacio con su dependencia ya resuelta (las torres de AD 2.18, las TMA de ENR 2.1). */
 export type EspacioConDependencia = EspacioAereo;
@@ -462,7 +487,12 @@ export function dependenciasEn(p: Punto, altitudFt: number | null, espacios: Esp
     .sort((a, b) => orden[a.tipo] - orden[b.tipo]);
   for (const e of adentro) {
     const d = e.dependencia!;
-    out.push({ donde: e.nombre, distintivo: d.distintivo, mhz: d.sectores.flatMap((s) => (s.nombre ? s.mhz.map((m) => `${m} (${s.nombre!.toLowerCase()})`) : s.mhz)) });
+    out.push({
+      tipo: e.tipo === "TMA" ? "tma" : "torre",
+      donde: e.nombre,
+      distintivo: d.distintivo,
+      mhz: d.sectores.flatMap((s) => (s.nombre ? s.mhz.map((m) => `${m} (${s.nombre!.toLowerCase()})`) : s.mhz)),
+    });
   }
   const fir = firDe(p, firs);
   if (fir?.centro) {
@@ -472,7 +502,20 @@ export function dependenciasEn(p: Punto, altitudFt: number | null, espacios: Esp
       const norte = alNorteDe(fir.lineaSectores.map(([lat, lon]) => ({ lat, lon })), p);
       sector = conSectores.find((s) => s.nombre === (norte ? "NORTE" : "SUR")) ?? sector;
     }
-    out.push({ donde: `${fir.nombre}${sector.nombre ? ` · Sector ${sector.nombre.toLowerCase()}` : ""}`, distintivo: fir.centro.distintivo, mhz: sector.mhz });
+    const donde = `${fir.nombre}${sector.nombre ? ` · Sector ${sector.nombre.toLowerCase()}` : ""}`;
+    if (altitudFt !== null && altitudFt > TECHO_CLASE_G) {
+      out.push({ tipo: "centro", donde, distintivo: fir.centro.distintivo, mhz: sector.mhz });
+    } else {
+      // Clase G de GND a FL 245 en las cinco FIR (ENR 2.1, "CLASE DE ESPACIO AÉREO"): nadie te
+      // controla. El centro da información de vuelo a quien la pida.
+      out.push({
+        tipo: "claseG",
+        donde: `Clase G · ${donde}`,
+        distintivo: "Sin control (clase G)",
+        mhz: [],
+        nota: `Información de vuelo: ${fir.centro.distintivo} ${sector.mhz.join(" · ")}`,
+      });
+    }
   }
   return out;
 }
@@ -488,17 +531,26 @@ export interface Cambio {
  * milla, sin repetir. La salida y la llegada van a nivel del suelo (la torre); el resto, a la
  * altitud de crucero.
  */
-export function dependenciasDeRuta(puntos: Punto[], altitudFt: number | null, espacios: EspacioConDependencia[], firs: Fir[]): Cambio[] {
+export function dependenciasDeRuta(
+  puntos: (Punto & { codigo?: string; label?: string })[],
+  altitudFt: number | null,
+  espacios: EspacioConDependencia[],
+  firs: Fir[],
+  aerodromos: Map<string, RadioDeAerodromo> = new Map(),
+  /** En vuelo el primer punto es tu posición, no una salida en el suelo. */
+  desdeElAire = false
+): Cambio[] {
   const cambios: Cambio[] = [];
   // La misma torre escrita distinto (TMA "MAR DEL PLATA TORRE", CTR "Mar del Plata Torre") es una sola.
   const clave = (d: Dependencia) => `${d.distintivo.toUpperCase()}|${d.mhz.map((m) => m.replace(/\s.*$/, "")).join(",")}`;
   let recorrido = 0;
-  const mirar = (p: Punto, alt: number | null, nm: number) => {
-    const d = dependenciasEn(p, alt, espacios, firs)[0];
+  const mirar = (p: Punto & { codigo?: string; label?: string }, alt: number | null, nm: number, extremo = false) => {
+    const d = extremo ? enElAerodromo(p, espacios, firs, aerodromos) : dependenciasEn(p, alt, espacios, firs)[0];
     if (d && (!cambios.length || clave(cambios[cambios.length - 1].dependencia) !== clave(d))) cambios.push({ desdeNm: nm, dependencia: d });
   };
   if (puntos.length === 0) return cambios;
-  mirar(puntos[0], 0, 0);
+  if (desdeElAire) mirar(puntos[0], altitudFt, 0);
+  else mirar(puntos[0], 0, 0, true);
   for (let i = 1; i < puntos.length; i++) {
     const a = puntos[i - 1];
     const b = puntos[i];
@@ -507,9 +559,47 @@ export function dependenciasDeRuta(puntos: Punto[], altitudFt: number | null, es
     const pasos = Math.max(1, Math.ceil(d / 0.5));
     for (let k = 1; k <= pasos; k++) {
       const esLlegada = i === puntos.length - 1 && k === pasos;
-      mirar(k === pasos ? b : puntoDesde(a, rumbo, (d * k) / pasos), esLlegada ? 0 : altitudFt, recorrido + (d * k) / pasos);
+      mirar(k === pasos ? b : puntoDesde(a, rumbo, (d * k) / pasos), esLlegada ? 0 : altitudFt, recorrido + (d * k) / pasos, esLlegada);
     }
     recorrido += d;
   }
   return cambios;
+}
+
+/**
+ * Con quién hablás en el suelo de un aeródromo (la salida o la llegada): la torre de su CTR o
+ * ATZ, o la de AD 2.18 si es controlado; si es no controlado, su canal de llamada de MADHEL. Un
+ * aeródromo no controlado debajo de una TMA opera con las reglas de la RAAC 91 y sus normas
+ * particulares (ENR 1.1, Anexo BRAVO, a donde remiten sus fichas), no con la TMA.
+ */
+export function enElAerodromo(
+  p: Punto & { codigo?: string; label?: string },
+  espacios: EspacioConDependencia[],
+  firs: Fir[],
+  aerodromos: Map<string, RadioDeAerodromo>
+): Dependencia | undefined {
+  const en = dependenciasEn(p, 0, espacios, firs);
+  if (en[0]?.tipo === "torre") return en[0];
+  const ad = p.codigo ? aerodromos.get(p.codigo.toUpperCase()) : undefined;
+  if (ad?.torre) {
+    return { tipo: "torre", donde: `${p.label ?? p.codigo} · controlado`, distintivo: ad.torre.distintivo, mhz: ad.torre.sectores.flatMap((s) => s.mhz) };
+  }
+  if (ad && ad.controlado === false) {
+    const fuente = !ad.llamada.length
+      ? "Sin canal publicado (ni en MADHEL ni en la lista de la zona)."
+      : ad.fuenteLlamada === "lista"
+        ? "De la lista de frecuencias de la zona; no lo publica el AIP."
+        : "El que publica su ficha de MADHEL.";
+    // ENR 1.1, Anexo BRAVO (aeródromos debajo de una TMA): no fija una frecuencia común; sí que
+    // el circuito va "a una altura máxima de 1.500 pies".
+    const debajoDeTma = espacios.some((e) => e.tipo === "TMA" && contiene(e.poligono, p) && !(e.huecos ?? []).some((h) => contiene(h, p)));
+    return {
+      tipo: "aerodromo",
+      donde: `${p.label ?? p.codigo} · no controlado`,
+      distintivo: ad.llamada.length ? "Canal de llamada" : "Aeródromo no controlado",
+      mhz: ad.llamada,
+      nota: debajoDeTma ? `${fuente} Debajo de la TMA: circuito a 1.500 ft como máximo (ENR 1.1, Anexo BRAVO).` : fuente,
+    };
+  }
+  return en[0];
 }

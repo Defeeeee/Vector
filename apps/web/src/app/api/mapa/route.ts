@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { allAirports } from "@/lib/airports";
-import { espaciosAereos } from "@/lib/espacios-aereos-servidor";
+import { allAirports, canalesDeLlamada } from "@/lib/airports";
+import { espaciosAereos, torreDe } from "@/lib/espacios-aereos-servidor";
 import { allRadioayudas } from "@/lib/radioayudas";
 
 /**
@@ -15,11 +15,24 @@ const r4 = (n: number) => Math.round(n * 1e4) / 1e4;
 
 export async function GET() {
   const { espacios, descartados, firs } = espaciosAereos();
+  const canales = canalesDeLlamada();
   const aerodromos = allAirports()
     // Sin los helipuertos (Federico, 2026-11-03): un avión no aterriza ahí y llenan el mapa.
     .filter((a) => a.country === "AR" && typeof a.lat === "number" && typeof a.lon === "number")
     .filter((a) => a.size !== "H" && a.madhel?.kind !== "HEL")
-    .map((a) => [a.icao, a.local ?? "", a.label || a.name, r4(a.lat!), r4(a.lon!), a.size]);
+    // Para la salida y la llegada (3.1.2): si es controlado, su canal de llamada si no lo es, y
+    // la torre del AIP si la tiene.
+    .map((a) => [
+      a.icao,
+      a.local ?? "",
+      a.label || a.name,
+      r4(a.lat!),
+      r4(a.lon!),
+      a.size,
+      a.madhel?.controlled ?? null,
+      (a.local && canales.get(a.local)) || null,
+      torreDe(a.icao, "ATZ"),
+    ]);
   const radioayudas = allRadioayudas()
     .filter((r) => r.lat < -20 && r.lat > -56 && r.lon < -52 && r.lon > -75)
     .map((r) => [r.ident, r.tipo, r.nombre, r4(r.lat), r4(r.lon), r.khz ?? null]);

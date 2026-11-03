@@ -4,14 +4,14 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { TILES_OPCIONES, TILES_URL } from "@/lib/mapa-tiles";
-import type { EspacioAereo } from "@/lib/espacios-aereos";
+import type { EspacioAereo, Frecuencias } from "@/lib/espacios-aereos";
 import type { Fir } from "@/lib/firs";
 import type { PuntoMapa } from "@/lib/mapa-ruta";
 
 /** Lo que devuelve `/api/mapa`, compacto: arrays en vez de objetos. */
 export interface CapasMapa {
-  /** [icao, designador, nombre, lat, lon, tamaño] */
-  aerodromos: [string, string, string, number, number, string][];
+  /** [icao, designador, nombre, lat, lon, tamaño, controlado, canal de llamada, torre del AIP] */
+  aerodromos: [string, string, string, number, number, string, boolean | null, { mhz: string[]; fuente: "madhel" | "lista" } | null, Frecuencias | null][];
   /** [ident, tipo, nombre, lat, lon, kHz] */
   radioayudas: [string, string, string, number, number, number | null][];
   espacios: EspacioAereo[];
@@ -86,7 +86,8 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
       zoom: 8,
       zoomControl: false,
       attributionControl: false,
-      preferCanvas: true,
+      // SVG y no canvas: con canvas, desmontar el mapa con un redibujo pendiente tira
+      // "Cannot read properties of undefined (reading 'clearRect')" (pasaba al recargar).
     });
     L.control.zoom({ position: "bottomright" }).addTo(m);
     // OSM exige la atribución visible (ver `lib/mapa-tiles.ts`).

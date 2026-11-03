@@ -990,6 +990,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.1.2",
+    fecha: "2026-11-03",
+    motivo: "Con quién hablás, corregido: fuera de TMA, CTR y ATZ es clase G (el centro, sólo información de vuelo), y la salida y la llegada a un aeródromo no controlado muestran su canal de llamada. Arreglo de lo anunciado en la 3.1.0, sin anuncio aparte.",
+  },
+  {
     version: "3.1.1",
     fecha: "2026-11-03",
     motivo: "El Mapa pide sus capas con la versión en la dirección: después de la 3.1.0, Safari seguía mostrando las de la 3.0.0, sin las FIR. Arreglo, sin anuncio.",

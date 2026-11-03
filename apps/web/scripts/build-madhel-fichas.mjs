@@ -17,7 +17,8 @@
  * - **se detiene** después de 5 fallas seguidas, y no escribe nada si contestó menos del
  *   80 %: una corrida mala no pisa los datos buenos, y si ANAC no quiere, no se insiste.
  *
- * Columnas: designador ANAC, combustible, pistas (separadas por " | "), actualizada (de MADHEL).
+ * Columnas: designador ANAC, combustible, pistas (separadas por " | "), actualizada (de MADHEL) y,
+ * desde la 3.1.2, el canal de llamada que publica un aeródromo no controlado (`madhel-llamada.mjs`).
  * Sólo aeródromos (no helipuertos) que MADHEL no da por cerrados.
  *
  * ## La ficha completa, aparte
@@ -31,6 +32,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { canalDeLlamada } from "./madhel-llamada.mjs";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SALIDA = path.join(RAIZ, "src", "data", "madhel-fichas.tsv");
@@ -81,7 +83,7 @@ for (const [i, designador] of designadores.entries()) {
     if (j?.data) {
       completas[designador] = j;
       const pistas = (Array.isArray(j.data.rwy) ? j.data.rwy : []).map(limpio).filter(Boolean);
-      filas.push([designador, limpio(j.data.fuel), pistas.join(" | "), limpio(j.updated_at).slice(0, 10)]);
+      filas.push([designador, limpio(j.data.fuel), pistas.join(" | "), limpio(j.updated_at).slice(0, 10), canalDeLlamada(j).join(",")]);
     }
   } catch (err) {
     fallasSeguidas++;
@@ -105,7 +107,7 @@ fs.writeFileSync(
   SALIDA,
   "# Las pistas y el combustible de cada aeródromo, de MADHEL (ANAC). Generado por\n" +
     "# scripts/build-madhel-fichas.mjs; NO EDITAR A MANO.\n" +
-    "# designador\tcombustible\tpistas\tactualizada\n" +
+    "# designador\tcombustible\tpistas\tactualizada\tcanal de llamada (MHz, si el AD no controlado lo publica)\n" +
     filas.map((f) => f.join("\t")).join("\n") +
     "\n",
 );
