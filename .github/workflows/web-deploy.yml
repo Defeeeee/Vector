@@ -55,6 +55,21 @@ jobs:
             # `reset --hard` de acá le cambiaría el código a la API corriendo.
             cd ~/Vector/web/apps/web
 
+            # **Lugar en disco antes de tocar nada.** El 2026-10-03 el VPS llegó a
+            # 1,4 GB libres de 45, y el deploy necesita lugar para `node_modules`, el
+            # build nuevo y el anterior guardado al lado. Con menos de 2 GB no se
+            # despliega y el sitio sigue con el commit que tiene.
+            LIBRE_MB=$(df -Pm . | awk 'NR==2 {print $4}')
+            # Un valor que no es número haría fallar el `[ -lt ]` adentro del `if`, y
+            # el deploy seguiría como si hubiera lugar.
+            case "$LIBRE_MB" in
+              ''|*[!0-9]*) echo "No pude leer el espacio libre ('$LIBRE_MB'): no despliego."; exit 1 ;;
+            esac
+            if [ "$LIBRE_MB" -lt 2048 ]; then
+              echo "Sólo ${LIBRE_MB} MB libres en el VPS: no despliego (pido 2048)."
+              exit 1
+            fi
+
             ANTERIOR=$(git rev-parse HEAD)
             git fetch origin main
             # El commit que el CI aprobó, no "lo último de main": si entró otro push
@@ -64,16 +79,45 @@ jobs:
             git reset --hard "$DESTINO"
             npm ci --omit=dev --no-audit --no-fund || npm install --no-audit --no-fund
 
-            # `rm -rf .next` NO es opcional. Turbopack reusa caché entre builds y
-            # el bundle puede seguir sirviendo un valor viejo compilado adentro
-            # aunque el código fuente esté correcto. Nos pasó dos veces: una con
-            # CSS y otra con un secreto, y la segunda costó una hora y media
-            # porque el `git pull` decía "Already up to date" y el build decía
-            # "Compiled successfully".
+            # **Si algo falla, se vuelve al commit anterior con su build, sin construir.**
+            # Hasta el 2026-11-03 un build roto cortaba el script (`set -e`) después de
+            # borrar `.next`: Vector quedaba en el commit nuevo, sin build en disco, y
+            # el siguiente reinicio lo dejaba caído. Pasó ese día, cuando el VPS no pudo
+            # bajar las fuentes de Google. Reconstruir el commit anterior tampoco
+            # alcanzaba: un corte de red lo rompe igual. Por eso el build anterior no se
+            # borra: se aparta a `.next-anterior` y, si hace falta, vuelve.
+            volver() {
+              echo "Volviendo a $ANTERIOR, con su build."
+              git reset --hard "$ANTERIOR"
+              # Las dependencias del commit anterior, si cambiaron. Si falla (sin red),
+              # se sigue igual: casi siempre las de ahora le sirven.
+              if ! git diff --quiet "$ANTERIOR" "$DESTINO" -- package-lock.json; then
+                npm ci --omit=dev --no-audit --no-fund || true
+              fi
+              if [ -d .next-anterior ]; then
+                rm -rf .next && mv .next-anterior .next
+              else
+                rm -rf .next && npm run build
+              fi
+              pm2 restart vector-frontend --update-env
+              exit 1
+            }
+
+            # Un build desde cero, sin el caché de Turbopack, NO es opcional: reusa
+            # caché entre builds y el bundle puede seguir sirviendo un valor viejo
+            # compilado adentro aunque el código fuente esté correcto. Nos pasó dos
+            # veces: una con CSS y otra con un secreto, y la segunda costó una hora y
+            # media porque el `git pull` decía "Already up to date" y el build decía
+            # "Compiled successfully". Apartarlo hace lo mismo que borrarlo.
             #
-            # Deja el sitio sin archivos ~15 s. Es el precio de un deploy simple.
-            rm -rf .next
-            npm run build
+            # Deja el sitio sin archivos mientras construye (~40 s). Es el precio de un
+            # deploy simple.
+            rm -rf .next-anterior
+            [ -d .next ] && mv .next .next-anterior
+            if ! npm run build; then
+              echo "El build falló."
+              volver
+            fi
 
             pm2 restart vector-frontend --update-env
 
@@ -88,13 +132,11 @@ jobs:
               if curl -fsS "http://localhost:${APP_PORT}/api/airports/search?q=SADM" \
                    | grep -q '"icao":"SADM"'; then
                 echo "Health OK tras ${i}s (Vector respondiendo en ${APP_PORT})"
+                rm -rf .next-anterior
                 exit 0
               fi
               sleep 1
             done
 
-            echo "El health check falló. Volviendo a $ANTERIOR"
-            git reset --hard "$ANTERIOR"
-            rm -rf .next && npm run build
-            pm2 restart vector-frontend --update-env
-            exit 1
+            echo "El health check falló."
+            volver

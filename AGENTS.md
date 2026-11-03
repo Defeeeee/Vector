@@ -245,10 +245,12 @@ Sin credenciales, y sin tocar producción: un backend falso local y una cookie c
 workflows y sólo corren si el push toca su carpeta:
 
 - **La web:** `web-ci.yml` corre `tsc`, tests, build y smoke con sesión; cuando termina
-  en verde, `web-deploy.yml` (`workflow_run`) entra por SSH al VPS, hace
-  `git reset --hard` **al commit que aprobó el CI**, `npm ci`, borra `.next`, construye,
-  reinicia con `pm2 restart vector-frontend --update-env` y **vuelve solo al commit
-  anterior** si el health check falla.
+  en verde, `web-deploy.yml` (`workflow_run`) entra por SSH al VPS y, si hay al menos 2 GB
+  libres, hace `git reset --hard` **al commit que aprobó el CI**, `npm ci`, aparta el build
+  anterior a `.next-anterior`, construye desde cero y reinicia con
+  `pm2 restart vector-frontend --update-env`. **Si falla el build o el health check, vuelve
+  al commit anterior con su build guardado**, sin reconstruir: un corte de red al bajar las
+  fuentes de Google rompió un build el 2026-11-03.
 - **La API:** `api-ci.yml` (los `test_*.py`, el import y ruff) y `api-deploy.yml`, que
   reinicia `flightlog-7477` y `grabador-adsb`, con el mismo rollback.
 - `secretos.yml` (gitleaks) corre sobre todo el repo, `aip.yml` los martes y `madhel.yml` el
