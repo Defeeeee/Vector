@@ -1,0 +1,26 @@
+name: Sonda Anexo BRAVO
+
+# **Una sola vez** (2026-11-03): baja de MADHEL el Anexo BRAVO de ENR 1.1 (normas para
+# aeródromos debajo de una TMA), que las fichas de los aeródromos no controlados citan, para
+# saber qué frecuencia usan. Un pedido, como Vector. Se borra después de usarla.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bajar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          mkdir -p out
+          curl -sf -m 30 -A "Vector/1.0 (bitacora de vuelo; https://vector.fdiaznem.com.ar)" -H "Accept: application/json" \
+            -o out/bravo.json "https://datos.anac.gob.ar/madhel/api/v2/documentation/BRAVO?format=json"
+          ls -la out; head -c 400 out/bravo.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bravo
+          path: out
+          retention-days: 3
