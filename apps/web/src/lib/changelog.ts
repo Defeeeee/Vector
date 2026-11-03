@@ -1011,6 +1011,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.2.1",
+    fecha: "2026-11-03",
+    motivo: "Los corredores VFR se dibujan con su ancho del AIP (2.500 m en la CTR, 5.000 m fuera) y en un verde que se distingue. Ajuste de lo anunciado en la 3.2.0.",
+  },
+  {
     version: "3.1.2",
     fecha: "2026-11-03",
     motivo: "Con quién hablás, corregido: fuera de TMA, CTR y ATZ es clase G (el centro, sólo información de vuelo), y la salida y la llegada a un aeródromo no controlado muestran su canal de llamada. Arreglo de lo anunciado en la 3.1.0, sin anuncio aparte.",

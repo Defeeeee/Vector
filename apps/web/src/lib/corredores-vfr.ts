@@ -226,3 +226,40 @@ export function puntosVfr(corredores: CorredorVfr[]): Map<string, { nombre: stri
 export function corredoresCerca(p: Punto, corredores: CorredorVfr[], nm = 3): CorredorVfr[] {
   return corredores.filter((c) => c.eje.some((q, i) => i > 0 && aEje(p, c.eje[i - 1], q).d <= nm));
 }
+
+/**
+ * La franja del corredor, con su ancho de verdad, para dibujarla: a cada lado del eje, 1250 m
+ * dentro de una CTR y 2500 m fuera; el Nº 2, dentro de la CTR, 300 m del lado sur. Se recorre el
+ * eje cada 0,2 NM y en cada punto se mira si está en una CTR, así el ancho cambia donde cruza el
+ * límite. Devuelve el contorno [lat, lon]: el borde izquierdo de ida y el derecho de vuelta.
+ */
+export function bandaDeCorredor(c: CorredorVfr, ctrs: [number, number][][]): [number, number][] {
+  const latRef = c.eje[0].lat;
+  const k = Math.cos((latRef * Math.PI) / 180) * 60;
+  const aPlano = (p: Punto) => [p.lon * k, p.lat * 60] as const;
+  const dePlano = (x: number, y: number): [number, number] => [y / 60, x / k];
+  const izquierda: [number, number][] = [];
+  const derecha: [number, number][] = [];
+  for (let i = 1; i < c.eje.length; i++) {
+    const [ax, ay] = aPlano(c.eje[i - 1]);
+    const [bx, by] = aPlano(c.eje[i]);
+    const largo = Math.hypot(bx - ax, by - ay);
+    if (largo === 0) continue;
+    const [ux, uy] = [(bx - ax) / largo, (by - ay) / largo];
+    // La normal izquierda (-uy, ux); "norte" es la que sube en latitud.
+    const izquierdaEsNorte = ux > 0 || (ux === 0 && uy < 0);
+    const pasos = Math.max(1, Math.ceil(largo / 0.2));
+    for (let s = i === 1 ? 0 : 1; s <= pasos; s++) {
+      const x = ax + ((bx - ax) * s) / pasos;
+      const y = ay + ((by - ay) * s) / pasos;
+      const [lat, lon] = dePlano(x, y);
+      const enCtr = ctrs.some((ctr) => contiene(ctr, { lat, lon }));
+      const media = enCtr ? DENTRO_CTR.mediaNm : FUERA_CTR.mediaNm;
+      const sur = c.numero === "2" && enCtr ? SUR_DEL_2 : media;
+      const [mi, md] = izquierdaEsNorte ? [media, sur] : [sur, media];
+      izquierda.push(dePlano(x - uy * mi, y + ux * mi));
+      derecha.push(dePlano(x + uy * md, y - ux * md));
+    }
+  }
+  return [...izquierda, ...derecha.reverse()];
+}

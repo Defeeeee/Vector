@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { allAirports, canalesDeLlamada } from "@/lib/airports";
 import { espaciosAereos, torreDe } from "@/lib/espacios-aereos-servidor";
+import { bandaDeCorredor } from "@/lib/corredores-vfr";
 import { allRadioayudas } from "@/lib/radioayudas";
 
 /**
@@ -44,7 +45,12 @@ export async function GET() {
       descartados: descartados.map((d) => d.nombre),
       // Los corredores y sectores VFR debajo de la TMA Baires (ENR 3.3): clase G.
       vfr: {
-        corredores: vfr.corredores.map((c) => ({ ...c, eje: c.eje.map((p) => ({ lat: r4(p.lat), lon: r4(p.lon) })) })),
+        // Con la franja ya armada: su ancho depende de si cada tramo está en una CTR.
+        corredores: vfr.corredores.map((c) => ({
+          ...c,
+          eje: c.eje.map((p) => ({ lat: r4(p.lat), lon: r4(p.lon) })),
+          banda: bandaDeCorredor(c, espacios.filter((e) => e.tipo === "CTR").map((e) => e.poligono)).map(([la, lo]) => [r4(la), r4(lo)]),
+        })),
         sectores: vfr.sectores.map((s) => ({ ...s, poligono: s.poligono.map(([la, lo]) => [r4(la), r4(lo)]) })),
       },
       // Las FIR: el polígono (con sus rodeos por afuera del país) para saber dónde estás, y

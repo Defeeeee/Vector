@@ -2,7 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { canalesDeLlamada, getAirport } from "./airports";
-import { codigoVfr, corredoresVfr, largoNm, puntosVfr, sectoresVfr } from "./corredores-vfr";
+import { bandaDeCorredor, codigoVfr, corredoresVfr, largoNm, puntosVfr, sectoresVfr } from "./corredores-vfr";
+import { distanciaAlBorde } from "./espacios-aereos";
 import { espaciosAereos, torreDe } from "./espacios-aereos-servidor";
 import { dependenciasDeRuta, type RadioDeAerodromo } from "./firs";
 
@@ -36,6 +37,26 @@ describe("los corredores VFR de ENR 3.3 (TMA Baires)", () => {
       ["Sector VFR Escuela de Morón", 2000, "ACC EZE"],
       ["Sector VFR Escuela de San Fernando", 1000, "TWR AER"],
     ]);
+  });
+});
+
+describe("la franja de cada corredor", () => {
+  const { espacios } = espaciosAereos();
+  const ctrs = espacios.filter((e) => e.tipo === "CTR").map((e) => e.poligono);
+  const borde = (c: (typeof corredores)[number], p: { lat: number; lon: number }) =>
+    distanciaAlBorde(bandaDeCorredor(c, ctrs).map(([lat, lon]) => ({ lat, lon })), p);
+
+  it("fuera de una CTR, 2500 m a cada lado del eje", () => {
+    const n13 = corredores.find((c) => c.numero === "13")!; // Capilla del Señor – Dique Luján, fuera de la CTR al oeste
+    const medio = { lat: (n13.eje[0].lat + n13.eje[1].lat) / 2, lon: (n13.eje[0].lon + n13.eje[1].lon) / 2 };
+    expect(borde(n13, medio)).toBeCloseTo(2500 / 1852, 1);
+  });
+
+  it("el Nº 2 dentro de la CTR Aeroparque: 300 m del lado sur", () => {
+    const n2 = corredores.find((c) => c.numero === "2")!;
+    // Cerca de Benavídez, adentro de la CTR.
+    const p = { lat: n2.eje[1].lat + (n2.eje[0].lat - n2.eje[1].lat) * 0.15, lon: n2.eje[1].lon + (n2.eje[0].lon - n2.eje[1].lon) * 0.15 };
+    expect(borde(n2, p)).toBeCloseTo(300 / 1852, 1);
   });
 });
 

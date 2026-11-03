@@ -18,8 +18,8 @@ export interface CapasMapa {
   descartados: string[];
   /** Las FIR con su centro (3.1.0). */
   firs: Fir[];
-  /** Corredores y sectores VFR de Baires (3.2.0). */
-  vfr?: Vfr;
+  /** Corredores y sectores VFR de Baires (3.2.0), cada corredor con su franja. */
+  vfr?: Vfr & { corredores: (Vfr["corredores"][number] & { banda?: [number, number][] })[] };
 }
 
 export interface Posicion {
@@ -166,13 +166,18 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
 
     // Los sectores y corredores VFR (ENR 3.3), en verde: clase G, como en la carta ENR 6.10. Después de las TMA, para que queden arriba y se puedan tocar.
     for (const s of capas.vfr?.sectores ?? []) {
-      L.polygon(s.poligono, { color: "#16a34a", weight: 1.5, dashArray: "2 4", fillColor: "#16a34a", fillOpacity: 0.08 })
+      L.polygon(s.poligono, { color: "#047857", weight: 2, dashArray: "6 4", fillColor: "#10b981", fillOpacity: 0.18 })
         .bindTooltip(`<b>${escapar(s.nombre)}</b><br>Clase G · GND / ${s.techoFt} ft${s.informacion ? `<br>Información: ${escapar(s.informacion)}` : ""}`, { sticky: true })
         .addTo(c.espacios);
     }
     for (const co of capas.vfr?.corredores ?? []) {
-      L.polyline(co.eje.map((p) => [p.lat, p.lon] as L.LatLngTuple), { color: "#16a34a", weight: 6, opacity: 0.35, lineCap: "round" })
-        .bindTooltip(`<b>Corredor VFR Nº ${escapar(co.numero)}</b><br>${escapar(co.nombre)}<br>Clase G · 1.000 ft máx. en CTR, 2.000 ft fuera`, { sticky: true })
+      const tooltip = `<b>Corredor VFR Nº ${escapar(co.numero)}</b><br>${escapar(co.nombre)}<br>Clase G · 2.500 m y 1.000 ft máx. en CTR; 5.000 m y 2.000 ft fuera`;
+      // La franja con su ancho (ENR 3.3) y el eje punteado encima.
+      if (co.banda?.length) {
+        L.polygon(co.banda, { color: "#047857", weight: 1.5, opacity: 0.9, fillColor: "#10b981", fillOpacity: 0.32 }).bindTooltip(tooltip, { sticky: true }).addTo(c.espacios);
+      }
+      L.polyline(co.eje.map((p) => [p.lat, p.lon] as L.LatLngTuple), { color: "#065f46", weight: 1.5, opacity: 0.9, dashArray: "6 5" })
+        .bindTooltip(tooltip, { sticky: true })
         .addTo(c.espacios);
     }
 
