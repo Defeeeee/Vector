@@ -1,6 +1,6 @@
 name: Sonda corredores VFR
 
-# **Una sola vez** (2026-11-03): baja ENR 3.5 (normas de los corredores VFR) y ENR 6.10 (carta
+# **Una sola vez** (2026-11-03): baja ENR 3.3, los corredores VFR (la carta ENR 6.10 remite ahí; antes bajó la carta
 # para vuelos VFR por debajo del TMA BAIRES) del AIP, para modelar los corredores VFR en el Mapa.
 # Tres pedidos (el listado y dos PDF), como Vector. Se borra después de usarla.
 on:
@@ -29,7 +29,7 @@ jobs:
           const html = await (await fetch(`${BASE}/aip/enr`, { headers: { "User-Agent": UA_VECTOR, "X-Requested-With": "XMLHttpRequest" } })).text();
           for (const fila of html.match(/<tr[\s\S]*?<\/tr>/g) ?? []) {
             const texto = fila.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-            const doc = /ENR-(3\.5|6\.10)\b/.exec(texto);
+            const doc = /ENR-(3\.3)\b/.exec(texto);
             const href = /href="([^"]+)"/.exec(fila);
             if (!doc || !href) continue;
             await new Promise((r) => setTimeout(r, 2000));
