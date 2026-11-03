@@ -941,6 +941,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "2.40.2",
+    fecha: "2026-11-03",
+    motivo: "Público o privado, y controlado o no, salen del texto que muestra ANAC y no de un campo de MADHEL que a veces lo contradice (Luján figuraba privado). Arreglo, sin anuncio.",
+  },
+  {
     version: "2.40.1",
     fecha: "2026-11-03",
     motivo: "La ficha del aeródromo sale de la copia mensual de MADHEL en el servidor: ya no queda vacía cuando el navegador no llega a ANAC. Y si cada aeródromo es público o privado, al día. Arreglo, sin anuncio.",

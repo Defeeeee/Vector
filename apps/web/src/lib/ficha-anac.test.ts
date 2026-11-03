@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { datosAip } from "./aip";
-import { leerMadhel, leerNotams } from "./ficha-anac";
+import { leerMadhel, leerNotams, usoYControl } from "./ficha-anac";
 
 // Respuestas reales de ANAC (2026-11-02), tal cual llegan al navegador del piloto.
 const fixture = (nombre: string) =>
@@ -49,5 +49,27 @@ describe("leerMadhel", () => {
   it("sin ficha de MADHEL, null", () => {
     expect(leerMadhel(null, "SADF", null)).toBeNull();
     expect(leerMadhel({ detail: "Not found." }, "XXXX", null)).toBeNull();
+  });
+});
+
+describe("usoYControl", () => {
+  it("manda el texto que muestra ANAC, aunque el campo diga otra cosa (Luján)", () => {
+    expect(usoYControl("LUJÁN - (LJN / SRDL ) - DRCE - PÚBLICO NO CONTROLADO", "PRIVADO", "CONTROLLED")).toEqual({
+      condition: "PUBLICO",
+      control: "NON-CONTROLLED",
+    });
+    expect(usoYControl("SAN FERNANDO - (FDO / SADF) - PÚBLICO CONTROLADO", "PRIVADO", "")).toEqual({
+      condition: "PUBLICO",
+      control: "CONTROLLED",
+    });
+    expect(usoYControl("ESTANCIA X - (XXX) - PRIVADO NO CONTROLADO", "PUBLICO", "")).toMatchObject({ condition: "PRIVADO" });
+  });
+
+  it("si el texto no lo dice, el campo", () => {
+    expect(usoYControl("ESTANCIA X - (XXX)", "PRIVADO", "NON-CONTROLLED")).toEqual({
+      condition: "PRIVADO",
+      control: "NON-CONTROLLED",
+    });
+    expect(usoYControl("", "", "")).toEqual({ condition: "", control: "" });
   });
 });

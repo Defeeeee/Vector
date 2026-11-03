@@ -60,6 +60,19 @@ export interface FichaAnac {
 const texto = (v: unknown): string => (typeof v === "string" ? v : "");
 const lista = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 
+/**
+ * Uso (público o privado) y control, **del texto que muestra ANAC** en su sitio
+ * ("LUJÁN - (LJN / SRDL) - DRCE - PÚBLICO NO CONTROLADO"). Los campos `metadata.condition` y
+ * `metadata.control` a veces lo contradicen: de 547 fichas (2026-11-03), 6 en el uso —Luján
+ * figuraba privado— y 5 en el control. El campo vale sólo si el texto no lo dice.
+ */
+export function usoYControl(texto: string, condition: string, control: string): { condition: string; control: string } {
+  const t = texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+  const uso = /\bPUBLICO\b/.test(t) ? "PUBLICO" : /\bPRIVADO\b/.test(t) ? "PRIVADO" : condition;
+  const ctrl = /\bNO CONTROLADO\b/.test(t) ? "NON-CONTROLLED" : /\bCONTROLADO\b/.test(t) ? "CONTROLLED" : control;
+  return { condition: uso, control: ctrl };
+}
+
 /** Los NOTAM, de lo que contesta `ais.anac.gob.ar/notam/json`. `null` si no es una lista. */
 export function leerNotams(json: unknown): NotamItem[] | null {
   if (!Array.isArray(json)) return null;
@@ -118,14 +131,17 @@ export function leerMadhel(json: unknown, icao: string, datosDelAip: DatosAip | 
     datosDelAip,
   );
 
+  const fullName = texto(mJson.human_readable_identifier) || texto(mJson.the_geom?.properties?.name);
+  const { condition, control } = usoYControl(fullName, texto(mJson.metadata.condition), texto(mJson.metadata.control));
+
   return {
     name: texto(mJson.metadata.identifiers?.icao) || icao,
-    fullName: texto(mJson.human_readable_identifier) || texto(mJson.the_geom?.properties?.name),
+    fullName,
     state: texto(mJson.metadata.localization?.state),
     fir: texto(mJson.metadata.localization?.fir),
     elevation: typeof mJson.metadata.localization?.elevation === "number" ? mJson.metadata.localization.elevation : 0,
-    condition: texto(mJson.metadata.condition),
-    control: texto(mJson.metadata.control),
+    condition,
+    control,
     traffic: texto(mJson.metadata.traffic),
     status: texto(mJson.metadata.status) || "OK",
 

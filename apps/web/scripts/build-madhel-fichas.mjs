@@ -118,15 +118,28 @@ console.log(`${filas.length} fichas (${respondidos} de ${designadores.length} co
   tres, y sólo de los aeródromos que contestaron: el resto del archivo no se toca.
 */
 const SI_CONTROLADO = (c) => (c === "CONTROLLED" ? "C" : c ? "NC" : "");
+/*
+  Del texto que muestra ANAC ("… - PÚBLICO NO CONTROLADO"), que a veces contradice a
+  `metadata.condition` y `metadata.control` (Luján: el texto dice público, el campo privado).
+  Es la misma regla que `usoYControl` en `lib/ficha-anac.ts`.
+*/
+function usoYControl(ficha) {
+  const t = String(ficha.human_readable_identifier ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+  const meta = ficha.metadata ?? {};
+  const uso = /\bPUBLICO\b/.test(t) ? "PUBLICO" : /\bPRIVADO\b/.test(t) ? "PRIVADO" : limpio(meta.condition);
+  const ctrl = /\bNO CONTROLADO\b/.test(t) ? "NC" : /\bCONTROLADO\b/.test(t) ? "C" : SI_CONTROLADO(meta.control);
+  return [uso, ctrl];
+}
 let corregidos = 0;
 const directorio = fs
   .readFileSync(MADHEL_TSV, "utf8")
   .split("\n")
   .map((linea) => {
     const c = linea.split("\t");
-    const meta = completas[c[0]]?.metadata;
+    const ficha = completas[c[0]];
+    const meta = ficha?.metadata;
     if (!c[0] || !meta) return linea;
-    const nuevo = [limpio(meta.condition), SI_CONTROLADO(meta.control), limpio(meta.status)];
+    const nuevo = [...usoYControl(ficha), limpio(meta.status)];
     if (nuevo.join() !== [c[7], c[8], c[9]].join()) corregidos++;
     c[7] = nuevo[0] || c[7];
     c[8] = nuevo[1] || c[8];

@@ -17,7 +17,9 @@ name: NOTAM
 # `gh workflow enable notam.yml`.
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    # Cada 15 min, fuera de los minutos redondos: GitHub demora mucho las corridas
+    # programadas a las :00, :15, :30 y :45, que es cuando las pide todo el mundo.
+    - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
 
 permissions:
