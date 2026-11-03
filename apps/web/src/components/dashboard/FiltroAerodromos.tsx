@@ -416,8 +416,8 @@ export default function FiltroAerodromos({
           )}
 
           <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-            El combustible sale del AIP, que lo publica para los aeródromos controlados, y las pistas de OurAirports
-            corregidas con el AIP. De los demás, esos datos están en la ficha de cada aeródromo.
+            Las pistas y el combustible salen del AIP para los aeródromos controlados, y de MADHEL (ANAC) para el
+            resto, que se actualiza una vez por mes. Lo de hoy está en la ficha de cada aeródromo.
           </p>
         </div>
       )}

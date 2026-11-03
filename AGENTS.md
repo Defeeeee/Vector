@@ -121,8 +121,10 @@ Actividad.
   ("con 100LL a menos de 100 NM de San Fernando") la pasa Gemini a esos filtros
   (`/api/airports/frase`); **el aeródromo, las unidades y la búsqueda los resuelve el código**.
   El combustible sólo está para los 51 aeródromos del AIP y las pistas para 117: lo que no se
-  sabe se cuenta como "sin dato" (invariante 2), nunca se descarta en silencio. Bajar las
-  fichas de MADHEL para completar eso quedó pendiente: no desde el VPS, que ANAC puede bloquear.
+  sabe se cuenta como "sin dato" (invariante 2), nunca se descarta en silencio. Las pistas y el
+  combustible del resto salen de `madhel-fichas.tsv`, que baja una vez por mes
+  `.github/workflows/madhel.yml` (de a uno, cada 2 s, presentándose como Vector, y se corta
+  solo si ANAC no contesta). **El AIP gana** sobre MADHEL donde están los dos.
 - **Registrar vuelo es una sola página** (`/dashboard/log-flight`). Hubo un modal
   interceptado (`@modal/(.)log-flight`) que se llevó cinco commits de arreglos en un
   mes; se sacó en la 2.18.0. No volver a interceptar esa ruta.
@@ -249,7 +251,8 @@ workflows y sólo corren si el push toca su carpeta:
   anterior** si el health check falla.
 - **La API:** `api-ci.yml` (los `test_*.py`, el import y ruff) y `api-deploy.yml`, que
   reinicia `flightlog-7477` y `grabador-adsb`, con el mismo rollback.
-- `secretos.yml` (gitleaks) corre sobre todo el repo, y `aip.yml` los martes.
+- `secretos.yml` (gitleaks) corre sobre todo el repo, `aip.yml` los martes y `madhel.yml` el
+  día 3 de cada mes.
 
 **En el VPS cada app tiene su propio clon** del monorepo, con sparse-checkout:
 `~/Vector/web` (PM2 corre en `~/Vector/web/apps/web`) y `~/Vector/api` (en

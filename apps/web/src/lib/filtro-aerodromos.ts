@@ -8,10 +8,10 @@ import { distanciaNmPrecisa } from "./distance";
  *
  * ## "No sé" no es "no hay" (invariante 2)
  *
- * Del combustible sólo sabemos lo que publica el AIP (51 aeródromos controlados) y del
- * largo y la superficie de las pistas, lo que trae `runways.tsv` (117 pistas). De los
- * otros cientos de aeródromos de MADHEL esos datos no están en el repo: los da la API de
- * MADHEL de a uno, cuando se abre la ficha. Así que cada criterio tiene tres respuestas
+ * El combustible sale del AIP (51 aeródromos controlados) y las pistas de `runways.tsv` (117);
+ * del resto, de las fichas de MADHEL que baja el workflow mensual (`madhel-fichas.tsv`).
+ * Aun así hay aeródromos con la ficha incompleta, y MADHEL deja vacío el combustible de
+ * muchos. Así que cada criterio tiene tres respuestas
  * —sí, no, no se sabe— y un aeródromo sin el dato **no se descarta en silencio**: se
  * cuenta aparte, y la pantalla ofrece mostrarlo marcado "sin dato".
  */
@@ -82,15 +82,34 @@ export interface ResultadoFiltro {
 export const MAX_RESULTADOS = 60;
 const PIES_A_METROS = 0.3048;
 
-/** Asfalto, hormigón y parecidos (los códigos de OurAirports y sus variantes). */
-const DURAS = /^(ASP|ASPH|ASPHALT|CON|CONC|CONCRETE|BIT|BITUMEN|PEM|PAVED)/i;
-const BLANDAS = /^(GRE|GRS|GRASS|TURF|DIRT|EARTH|GRV|GRAVEL|GVL|SAND|TIERRA|CESPED|PASTO)/i;
+/**
+ * Asfalto, hormigón y parecidos: los códigos de OurAirports y sus variantes, y las palabras
+ * de MADHEL ("Asfalto", "Hormigón", "Carpeta asfáltica").
+ */
+const DURAS = /^(ASP|ASPH|ASPHALT|CON|CONC|CONCRETE|BIT|BITUMEN|PEM|PAVED|ASFALT|HORMIGON|CONCRETO|PAVIMENT|CARPETA)/i;
+const BLANDAS = /^(GRE|GRS|GRASS|TURF|DIRT|EARTH|GRV|GRAVEL|GVL|SAND|TIERRA|CESPED|PASTO|RIPIO|GRAVA|ARENA|CONCHILLA|GRANZA|SUELO)/i;
 
 export function clasificarSuperficie(s: string | undefined): Superficie | null {
-  if (!s?.trim()) return null;
-  if (DURAS.test(s.trim())) return "dura";
-  if (BLANDAS.test(s.trim())) return "blanda";
+  const t = s?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  if (!t) return null;
+  if (DURAS.test(t)) return "dura";
+  if (BLANDAS.test(t)) return "blanda";
   return null;
+}
+
+/**
+ * Una pista como la escribe MADHEL: "17/35 1400x21 M – Tierra." o "01/19 1200x40 M - Asfalto".
+ * El largo va en metros y se pasa a pies, como el resto de las pistas del directorio. Lo que
+ * no se entiende queda sin dato, nunca inventado.
+ */
+export function pistaDeMadhel(texto: string): { largoFt?: number; superficie?: string } {
+  const largo = texto.match(/(\d{2,5})\s*[xX×]\s*\d+(?:[.,]\d+)?\s*M\b/);
+  const superficie = texto.match(/\bM\b\s*[–—-]\s*([^.|]+)/);
+  const metros = largo ? Number(largo[1]) : NaN;
+  return {
+    largoFt: Number.isFinite(metros) && metros > 0 ? Math.round(metros / PIES_A_METROS) : undefined,
+    superficie: superficie?.[1].trim() || undefined,
+  };
 }
 
 export function tieneCombustible(texto: string, c: Combustible): boolean {

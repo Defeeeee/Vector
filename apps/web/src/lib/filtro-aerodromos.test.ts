@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   clasificarSuperficie,
   filtrarAerodromos,
+  pistaDeMadhel,
   filtrosDeModelo,
   filtrosDeParams,
   hayFiltros,
@@ -146,5 +147,30 @@ describe("filtrosDeModelo", () => {
   it("la provincia se busca sin tildes, y una desconocida se avisa", () => {
     expect(filtrosDeModelo({ provincia: "Córdoba" }, resolver, PROVINCIAS).filtros.provincia).toBe("CORDOBA");
     expect(filtrosDeModelo({ provincia: "Atlántida" }, resolver, PROVINCIAS).noEntendido).toHaveLength(1);
+  });
+});
+
+describe("las pistas como las escribe MADHEL", () => {
+  it("largo en metros, pasado a pies, y la superficie", () => {
+    expect(pistaDeMadhel("17/35 1400x21 M – Tierra.")).toEqual({ largoFt: 4593, superficie: "Tierra" });
+    expect(pistaDeMadhel("01/19 1200x40 M - Asfalto")).toEqual({ largoFt: 3937, superficie: "Asfalto" });
+  });
+
+  it("lo que no entiende queda sin dato, nunca inventado", () => {
+    expect(pistaDeMadhel("Pista en mal estado")).toEqual({ largoFt: undefined, superficie: undefined });
+  });
+
+  it("las superficies en castellano, con y sin tilde", () => {
+    expect(clasificarSuperficie("Hormigón")).toBe("dura");
+    expect(clasificarSuperficie("Carpeta asfáltica")).toBe("dura");
+    expect(clasificarSuperficie("Césped")).toBe("blanda");
+    expect(clasificarSuperficie("Tierra/Pasto")).toBe("blanda");
+    expect(clasificarSuperficie("Ripio")).toBe("blanda");
+  });
+
+  it("una pista de MADHEL entra en los filtros como cualquier otra", () => {
+    const dir = [base({ icao: "GEZ", pistas: [pistaDeMadhel("17/35 1400x21 M – Tierra.")] })];
+    expect(filtrarAerodromos(dir, { largoMinM: 1200, superficie: "blanda" }).resultados.map((a) => a.icao)).toEqual(["GEZ"]);
+    expect(filtrarAerodromos(dir, { largoMinM: 1200, superficie: "dura" }).resultados).toEqual([]);
   });
 });

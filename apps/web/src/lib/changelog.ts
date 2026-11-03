@@ -927,6 +927,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "2.39.4",
+    fecha: "2026-11-03",
+    motivo: "Los filtros de Aeropuertos completan pistas y combustible con las fichas de MADHEL que baja un workflow mensual. Menos \"sin dato\", sin anuncio aparte.",
+  },
+  {
     version: "2.39.3",
     fecha: "2026-11-02",
     motivo: "El navegador le pide a ANAC lo menos posible: reusa la ficha de MADHEL 24 h y los NOTAM 15 min, y la tarjeta dice de cuándo son. Para que ANAC no bloquee la IP del piloto. Sin anuncio.",

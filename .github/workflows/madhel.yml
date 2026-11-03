@@ -1,0 +1,119 @@
+name: MADHEL
+
+# **Las fichas de MADHEL, una vez por mes** (2026-11-03).
+#
+# Baja de ANAC las pistas y el combustible de cada aeródromo (`npm run build:madhel`,
+# `scripts/build-madhel-fichas.mjs`) para los filtros de Aeropuertos, que sin esto sólo
+# conocen el combustible de 51 aeródromos y las pistas de 117.
+#
+# ANAC bloquea las IPs que le piden mucho: el script va de a uno, cada 2 s, se presenta como
+# Vector, y se corta solo si ANAC deja de contestar. Una vez por mes alcanza: MADHEL cambia
+# poco (un servicio parecido, aerobot-madhel-api, refrescaba cada 3 días).
+#
+# - Sin cambios: no hace nada.
+# - Con cambios y los tests en verde: lo commitea en `main` y dispara el CI, que despliega.
+# - Con cambios y los tests en rojo: abre un PR para revisar.
+# - Si ANAC no contesta: avisa por ntfy y lo intenta el mes que viene.
+on:
+  schedule:
+    # El día 3 de cada mes, 11:00 UTC (08:00 en Argentina).
+    - cron: "0 11 3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: madhel
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: apps/web
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+
+      - name: Bajar las fichas de MADHEL
+        id: bajar
+        run: npm run build:madhel
+
+      - name: ¿Cambió algo?
+        id: cambios
+        run: |
+          if git diff --quiet -- src/data/madhel-fichas.tsv && [ -z "$(git ls-files --others --exclude-standard src/data/madhel-fichas.tsv)" ]; then
+            echo "hay=no" >> "$GITHUB_OUTPUT"
+            echo "MADHEL sigue igual."
+          else
+            echo "hay=si" >> "$GITHUB_OUTPUT"
+            git diff --stat -- src/data/madhel-fichas.tsv | tail -1
+          fi
+
+      - name: Tipos y tests
+        id: tests
+        if: steps.cambios.outputs.hay == 'si'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          { npx tsc --noEmit && npm test; } 2>&1 | tee /tmp/tests.log
+
+      - name: Commitear en main
+        if: steps.cambios.outputs.hay == 'si' && steps.tests.outcome == 'success'
+        run: |
+          mes=$(date -u +%Y-%m)
+          ahora=$(date -u "+%Y-%m-%d %H:%M")
+          filas=$(grep -vc '^#' src/data/madhel-fichas.tsv)
+          {
+            echo
+            echo "### $ahora UTC — GitHub Actions (madhel.yml) — Las fichas de MADHEL del mes"
+            echo
+            echo "**Qué cambié:** \`apps/web/src/data/madhel-fichas.tsv\` con \`npm run build:madhel\`: $filas aeródromos."
+            echo "**Por qué:** la actualización mensual de las pistas y el combustible para los filtros de Aeropuertos."
+            echo "**Estado:** terminado; se despliega si pasa el CI."
+            echo "**Verificación:** \`tsc\` y \`npm test\` en verde."
+          } >> "../../docs/bitacora/$mes.md"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/madhel-fichas.tsv "../../docs/bitacora/$mes.md"
+          git commit -q -m "MADHEL: las fichas del mes (actualización automática)"
+          git push -q origin HEAD:main
+          # Un push con este token no dispara el CI: se lo pide a mano. El deploy sale del CI.
+          gh workflow run web-ci.yml --ref main
+          [ -n "$NTFY_TOPIC" ] && curl -s -H "Title: Vector: MADHEL actualizado" -d "$filas aeródromos. Se despliega si pasa el CI." "https://ntfy.sh/$NTFY_TOPIC" > /dev/null || true
+
+      - name: Abrir un PR para revisar
+        if: steps.cambios.outputs.hay == 'si' && steps.tests.outcome != 'success'
+        run: |
+          rama="madhel-$(date -u +%Y-%m-%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b "$rama"
+          git add src/data/madhel-fichas.tsv
+          git commit -q -m "MADHEL: las fichas del mes (para revisar: tests en rojo)"
+          git push -q origin "$rama"
+          url=$(gh pr create --base main --head "$rama" --title "MADHEL: las fichas del mes, para revisar" --body "Las fichas nuevas de MADHEL dan rojo en los tests. Revisar antes de mergear.")
+          [ -n "$NTFY_TOPIC" ] && curl -s -H "Title: Vector: MADHEL nuevo, revisar" -H "Click: $url" -d "Los tests dan rojo. PR: $url" "https://ntfy.sh/$NTFY_TOPIC" > /dev/null || true
+
+      - name: Avisar si ANAC no contestó
+        if: failure() && steps.bajar.outcome == 'failure'
+        run: |
+          [ -n "$NTFY_TOPIC" ] && curl -s -H "Title: Vector: no pude bajar MADHEL" -d "ANAC no contestó o cortó. Se reintenta el mes que viene, o a mano desde Actions." "https://ntfy.sh/$NTFY_TOPIC" > /dev/null || true

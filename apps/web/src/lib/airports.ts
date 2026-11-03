@@ -10,7 +10,7 @@ import {
   type MadhelInfo,
 } from "./busqueda-aerodromos";
 import type { Pista } from "./briefing";
-import type { AerodromoFiltrable } from "./filtro-aerodromos";
+import { pistaDeMadhel, type AerodromoFiltrable } from "./filtro-aerodromos";
 
 /*
   Los tipos y la búsqueda viven en `busqueda-aerodromos.ts`, que **no lee el disco**:
@@ -317,26 +317,54 @@ export function searchAirports(query: string, limit = 8): Airport[] {
 let filtrables: AerodromoFiltrable[] | null = null;
 
 /**
+ * Las fichas de MADHEL que baja el workflow mensual (`scripts/build-madhel-fichas.mjs`):
+ * combustible y pistas por designador ANAC. Vacío si el archivo todavía no existe.
+ */
+function leerFichasMadhel(): Map<string, { combustible: string; pistas: string[] }> {
+  const mapa = new Map<string, { combustible: string; pistas: string[] }>();
+  const archivo = path.join(process.cwd(), "src", "data", "madhel-fichas.tsv");
+  if (!fs.existsSync(archivo)) return mapa;
+  for (const linea of fs.readFileSync(archivo, "utf8").split("\n")) {
+    if (!linea || linea.startsWith("#")) continue;
+    const [designador, combustible = "", pistas = ""] = linea.split("\t");
+    if (designador) mapa.set(designador, { combustible, pistas: pistas.split(" | ").filter(Boolean) });
+  }
+  return mapa;
+}
+
+/**
  * Los aeródromos argentinos como los pide el filtro de la pestaña Aeropuertos
- * (`lib/filtro-aerodromos.ts`), con el combustible del AIP. Se arman una vez.
+ * (`lib/filtro-aerodromos.ts`). Se arman una vez.
+ *
+ * Las pistas salen de `runways.tsv` (corregidas con el AIP) y, donde no hay, de las fichas
+ * de MADHEL; el combustible, del AIP y, donde no lo publica, de MADHEL. **El AIP gana**: es
+ * el dato validado contra el PDF oficial (invariante 12).
  */
 export function aerodromosParaFiltrar(): AerodromoFiltrable[] {
-  filtrables ??= load()
+  if (filtrables) return filtrables;
+  const fichas = leerFichasMadhel();
+  filtrables = load()
     .all.filter((a) => a.country === "AR")
-    .map((a) => ({
-      icao: a.icao,
-      local: a.local,
-      label: a.label,
-      provincia: a.madhel?.province ?? "",
-      lat: a.lat,
-      lon: a.lon,
-      helipuerto: a.size === "H" || a.madhel?.kind === "HEL",
-      controlado: a.madhel?.controlled ?? null,
-      uso: a.madhel?.condition ?? "",
-      estado: a.madhel?.status ?? "",
-      pistas: (a.pistas ?? []).map((p) => ({ largoFt: p.largoFt, superficie: p.superficie })),
-      combustible: datosAip(a.icao)?.combustible ?? "",
-    }));
+    .map((a) => {
+      const ficha = a.local ? fichas.get(a.local) : undefined;
+      const pistas = a.pistas?.length
+        ? a.pistas.map((p) => ({ largoFt: p.largoFt, superficie: p.superficie }))
+        : (ficha?.pistas ?? []).map(pistaDeMadhel);
+      return {
+        icao: a.icao,
+        local: a.local,
+        label: a.label,
+        provincia: a.madhel?.province ?? "",
+        lat: a.lat,
+        lon: a.lon,
+        helipuerto: a.size === "H" || a.madhel?.kind === "HEL",
+        controlado: a.madhel?.controlled ?? null,
+        uso: a.madhel?.condition ?? "",
+        estado: a.madhel?.status ?? "",
+        pistas,
+        combustible: datosAip(a.icao)?.combustible || ficha?.combustible || "",
+      };
+    });
   return filtrables;
 }
 
