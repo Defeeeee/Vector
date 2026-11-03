@@ -13,6 +13,8 @@ import HorasDeAntesAlumno from "@/components/dashboard/HorasDeAntesAlumno";
 import { esAlumno } from "@/lib/licencias";
 import WhatsAppMissingNotice from "@/components/dashboard/WhatsAppMissingNotice";
 import PageHeader from "@/components/dashboard/PageHeader";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { LogoutButton } from "@/components/dashboard/LogoutButton";
 
 import { redirect } from "next/navigation";
 import CustomStatsManager from "@/components/dashboard/CustomStatsManager";
@@ -76,6 +78,13 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <PageHeader eyebrow="Perfil, vencimientos, aeronaves y packs de horas" title="Configuración" />
+
+      {/* En el teléfono el tema y "Cerrar sesión" viven acá desde la 3.4.0: el encabezado quedó
+          con el logo, el buscador y la cuenta. En el escritorio siguen en el rail. */}
+      <div className="lg:hidden flex items-center gap-3">
+        <span className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 flex-1">Tema</span>
+        <ThemeToggle />
+      </div>
 
       {/* Logbooks — above aircraft and packs because a flight has to land in a
           book before anything else about it matters. */}
@@ -279,6 +288,9 @@ export default async function SettingsPage() {
           diagnosticar y adivinar. Sale de `package.json` vía `next.config.js`, así que
           es la que se construyó de verdad y no un número escrito a mano.
         */}
+        <div className="lg:hidden pt-2">
+          <LogoutButton />
+        </div>
         <p className="text-center font-mono text-[10px] text-zinc-300 dark:text-zinc-600 pt-2">
           Vector v{process.env.NEXT_PUBLIC_APP_VERSION ?? "?"} ·{" "}
           <Link href="/dashboard/novedades" className="hover:underline">

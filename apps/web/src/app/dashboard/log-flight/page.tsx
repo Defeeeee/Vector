@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import EncabezadoRegistrar from "@/components/dashboard/EncabezadoRegistrar";
 import { Aircraft, Flight, Profile } from "@/types";
 import { esAlumno } from "@/lib/licencias";
 import VueloAlumnoForm from "@/components/dashboard/VueloAlumnoForm";
@@ -54,7 +55,8 @@ export default async function LogFlightPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-8 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 w-full pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8">
+      <EncabezadoRegistrar importar={!alumno} guardar={!alumno && aircraft.length > 0} />
+      <div className="max-lg:hidden flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8">
         <div className="space-y-2 md:space-y-4">
           <div className="flex items-center space-x-3 md:space-x-4">
             <Link href="/dashboard" className="p-2 md:p-3 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-full transition-colors group bg-white dark:bg-[#111111] shadow-sm border border-zinc-200 dark:border-white/10 md:border-transparent md:bg-transparent md:shadow-none">

@@ -42,12 +42,24 @@ export default function SeccionTabs({
 
   if (!seccion || seccion.pestanas.length < 2) return null;
 
+  /*
+    En el teléfono (3.4.0): en el navegador, pestañas subrayadas en una franja blanca pegada
+    al encabezado; instalada (`app:`), un control segmentado gris cuando entran (hasta cuatro).
+    Desde `md`, las píldoras de siempre.
+  */
+  const segmentado = seccion.pestanas.length <= 4;
   return (
     <nav
       aria-label={seccion.label}
-      className="-mx-4 px-4 scroll-px-4 md:mx-0 md:px-0 md:scroll-px-0 mb-6 md:mb-10 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className={`-mx-4 -mt-4 mb-4 px-4 scroll-px-4 bg-white dark:bg-black border-b border-zinc-200 dark:border-white/10 md:mx-0 md:mt-0 md:px-0 md:scroll-px-0 md:mb-10 md:bg-transparent md:dark:bg-transparent md:border-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+        segmentado ? "app:mx-0 app:mt-0 app:px-0 app:mb-2.5 app:bg-transparent app:dark:bg-transparent app:border-0" : "app:bg-transparent app:dark:bg-transparent"
+      }`}
     >
-      <div className="inline-flex items-center gap-1 p-1 rounded-2xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10">
+      <div
+        className={`flex h-10 items-end gap-[18px] md:inline-flex md:h-auto md:items-center md:gap-1 md:p-1 md:rounded-2xl md:bg-zinc-100 md:dark:bg-white/5 md:border md:border-zinc-200 md:dark:border-white/10 ${
+          segmentado ? "app:grid app:grid-flow-col app:auto-cols-fr app:h-9 app:items-stretch app:gap-0 app:p-[3px] app:rounded-[11px] app:bg-zinc-200 app:dark:bg-white/10" : ""
+        }`}
+      >
         {seccion.pestanas.map((pestana) => {
           const esActiva = pestana.href === activa?.href;
           const cantidad = contadores[pestana.href] ?? 0;
@@ -58,10 +70,12 @@ export default function SeccionTabs({
               href={pestana.href}
               ref={esActiva ? activaRef : undefined}
               aria-current={esActiva ? "page" : undefined}
-              className={`shrink-0 inline-flex items-center gap-2 px-3.5 md:px-4 py-2 rounded-xl text-[13px] md:text-sm font-semibold whitespace-nowrap transition-colors ${
+              className={`shrink-0 inline-flex items-center gap-2 pb-[9px] border-b-2 md:border-b-0 md:px-4 md:py-2 md:rounded-xl text-[13px] md:text-sm md:font-semibold whitespace-nowrap transition-colors ${
+                segmentado ? "app:justify-center app:pb-0 app:border-b-0 app:rounded-[9px] app:text-[12.5px]" : ""
+              } ${
                 esActiva
-                  ? "bg-white dark:bg-white/10 text-zinc-900 dark:text-white shadow-sm"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                  ? `border-zinc-900 dark:border-white font-extrabold md:bg-white md:dark:bg-white/10 text-zinc-900 dark:text-white md:shadow-sm ${segmentado ? "app:bg-white app:dark:bg-zinc-800 app:shadow-sm" : ""}`
+                  : "border-transparent font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
               {pestana.label}

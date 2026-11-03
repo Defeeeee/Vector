@@ -126,6 +126,18 @@ Actividad.
   combustible del resto salen de `madhel-fichas.tsv`, que baja una vez por mes
   `.github/workflows/madhel.yml` (de a uno, cada 2 s, presentándose como Vector, y se corta
   solo si ANAC no contesta). **El AIP gana** sobre MADHEL donde están los dos.
+- **El teléfono tiene su propio diseño** (3.4.0, Federico): distinto en el navegador y en la app
+  instalada. La variante `app:` de Tailwind (`globals.css`) es `display-mode: standalone` **y menos
+  de `lg`**: CSS puro, nunca JavaScript (invariante 1), y una PWA instalada en la compu sigue con el
+  escritorio. En el navegador: encabezado blanco de 56 px (logo, buscador, cuenta), pestañas
+  subrayadas y abajo la píldora con el nombre de cada sección más el +. En la app: sin logo, título
+  grande ("Hola, …" con la fecha en el inicio, el nombre de la sección en el resto,
+  `TituloTelefono`), el + arriba y una barra de pestañas de borde a borde. Las medidas de la app son
+  las del diseño (58 px arriba o la muesca, 8 px al contenido, 12 entre tarjetas): no a ojo. El
+  tema y "Cerrar sesión" del teléfono están en el Hangar. Una pantalla puede esconder la barra de
+  abajo (`data-sin-barra-movil`) o el encabezado (`data-sin-encabezado-movil`): Registrar vuelo y
+  el Mapa en vuelo. Lo que tenga que quedar `fixed` dentro de una página va en un portal sobre
+  `body`: la página entra con `animate-in`, un `transform`.
 - **Registrar vuelo es una sola página** (`/dashboard/log-flight`). Hubo un modal
   interceptado (`@modal/(.)log-flight`) que se llevó cinco commits de arreglos en un
   mes; se sacó en la 2.18.0. No volver a interceptar esa ruta.

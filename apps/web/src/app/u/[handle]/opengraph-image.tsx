@@ -82,7 +82,7 @@ export default async function Image({ params }: { params: Promise<{ handle: stri
           padding: 64,
           backgroundColor: COLOR.fondo,
           backgroundImage: RESPLANDOR,
-          fontFamily: "Nunito",
+          fontFamily: "Display",
         }}
       >
         <MarcaVector tamano={52} />

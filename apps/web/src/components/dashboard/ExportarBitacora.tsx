@@ -24,12 +24,15 @@ export default function ExportarBitacora({
   aircraft,
   libros,
   alumno = false,
+  variante = "boton",
 }: {
   flights: Flight[];
   aircraft: Aircraft[];
   libros: Logbook[];
   /** El alumno piloto no lleva libro de vuelo: sólo la planilla. */
   alumno?: boolean;
+  /** "chip": el del encabezado de la Bitácora en el teléfono (3.4.0), con texto y sin ícono. */
+  variante?: "boton" | "chip";
 }) {
   const [armando, setArmando] = useState(false);
   const { notificar } = useAvisos();
@@ -101,6 +104,19 @@ export default function ExportarBitacora({
       ? [{ etiqueta: "Planilla · CSV", detalle: "Todos los vuelos, para Excel o Sheets", icono: FileSpreadsheet, alElegir: descargarCsv }]
       : []),
   ];
+
+  if (variante === "chip") {
+    return (
+      <MenuAcciones
+        acciones={acciones}
+        etiqueta={armando ? "Armando el libro…" : "Exportar"}
+        claseBoton="h-9 px-3 rounded-full bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center gap-1.5 text-[13px] font-bold text-zinc-900 dark:text-white"
+      >
+        {armando && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />}
+        {armando ? "Armando…" : alumno ? "Planilla" : "Libro en PDF"}
+      </MenuAcciones>
+    );
+  }
 
   return (
     <MenuAcciones

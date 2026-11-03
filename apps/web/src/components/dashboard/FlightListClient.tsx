@@ -75,7 +75,7 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
   }, [visibleFlights, costos]);
 
   return (
-    <div className="space-y-6 md:space-y-8 w-full">
+    <div className="space-y-4 md:space-y-8 w-full">
       {/*
         El texto siempre a la vista; el resto detrás de un botón.
 
@@ -86,12 +86,13 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
       <div className="space-y-3 max-w-3xl">
         <div className="flex gap-2">
           <div className="relative group flex-1">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500 group-focus-within:text-zinc-900 dark:group-focus-within:text-white transition-colors" />
+            <Search className="absolute left-3.5 md:left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500 group-focus-within:text-zinc-900 dark:group-focus-within:text-white transition-colors" />
             <input
               value={filtros.texto ?? ""}
               onChange={(e) => setFiltro("texto", e.target.value)}
-              placeholder="Buscar ruta, matrícula u observaciones..."
-              className="w-full bg-white dark:bg-white/[0.03] border border-zinc-200 dark:border-white/10 rounded-2xl py-4 md:py-5 pl-14 pr-6 outline-none focus:border-aviation-blue dark:focus:border-aviation-cyan transition-all text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-sm"
+              placeholder="Ruta, matrícula, nota"
+              aria-label="Buscar vuelos"
+              className="w-full bg-white dark:bg-white/[0.03] border border-zinc-200 dark:border-white/10 app:bg-zinc-200 app:dark:bg-white/10 app:border-transparent app:shadow-none rounded-xl md:rounded-2xl h-11 app:h-10 md:h-auto md:py-5 pl-10 md:pl-14 pr-4 md:pr-6 text-[15px] md:text-sm outline-none focus:border-aviation-blue dark:focus:border-aviation-cyan transition-all font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-sm"
             />
           </div>
           <button
@@ -99,7 +100,7 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
             onClick={() => setAbierto((v) => !v)}
             aria-label="Más filtros"
             aria-expanded={abierto}
-            className={`shrink-0 px-4 rounded-2xl border transition-colors ${
+            className={`shrink-0 w-11 md:w-auto flex items-center justify-center md:px-4 rounded-xl md:rounded-2xl border transition-colors ${
               abierto || filtrado
                 ? "border-aviation-blue dark:border-aviation-cyan text-aviation-blue dark:text-aviation-cyan bg-aviation-blue/5"
                 : "border-zinc-200 dark:border-white/10 text-zinc-400 dark:text-zinc-500 bg-white dark:bg-white/[0.03]"
@@ -154,7 +155,7 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
       </div>
 
       {monthGroups.length > 0 ? (
-        <div className="space-y-8">
+        <div className="space-y-5 md:space-y-8">
           <AnimatePresence mode="popLayout">
             {monthGroups.map((group) => (
               <motion.div
@@ -163,10 +164,19 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="space-y-3"
+                className="space-y-2 md:space-y-3"
               >
+                {/* En el teléfono (3.4.0): el mes y, a la derecha, vuelos y horas en mono; en la
+                    app, el mes en mayúsculas chicas y sólo las horas. */}
+                <div className="md:hidden flex items-baseline justify-between px-1">
+                  <h3 className="text-[15px] app:text-[13px] font-extrabold text-zinc-900 dark:text-white app:text-zinc-600 app:dark:text-zinc-400 capitalize app:uppercase">{group.label}</h3>
+                  <span className="data text-xs text-zinc-600 dark:text-zinc-400">
+                    <span className="app:hidden">{group.flights.length} {group.flights.length === 1 ? "vuelo" : "vuelos"} · </span>
+                    {group.hours.toFixed(1).replace(".", ",")} h
+                  </span>
+                </div>
                 {/* Ledger page header */}
-                <div className="flex items-baseline justify-between px-1">
+                <div className="max-md:hidden flex items-baseline justify-between px-1">
                   <h3 className="text-lg font-bold font-display text-zinc-900 dark:text-white tracking-tight capitalize">{group.label}</h3>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-sm font-bold font-display text-aviation-blue-dark dark:text-aviation-cyan">{group.hours.toFixed(1)}</span>
@@ -180,7 +190,7 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
                 </div>
 
                 {/* Ledger table */}
-                <div className="bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl md:rounded-[2rem] shadow-sm dark:shadow-none overflow-hidden">
+                <div className="bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 app:border-transparent app:dark:bg-[#111111] rounded-[20px] app:rounded-[18px] md:rounded-[2rem] shadow-sm app:shadow-none dark:shadow-none overflow-hidden">
                   {/* Column labels (desktop only) */}
                   <div className="hidden md:grid grid-cols-[80px_130px_1fr_100px_72px] gap-4 px-6 py-2.5 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/60 dark:bg-white/[0.02] text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
                     <span>Fecha</span>

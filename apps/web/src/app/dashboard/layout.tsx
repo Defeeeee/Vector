@@ -3,10 +3,10 @@ import Link from "next/link";
 import DashboardNav, { type AlertasDeSeccion } from "@/components/dashboard/DashboardNav";
 import SeccionTabs from "@/components/dashboard/SeccionTabs";
 import OnboardingOverlay from "@/components/dashboard/OnboardingOverlay";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import BuscadorGlobal from "@/components/dashboard/BuscadorGlobal";
 import { RailThemeToggle } from "@/components/dashboard/RailThemeToggle";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
+import TituloTelefono from "@/components/dashboard/TituloTelefono";
 import { apiFetch } from "@/lib/api";
 import { leerResumenSocial } from "@/lib/resumen-social";
 import { AuditSummary, Profile } from "@/types";
@@ -130,9 +130,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
     // dispara desde un formulario y tiene que seguir viéndose después de que ese
     // formulario navega a otra pantalla.
     <AvisosProvider>
-    <div className="flex min-h-screen bg-zinc-50 dark:bg-black w-full relative text-zinc-900 dark:text-white antialiased transition-colors duration-300">
+    <div className="flex min-h-screen bg-zinc-50 max-lg:app:bg-zinc-100 dark:bg-black max-lg:app:dark:bg-black w-full relative text-zinc-900 dark:text-white antialiased transition-colors duration-300">
       {/* Subtle Background Pattern */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.02] dark:opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+      <div className="app:hidden absolute inset-0 pointer-events-none opacity-[0.02] dark:opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '40px 40px' }} />
 
       {/* Icon Rail — always dark, independent of app theme */}
       <aside className="hidden lg:flex flex-col items-center w-20 bg-zinc-950 border-r border-white/5 h-screen sticky top-0 z-30 py-6 shrink-0">
@@ -174,27 +174,43 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 w-full z-40 bg-white dark:bg-black backdrop-blur-md border-b border-zinc-200 dark:border-white/10 px-6 py-4 flex items-center justify-between transition-colors duration-300">
+      {/*
+        El encabezado del teléfono (3.4.0): el logo, el buscador y la cuenta; el tema y "Cerrar
+        sesión" pasaron al Hangar. En el navegador, una barra blanca de 56 px. Instalada como app
+        (`app:`), arranca debajo de la muesca, sin borde, suma el + de Nuevo vuelo (abajo hay una
+        barra de pestañas y no la píldora) y en el inicio el logo deja lugar a "Hola" con la fecha
+        (`TituloTelefono`). Las medidas son las del diseño: el encabezado arranca a 58 px del
+        borde (o debajo de la muesca, si es más), apoya el título 8 px arriba de su borde de abajo,
+        y el contenido empieza 8 px después; los 44 px son los botones.
+      */}
+      <header className="lg:hidden [body:has([data-sin-encabezado-movil])_&]:hidden fixed top-0 w-full z-40 bg-white dark:bg-black app:bg-zinc-100 app:dark:bg-black app:backdrop-blur-none backdrop-blur-xl border-b border-zinc-200 dark:border-white/10 app:border-b-0 h-14 app:h-auto px-4 app:pt-[max(58px,calc(env(safe-area-inset-top)+0.75rem))] app:pb-2 flex items-center app:items-end justify-between gap-2 transition-colors duration-300">
+        <TituloTelefono fecha={todayCapitalized.replace(",", "")} nombre={profile?.first_name || "Comandante"}>
         <Link href="/dashboard" className="flex items-center space-x-3 group">
           <div className="w-8 h-8 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-lg flex items-center justify-center shadow-md">
             <Compass className="w-4 h-4" strokeWidth={2} />
           </div>
           <span className="text-lg font-bold font-display tracking-tight dark:text-white">Vector</span>
         </Link>
-        <div className="flex items-center space-x-3">
+        </TituloTelefono>
+        <div className="flex items-center gap-2 shrink-0">
             <BuscadorGlobal variante="icono" />
-            <ThemeToggle />
+            <Link
+              href="/dashboard/log-flight"
+              aria-label="Nuevo vuelo"
+              className="hidden app:flex w-11 h-11 rounded-full bg-aviation-blue text-white items-center justify-center shadow-md shadow-aviation-blue/30 active:scale-95 transition-transform"
+            >
+              <Plus className="w-5 h-5" strokeWidth={2.5} />
+            </Link>
             {/* En el teléfono no hay rail, así que el avatar vive acá. Sin esto,
                 sacar Hangar del nav lo dejaba sin ninguna entrada en móvil: caía
                 en el sheet de "Más" y de ahí desaparecía. */}
             <Link
               href="/dashboard/settings"
               aria-label="Hangar"
-              className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-white/10 flex items-center justify-center text-[11px] font-bold text-zinc-600 dark:text-zinc-300 overflow-hidden"
+              className="w-9 h-9 app:w-11 app:h-11 rounded-full bg-zinc-100 dark:bg-white/10 app:bg-white app:dark:bg-zinc-900 app:shadow-sm flex items-center justify-center text-[11px] font-bold text-zinc-600 dark:text-zinc-300 overflow-hidden"
             >
               {avatar}
             </Link>
-            <LogoutButton isMobile={true} />
         </div>
       </header>
 
@@ -217,7 +233,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </header>
 
         {/* Main Content Area */}
-        <main className="relative z-10 flex-1 w-full p-4 md:p-8 lg:p-12 pt-24 lg:pt-12 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-12 overflow-y-auto custom-scrollbar transition-colors">
+        <main className="relative z-10 flex-1 w-full p-4 md:p-8 lg:p-12 pt-[4.5rem] app:pt-[calc(max(58px,calc(env(safe-area-inset-top)+0.75rem))+3.75rem)] lg:pt-12 pb-[calc(7rem+env(safe-area-inset-bottom))] app:pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-12 overflow-y-auto custom-scrollbar transition-colors">
           <div className="w-full max-w-6xl mx-auto">
             {/* Las pestañas de la sección van antes que los carteles: son
                 navegación y no datos, y así no cambian de lugar cuando aparece
@@ -245,8 +261,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       */}
       <div
         data-imprimir="no"
-        className="lg:hidden fixed inset-x-4 z-50 flex items-center gap-3 pointer-events-none"
-        style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
+        className="lg:hidden [body:has([data-sin-barra-movil])_&]:hidden fixed inset-x-3 bottom-[calc(1rem+env(safe-area-inset-bottom))] app:inset-x-0 app:bottom-0 z-50 flex items-center gap-2.5 pointer-events-none"
       >
         <div className="flex-1 min-w-0 pointer-events-auto">
           <DashboardNav variant="mobile" alertas={alertas} />
@@ -254,7 +269,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <Link
           href="/dashboard/log-flight"
           aria-label="Nuevo vuelo"
-          className="pointer-events-auto shrink-0 w-14 h-14 rounded-full bg-aviation-blue text-white flex items-center justify-center shadow-lg shadow-aviation-blue/30 transition-transform active:scale-95"
+          className="app:hidden pointer-events-auto shrink-0 w-[60px] h-[60px] rounded-full bg-aviation-blue text-white flex items-center justify-center shadow-lg shadow-aviation-blue/30 transition-transform active:scale-95"
         >
           <Plus className="w-6 h-6" strokeWidth={2.5} />
         </Link>

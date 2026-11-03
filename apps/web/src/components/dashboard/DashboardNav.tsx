@@ -86,23 +86,28 @@ export default function DashboardNav({
   }
 
   /*
-    Floating pill for the phone. Icon-only, deliberately: it shares the row with the
-    "Nuevo vuelo" button, and "Preparar vuelo" doesn't fit under a ~55 px slot. The
-    names live in each icon's `aria-label`, in the rail's tooltips and in the tabs of
-    each section.
+    The phone. Since 3.4.0 each icon carries its name underneath ("Preparar vuelo" is
+    shortened to "Preparar": it doesn't fit under a ~55 px slot).
+    - In the browser, a floating pill over Safari's bar, sharing the row with the round
+      "Nuevo vuelo" button (Federico rejected a menu bar at the top).
+    - Installed as an app (`app:`), a full-width tab bar against the bottom edge, with the
+      home indicator's safe area under it; the + moves to the header.
 
-    With five sections everything fits in the pill, so the "Más" sheet that used to
-    hold the overflow is gone — and with it the extra tap to reach half the app.
+    With five sections everything fits, so the "Más" sheet that used to hold the
+    overflow is gone — and with it the extra tap to reach half the app.
   */
   return (
-    <nav className="w-full h-14 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl px-1.5 rounded-full flex items-center shadow-cal dark:shadow-none border border-zinc-200 dark:border-white/10 pointer-events-auto">
+    <nav
+      aria-label="Secciones"
+      className="w-full h-[60px] app:h-auto bg-white/95 dark:bg-zinc-900/95 app:dark:bg-black/90 backdrop-blur-xl p-1 app:px-1.5 app:pt-1.5 app:pb-[calc(env(safe-area-inset-bottom)+0.25rem)] rounded-full app:rounded-none grid grid-cols-5 shadow-cal dark:shadow-none app:shadow-none border border-zinc-200 dark:border-white/10 app:border-x-0 app:border-b-0 pointer-events-auto"
+    >
       {SECCIONES.map((seccion) => {
         const Icon = ICONOS[seccion.clave];
         return (
           <MobileNavItem
             key={seccion.clave}
             href={hrefDeSeccion(seccion)}
-            label={seccion.label}
+            label={seccion.clave === "preparar" ? "Preparar" : seccion.label}
             icon={<Icon className="w-[22px] h-[22px]" strokeWidth={2} />}
             active={seccion.clave === activa}
             flagged={(alertas[seccion.clave]?.cantidad ?? 0) > 0}
@@ -122,7 +127,6 @@ function MobileNavItem({
 }: {
   href: string;
   icon: React.ReactNode;
-  /** Not rendered — the bar is icon-only. Exposed to assistive tech instead. */
   label: string;
   active?: boolean;
   flagged?: boolean;
@@ -130,25 +134,23 @@ function MobileNavItem({
   return (
     <Link
       href={href}
-      aria-label={label}
       aria-current={active ? "page" : undefined}
-      className="relative flex-1 h-full flex items-center justify-center"
+      className={`relative h-full app:h-12 flex flex-col items-center justify-center gap-0.5 transition-colors ${
+        active ? "text-aviation-blue-dark dark:text-aviation-cyan" : "text-zinc-500 dark:text-zinc-400"
+      }`}
     >
       {active && (
         <motion.div
           layoutId="mobile-nav-active"
-          className="absolute inset-y-1.5 inset-x-1 rounded-2xl bg-aviation-blue/10"
+          className="absolute inset-0 rounded-full bg-aviation-blue/10 app:hidden"
           transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
         />
       )}
-      <span
-        className={`relative z-10 transition-colors ${
-          active ? "text-aviation-blue-dark dark:text-aviation-cyan" : "text-zinc-400 dark:text-zinc-500"
-        }`}
-      >
+      <span className="relative z-10">
         {icon}
         {flagged && <Dot ring="ring-white dark:ring-zinc-900" />}
       </span>
+      <span className={`relative z-10 text-[10.5px] app:text-[11px] leading-none ${active ? "font-extrabold" : "font-bold"}`}>{label}</span>
     </Link>
   );
 }

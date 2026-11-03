@@ -78,6 +78,32 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.4.0",
+    fecha: "2026-11-03",
+    titulo: "Vector, cómodo en el teléfono",
+    novedades: [
+      {
+        icono: "avion",
+        titulo: "Un inicio para el teléfono",
+        texto: "Primero, si podés volar hoy; después cuánto te queda del pack y cuánto te falta para la licencia, en una fila. Abajo, cada sección con su nombre, y en la app instalada, una barra de pestañas de borde a borde. El tema y \"Cerrar sesión\" están en tu Hangar.",
+        href: "/dashboard",
+        cta: "Ver el inicio",
+      },
+      {
+        icono: "reloj",
+        titulo: "Registrar con una mano",
+        texto: "\"Ahora\" en cada hora, y Guardar siempre abajo con el tiempo de vuelo. En la Bitácora, deslizá un vuelo a la izquierda para editarlo o pasarlo al CAD. Y en el Mapa, volando, la tarjeta baja con el próximo punto y con quién hablás.",
+        href: "/dashboard/log-flight",
+        cta: "Registrar un vuelo",
+      },
+      {
+        icono: "libro",
+        titulo: "Letra nueva",
+        texto: "Plus Jakarta Sans en vez de Nunito: los títulos y las negritas, más firmes.",
+      },
+    ],
+  },
+  {
     version: "3.3.0",
     fecha: "2026-11-03",
     titulo: "Tus propios puntos, desde el mapa",

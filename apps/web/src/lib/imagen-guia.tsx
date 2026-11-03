@@ -22,7 +22,7 @@ export async function imagenDeGuia(titulo: string, eyebrow = "GUÍA PARA PILOTOS
           padding: 72,
           backgroundColor: COLOR.fondo,
           backgroundImage: RESPLANDOR,
-          fontFamily: "Nunito",
+          fontFamily: "Display",
         }}
       >
         <MarcaVector tamano={52} />

@@ -4,7 +4,7 @@ import { costosPorVuelo } from "@/lib/costos";
 import { hitoCruzado } from "@/lib/hitos";
 import { soloVolados } from "@/lib/simulador";
 import { openingTotals } from "@/lib/summary";
-import { Plus, Clock, LandPlot, Plane } from "lucide-react";
+import { Plus, Clock, LandPlot, Plane, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import ExportarBitacora from "@/components/dashboard/ExportarBitacora";
 import { esAlumno } from "@/lib/licencias";
@@ -86,7 +86,47 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
   const totalLandings = sortedFlights.reduce((acc, f) => acc + f.landings, 0);
 
   return (
-    <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000 w-full">
+    <div className="space-y-4 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000 w-full">
+      {/*
+        En el teléfono (3.4.0), un encabezado más chico: el título, los totales en una línea y
+        "Pasar al CAD" y el libro como dos chips. Instalada (`app:`), los pendientes del CAD son un
+        aviso ámbar en vez del chip. En el escritorio, `PageHeader` como siempre.
+      */}
+      <div className="md:hidden space-y-3">
+        <div>
+          <h1 className="app:hidden text-[28px] font-display font-extrabold tracking-tight leading-tight text-zinc-900 dark:text-white">Bitácora</h1>
+          <p className="data text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
+            {sortedFlights.length} vuelos · {totalHours.toFixed(1).replace(".", ",")} h<span className="app:hidden"> · {totalLandings} aterrizajes</span>
+          </p>
+        </div>
+        <div className="flex items-center gap-2 app:hidden">
+          {!esAlumno(profile?.license_type) && (
+            <Link
+              href="/dashboard/history/cad"
+              className="h-9 px-3 rounded-full bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center gap-1.5 text-[13px] font-bold text-zinc-900 dark:text-white"
+            >
+              Pasar al CAD
+              {sinPasarAlCad > 0 && (
+                <span className="data px-[7px] py-px rounded-full bg-amber-400 text-zinc-900 text-[11px] font-bold">{sinPasarAlCad}</span>
+              )}
+            </Link>
+          )}
+          <ExportarBitacora flights={sortedFlights} aircraft={aircraft} libros={libros} alumno={esAlumno(profile?.license_type)} variante="chip" />
+        </div>
+        {!esAlumno(profile?.license_type) && sinPasarAlCad > 0 && (
+          <Link
+            href="/dashboard/history/cad"
+            className="hidden app:flex items-center gap-2.5 rounded-[14px] border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3 py-2.5 text-[13.5px] font-bold text-amber-900 dark:text-amber-200"
+          >
+            <span className="flex-1">
+              {sinPasarAlCad} {sinPasarAlCad === 1 ? "vuelo" : "vuelos"} para pasar al CAD
+            </span>
+            <ChevronRight className="w-4 h-4" aria-hidden="true" />
+          </Link>
+        )}
+        {!esAlumno(profile?.license_type) && flights.some((f) => f.cad_vuelo_id) && <LeidoDelCad leido={leidoDelCad(profile?.cad_leido_at, new Date())} />}
+      </div>
+      <div className="max-md:hidden">
       <PageHeader
         eyebrow="Historial completo"
         title="Bitácora"
@@ -109,7 +149,8 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                 )}
               </Link>
             )}
-            <Link href="/dashboard/log-flight" className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm px-6 py-3.5 rounded-xl shadow-cal-highlight dark:shadow-none transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 flex items-center justify-center gap-2">
+            {/* En el teléfono no: el + de Nuevo vuelo está siempre a mano (3.4.0). */}
+            <Link href="/dashboard/log-flight" className="max-lg:hidden bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm px-6 py-3.5 rounded-xl shadow-cal-highlight dark:shadow-none transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 flex items-center justify-center gap-2">
               <span>Nuevo registro</span>
               <Plus className="w-4 h-4" />
             </Link>
@@ -124,6 +165,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
         {/* Las marcas "En el CAD" y "Falta la DDJJ" son de la última lectura del CAD (2.36.0). */}
         {!esAlumno(profile?.license_type) && flights.some((f) => f.cad_vuelo_id) && <LeidoDelCad leido={leidoDelCad(profile?.cad_leido_at, new Date())} />}
       </PageHeader>
+      </div>
 
       {(ofrecerCompartir || hito) && recienCargado && (
         <BannerCompartirVuelo

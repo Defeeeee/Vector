@@ -1,6 +1,13 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
+/*
+  `app:` — Vector abierta como app instalada (PWA, `display: standalone` del manifest), sin las
+  barras del navegador, **en el teléfono** (menos de `lg`): instalada en la compu sigue el diseño
+  del escritorio (3.4.0). Es CSS puro: el server no sabe cómo se abrió, así que nada de esto
+  puede depender de JavaScript sin romper la hidratación.
+*/
+@custom-variant app (@media (display-mode: standalone) and (width < 64rem));
 
 @theme {
   --color-background: #ffffff;
@@ -349,4 +356,10 @@
 }
 .leaflet-container.mapa-oscuro .leaflet-control-attribution.leaflet-control a {
   color: #d4d4d8;
+}
+
+/* El Mapa en vuelo ocupa la pantalla entera en el teléfono (3.4.0): los controles de arriba
+   (capas, zoom) bajan lo que ocupa la muesca para que se puedan tocar. */
+[data-sin-encabezado-movil] .leaflet-top {
+  top: env(safe-area-inset-top);
 }

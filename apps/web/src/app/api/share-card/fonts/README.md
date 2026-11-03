@@ -1,6 +1,6 @@
 # Fuentes de la tarjeta compartible
 
-Dos archivos, vendorizados a propósito.
+Tres archivos, vendorizados a propósito.
 
 `next/font/google` descarga las tipografías en tiempo de build y **no deja nada en
 disco que satori pueda leer**: `ImageResponse` necesita los bytes de la fuente como
@@ -12,15 +12,16 @@ parecerse a Vector, que es el punto de la tarjeta.
 
 | Archivo | Para qué |
 |---|---|
-| `Nunito-ExtraBold.ttf` | El número grande y el logotipo. Es la `--font-display` de la app. |
+| `PlusJakartaSans-ExtraBold.woff` | El número grande y el logotipo (`Display`). Es la `--font-display` de la app desde la 3.4.0. |
+| `Nunito-ExtraBold.ttf` | La de antes: sólo la pegatina (`lib/pegatina-png.tsx`), que ya está impresa con ésa. |
 | `IBMPlexMono-SemiBold.ttf` | Todo lo que se lee como **medición**, y las etiquetas. |
 
 IBM Plex Mono no es decorativa: se eligió por el cero barrado, y `src/app/layout.tsx`
 explica por qué — *"en un libro de vuelo la diferencia entre 0 y O no es un detalle
 estilístico"*. Una tarjeta con las horas en la sans pierde la identidad del producto.
 
-Bajadas de Google Fonts (`fonts.gstatic.com`), las dos bajo **SIL Open Font License
-1.1** — ver `OFL.txt`. Vendorizarlas es lo mismo que ya hace el repo con
+Bajadas de Google Fonts (`fonts.gstatic.com`; Plus Jakarta Sans de Fontsource 5.3.0, en WOFF, que satori lee), todas bajo **SIL Open Font License
+1.1** — ver `OFL.txt` y `OFL-PlusJakartaSans.txt`. Vendorizarlas es lo mismo que ya hace el repo con
 `src/data/airports.tsv`: no depender de la red ni en build ni en runtime.
 
 Los bytes nunca llegan al navegador: son entrada del render en el servidor.

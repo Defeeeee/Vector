@@ -162,7 +162,8 @@ export default function AirportResolver({
 
   return (
     <div ref={containerRef} className="relative">
-      <label className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide block mb-1.5">
+      {/* En el teléfono (3.4.0), una caja blanca con la etiqueta adentro y el código a la izquierda. */}
+      <label className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide block mb-1.5 max-lg:absolute max-lg:z-10 max-lg:top-[7px] max-lg:left-3 max-lg:mb-0 max-lg:normal-case max-lg:tracking-normal max-lg:text-[11px] max-lg:font-bold max-lg:text-zinc-500 max-lg:pointer-events-none">
         {label}
       </label>
 
@@ -184,7 +185,7 @@ export default function AirportResolver({
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        className={`w-full text-center text-2xl font-bold tracking-[0.15em] rounded-2xl py-3 outline-none transition-colors border-2 bg-zinc-50 dark:bg-white/5 text-zinc-900 dark:text-white placeholder:text-zinc-300 dark:placeholder:text-zinc-700 placeholder:tracking-[0.15em] ${
+        className={`w-full text-center text-2xl font-bold tracking-[0.15em] rounded-2xl py-3 outline-none transition-colors border-2 bg-zinc-50 dark:bg-white/5 text-zinc-900 dark:text-white placeholder:text-zinc-300 dark:placeholder:text-zinc-700 placeholder:tracking-[0.15em] max-lg:h-14 max-lg:text-left max-lg:font-mono max-lg:text-lg max-lg:font-semibold max-lg:tracking-normal max-lg:placeholder:tracking-normal max-lg:px-3 max-lg:pt-5 max-lg:pb-1 max-lg:rounded-[14px] max-lg:border max-lg:bg-white max-lg:dark:bg-[#111111] ${
           unknown
             ? "border-amber-400 dark:border-amber-500/60"
             : resolved
@@ -198,7 +199,7 @@ export default function AirportResolver({
 
       {/* Resolved name — the whole point of the control. Reserve the line so
           the layout doesn't jump as codes resolve and un-resolve. */}
-      <div className="h-4 mt-1.5 text-center overflow-hidden">
+      <div className="h-4 mt-1.5 text-center max-lg:text-left max-lg:px-1 overflow-hidden">
         <AnimatePresence mode="wait">
           {resolved ? (
             <motion.p

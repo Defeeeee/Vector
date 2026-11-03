@@ -103,7 +103,7 @@ export async function GET(req: NextRequest) {
           padding: 72,
           backgroundColor: COLOR.fondo,
           backgroundImage: RESPLANDOR,
-          fontFamily: "Nunito",
+          fontFamily: "Display",
         }}
       >
         {/* Marca ------------------------------------------------------------- */}

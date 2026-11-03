@@ -100,7 +100,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   return new ImageResponse(
     (
-      <div style={{ width: ANCHO, height: ALTO, display: "flex", position: "relative", backgroundColor: COLOR.fondo, fontFamily: "Nunito" }}>
+      <div style={{ width: ANCHO, height: ALTO, display: "flex", position: "relative", backgroundColor: COLOR.fondo, fontFamily: "Display" }}>
         {/* El mapa, apagado para que el recorrido sea lo que se ve. */}
         {e.tiles.map((t, i) =>
           imagenes[i] ? (

@@ -5,6 +5,13 @@ import { recencyByClass, recencyWindowDays } from "@/lib/recency";
 import { pilotStatus } from "@/lib/pilot-status";
 import { esAlumno } from "@/lib/licencias";
 import type { Aircraft } from "@/types";
+import { documentStatus } from "@/lib/utils";
+
+/** El "sí" corto de la tarjeta del teléfono; lo que no esté acá se muestra entero. */
+const SI_CORTO: Record<string, string> = {
+  "Podés volar como piloto al mando y llevar pasajeros.": "Sí, con pasajeros",
+  "Podés volar con tu instructor.": "Sí, con tu instructor",
+};
 
 /**
  * "¿Puedo volar hoy?" — las cuatro condiciones de RAAC 61.060(a)(1) en un lugar.
@@ -44,8 +51,36 @@ export default function FlightStatusCard({
   const grave = estado.estado === "inactividad_prolongada" || estado.estado === "documento_vencido";
 
   if (ok) {
+    // En el teléfono el documento que vence primero va adentro de la tarjeta, si está lejos:
+    // cerca (60 días o menos) lo sigue diciendo `ProximoVencimiento`, en color.
+    const proximo = documents
+      .map((doc) => ({ doc, status: documentStatus(doc.expiry_date) }))
+      .filter((d) => d.status.daysRemaining !== null)
+      .sort((a, b) => (a.status.daysRemaining ?? Infinity) - (b.status.daysRemaining ?? Infinity))[0];
+    const vigencia =
+      proximo && proximo.status.tone === "ok" ? ` ${proximo.doc.name} vigente ${proximo.status.daysRemaining} días más.` : "";
+    const detalle = `${estado.detalle ? `${estado.detalle.replace(/\.?$/, ".")}` : ""}${vigencia}`.trim();
     return (
-      <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.07] px-4 py-3">
+      <>
+      {/*
+        El teléfono (3.4.0): la tarjeta grande, como primera respuesta del inicio. En el navegador,
+        blanca con el tilde verde; instalada (`app:`), entera en verde.
+      */}
+      <section className="lg:hidden rounded-[20px] border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] app:bg-emerald-900 app:dark:bg-emerald-950 app:border-transparent app:dark:border-transparent app:rounded-[22px] p-4 app:p-[18px] flex flex-col gap-2.5 app:gap-2">
+        <div className="flex items-center gap-2.5">
+          <span className="app:hidden w-[34px] h-[34px] rounded-full bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-[18px] h-[18px] text-emerald-700 dark:text-emerald-400" />
+          </span>
+          <div className="min-w-0">
+            <p className="eyebrow app:text-emerald-200!">¿Puedo volar hoy?</p>
+            <p className="text-xl app:text-[26px] font-extrabold tracking-tight text-emerald-900 dark:text-emerald-300 app:text-white app:dark:text-white leading-tight">
+              {SI_CORTO[estado.puede] ?? estado.puede}
+            </p>
+          </div>
+        </div>
+        {detalle && <p className="text-[13px] app:text-[13.5px] leading-snug text-zinc-600 dark:text-zinc-400 app:text-emerald-100 app:dark:text-emerald-100">{detalle}</p>}
+      </section>
+      <div className="max-lg:hidden flex items-center gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.07] px-4 py-3">
         <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-500" />
         <p className="text-sm font-semibold text-zinc-900 dark:text-white">{estado.puede}</p>
         {estado.detalle && (
@@ -54,6 +89,7 @@ export default function FlightStatusCard({
           </p>
         )}
       </div>
+      </>
     );
   }
 

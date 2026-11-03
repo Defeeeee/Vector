@@ -10,7 +10,7 @@
  *   y Outlook dibuja con el motor de Word, que no entiende flex ni grid.
  * - Las imágenes son PNG en el dominio público (`public/hotlink-ok/correo/`, las arma
  *   `npm run build:correo`): ningún cliente de correo muestra SVG.
- * - La tipografía es Nunito donde el cliente carga fuentes web (Apple Mail, iOS) y la
+ * - La tipografía es la de la app (Plus Jakarta Sans) donde el cliente carga fuentes web (Apple Mail, iOS) y la
  *   del sistema donde no (Gmail).
  * - Sólo modo claro, declarado: los clientes que invierten colores solos arruinan el
  *   contraste del título azul sobre blanco.
@@ -22,7 +22,7 @@
 export const escapar = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-export const FUENTE = "'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+export const FUENTE = "'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 export const MONO = "'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace";
 export const AZUL = "#2563eb";
 export const NEGRO = "#18181b";
@@ -217,7 +217,7 @@ export function plantillaMail(p: Plantilla): string {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light only">
 <meta name="supported-color-schemes" content="light only">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <title>Vector</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f4f5">

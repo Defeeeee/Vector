@@ -6,6 +6,14 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.4.0 — Vector, cómodo en el teléfono
+
+_3 de noviembre de 2026_
+
+- **Un inicio para el teléfono** — Primero, si podés volar hoy; después cuánto te queda del pack y cuánto te falta para la licencia, en una fila. Abajo, cada sección con su nombre, y en la app instalada, una barra de pestañas de borde a borde. El tema y "Cerrar sesión" están en tu Hangar.
+- **Registrar con una mano** — "Ahora" en cada hora, y Guardar siempre abajo con el tiempo de vuelo. En la Bitácora, deslizá un vuelo a la izquierda para editarlo o pasarlo al CAD. Y en el Mapa, volando, la tarjeta baja con el próximo punto y con quién hablás.
+- **Letra nueva** — Plus Jakarta Sans en vez de Nunito: los títulos y las negritas, más firmes.
+
 ## v3.3.0 — Tus propios puntos, desde el mapa
 
 _3 de noviembre de 2026_

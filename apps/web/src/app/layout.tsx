@@ -8,13 +8,16 @@ import ServiceWorkerVector from "@/components/ServiceWorkerVector";
 import PixelMeta from "@/components/PixelMeta";
 import { SITIO_URL } from "@/lib/sitio";
 
-// Single unified typeface across the app — Nunito for both body text and
-// display/headline roles.
+// Single unified typeface across the app for both body text and display/headline roles:
+// **Plus Jakarta Sans** desde la 3.4.0 (Federico, 2026-11-03). Hasta ahí fue Nunito, cuyos remates
+// redondeados se notaban en los títulos y las negritas; Plus Jakarta se eligió entre seis
+// (Figtree, Manrope, Onest, Inter Tight) mirando el inicio del teléfono. Pesa 200–800: un
+// `font-black` (900) cae en 800.
 //
 // **Las fuentes están en el repo** (`src/app/fonts/`, de Fontsource, OFL), desde la 3.3.1. Antes
 // salían de `next/font/google`, que las baja de Google en cada build: el 2026-11-03 ese pedido
 // cortó tres builds (uno en el CI y dos en el VPS, que volvieron solos al anterior). Son los
-// mismos archivos (Nunito variable, IBM Plex Mono 400–700), sólo el subconjunto latino, que
+// mismos archivos que daba Google (la sans variable, IBM Plex Mono 400–700), sólo el subconjunto latino, que
 // trae las tildes, la ñ y los signos de apertura.
 //
 // The variables are named after the *role*, not the typeface: they used to be
@@ -23,14 +26,14 @@ import { SITIO_URL } from "@/lib/sitio";
 // Space Grotesk. Role names survive a change of face (see T3.2 in
 // docs/brief/06-plan-post-flightdeck.md).
 const bodyFace = localFont({
-  src: "./fonts/nunito-latin-wght-normal.woff2",
-  weight: "200 1000",
+  src: "./fonts/plus-jakarta-sans-latin-wght-normal.woff2",
+  weight: "200 800",
   variable: "--font-body-face",
 });
 
 const displayFace = localFont({
-  src: "./fonts/nunito-latin-wght-normal.woff2",
-  weight: "200 1000",
+  src: "./fonts/plus-jakarta-sans-latin-wght-normal.woff2",
+  weight: "200 800",
   variable: "--font-display-face",
 });
 

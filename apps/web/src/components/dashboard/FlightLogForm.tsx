@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AUTORIDADES_CAD } from "@/lib/cad";
 import { useRouter } from "next/navigation";
 import { Aircraft, AirportRef, Logbook } from "@/types";
@@ -286,6 +287,22 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
     if (initialData?.purpose) setPurpose(initialData.purpose);
   }, [initialData?.purpose]);
 
+  // La barra de guardar del teléfono va en un portal sobre `body`: la página entra con una
+  // animación de `transform`, que haría que `fixed` se ubique contra ella y no contra la pantalla.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+
+  // En el teléfono se guarda desde la barra de abajo y el error aparece arriba: llevarlo a la vista.
+  useEffect(() => {
+    if (error) window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [error]);
+
+  // El chip de la fecha en el teléfono: "Hoy, 3 nov" o "28 oct", escrito a mano (invariante 1).
+  // "Hoy" recién después de montar, con la misma fecha UTC que usa el valor por defecto.
+  const [, mesFecha, diaFecha] = date.split("-").map(Number);
+  const hoyIso = montado ? new Date().toISOString().slice(0, 10) : null;
+  const fechaCorta = `${date === hoyIso ? "Hoy, " : ""}${diaFecha || ""} ${MESES_CHIP[(mesFecha || 1) - 1]}`;
+
   // Raw block time vs. the ANAC-rounded decimal that actually goes on the books.
   const blockMinutes = calculateBlockMinutes(takeoff, landing);
   const computedDuration = takeoff && landing ? calculateFlightDuration(takeoff, landing) : 0;
@@ -346,6 +363,11 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
 
   async function handleSubmit(formData: FormData) {
     setError(null);
+
+    if (!aircraftId) {
+      setError("Elegí el avión.");
+      return;
+    }
 
     if (esSimulador) {
       // No se validan aeródromos: no los hay. Lo que no puede faltar es la única
@@ -445,6 +467,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
 
   return (
     <form 
+      id="form-registrar-vuelo"
       onSubmit={(e) => {
         e.preventDefault();
         handleSubmit(new FormData(e.currentTarget));
@@ -470,8 +493,8 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
 
       {/* La tarjeta: `overflow-hidden` recorta sus esquinas redondeadas. Hasta la 3.0.0
           también se dibujaba sin tarjeta, adentro del modal que cerraba la sesión en vivo. */}
-      <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-3xl md:rounded-[2.5rem] shadow-cal dark:shadow-none overflow-hidden flex flex-col transition-colors">
-          <div className="p-6 md:p-8 border-b border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 flex items-center justify-between">
+      <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-3xl md:rounded-[2.5rem] shadow-cal dark:shadow-none overflow-hidden flex flex-col transition-colors max-lg:bg-transparent! max-lg:dark:bg-transparent! max-lg:border-0 max-lg:shadow-none! max-lg:rounded-none max-lg:overflow-visible">
+          <div className="max-lg:hidden p-6 md:p-8 border-b border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 flex items-center justify-between">
             <div className="space-y-1">
               <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">
                 Nueva entrada
@@ -483,20 +506,62 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
             </div>
           </div>
 
-        <div className="p-6 md:p-8 space-y-8 md:space-y-10">
+        <div className="p-6 md:p-8 max-lg:p-0 space-y-8 md:space-y-10 max-lg:space-y-0 max-lg:flex max-lg:flex-col max-lg:gap-[18px]">
           {/* 01. General */}
-          <div className="space-y-6">
-            <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">01. Información general</p>
+          <div className="space-y-6 max-lg:space-y-0 max-lg:contents">
+            <p className="max-lg:hidden text-sm font-semibold text-zinc-500 dark:text-zinc-400">01. Información general</p>
 
             {/* Two columns from `lg` up. Below that it stays a single stack:
                 on a phone side-by-side fields would each be ~150px wide, and a
                 time input does not fit in that. */}
-            <div className="lg:grid lg:grid-cols-2 lg:gap-x-10 lg:items-start space-y-6 lg:space-y-0">
+            {/*
+              En el teléfono (3.4.0) las dos columnas se disuelven (`contents`) y todo queda en una
+              sola, en el orden del diseño: avión y fecha, ruta, horarios, aterrizajes; lo que
+              clasifica el vuelo (finalidad, libro, observaciones, CAD) va después (`order-1`).
+            */}
+            <div className="lg:grid lg:grid-cols-2 lg:gap-x-10 lg:items-start space-y-6 lg:space-y-0 max-lg:space-y-0 max-lg:contents">
               {/* Left column — the flight itself. */}
-              <div className="space-y-6">
+              <div className="space-y-6 max-lg:space-y-0 max-lg:contents">
+              <section className="lg:hidden flex flex-col gap-2">
+                <p className="eyebrow">Avión y fecha</p>
+                <div className="flex items-center gap-2">
+                  {/* Con muchos aviones la fila se desliza de costado; el borde se desvanece para que
+                      se note que hay más. La fecha queda fija a la derecha. */}
+                  <div className="flex-1 min-w-0 flex gap-2 pr-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-20px),transparent)]">
+                  {aircraft.map((ac) => {
+                    const elegido = ac.id === aircraftId;
+                    return (
+                      <button
+                        key={ac.id}
+                        type="button"
+                        aria-pressed={elegido}
+                        onClick={() => setAircraftId(ac.id)}
+                        className={`shrink-0 h-11 px-3.5 rounded-xl data text-sm font-semibold transition-colors ${
+                          elegido
+                            ? "border-2 border-aviation-blue bg-blue-50 dark:bg-aviation-blue/15 text-blue-950 dark:text-white"
+                            : "border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] text-zinc-700 dark:text-zinc-300"
+                        }`}
+                      >
+                        {ac.registration}
+                      </button>
+                    );
+                  })}
+                  </div>
+                  <label className="relative shrink-0 h-11 px-3.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] flex items-center text-sm font-bold text-zinc-700 dark:text-zinc-300">
+                    {fechaCorta}
+                    <input
+                      type="date"
+                      aria-label="Fecha"
+                      value={date}
+                      onChange={(e) => e.target.value && setDate(e.target.value)}
+                      className="absolute inset-0 w-full h-full opacity-0"
+                    />
+                  </label>
+                </div>
+              </section>
             {/* Route — two resolving chips joined by an arrow, or, on a simulator,
                 the one free-text column the paper book has. */}
-            <div className="space-y-4">
+            <div className="space-y-4 max-lg:space-y-0 max-lg:flex max-lg:flex-col max-lg:gap-2">
               {esSimulador ? (
                 <LedgerField label="Ruta">
                   <input
@@ -519,7 +584,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
                       placeholder="SADM"
                     />
                   </div>
-                  <ArrowRight className="w-5 h-5 text-zinc-300 dark:text-zinc-600 shrink-0 mt-9" />
+                  <ArrowRight className="w-5 h-5 text-zinc-300 dark:text-zinc-600 shrink-0 mt-9 max-lg:mt-[18px]" />
                   <div className="flex-1 min-w-0">
                     <AirportResolver
                       label="Llegada"
@@ -541,16 +606,19 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
               {/* Auto-set from the two codes, but still the pilot's call. En un
                   simulador no hay travesía posible: no se recorrió distancia. */}
               {!esSimulador && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 max-lg:order-first">
+                  <p className="lg:hidden eyebrow mr-auto">Ruta</p>
                   <SegmentToggle
                     active={!isCrossCountry}
                     onClick={() => setCrossCountryOverride(false)}
                     label="Local"
+                    grupo="tipo-de-ruta"
                   />
                   <SegmentToggle
                     active={isCrossCountry}
                     onClick={() => setCrossCountryOverride(true)}
                     label="Travesía"
+                    grupo="tipo-de-ruta"
                   />
                   {legDistance !== null && legDistance > 0 && (
                     <span className="text-[10px] font-bold data text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">
@@ -580,30 +648,33 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
               <input type="hidden" name="takeoff" value={takeoff} />
               <input type="hidden" name="landing" value={landing} />
 
-              <div className="flex items-center gap-1.5">
-                <SegmentToggle active={!localTime} onClick={() => setLocalTime(false)} label="UTC" />
-                <SegmentToggle active={localTime} onClick={() => setLocalTime(true)} label="Local (−3)" />
+              <div className="flex items-center gap-1.5 max-lg:-mb-2.5">
+                <p className="lg:hidden eyebrow mr-auto">Horarios ({localTime ? "hora local" : "UTC"})</p>
+                <SegmentToggle active={!localTime} onClick={() => setLocalTime(false)} label="UTC" grupo="horario" />
+                <SegmentToggle active={localTime} onClick={() => setLocalTime(true)} label="Local (−3)" grupo="horario" />
               </div>
 
-              <div className="grid grid-cols-2 gap-x-6 gap-y-6">
-                <LedgerField label={localTime ? "Hora de salida (local)" : "Hora de salida (UTC)"}>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-6 max-lg:gap-2">
+                <LedgerField label={localTime ? "Hora de salida (local)" : "Hora de salida (UTC)"} className={TARJETA_HORA}>
                   <input
                     type="time"
                     required
                     value={toDisplay(takeoff)}
                     onChange={(e) => setTakeoff(fromDisplay(e.target.value))}
-                    className={`${ledgerInput} [color-scheme:light] dark:[color-scheme:dark]`}
+                    className={`${ledgerInput} ${HORA_GRANDE} [color-scheme:light] dark:[color-scheme:dark]`}
                   />
+                  <BotonAhora onClick={() => setTakeoff(new Date().toISOString().slice(11, 16))} />
                 </LedgerField>
 
-                <LedgerField label={localTime ? "Hora de llegada (local)" : "Hora de llegada (UTC)"}>
+                <LedgerField label={localTime ? "Hora de llegada (local)" : "Hora de llegada (UTC)"} className={TARJETA_HORA}>
                   <input
                     type="time"
                     required
                     value={toDisplay(landing)}
                     onChange={(e) => setLanding(fromDisplay(e.target.value))}
-                    className={`${ledgerInput} [color-scheme:light] dark:[color-scheme:dark]`}
+                    className={`${ledgerInput} ${HORA_GRANDE} [color-scheme:light] dark:[color-scheme:dark]`}
                   />
+                  <BotonAhora onClick={() => setLanding(new Date().toISOString().slice(11, 16))} />
                 </LedgerField>
               </div>
 
@@ -635,21 +706,24 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
                   <input type="hidden" name="duration" value={duracionAGuardar.toFixed(1)} />
                 </>
               ) : (
+                <div className="max-lg:hidden">
                 <TimeSummary
                   blockMinutes={blockMinutes}
                   total={total}
                   manualDuration={manualDuration}
                   onManualDuration={setManualDuration}
                 />
+                </div>
               )}
             </div>
 
             {/* Right column — what classifies the flight. */}
-            <div className="space-y-6">
-              <LedgerField label="Aeronave">
+            <div className="space-y-6 max-lg:space-y-0 max-lg:contents">
+              {/* En el teléfono el avión se elige con los chips de arriba. Sin `required`: un
+                  campo obligatorio escondido frena el envío sin decir nada; lo valida `handleSubmit`. */}
+              <LedgerField label="Aeronave" className="max-lg:hidden">
                 <StyledSelect
                   name="aircraft_id"
-                  required
                   value={aircraftId}
                   onChange={setAircraftId}
                   placeholder="Seleccionar aeronave..."
@@ -661,7 +735,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
                 />
               </LedgerField>
 
-              <LedgerField label="Finalidad">
+              <LedgerField label="Finalidad" className={`max-lg:order-2 ${TARJETA_CAMPO}`}>
                 <StyledSelect
                   name="purpose"
                   required
@@ -681,7 +755,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
               </LedgerField>
 
               {logbooks.length > 1 && (
-                <LedgerField label="Libro de vuelo">
+                <LedgerField label="Libro de vuelo" className={`max-lg:order-2 ${TARJETA_CAMPO}`}>
                   <StyledSelect
                     name="logbook_id"
                     required
@@ -693,8 +767,8 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
                 </LedgerField>
               )}
 
-              <div className="grid grid-cols-2 gap-x-6 gap-y-6">
-                <LedgerField label="Fecha">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-6 max-lg:block">
+                <LedgerField label="Fecha" className="max-lg:hidden">
                   <input
                     type="date"
                     name="date"
@@ -708,7 +782,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
                 {/* Un simulador no aterriza. Contarle un aterrizaje inflaría el
                     requisito de aterrizajes nocturnos con uno que nunca pasó. */}
                 {!esSimulador && (
-                  <LedgerField label="Aterrizajes">
+                  <LedgerField label="Aterrizajes" className={FILA_ATERRIZAJES}>
                     <LandingsStepper value={landings} onChange={setLandings} />
                   </LedgerField>
                 )}
@@ -718,7 +792,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
               {/* The paper ANAC logbook has an observations column and Vector
                   had nowhere to write one. Kept last and unlabelled-optional:
                   most flights never need it. */}
-              <LedgerField label="Observaciones">
+              <LedgerField label="Observaciones" className={`max-lg:order-2 ${TARJETA_CAMPO}`}>
                 <textarea
                   name="remarks"
                   rows={2}
@@ -732,9 +806,9 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
               {/* La autoridad certificante para el CAD de ANAC: opcional. Si se carga acá, el
                   panel de "Pasar al CAD" ya la tiene. Desde la 2.33.0 también va en un simulador. */}
               {(
-                <div className="space-y-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-                    <LedgerField label="Autoridad para el CAD">
+                <div className="space-y-2 max-lg:order-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6 max-lg:gap-2">
+                    <LedgerField label="Autoridad para el CAD" className={TARJETA_CAMPO}>
                       <StyledSelect
                         name="cad_autoridad_id"
                         searchable
@@ -747,7 +821,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
                         options={OPCIONES_AUTORIDAD}
                       />
                     </LedgerField>
-                    <LedgerField label="Nombre y apellido">
+                    <LedgerField label="Nombre y apellido" className={TARJETA_CAMPO}>
                       <input
                         name="cad_autoridad_nombre"
                         value={autoridadNombre}
@@ -786,7 +860,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
               {/* En el libro de papel a veces se cierra la hoja antes de llenarla (para
                   foliar, para certificar): este vuelo pasa a ser su último renglón, y en el
                   PDF lo que queda en blanco se tacha. Ver `lib/libro-anac.ts`. */}
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label className="flex items-start gap-3 cursor-pointer max-lg:order-2">
                 <input
                   type="checkbox"
                   name="cierra_hoja"
@@ -811,7 +885,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
           {/* 02 and 03 side by side too: both are short now, and stacking two
               short blocks was what still forced a scroll after the breakdown
               moved into the panel. */}
-          <div className="lg:grid lg:grid-cols-2 lg:gap-x-10 lg:items-start space-y-8 lg:space-y-0 md:space-y-10 lg:md:space-y-0">
+          <div className="lg:grid lg:grid-cols-2 lg:gap-x-10 lg:items-start space-y-8 lg:space-y-0 md:space-y-10 lg:md:space-y-0 max-lg:space-y-0 max-lg:contents">
 
           {/* 02 — now a trigger, not thirteen rows.
               The whole breakdown lives in the slide-over below. Inline, those
@@ -821,8 +895,8 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
               summary here has to carry enough state that opening the panel is a
               choice and not an obligation — hence assigned/total and the
               unassigned warning right on the button. */}
-          <div className="space-y-3 pt-6 border-t border-zinc-200 dark:border-white/10">
-            <div className="flex items-center justify-between">
+          <div className="space-y-3 pt-6 border-t border-zinc-200 dark:border-white/10 max-lg:pt-0 max-lg:border-t-0 max-lg:order-1">
+            <div className="flex items-center justify-between max-lg:hidden">
               <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
                 {esSimulador ? "02. Instrucción terrestre" : "02. Desglose ANAC"}
               </p>
@@ -897,15 +971,15 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
 
           {/* 03. Discounts — untouched, this is Vector's own concept. Renumbered from
               04 when sections 02 and 03 merged into the slide-over. */}
-          <div className="space-y-4 pt-6 border-t border-zinc-200 dark:border-white/10">
+          <div className="space-y-4 pt-6 border-t border-zinc-200 dark:border-white/10 max-lg:order-3 max-lg:pt-0 max-lg:border-t-0 max-lg:space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">03. Descuento aplicado</p>
+              <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 max-lg:eyebrow">03. Descuento aplicado</p>
               <Percent className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
             </div>
             {/* Stacked, not two-up: this block now lives inside a half-width
                 column, where two fields side by side would be ~150px each. */}
             <div className="grid grid-cols-1 gap-y-6">
-              <LedgerField label="Tipo de descuento">
+              <LedgerField label="Tipo de descuento" className={TARJETA_CAMPO}>
                 <StyledSelect
                   name="discount_type"
                   value={discountType}
@@ -917,6 +991,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
               {discountType && (
                 <LedgerField
                   label={discountType === "value" ? "Monto de descuento ($)" : "Porcentaje de descuento (%)"}
+                  className={TARJETA_CAMPO}
                 >
                   <input
                     type="number"
@@ -1031,7 +1106,38 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
         </div>
         )}
 
-        <div className="p-6 md:p-8 border-t border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5">
+        {/*
+          En el teléfono, guardar está siempre a mano: una barra fija abajo con el tiempo de vuelo,
+          que en esta pantalla reemplaza a la de secciones (`data-sin-barra-movil`, ver el layout).
+          Envía este mismo formulario con `form=`.
+        */}
+        {montado &&
+          createPortal(
+            <div
+              data-sin-barra-movil
+              className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-white/95 dark:bg-black/90 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] flex items-center gap-3"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">{esSimulador ? "Sesión" : "Tiempo de vuelo"}</p>
+                <p className="data text-2xl font-semibold text-zinc-900 dark:text-white leading-tight">
+                  {total > 0 ? total.toFixed(1).replace(".", ",") : "—"}
+                  <span className="text-sm text-zinc-500 dark:text-zinc-400"> h</span>
+                </p>
+              </div>
+              <button
+                type="submit"
+                form="form-registrar-vuelo"
+                disabled={isPending}
+                className="h-12 px-6 rounded-full bg-aviation-blue text-white font-bold text-[15px] flex items-center gap-2 shadow-lg shadow-aviation-blue/30 active:scale-95 transition-transform disabled:opacity-50"
+              >
+                {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                {isPending ? (cargandoCad ? "Cargando en tu CAD…" : "Guardando…") : "Guardar"}
+              </button>
+            </div>,
+            document.body,
+          )}
+
+        <div className="max-lg:hidden p-6 md:p-8 border-t border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5">
           <motion.button
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
@@ -1081,6 +1187,32 @@ function SesionDeSimulador({ duracion }: { duracion: number }) {
         acá abajo.
       </p>
     </div>
+  );
+}
+
+const MESES_CHIP = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+/** En el teléfono, cada hora va en su tarjeta, con el número grande (3.4.0). */
+const TARJETA_HORA =
+  "max-lg:bg-white max-lg:dark:bg-[#111111] max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:rounded-[14px] max-lg:px-3 max-lg:py-2.5 max-lg:space-y-1 max-lg:[&>label]:font-sans max-lg:[&>label]:normal-case max-lg:[&>label]:tracking-normal max-lg:[&>label]:text-[11px] max-lg:[&>label]:font-bold max-lg:[&>label]:text-zinc-500";
+/** Los campos de abajo (finalidad, observaciones, CAD), en el teléfono: la misma tarjeta, sin el subrayado. */
+const TARJETA_CAMPO = `${"max-lg:bg-white max-lg:dark:bg-[#111111] max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:rounded-[14px] max-lg:px-3 max-lg:py-2.5 max-lg:space-y-0.5 max-lg:[&>label]:font-sans max-lg:[&>label]:normal-case max-lg:[&>label]:tracking-normal max-lg:[&>label]:text-[11px] max-lg:[&>label]:font-bold max-lg:[&>label]:text-zinc-500"} max-lg:[&_input]:border-0 max-lg:[&_textarea]:border-0 max-lg:[&_button]:border-0 max-lg:[&_input]:py-1 max-lg:[&_textarea]:py-1 max-lg:[&_button]:py-1 max-lg:[&_input]:text-[15px] max-lg:[&_textarea]:text-[15px] max-lg:[&_button]:text-[15px]`;
+const HORA_GRANDE = "max-lg:border-0 max-lg:py-0 max-lg:font-mono max-lg:text-2xl";
+
+/** "Aterrizajes" como una fila: el nombre a la izquierda y el −/+ a la derecha. */
+const FILA_ATERRIZAJES =
+  "max-lg:flex max-lg:items-center max-lg:gap-3 max-lg:space-y-0 max-lg:bg-white max-lg:dark:bg-[#111111] max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:rounded-[14px] max-lg:pl-3.5 max-lg:pr-3 max-lg:py-1.5 max-lg:[&>label]:flex-1 max-lg:[&>label]:font-sans max-lg:[&>label]:normal-case max-lg:[&>label]:tracking-normal max-lg:[&>label]:text-[15px] max-lg:[&>label]:font-bold max-lg:[&>label]:text-zinc-900 max-lg:dark:[&>label]:text-white max-lg:[&>div]:w-40";
+
+/** "Ahora" debajo de una hora: la hora UTC del teléfono en ese momento (lo que se guarda es UTC). */
+function BotonAhora({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-2 max-lg:mt-1 h-8 px-3 rounded-full bg-aviation-blue/10 text-aviation-blue-dark dark:text-aviation-cyan max-lg:bg-zinc-50 max-lg:dark:bg-white/5 max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:text-zinc-700 max-lg:dark:text-zinc-300 text-xs font-bold active:scale-95 transition-transform"
+    >
+      Ahora
+    </button>
   );
 }
 
@@ -1150,7 +1282,9 @@ function TimeSummary({
   );
 }
 
-function SegmentToggle({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+// `grupo`: cada par de botones anima su propia pastilla. Con un solo `layoutId` para los dos pares
+// (Local/Travesía y UTC/Local), la pastilla saltaba de un par al otro y uno quedaba sin marcar.
+function SegmentToggle({ active, onClick, label, grupo }: { active: boolean; onClick: () => void; label: string; grupo: string }) {
   return (
     <button
       type="button"
@@ -1162,7 +1296,7 @@ function SegmentToggle({ active, onClick, label }: { active: boolean; onClick: (
     >
       {active && (
         <motion.span
-          layoutId="route-kind"
+          layoutId={grupo}
           className="absolute inset-0 rounded-full bg-aviation-blue"
           transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
         />

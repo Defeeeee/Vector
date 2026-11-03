@@ -5,7 +5,7 @@ Vendorizadas desde la 3.3.1 (2026-11-03), para que el build no dependa de bajarl
 
 | Archivo | Qué | De dónde |
 |---|---|---|
-| `nunito-latin-wght-normal.woff2` | Nunito variable (200–1000): el texto y los títulos | `@fontsource-variable/nunito` 5.3.0 |
+| `plus-jakarta-sans-latin-wght-normal.woff2` | Plus Jakarta Sans variable (200–800): el texto y los títulos, desde la 3.4.0 (antes, Nunito) | `@fontsource-variable/plus-jakarta-sans` 5.3.0 |
 | `ibm-plex-mono-latin-{400,500,600,700}-normal.woff2` | IBM Plex Mono: horas, códigos, matrículas | `@fontsource/ibm-plex-mono` 5.3.0 |
 
 Las dos son SIL Open Font License 1.1 (`OFL-*.txt`). Sólo el subconjunto latino, que trae las

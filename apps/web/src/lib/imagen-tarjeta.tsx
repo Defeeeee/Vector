@@ -47,13 +47,17 @@ export function cargarFuentes(): Promise<FuenteTarjeta[]> {
       const { readFile } = await import("node:fs/promises");
       const { join } = await import("node:path");
       const dir = join(process.cwd(), "src", "app", "api", "share-card", "fonts");
-      const [display, mono] = await Promise.all([
+      const [display, nunito, mono] = await Promise.all([
+        readFile(join(dir, "PlusJakartaSans-ExtraBold.woff")),
         readFile(join(dir, "Nunito-ExtraBold.ttf")),
         readFile(join(dir, "IBMPlexMono-SemiBold.ttf")),
       ]);
       const buf = (b: Buffer) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
       return [
-        { name: "Nunito", data: buf(display), weight: 800 as const, style: "normal" as const },
+        // "Display" es la tipografía de los títulos de la app (Plus Jakarta Sans desde la 3.4.0);
+        // "Nunito" queda para la pegatina, que ya está impresa con ésa.
+        { name: "Display", data: buf(display), weight: 800 as const, style: "normal" as const },
+        { name: "Nunito", data: buf(nunito), weight: 800 as const, style: "normal" as const },
         { name: "PlexMono", data: buf(mono), weight: 600 as const, style: "normal" as const },
       ];
     })().catch((err) => {

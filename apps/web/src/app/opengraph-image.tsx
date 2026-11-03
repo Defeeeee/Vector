@@ -28,7 +28,7 @@ export default async function Image() {
           padding: 72,
           backgroundColor: COLOR.fondo,
           backgroundImage: RESPLANDOR,
-          fontFamily: "Nunito",
+          fontFamily: "Display",
         }}
       >
         <MarcaVector tamano={56} />

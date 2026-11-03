@@ -248,7 +248,7 @@ export default function BuscadorGlobal({ variante }: { variante: "barra" | "icon
           type="button"
           onClick={() => setAbierto(true)}
           aria-label="Buscar o preguntarle al copiloto"
-          className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
+          className="w-10 h-10 app:w-11 app:h-11 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10 app:bg-white app:dark:bg-zinc-900 app:shadow-sm transition-colors"
         >
           <Search className="w-[18px] h-[18px]" />
         </button>

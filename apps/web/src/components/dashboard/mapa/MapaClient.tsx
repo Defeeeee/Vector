@@ -277,10 +277,22 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
 
   if (!montado) return null;
 
+  /*
+    En vuelo, en el teléfono (3.4.0), la tarjeta baja y se vuelve una hoja pegada al borde de
+    abajo, que se lee con el teléfono en la mano o en la pierna; la barra de secciones se esconde
+    (`data-sin-barra-movil`). Arriba, lo que se mira cada minuto: el próximo punto y con quién
+    hablás. Planificando sigue arriba a la izquierda.
+  */
+  const enHoja = volando ? "max-lg:top-auto max-lg:inset-x-0 max-lg:bottom-0 max-lg:rounded-b-none max-lg:border-x-0 max-lg:border-b-0 max-lg:max-h-[72%] max-lg:pb-[env(safe-area-inset-bottom)]" : "";
   const tarjeta = (
     <div
-      className="absolute z-10 top-3 left-3 right-3 lg:top-4 lg:left-4 lg:right-auto lg:w-[380px] max-h-[calc(100%-7.5rem-env(safe-area-inset-bottom))] lg:max-h-[calc(100%-2rem)] flex flex-col rounded-3xl bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-2xl shadow-black/10 overflow-hidden"
+      className={`absolute z-10 top-3 left-3 right-3 lg:top-4 lg:left-4 lg:right-auto lg:w-[380px] max-h-[calc(100%-7.5rem-env(safe-area-inset-bottom))] lg:max-h-[calc(100%-2rem)] ${enHoja} flex flex-col rounded-3xl bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-2xl shadow-black/10 overflow-hidden`}
     >
+      {volando && (
+        <div className="lg:hidden flex justify-center pt-2" aria-hidden="true">
+          <span className="w-9 h-1.5 rounded-full bg-zinc-300 dark:bg-white/20" />
+        </div>
+      )}
       {/* Encabezado: el modo y, en el teléfono, plegar para ver el mapa entero. */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-3 shrink-0">
         <div className="flex-1 min-w-0">
@@ -319,7 +331,7 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
 
       <div className={`${plegada ? "hidden" : "flex"} flex-col min-h-0 overflow-y-auto custom-scrollbar px-4 pb-4 gap-4`}>
         {volando && (
-          <section className="space-y-3">
+          <section className="flex flex-col gap-3">
             {errorGps && !lectura && <p className="text-sm text-amber-600 dark:text-amber-400">{errorGps}</p>}
             {!lectura && !errorGps && (
               <p className="text-sm text-zinc-500 flex items-center gap-2">
@@ -328,7 +340,7 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
             )}
             {lectura && (
               <>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-2 max-lg:order-2">
                   <Dato etiqueta="GS" valor={lectura.gsKt !== null ? Math.round(lectura.gsKt).toString() : "—"} unidad="kt" />
                   <Dato etiqueta="Track" valor={lectura.trackT !== null && (lectura.gsKt ?? 0) > 15 ? grados(variacion !== null ? aMagnetico(lectura.trackT, variacion) : lectura.trackT) : "—"} unidad={variacion !== null ? "°M" : "°V"} />
                   <Dato etiqueta="Alt. GPS" valor={lectura.altitudFt !== null ? miles(lectura.altitudFt) : "—"} unidad="ft" />
@@ -379,7 +391,7 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
                     )}
                   </div>
                 )}
-                <div>
+                <div className="max-lg:order-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">Estás dentro de</p>
                   {dentro.length ? (
                     <ListaEspacios espacios={dentro} />
@@ -387,7 +399,7 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
                     <p className="text-sm text-zinc-500">Ningún espacio controlado de los que dibuja el mapa.</p>
                   )}
                 </div>
-                <div className="flex items-center justify-between gap-2 text-[11px] text-zinc-500">
+                <div className="flex items-center justify-between gap-2 text-[11px] text-zinc-500 max-lg:order-4">
                   <span>Precisión ±{Math.round(lectura.precisionM)} m{lectura.precisionM > 100 ? " · señal débil" : ""}</span>
                   {!seguir && (
                     <button onClick={() => setSeguir(true)} className="inline-flex items-center gap-1 font-semibold text-aviation-blue">
@@ -397,14 +409,14 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
                 </div>
               </>
             )}
-            <p className="text-[11px] leading-snug text-zinc-500 flex gap-1.5">
+            <p className="text-[11px] leading-snug text-zinc-500 flex gap-1.5 max-lg:order-5">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" />
               Ayuda VFR con el GPS del teléfono: no reemplaza la carta ni la navegación. La altura es la del GPS, no la del altímetro.
             </p>
           </section>
         )}
 
-        <section className="space-y-2">
+        <section className={`space-y-2 ${volando ? "max-lg:hidden" : ""}`}>
           <textarea
             value={texto}
             onChange={(e) => setTexto(e.target.value.toUpperCase())}
@@ -594,7 +606,11 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
   );
 
   return createPortal(
-    <div className="fixed inset-x-0 bottom-0 top-16 lg:top-0 lg:left-20 z-[35]">
+    <div
+      data-sin-barra-movil={volando ? "" : undefined}
+      data-sin-encabezado-movil={volando ? "" : undefined}
+      className={`fixed inset-x-0 bottom-0 ${volando ? "top-0" : "top-14 app:top-[calc(max(58px,calc(env(safe-area-inset-top)+0.75rem))+3.25rem)]"} lg:top-0 lg:left-20 z-[35]`}
+    >
       <MapaLeaflet
         capas={capas}
         puntos={puntos}

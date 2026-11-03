@@ -7,7 +7,7 @@ import { Flight, Aircraft } from "@/types";
 import { updateFlight, deleteFlight, marcarCierreDeHoja } from "@/actions/flight";
 import { ArrowRight, BookOpenCheck, Edit2, Landmark, Trash2, X, Check, Loader2, User, Users, Cloud, Monitor, Share2 } from "lucide-react";
 import { useState, useTransition, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, animate, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 import Link from "next/link";
 import { calculateFlightDuration } from "@/lib/utils";
 import { splitRoute } from "@/lib/route";
@@ -15,6 +15,20 @@ import { horasDeLaFila } from "@/lib/simulador";
 import { pesos } from "@/lib/costos";
 import { AUTORIDADES_CAD } from "@/lib/cad";
 import { pendienteDeDdjj } from "@/lib/cad";
+
+/*
+  La fecha de la fila, escrita a mano y no con `toLocaleDateString`: este componente es
+  cliente, y Node y Chrome no escriben igual el mes abreviado (invariante 1).
+*/
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const DIAS_CORTOS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+function fechaDeFila(iso: string) {
+  const [a, m, d] = iso.slice(0, 10).split("-").map(Number);
+  return { dia: String(d).padStart(2, "0"), mes: MESES_CORTOS[m - 1] ?? "", semana: DIAS_CORTOS[new Date(Date.UTC(a, m - 1, d)).getUTCDay()] };
+}
+
+/** Lo que se corre la fila al deslizarla a la izquierda: el ancho de las dos acciones. */
+const ANCHO_ACCIONES = 152;
 
 const PURPOSE_OPTIONS = [
   { value: "ACR", label: "ACR – Acrobacia" },
@@ -82,6 +96,30 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
   const enSimulador = Boolean(aircraft?.is_simulator);
   const deAlumno = esVueloDeAlumno(flight.date, fechaPpa);
   const horas = horasDeLaFila(flight, enSimulador);
+  const fecha = fechaDeFila(flight.date);
+
+  /*
+    Deslizar la fila a la izquierda (3.4.0, sólo en pantallas táctiles angostas) muestra
+    Editar y, si no está en el CAD, "Al CAD". Es un atajo: lo mismo está al abrir el vuelo.
+    `tactil` arranca en false para que server y cliente dibujen lo mismo.
+  */
+  const [tactil, setTactil] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px) and (pointer: coarse)");
+    const cambiar = () => setTactil(mq.matches);
+    cambiar();
+    mq.addEventListener("change", cambiar);
+    return () => mq.removeEventListener("change", cambiar);
+  }, []);
+  const corrimiento = useMotionValue(0);
+  // Las acciones sólo se ven mientras la fila está corrida: quietas, asomaban por el borde.
+  const verAcciones = useTransform(corrimiento, (x) => (x < -1 ? 1 : 0));
+  const arrastrado = useRef(false);
+  const soltar = (_: unknown, info: PanInfo) => {
+    const abrir = info.offset.x < -ANCHO_ACCIONES / 3 || info.velocity.x < -400;
+    animate(corrimiento, abrir ? -ANCHO_ACCIONES : 0, { type: "spring", bounce: 0, duration: 0.3 });
+  };
+  const cerrarDeslizado = () => animate(corrimiento, 0, { type: "spring", bounce: 0, duration: 0.3 });
 
   // "Cerrar la hoja": el último renglón de su hoja en el libro de papel. Se marca al
   // instante y se deshace si el backend no lo toma.
@@ -220,14 +258,61 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
 
   return (
     <div ref={raiz} className="group scroll-mt-24">
+      <div className="relative overflow-hidden">
+      {tactil && (
+        <motion.div className="absolute inset-y-0 right-0 flex" style={{ width: ANCHO_ACCIONES, opacity: verAcciones }}>
+          <button
+            type="button"
+            onClick={() => { cerrarDeslizado(); setIsEditing(true); }}
+            className="flex-1 flex flex-col items-center justify-center gap-1 bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 text-xs font-bold"
+          >
+            <Edit2 className="w-4 h-4" aria-hidden="true" />
+            Editar
+          </button>
+          {!flight.cad_vuelo_id && !enSimulador ? (
+            <Link
+              href="/dashboard/history/cad"
+              className="flex-1 flex flex-col items-center justify-center gap-1 bg-aviation-blue text-white text-xs font-bold"
+            >
+              <Landmark className="w-4 h-4" aria-hidden="true" />
+              Al CAD
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => { cerrarDeslizado(); handleDelete(e); }}
+              className="flex-1 flex flex-col items-center justify-center gap-1 bg-red-500 text-white text-xs font-bold"
+            >
+              <Trash2 className="w-4 h-4" aria-hidden="true" />
+              Eliminar
+            </button>
+          )}
+        </motion.div>
+      )}
       {/* Ledger row */}
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        className="grid grid-cols-[52px_1fr_auto] md:grid-cols-[80px_130px_1fr_100px_72px] items-center gap-3 md:gap-4 px-4 md:px-6 py-3.5 md:py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/[0.03] transition-colors"
+      <motion.div
+        drag={tactil ? "x" : false}
+        dragDirectionLock
+        dragConstraints={{ left: -ANCHO_ACCIONES, right: 0 }}
+        dragElastic={0.08}
+        dragMomentum={false}
+        style={{ x: corrimiento }}
+        onDragStart={() => { arrastrado.current = true; }}
+        onDragEnd={soltar}
+        onClick={() => {
+          if (arrastrado.current) { arrastrado.current = false; return; }
+          if (corrimiento.get() < 0) { cerrarDeslizado(); return; }
+          setIsOpen(!isOpen);
+        }}
+        className="relative bg-white dark:bg-[#050505] grid grid-cols-[40px_1fr_auto] md:grid-cols-[80px_130px_1fr_100px_72px] items-center gap-3 md:gap-4 px-4 md:px-6 py-3.5 md:py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-[#0c0c0c] transition-colors"
       >
-        {/* Date */}
-        <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 data leading-tight">
-          {new Date(flight.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', timeZone: 'UTC' })}
+        {/* Date: en el teléfono, el día grande y el de la semana abajo */}
+        <div className="leading-tight">
+          <span className="md:hidden flex flex-col items-center">
+            <span className="data text-lg font-semibold text-zinc-900 dark:text-white leading-none">{fecha.dia}</span>
+            <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5">{fecha.semana}</span>
+          </span>
+          <span className="hidden md:inline text-xs font-medium text-zinc-500 dark:text-zinc-400 data">{fecha.dia} {fecha.mes}</span>
         </div>
 
         {/* Route (desktop column) */}
@@ -241,10 +326,14 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
             <Ruta origin={origin} dest={dest} enSimulador={enSimulador} />
           </div>
           <div className="flex items-center gap-2 text-xs md:text-sm text-zinc-500 dark:text-zinc-400 truncate">
-            <span className="data font-semibold text-zinc-700 dark:text-zinc-300 uppercase">{aircraft?.registration}</span>
+            <span className="data font-semibold text-zinc-700 dark:text-zinc-300 uppercase max-md:font-normal max-md:font-sans max-md:text-zinc-500 max-md:dark:text-zinc-400">{aircraft?.registration}</span>
+            {/* En el teléfono, "LV-ABC · 3 aterrizajes"; la finalidad, al abrirlo. */}
+            {!enSimulador && (
+              <span className="md:hidden">· {flight.landings} {flight.landings === 1 ? "aterrizaje" : "aterrizajes"}</span>
+            )}
             <span className="hidden sm:inline truncate">{aircraft?.type}</span>
             {flight.purpose && (
-              <span className="text-[10px] font-bold bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 px-1.5 py-0.5 rounded uppercase flex-shrink-0">
+              <span className="max-md:hidden text-[10px] font-bold bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 px-1.5 py-0.5 rounded uppercase flex-shrink-0">
                 {flight.purpose}
               </span>
             )}
@@ -279,8 +368,9 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
         </div>
 
         {/* Duration */}
-        <div className="text-right font-bold text-base md:text-lg text-zinc-900 dark:text-white data">
-          {horas.toFixed(1)}<span className="text-xs font-medium text-zinc-400 dark:text-zinc-600 ml-0.5">h</span>
+        <div className="text-right font-semibold md:font-bold text-[15px] md:text-lg text-zinc-900 dark:text-white data">
+          <span className="md:hidden">{horas.toFixed(1).replace(".", ",")}</span>
+          <span className="max-md:hidden">{horas.toFixed(1)}<span className="text-xs font-medium text-zinc-400 dark:text-zinc-600 ml-0.5">h</span></span>
         </div>
 
         {/* Actions */}
@@ -291,6 +381,7 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
           )}
           <button onClick={handleDelete} className="p-2 text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 rounded-full transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
+      </motion.div>
       </div>
 
       <AnimatePresence>
