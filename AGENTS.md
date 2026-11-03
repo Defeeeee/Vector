@@ -251,7 +251,9 @@ workflows y sólo corren si el push toca su carpeta:
   anterior a `.next-anterior`, construye desde cero y reinicia con
   `pm2 restart vector-frontend --update-env`. **Si falla el build o el health check, vuelve
   al commit anterior con su build guardado**, sin reconstruir: un corte de red al bajar las
-  fuentes de Google rompió un build el 2026-11-03.
+  fuentes de Google rompió un build el 2026-11-03. Desde la 3.3.1 las tipografías están en el
+  repo (`src/app/fonts/`, `next/font/local`): **no volver a `next/font/google`**, que las baja en
+  cada build y ese mismo día cortó tres.
 - **La API:** `api-ci.yml` (los `test_*.py`, el import y ruff) y `api-deploy.yml`, que
   reinicia `flightlog-7477` y `grabador-adsb`, con el mismo rollback.
 - `secretos.yml` (gitleaks) corre sobre todo el repo, `aip.yml` los martes, `madhel.yml` el

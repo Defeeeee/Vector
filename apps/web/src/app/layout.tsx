@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito, IBM_Plex_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -11,20 +11,26 @@ import { SITIO_URL } from "@/lib/sitio";
 // Single unified typeface across the app — Nunito for both body text and
 // display/headline roles.
 //
+// **Las fuentes están en el repo** (`src/app/fonts/`, de Fontsource, OFL), desde la 3.3.1. Antes
+// salían de `next/font/google`, que las baja de Google en cada build: el 2026-11-03 ese pedido
+// cortó tres builds (uno en el CI y dos en el VPS, que volvieron solos al anterior). Son los
+// mismos archivos (Nunito variable, IBM Plex Mono 400–700), sólo el subconjunto latino, que
+// trae las tildes, la ñ y los signos de apertura.
+//
 // The variables are named after the *role*, not the typeface: they used to be
 // called --font-inter and --font-space-grotesk while actually carrying Nunito,
 // which meant `font-display` in the markup applied something that was not
 // Space Grotesk. Role names survive a change of face (see T3.2 in
 // docs/brief/06-plan-post-flightdeck.md).
-const bodyFace = Nunito({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const bodyFace = localFont({
+  src: "./fonts/nunito-latin-wght-normal.woff2",
+  weight: "200 1000",
   variable: "--font-body-face",
 });
 
-const displayFace = Nunito({
-  subsets: ["latin"],
-  weight: ["700", "800", "900"],
+const displayFace = localFont({
+  src: "./fonts/nunito-latin-wght-normal.woff2",
+  weight: "200 1000",
   variable: "--font-display-face",
 });
 
@@ -32,9 +38,13 @@ const displayFace = Nunito({
 // prose: hours, ICAO codes, registrations, UTC times, METAR, eyebrow labels.
 // IBM Plex Mono is picked for its slashed zero — in a logbook the difference
 // between 0 and O is not a stylistic detail.
-const monoFace = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const monoFace = localFont({
+  src: [
+    { path: "./fonts/ibm-plex-mono-latin-400-normal.woff2", weight: "400" },
+    { path: "./fonts/ibm-plex-mono-latin-500-normal.woff2", weight: "500" },
+    { path: "./fonts/ibm-plex-mono-latin-600-normal.woff2", weight: "600" },
+    { path: "./fonts/ibm-plex-mono-latin-700-normal.woff2", weight: "700" },
+  ],
   variable: "--font-mono-face",
 });
 

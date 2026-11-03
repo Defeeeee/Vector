@@ -1025,6 +1025,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.3.1",
+    fecha: "2026-11-03",
+    motivo: "Las tipografías (Nunito, IBM Plex Mono) van en el repo en vez de bajarse de Google en cada build: ese pedido cortó tres builds el mismo día. Se ven igual; no hay nada que anunciar.",
+  },
+  {
     version: "3.2.1",
     fecha: "2026-11-03",
     motivo: "Los corredores VFR se dibujan con su ancho del AIP (2.500 m en la CTR, 5.000 m fuera) y en un verde que se distingue. Ajuste de lo anunciado en la 3.2.0.",
