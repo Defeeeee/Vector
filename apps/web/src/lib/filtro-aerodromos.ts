@@ -108,7 +108,8 @@ export function pistaDeMadhel(texto: string): { largoFt?: number; superficie?: s
   const metros = largo ? Number(largo[1]) : NaN;
   return {
     largoFt: Number.isFinite(metros) && metros > 0 ? Math.round(metros / PIES_A_METROS) : undefined,
-    superficie: superficie?.[1].trim() || undefined,
+    // Sin lo que va entre paréntesis ("Tierra (CLSD)").
+    superficie: superficie?.[1].replace(/\(.*?\)/g, "").trim() || undefined,
   };
 }
 

@@ -156,6 +156,10 @@ describe("las pistas como las escribe MADHEL", () => {
     expect(pistaDeMadhel("01/19 1200x40 M - Asfalto")).toEqual({ largoFt: 3937, superficie: "Asfalto" });
   });
 
+  it("la superficie sin lo que va entre paréntesis", () => {
+    expect(pistaDeMadhel("09/27 1350x40 M - Tierra (CLSD)").superficie).toBe("Tierra");
+  });
+
   it("lo que no entiende queda sin dato, nunca inventado", () => {
     expect(pistaDeMadhel("Pista en mal estado")).toEqual({ largoFt: undefined, superficie: undefined });
   });

@@ -316,6 +316,9 @@ export function searchAirports(query: string, limit = 8): Airport[] {
 
 let filtrables: AerodromoFiltrable[] | null = null;
 
+/** MADHEL marca así una pista cerrada ("09/27 1350x40 M - Tierra (CLSD)"): no cuenta para los filtros. */
+const PISTA_CERRADA = /\bCLSD\b|\bCERRADA\b/i;
+
 /**
  * Las fichas de MADHEL que baja el workflow mensual (`scripts/build-madhel-fichas.mjs`):
  * combustible y pistas por designador ANAC. Vacío si el archivo todavía no existe.
@@ -349,7 +352,7 @@ export function aerodromosParaFiltrar(): AerodromoFiltrable[] {
       const ficha = a.local ? fichas.get(a.local) : undefined;
       const pistas = a.pistas?.length
         ? a.pistas.map((p) => ({ largoFt: p.largoFt, superficie: p.superficie }))
-        : (ficha?.pistas ?? []).map(pistaDeMadhel);
+        : (ficha?.pistas ?? []).filter((t) => !PISTA_CERRADA.test(t)).map(pistaDeMadhel);
       return {
         icao: a.icao,
         local: a.local,
