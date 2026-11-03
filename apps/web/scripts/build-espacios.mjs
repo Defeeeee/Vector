@@ -17,6 +17,9 @@
  * texto en los dos sentidos (invariante 12). Un parser que se equivoca se ve en un test; un
  * polígono guardado mal no se ve nunca.
  *
+ * Desde la 3.1.0 se guarda la fila entera de cada TMA (con la dependencia y sus frecuencias)
+ * y las de las FIR (límites, centro, sectores y frecuencias), para saber con quién se habla.
+ *
  * Al final van los sectores por nivel de las TMA que los tienen (Baires: piso 2500 FT y FL 45),
  * que el AIP describe en las observaciones.
  *
@@ -55,7 +58,7 @@ function documento(html) {
 }
 
 /** El renglón con el que arranca una TMA: "TMA BAIRES", seguido de sus límites. */
-const ENCABEZADO = /^TMA [A-ZÁÉÍÓÚÑÜ ()]+$/;
+const ENCABEZADO = /^TMA (?!.*\b(?:SE|ESTA|ESTÁ|DIVIDIDO)\b)[A-ZÁÉÍÓÚÑÜ ()]+$/;
 const ARRANQUE_LIMITES = /^(Desde|C[ií]rculo|Arco)\b/;
 /** Donde empieza la versión en inglés de la misma TMA. */
 const INGLES = /^(From|Circle|Arc of|Area)\b/;
@@ -82,17 +85,31 @@ export function bloquesSectores(texto) {
   return bloques;
 }
 
-export function bloquesTma(texto) {
+/** El renglón con el que arranca una FIR: "FIR EZEIZA", seguido de sus límites. */
+const ENCABEZADO_FIR = /^FIR [A-ZÁÉÍÓÚÑÜ ]+$/;
+
+/** ¿Arranca acá una fila de la tabla (una TMA o una FIR con sus límites)? */
+const arrancaFila = (lineas, i) =>
+  (ENCABEZADO.test(lineas[i].trim()) || ENCABEZADO_FIR.test(lineas[i].trim())) && ARRANQUE_LIMITES.test((lineas[i + 1] ?? "").trim());
+
+/**
+ * Cada fila entera, del nombre a la fila siguiente: los límites en castellano y en inglés, la
+ * dependencia, sus frecuencias y las observaciones. El parser toma de cada parte lo suyo.
+ */
+function filas(texto, encabezado) {
   const lineas = texto.split("\n");
   const bloques = [];
   for (let i = 0; i < lineas.length - 1; i++) {
-    if (!ENCABEZADO.test(lineas[i].trim()) || !ARRANQUE_LIMITES.test(lineas[i + 1].trim())) continue;
+    if (!encabezado.test(lineas[i].trim()) || !arrancaFila(lineas, i)) continue;
     let j = i + 1;
-    while (j < lineas.length && !INGLES.test(lineas[j].trim()) && !(j > i + 1 && ENCABEZADO.test(lineas[j].trim()))) j++;
+    while (j < lineas.length && !arrancaFila(lineas, j)) j++;
     bloques.push(lineas.slice(i, j).join("\n").trimEnd());
   }
   return bloques;
 }
+
+export const bloquesTma = (texto) => filas(texto, ENCABEZADO);
+export const bloquesFir = (texto) => filas(texto, ENCABEZADO_FIR);
 
 async function main() {
   const local = process.argv[2];
@@ -122,7 +139,9 @@ async function main() {
     "",
   ].join("\n");
   const sectores = bloquesSectores(text);
-  fs.writeFileSync(SALIDA, `${cabecera}${[...bloques, ...sectores].join("\n\n")}\n`);
+  const firs = bloquesFir(text);
+  if (firs.length < 5) throw new Error(`Sólo ${firs.length} FIR en ENR 2.1: el formato cambió, no se pisa lo que hay.`);
+  fs.writeFileSync(SALIDA, `${cabecera}${[...bloques, ...sectores, ...firs].join("\n\n")}\n`);
 
   if (meta.url) {
     const previas = fs.existsSync(FUENTES)
@@ -131,7 +150,7 @@ async function main() {
     const fila = ["ENR2.1", "ENR 2.1", meta.edicion, meta.vigenteDesde, meta.url].join("\t");
     fs.writeFileSync(FUENTES, [...previas, fila].sort().join("\n") + "\n");
   }
-  console.log(`${bloques.length} TMA y ${sectores.length} divididas en sectores → src/data/aip/ENR-2.1.txt`);
+  console.log(`${bloques.length} TMA (${sectores.length} divididas en sectores) y ${firs.length} FIR → src/data/aip/ENR-2.1.txt`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

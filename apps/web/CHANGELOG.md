@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.1.0 — Con quién hablás, de punta a punta
+
+_3 de noviembre de 2026_
+
+- **Las frecuencias de toda la ruta** — Poné la altitud de crucero y el Mapa te dice con quién hablás en cada tramo: la torre, el control de la TMA y el centro de la FIR con su sector, con las frecuencias del AIP. En vuelo, con quién hablás ahora y cuál es el próximo cambio.
+- **Las FIR y sus sectores, en el mapa** — Los límites de las cinco FIR y la línea entre los sectores de cada centro. Las TMA vecinas comparten el borde, y el mapa ya no muestra los helipuertos.
+
 ## v3.0.0 — El Mapa: planificá y volá sobre la carta
 
 _3 de noviembre de 2026_

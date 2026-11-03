@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { getAirport } from "./airports";
 import { distanciaNmPrecisa } from "./distance";
-import { contiene, coordenadasDe, dentroDelEspacio, leerLimite, nombradosDe, seccionesAd217, seccionesTma } from "./espacios-aereos";
+import { contiene, coordenadasDe, dentroDelEspacio, distanciaAlBorde, leerLimite, nombradosDe, seccionesAd217, seccionesTma } from "./espacios-aereos";
 import { espaciosAereos } from "./espacios-aereos-servidor";
 
 const AIP = path.join(process.cwd(), "src", "data", "aip");
@@ -127,6 +127,25 @@ describe("los espacios aéreos del AIP commiteado", () => {
         }
       }
     }
+  });
+
+  /*
+    Los vecinos comparten el borde (Federico: "que los límites coincidan y no queden raros").
+    Ninguna esquina de un espacio cae más de 1 NM adentro de otro del mismo tipo. Antes de que
+    "siguiendo el límite del TMA X" siguiera el borde del vecino, seis TMA se pisaban.
+  */
+  it("los espacios del mismo tipo no se pisan", () => {
+    const pisados: string[] = [];
+    for (const a of espacios) {
+      for (const b of espacios) {
+        if (a === b || a.tipo !== b.tipo) continue;
+        if (a.tipo === "TMA" && a.nombre.replace(/ \(I+\)$/, "") === b.nombre.replace(/ \(I+\)$/, "")) continue; // los sectores de Baires: uno es el hueco del otro
+        const anillo = b.poligono.map(([lat, lon]) => ({ lat, lon }));
+        const adentro = a.poligono.filter(([lat, lon]) => contiene(b.poligono, { lat, lon }) && distanciaAlBorde(anillo, { lat, lon }) > 1);
+        if (adentro.length) pisados.push(`${a.nombre} en ${b.nombre} (${adentro.length})`);
+      }
+    }
+    expect(pisados).toEqual([]);
   });
 
   it("cada TMA dibujada sale de un bloque de ENR 2.1", () => {

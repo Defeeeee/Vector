@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.1.0",
+    fecha: "2026-11-03",
+    titulo: "Con quién hablás, de punta a punta",
+    novedades: [
+      {
+        icono: "conversacion",
+        titulo: "Las frecuencias de toda la ruta",
+        texto: "Poné la altitud de crucero y el Mapa te dice con quién hablás en cada tramo: la torre, el control de la TMA y el centro de la FIR con su sector, con las frecuencias del AIP. En vuelo, con quién hablás ahora y cuál es el próximo cambio.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+      {
+        icono: "brujula",
+        titulo: "Las FIR y sus sectores, en el mapa",
+        texto: "Los límites de las cinco FIR y la línea entre los sectores de cada centro. Las TMA vecinas comparten el borde, y el mapa ya no muestra los helipuertos.",
+        href: "/dashboard/mapa",
+        cta: "Ver el Mapa",
+      },
+    ],
+  },
+  {
     version: "3.0.0",
     fecha: "2026-11-03",
     titulo: "El Mapa: planificá y volá sobre la carta",

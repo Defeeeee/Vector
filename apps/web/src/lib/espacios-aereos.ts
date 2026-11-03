@@ -66,6 +66,15 @@ export interface EspacioAereo {
    * sectores por nivel, el sector (II) es "el resto" y el (I) es su hueco (TMA Baires).
    */
   huecos?: [number, number][][];
+  /** Con quién se habla adentro: la torre (AD 2.18) o el control de la TMA (ENR 2.1). */
+  dependencia?: Frecuencias | null;
+}
+
+export interface Frecuencias {
+  /** "EZEIZA CENTRO", "BAIRES CONTROL", "Fernando Torre". */
+  distintivo: string;
+  /** Por sector ("NORTE", "SUR"); `nombre: null` si la dependencia no tiene sectores. */
+  sectores: { nombre: string | null; mhz: string[] }[];
 }
 
 /** ¿El punto está en el espacio? Adentro del contorno y fuera de sus huecos. */
@@ -204,7 +213,15 @@ const RE_RADIO = /(\d+(?:[.,]\d+)?)\s*(?:NM|MN)\b/i;
 const RE_TRAMO_TORCIDO = /\b(RN|RP|Av\.?|avenida|calle|r[ií]o|costa|v[ií]a|FFCC|l[ií]mite|autopista|ruta|camino)\b/i;
 
 export type Limite =
-  | { ok: true; poligono: Punto[]; aproximado: boolean; centros: Punto[]; usadas: string[] }
+  | {
+      ok: true;
+      poligono: Punto[];
+      aproximado: boolean;
+      centros: Punto[];
+      usadas: string[];
+      /** Los tramos rectos que en el texto siguen el límite de otro espacio ("siguiendo el límite del TMA SDE"). */
+      porVecinos?: { desde: Punto; hasta: Punto; vecino: string }[];
+    }
   | { ok: false; motivo: string };
 
 interface Arco {
@@ -271,7 +288,7 @@ export function leerLimite(textoCrudo: string, referencia: Punto | null, externo
     const centro = centroDesde(0);
     if (!radio || !centro) return { ok: false, motivo: "círculo sin radio o sin centro" };
     if (vertices.length > 0) return { ok: false, motivo: "círculo con vértices: no se sabe cómo combinarlos" };
-    return { ok: true, poligono: circulo(centro, Number(radio[1].replace(",", "."))), aproximado: false, centros: [centro], usadas: coords.map((c) => c.clave) };
+    return { ok: true, poligono: circulo(centro, Number(radio[1].replace(",", "."))), aproximado: false, centros: [centro], usadas: coords.map((c) => c.clave), porVecinos: [] };
   }
 
   if (vertices.length < 2) return { ok: false, motivo: "sin coordenadas para el contorno (radiales, o un límite sin puntos)" };
@@ -311,6 +328,7 @@ export function leerLimite(textoCrudo: string, referencia: Punto | null, externo
     hasta: CoordEnTexto;
     arco: Arco | null;
     torcido: boolean;
+    vecino: string | null;
   }
   const tramos: Tramo[] = [];
   for (let i = 0; i < vertices.length - 1; i++) {
@@ -331,7 +349,8 @@ export function leerLimite(textoCrudo: string, referencia: Punto | null, externo
       }
     }
     const textoEntre = texto.slice(a.hasta, b.desde);
-    tramos.push({ desde: a, hasta: b, arco: arcoDelTramo, torcido: !arcoDelTramo && RE_TRAMO_TORCIDO.test(textoEntre) });
+    const vecino = arcoDelTramo ? null : /l[íi]mite (?:del |de la |de los )?((?:TMA|CTR) [A-Za-zÁÉÍÓÚÑÜáéíóúñü ]+?)(?=\s+(?:hacia|hasta)\b)/.exec(textoEntre);
+    tramos.push({ desde: a, hasta: b, arco: arcoDelTramo, torcido: !arcoDelTramo && RE_TRAMO_TORCIDO.test(textoEntre), vecino: vecino ? vecino[1].trim() : null });
   }
   if (arcos.some((x) => !tramos.some((t) => t.arco === x))) return { ok: false, motivo: "un arco que no cae entre dos puntos" };
 
@@ -376,6 +395,7 @@ export function leerLimite(textoCrudo: string, referencia: Punto | null, externo
     aproximado: tramos.some((t) => t.torcido),
     centros: arcos.map((x) => x.centro!).concat(centrosUsados.filter((c) => !arcos.some((x) => x.centro === c))),
     usadas: coords.map((c) => c.clave),
+    porVecinos: tramos.filter((t) => t.vecino).map((t) => ({ desde: { lat: t.desde.lat, lon: t.desde.lon }, hasta: { lat: t.hasta.lat, lon: t.hasta.lon }, vecino: t.vecino! })),
   };
 }
 
@@ -497,6 +517,12 @@ export interface SeccionTma {
 
 const RE_VERTICAL = /^(\(I+\)\s*)?(FL\s*\d+|[\d.]+\s*FT|GND|SFC|UNL)\b/i;
 
+/** Las filas de TMA de `ENR-2.1.txt` (sin los bloques de sectores ni de FIR que van al final). */
+export function filasTma(texto: string): string[] {
+  const tmas = texto.split(/\n\n(?=SECTORES TMA |FIR [A-ZÁÉÍÓÚÑÜ ]+\nDesde)/)[0];
+  return tmas.split(/\n(?=TMA [A-ZÁÉÍÓÚÑÜ ()]+\n(?:Desde|C[ií]rculo|Arco))/).filter((b) => b.startsWith("TMA "));
+}
+
 /** ["(I) FL 245", "2500 FT AGL", "(II) FL 245", "FL 45"] → "(I) FL 245 / 2500 FT AGL · (II) FL 245 / FL 45". */
 function enPares(renglones: string[]): string {
   if (renglones.length % 2 !== 0) return renglones.join(" · ");
@@ -507,12 +533,13 @@ function enPares(renglones: string[]): string {
 
 /** Las TMA de `ENR-2.1.txt`, cada una con su texto en castellano. */
 export function seccionesTma(texto: string): SeccionTma[] {
-  const tmas = texto.split(/\n(?=SECTORES TMA )/)[0];
-  const bloques = tmas.split(/\n(?=TMA [A-ZÁÉÍÓÚÑÜ ()]+\n)/).filter((b) => b.startsWith("TMA "));
-  return bloques.map((b) => {
+  return filasTma(texto).map((b) => {
     const lineas = b.split("\n");
     const nombre = lineas[0].trim();
-    const cuerpo = lineas.slice(1);
+    // Desde la 3.1.0 la fila viene entera: lo de la TMA en castellano termina donde empieza
+    // el inglés ("From …", "Circle …").
+    const finCastellano = lineas.findIndex((l, i) => i > 0 && /^(From|Circle|Arc of|Area)\b/.test(l.trim()));
+    const cuerpo = lineas.slice(1, finCastellano > 0 ? finCastellano : undefined);
     const finLateral = cuerpo.findIndex((l) => RE_VERTICAL.test(l.trim()));
     const lateral = (finLateral < 0 ? cuerpo : cuerpo.slice(0, finLateral)).join("\n");
     const resto = finLateral < 0 ? [] : cuerpo.slice(finLateral);
@@ -536,8 +563,8 @@ export function seccionesTma(texto: string): SeccionTma[] {
 /** Las TMA divididas en sectores por nivel: el texto de las observaciones, por TMA. */
 export function sectoresTma(texto: string): { tma: string; texto: string }[] {
   return texto
-    .split(/\n(?=SECTORES TMA )/)
-    .slice(1)
+    .split(/\n\n(?=SECTORES TMA |FIR [A-ZÁÉÍÓÚÑÜ ]+\nDesde)/)
+    .filter((b) => b.startsWith("SECTORES TMA "))
     .map((b) => ({ tma: b.split("\n")[0].replace(/^SECTORES\s+/, "").trim(), texto: b.split("\n").slice(1).join("\n") }));
 }
 
@@ -549,6 +576,11 @@ function aSegmento(p: Punto, a: Punto, b: Punto): number {
   const dy = by - ay;
   const t = dx || dy ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy))) : 0;
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
+/** La distancia en NM de un punto al borde de un anillo. */
+export function distanciaAlBorde(anillo: Punto[], p: Punto): number {
+  return Math.min(...anillo.map((a, i) => aSegmento(p, a, anillo[(i + 1) % anillo.length])));
 }
 
 /** ¿Adentro del anillo o a menos de `margen` NM de su borde? */
@@ -715,6 +747,9 @@ const AREA_MAXIMA: Record<TipoEspacio, number> = { ATZ: 600, CTR: 4000, TMA: 400
 export function armarEspacios(f: Fuentes): { espacios: EspacioAereo[]; descartados: EspacioDescartado[] } {
   const espacios: EspacioAereo[] = [];
   const descartados: EspacioDescartado[] = [];
+  /** Por id: los tramos que siguen el límite de un vecino, y el texto (para saber sus radioayudas). */
+  const porVecinos = new Map<string, NonNullable<Extract<Limite, { ok: true }>["porVecinos"]>>();
+  const textos = new Map<string, string>();
 
   const agregar = (tipo: TipoEspacio, nombre: string, id: string, fuente: string, lateral: string, ref: Punto | null, limites: string, clase: string | null) => {
     const r = leerLimite(lateral, ref);
@@ -728,6 +763,8 @@ export function armarEspacios(f: Fuentes): { espacios: EspacioAereo[]; descartad
       return;
     }
     espacios.push({ id, tipo, nombre, limites, clase, poligono: r.poligono.map((p) => [p.lat, p.lon]), aproximado: r.aproximado, fuente });
+    if (r.porVecinos?.length) porVecinos.set(id, r.porVecinos);
+    textos.set(id, lateral);
   };
 
   for (const { icao, bloque, arp } of f.ad217) {
@@ -790,5 +827,76 @@ export function armarEspacios(f: Fuentes): { espacios: EspacioAereo[]; descartad
     );
   }
 
+  seguirVecinos(espacios, porVecinos, textos);
   return { espacios, descartados };
 }
+
+/**
+ * "siguiendo el límite del TMA SDE hacia el W hasta …": ese tramo no es una recta, es el borde
+ * del vecino. Dibujado recto, corta el círculo de la otra TMA y las dos se pisan (Tucumán con
+ * Santiago del Estero, San Juan con Mendoza). Se reemplaza por el camino más corto sobre el
+ * borde del vecino, entre los dos puntos del texto, si los dos están sobre ese borde (±2 NM).
+ *
+ * El vecino se nombra a veces entero ("TMA LA RIOJA") y a veces por su radioayuda ("TMA SDE",
+ * "TMA DOZ"): se busca por nombre y, si no, por la radioayuda en el centro de su texto. Se
+ * resuelve en rondas porque un vecino puede seguir a otro (Río Cuarto sigue a Villa Reynolds,
+ * que sigue a San Luis).
+ */
+function seguirVecinos(espacios: EspacioAereo[], porVecinos: Map<string, { desde: Punto; hasta: Punto; vecino: string }[]>, textos: Map<string, string>) {
+  const sinTilde = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+  const buscar = (nombre: string): EspacioAereo | null => {
+    const n = sinTilde(nombre);
+    const porNombre = espacios.find((e) => sinTilde(e.nombre.replace(/\s+\(I+\)$/, "")) === n && !e.huecos);
+    if (porNombre) return porNombre;
+    const ident = /^(?:TMA|CTR)\s+([A-Z]{3})$/.exec(n)?.[1];
+    if (!ident) return null;
+    return espacios.find((e) => e.tipo === n.slice(0, 3) && new RegExp(`(?:VOR|NDB|DME)\\s*([/ ]\\s*DME)?\\s*${ident}\\b`).test(textos.get(e.id) ?? "")) ?? null;
+  };
+  const pendientes = new Set(porVecinos.keys());
+  for (let ronda = 0; ronda < 4 && pendientes.size; ronda++) {
+    for (const id of [...pendientes]) {
+      const tramos = porVecinos.get(id)!;
+      const vecinos = tramos.map((t) => buscar(t.vecino));
+      // Si un vecino todavía tiene que seguir a otro, se espera a la ronda siguiente.
+      if (vecinos.some((v) => v && pendientes.has(v.id) && v.id !== id) && ronda < 3) continue;
+      const e = espacios.find((x) => x.id === id)!;
+      let anillo = e.poligono.map(([lat, lon]) => ({ lat, lon }));
+      tramos.forEach((t, k) => {
+        const v = vecinos[k];
+        if (!v) return;
+        const borde = v.poligono.map(([lat, lon]) => ({ lat, lon }));
+        // El lado del vecino más cercano a cada punto (el punto puede caer en medio de un lado).
+        const n = borde.length;
+        const lado = (p: Punto) => {
+          let mejor = 0;
+          for (let i = 1; i < n; i++) if (aSegmento(p, borde[i], borde[(i + 1) % n]) < aSegmento(p, borde[mejor], borde[(mejor + 1) % n])) mejor = i;
+          return mejor;
+        };
+        const la = lado(t.desde);
+        const lb = lado(t.hasta);
+        if (aSegmento(t.desde, borde[la], borde[(la + 1) % n]) > 2 || aSegmento(t.hasta, borde[lb], borde[(lb + 1) % n]) > 2) return;
+        // Hacia adelante: los vértices la+1 … lb. Hacia atrás: la … lb+1.
+        const adelante: Punto[] = [];
+        for (let i = (la + 1) % n, c = 0; c < n && la !== lb; i = (i + 1) % n, c++) {
+          adelante.push(borde[i]);
+          if (i === lb) break;
+        }
+        const atras: Punto[] = [];
+        for (let i = la, c = 0; c < n && la !== lb; i = (i - 1 + n) % n, c++) {
+          if (i === lb) break;
+          atras.push(borde[i]);
+        }
+        const largo = (pts: Punto[]) => pts.reduce((s, p, i) => s + dist(i ? pts[i - 1] : t.desde, p), 0) + (pts.length ? dist(pts[pts.length - 1], t.hasta) : dist(t.desde, t.hasta));
+        const medio = la === lb ? [] : largo(adelante) <= largo(atras) ? adelante : atras;
+        const i = anillo.findIndex((p, j) => sonIguales(p, t.desde) && sonIguales(anillo[(j + 1) % anillo.length], t.hasta));
+        if (i < 0) return;
+        const nuevo = [...anillo.slice(0, i + 1), ...medio, ...anillo.slice(i + 1)];
+        if (!seCruza(nuevo)) anillo = nuevo;
+      });
+      e.poligono = anillo.map((p) => [p.lat, p.lon]);
+      pendientes.delete(id);
+    }
+  }
+}
+
+const sonIguales = (a: Punto, b: Punto) => Math.abs(a.lat - b.lat) < 1e-9 && Math.abs(a.lon - b.lon) < 1e-9;

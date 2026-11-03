@@ -5,6 +5,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { TILES_OPCIONES, TILES_URL } from "@/lib/mapa-tiles";
 import type { EspacioAereo } from "@/lib/espacios-aereos";
+import type { Fir } from "@/lib/firs";
 import type { PuntoMapa } from "@/lib/mapa-ruta";
 
 /** Lo que devuelve `/api/mapa`, compacto: arrays en vez de objetos. */
@@ -15,6 +16,8 @@ export interface CapasMapa {
   radioayudas: [string, string, string, number, number, number | null][];
   espacios: EspacioAereo[];
   descartados: string[];
+  /** Las FIR con su centro (3.1.0). */
+  firs: Fir[];
 }
 
 export interface Posicion {
@@ -70,7 +73,7 @@ interface Props {
 export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, volando, onAgregar, onArrastre, margenIzquierdo }: Props) {
   const contenedor = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
-  const capasRef = useRef<{ ruta: L.LayerGroup; avion: L.LayerGroup; espacios: L.LayerGroup; aerodromos: L.LayerGroup; radioayudas: L.LayerGroup } | null>(null);
+  const capasRef = useRef<{ ruta: L.LayerGroup; avion: L.LayerGroup; espacios: L.LayerGroup; firs: L.LayerGroup; aerodromos: L.LayerGroup; radioayudas: L.LayerGroup } | null>(null);
   const callbacks = useRef({ onAgregar, onArrastre });
   callbacks.current = { onAgregar, onArrastre };
   const ultimoEncuadre = useRef("");
@@ -90,15 +93,16 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
     L.control.attribution({ prefix: false, position: "bottomright" }).addTo(m);
     L.tileLayer(TILES_URL, TILES_OPCIONES).addTo(m);
 
+    const firs = L.layerGroup().addTo(m);
     const espacios = L.layerGroup().addTo(m);
     const aerodromos = L.layerGroup().addTo(m);
     const radioayudas = L.layerGroup().addTo(m);
     const ruta = L.layerGroup().addTo(m);
     const avion = L.layerGroup().addTo(m);
     L.control
-      .layers(undefined, { "Espacios aéreos": espacios, "Aeródromos": aerodromos, "Radioayudas": radioayudas }, { position: "topright", collapsed: true })
+      .layers(undefined, { "Espacios aéreos": espacios, "FIR y sectores": firs, "Aeródromos": aerodromos, "Radioayudas": radioayudas }, { position: "topright", collapsed: true })
       .addTo(m);
-    capasRef.current = { ruta, avion, espacios, aerodromos, radioayudas };
+    capasRef.current = { ruta, avion, espacios, firs, aerodromos, radioayudas };
 
     m.on("dragstart", () => callbacks.current.onArrastre());
     mapa.current = m;
@@ -119,7 +123,26 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
     const c = capasRef.current;
     if (!c || !capas) return;
     c.espacios.clearLayers();
+    c.firs.clearLayers();
     c.aerodromos.clearLayers();
+
+    // Las FIR: sólo los tramos del AIP (sin los rodeos por afuera del país), y la línea entre
+    // los sectores de su centro. En gris, debajo de todo: son el fondo, no el dato.
+    for (const f of capas.firs ?? []) {
+      const centro = f.centro
+        ? `${escapar(f.centro.distintivo)}<br>${f.centro.sectores.map((s) => `${s.nombre ? `${escapar(s.nombre.toLowerCase())}: ` : ""}${s.mhz.join(" · ")}`).join("<br>")}`
+        : "";
+      for (const b of f.bordes) {
+        L.polyline(b, { color: "#475569", weight: 2, opacity: 0.8, dashArray: "12 6 2 6" })
+          .bindTooltip(`<b>${escapar(f.nombre)}</b><br>${centro}`, { sticky: true })
+          .addTo(c.firs);
+      }
+      if (f.lineaSectores) {
+        L.polyline(f.lineaSectores, { color: "#64748b", weight: 1.5, opacity: 0.8, dashArray: "4 6" })
+          .bindTooltip(`Límite entre sectores · ${escapar(f.centro?.distintivo ?? f.nombre)}`, { sticky: true })
+          .addTo(c.firs);
+      }
+    }
     c.radioayudas.clearLayers();
 
     // Las TMA primero, para que las CTR y ATZ queden arriba y se puedan tocar.

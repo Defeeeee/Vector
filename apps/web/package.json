@@ -1,6 +1,6 @@
 {
   "name": "FlightLog-FrontEnd",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -31,7 +31,8 @@
     "build:raac": "node scripts/build-raac.mjs",
     "build:lad": "node scripts/build-lad.mjs",
     "build:madhel": "node scripts/build-madhel-fichas.mjs",
-    "build:espacios": "node scripts/build-espacios.mjs"
+    "build:espacios": "node scripts/build-espacios.mjs",
+    "build:frontera": "node scripts/build-frontera.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",

@@ -11,6 +11,51 @@ CLASE DE ESPACIO AÉREO:
 A- Por encima de FL 195 hasta FL 245
 B- Por encima de FL 145 hasta FL 195
 C- Desde 2000 FT AGL/AMSL hasta FL 145
+Circle with 55 NM radius centered at CRV
+VOR/DME (454624S-0672218W)
+FL 245
+2000FT AGL/AMSL
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 245
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL/AMSL up to FL 145
+ACC COMODORO
+RIVADAVIA
+COMODORO CONTROL
+ESPAÑOL / INGLÉS /
+SPANISH / ENGLISH
+H 24
+124.30 MHz
+126.75 MHz
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 2.1-6
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
 
 TMA EL CALAFATE
 Desde el Límite lateral del FIR COMODORO
@@ -33,6 +78,144 @@ FL095
 CLASE DE ESPACIO AÉREO:
 C - 1) Desde 2000 FT AGL hasta FL 135
 2) Por encima de FL 095 hasta FL 135
+From the lateral limit of the COMODORO
+RIVADAVIA/PUNTA ARENAS FIR 494600S -
+0732718W in E direction to 494643S -
+0721441W from there in a straight line
+direction NNE to 492722S - 0720431W
+continuing with an arc of 49 NM centered at
+VOR/DME ECA, to 494119S - 0710923W, from
+there in a straight line SSW to 495959S -
+0712402W, where it continues in an arc of 30
+NM clockwise centered at VOR/DME ECA to
+504419S - 0722059W, continuing along the
+limit of the COMODORO RIVADAVIA/PUNTA
+ARENAS FIR to 494600S - 0732718W.
+(I) FL 135
+2000FT/AGL
+TWR EL CALAFATE
+CALAFATE TORRE/
+CALAFATE TOWER
+ESPAÑOL/ SPANISH
+Inglés a requerimiento
+con 72 hr de
+antelación/ English on
+request with 72 hrs
+advanced
+1000 a/to 2359
+119.95 MHz
+118.20 MHz
+127.85 MHz
+ATIS
+121.50 MHz.
+EMERG
+EL LÍMITE VERTICAL DEL TMA EL
+CALAFATE SE ENCUENTRA
+DIVIDIDO EN DOS SECTORES:
+(I) El límite vertical inferior
+2000 FT AGL comprende el
+espacio aéreo desde el
+Límite lateral del FIR
+COMODORO RIVADAVIA /
+PUNTA ARENAS (494600S -
+0732718W) en dirección E
+hasta 494644S - 0720305W
+desde allí continuando con
+un arco de 30 NM en sentido
+horario con centro en el
+VOR/DME ECA hasta
+504419S - 0722059W
+continuando por el límite del
+FIR COMODORO RIVADAVIA
+/ PUNTA ARENAS hasta
+494600S - 0732718W.
+(II) El límite vertical inferior FL
+95 comprende desde
+494643S - 0721441W desde
+allí en línea recta sentido
+NNE hasta 492722S -
+0720431W continuando con
+un arco de 49 NM en sentido
+horario con centro
+VOR/DME ECA, hasta
+494119S - 0710923W, desde
+allí en línea recta en sentido
+SSW hasta 495959S -
+0712402W, posterior arco
+DME de 30NM con centro en
+el VOR/DME ECA en sentido
+antihorario hasta 494644S -
+0720305W y desde allí hasta
+494643S - 0721441W
+AIP ARGENTINA ENR 2.1-7
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+(II) FL135
+FL095
+AIRSPACE CLASS:
+C - 1) From 2000 FT AGL up to FL 135
+2) Above FL 095 up to FL 135
+THE VERTICAL LIMIT OF EL
+CALAFATE TMA IS DIVIDED INTO
+TWO SECTORS:
+(I) The lower vertical limit at
+2,000 FT AGL comprises the
+airspace from the lateral
+boundary of the
+COMODORO RIVADAVIA /
+PUNTA ARENAS FIR
+(494600S - 0732718W)
+eastward to 494644S -
+0720305W, thence
+continuing along a 30 NM
+arc clockwise, centered on
+the ECA VOR/DME, to
+504419S 0722059W, thence
+along the boundary of the
+COMODORO RIVADAVIA /
+PUNTA ARENAS FIR to
+494600S - 0732718W.
+(II) The lower vertical limit FL 95
+extends from 494643S -
+0721441W, thence in a
+straight line NNE to 492722S
+- 0720431W, thence
+continuing along a 49 NM
+arc clockwise, centered on
+the ECA VOR/DME to
+494119S - 0710923W,
+thence in a straight line SSW
+to 495959S - 0712402W,
+thence along a 30 NM DME
+arc counterclockwise,
+centered on ECA VOR/DME
+to 494644S - 0720305W,
+and thence to 494643S -
+0721441W.
 
 TMA ESQUEL
 Desde 414147S – 0705922W, 422259S -
@@ -85,6 +268,20 @@ CLASE DE ESPACIO AÉREO:
 A- Por encima de FL 195 hasta FL 245
 B- Por encima de FL 145 hasta FL 195.
 C-Desde 2000 FT AGL hasta FL 145
+From 414147S – 0705922W, 422259S -
+0705704W, following an arc of 30 NM radius
+centered at VOR/DME ESQ (425314S -
+0710601W) to the east until 422329S –
+0711734W, 414229S - 0711834W, following an
+arc of 35 NM radius centered at VOR/DME BAR
+(410825S - 0711120W) to the east until
+414147S - 0705922W.
+FL 245
+2000 FT AGL
+AIRSPACE CLASS:
+A - Above FL 195 up to FL 245
+B - Above FL 145 up to FL 195
+C - From 2000 FT AGL up to FL 145
 
 TMA MARAMBIO
 Círculo de 60 NM de radio con centro en
@@ -95,6 +292,68 @@ CLASE DE ESPACIO AÉREO:
 A- Por encima de FL 195 hasta FL 450.
 B- Por encima de FL 145 hasta FL 195.
 C- Desde 2000 FT AGL/AMSL hasta FL 145
+Circle with a 60 NM radius centered at
+VOR/DME MBI (641405S - 0563712W).
+TWR MARAMBIO
+MARAMBIO TORRE/
+MARAMBIO TOWER
+ESPAÑOL/ SPANISH
+H 24
+118.10 MHz
+118.50 MHz
+121.50 MHz.
+EMERG
+La escasa información para
+mantener un buen ajuste
+altimétrico, combinado con
+temperaturas y presión
+extremadamente bajas sobre el
+continente antártico, exige que
+se mantenga especial atención
+cuando se utilicen las altitudes y
+niveles de vuelo mínimos.
+The limited information to
+maintain a good altimetric
+adjustment, combined with
+extremely low temperatures and
+AIP ARGENTINA ENR 2.1-9
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+FL 450
+2000 FT AGL/AMSL
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 450.
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL/AMSL up to FL 145
+pressure over the antarctic
+continent, requires that special
+attention be maintained when
+using minimum altitudes and
+flight levels.
 
 TMA RÍO GALLEGOS
 Desde la intersección de un arco de 55 NM de
@@ -121,6 +380,69 @@ FL 55
 CLASE DE ESPACIO AÉREO:
 B- Por encima de FL 145 hasta FL 195.
 C- Desde FL 55 hasta FL 145.
+From the intersection of an arc of 55 NM radius
+centered at VOR/DME GAL (513642S-
+0691950W) with the common limit of the
+COMODORO RIVADAVIA / PUNTA ARENAS FIR
+to the SW of the VOR GAL, continuing along this
+TWR RÍO GALLEGOS
+GALLEGOS TORRE/
+GALLEGOS TOWER
+ESPAÑOL/ INGLÉS/
+SPANISH / ENGLISH
+H 24
+124.70 MHz
+128.80 MHz
+127.60 MHz
+ATIS
+121.50 MHz.
+EMERG
+AIP ARGENTINA ENR 2.1-10
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+arc towards the N until 510800S - 0680504W
+continuing along this meridian until parallel
+520600S, continuing with an arc of 55 NM
+radius centered at VOR/DME GAL to the SW
+until the intersection of the COMODORO
+RIVADAVIA / PUNTA ARENAS FIR limit,
+continuing along this limit to the point of origin,
+and a 5 NM strip towards the S on both sides of
+the trajectory axis of the VOR GAL / VOR GRA,
+to the intersection with the PUNTA ARENAS /
+COMODORO RIVADAVIA FIR on the W side,
+continuing to the E along the limit of the RÍO
+GRANDE TMA to 5 NM to the E of the
+aforementioned trajectory axis.
+FL 195
+FL 55
+AIRSPACE CLASS:
+B- Above FL 145 up to FL 195
+C- From FL 55 up to FL 145
 
 TMA RÍO GRANDE
 Desde intersección entre arco de 64 NM de
@@ -180,6 +502,24 @@ FL 135
 2000 FT AGL/AMSL
 CLASE DE ESPACIO AÉREO:
 C- Desde 2000 FT AGL/AMSL hasta FL 135
+From intersection between Arc of 64 NM radius
+centered at VOR/DME Río Grande (534631S -
+0674445W) and COMODORO RIVADAVIA /
+PUNTA ARENAS limit continuing on the arc to
+the E to the 06600W meridian.
+Continuing along this meridian to the S to the
+limit of COMODORO RIVADAVIA / PUNTA
+ARENAS FIR. Follow this limit to the W until
+intersection with 39NM arc radio of DVOR USU
+(545017S- 0681703W) Continuing on arc to the
+N until 05430S parallel. Continuing on 05430S
+parallel to the W until the limit of COMODORO
+RIVADAVIA / PUNTA ARENAS FIR and follow on
+limit to the N until the first point.
+FL 135
+2000 FT AGL/AMSL
+AIRSPACE CLASS:
+B- From 2000 FT AGL/AMSL up to FL 135
 
 TMA TRELEW
 Círculo de 55 NM de radio con centro en
@@ -189,6 +529,124 @@ FL195
 CLASE DE ESPACIO AÉREO:
 B- Por encima de FL 145 hasta FL 195.
 C-Desde 2000 FT AGL/AMSL hasta FL 145
+Circle with a 55 NM radius centered at
+VOR/DME TRE (431209S - 0651450W).
+FL195
+2000 FT AGL/AMSL
+TWR TRELEW
+TRELEW TORRE/
+TRELEW TOWER
+ESPAÑOL / INGLÉS/
+SPANISH / ENGLISH
+H 24
+118.70 MHz
+120.65 MHz
+127.70 MHz
+ATIS
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 2.1-12
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+AIRSPACE CLASS:
+B - Above FL 145 up to FL 195
+C - From 2000 FT AGL/AMSL up to FL 145
+TMA USHUAIA
+Limite FIR COMODORO RIVADAVIA / PUNTA
+ARENAS y paralelo 543000S, continuando por
+este hasta interceptar el arco de 39 NM de
+radio con centro en DVOR USU (545017S -
+0681703W) y límite FIR COMODORO
+RIVADAVIA / PUNTA ARENAS.
+FL 450
+2000 FT AGL/AMSL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 450
+B- Por encima de FL 145 hasta FL 195.
+C-Desde 2000 FT AGL/AMSL hasta FL 145.
+COMODORO RIVADAVIA / PUNTA ARENAS FIR
+limit and parallel 543000S, continuing east until
+intercepting an arc of 39 NM radius centered at
+DVOR USU (545017S - 0681703W) and
+COMODORO RIVADAVIA / PUNTA ARENAS FIR
+limit.
+FL 450
+2000 FT AGL/AMSL
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 450
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL/AMSL up to FL 145.
+TWR USHUAIA
+USHUAIA TORRE/
+USHUAIA TOWER
+ESPAÑOL / INGLÉS/
+SPANISH / ENGLISH
+1000 a / to 0200
+118.10 MHz
+122.10 MHz
+127.80 MHz
+ATIS
+121. 50 MHz
+EMERG
+TWR USHUAIA no provee ATS en
+sector TMA desde el límite W de
+FIR COMODORO RIVADAVIA y
+paralelo 543000S hacia el E hasta
+intersección con arco 39 NM
+radio en DVOR USU (545017S -
+0681703W), continuando sobre
+arco hacia el S hasta 544624S
+0671000W, luego hacia el W
+hasta 544734S 0683543W entre
+valles y cañadones de la
+cordillera. Luego, hacia el N
+intersección del límite FIR
+COMODORO RIVADAVIA - PUNTA
+ARENAS y el paralelo 543000S.
+Desde 2000 FT AGL a 6000 FT
+MSL.
+ATS is not provided by TWR
+USHUAIA TWR in TMA sector
+from the W limit of the
+COMODORO RIVADAVIA FIR and
+parallel 543000S to the E until the
+intersection an arc of 39 NM
+radius centered at DVOR USU
+(545017S - 0681703W),
+continuing to the south along the
+arc until 544624S 0671000W,
+then to the W to 544734S
+683543W between valleys and
+canyons of the mountain range.
+Then, to the N intersection of the
+COMODORO RIVADAVIA - PUNTA
+ARENAS FIR and the parallel
+543000S. From 2000 FT AGL up to
+6000 FT MSL.
 
 TMA VIEDMA
 Círculo de 30 NM de radio con centro en VOR
@@ -228,6 +686,15 @@ Remarks
 FL 75
 2000 FT AGL/AMSL
 CLASE DE ESPACIO AÉREO: C
+Circle with a 30 NM radius centered at VOR VIE
+(405202S - 0630003W).
+FL 75
+2000 FT AGL/AMSL
+AIRSPACE CLASS: C
+ESPAÑOL/ SPANISH
+0900 a/ to 2359
+121.50 MHz
+EMERG
 
 TMA CATAMARCA
 Desde 274458S - 0652003W 280858S -
@@ -247,6 +714,61 @@ FL 165
 CLASE DE ESPACIO AÉREO:
 B- Por encima de FL 145 hasta FL 165.
 C-Desde 2000 FT AGL hasta FL 145
+From 274458S - 0652003W 280858S -
+0652903W, following an arc of 30 NM radius
+centered at VOR/DME CAT (283501S -
+0654448W) to the SE to 285858S -0660603W
+290858S - 0661703W, following LA RIOJA TMA
+TWR CATAMARCA
+CATAMARCA TORRE/
+CATAMARCA TOWER
+ESPAÑOL/ SPANISH
+LUN a VIE 10:00-23:00
+UTC, SAB 12:00-17:00
+UTC, DOM 17:00-
+23:00 UTC
+118.15 MHz
+119.90 MHz
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 2.1-17
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+limit to NW to 285958S - 0662603W 285158S -
+0661503W, following an arc of 30 NM radius
+centered VOR/DME CAT, to NW to 280558S -
+0654103W 274058S - 0653203W following the
+TUCUMÁN TMA limit to the E to 274458S -
+0652003W.
+FL 165
+2000 FT AGL
+AIRSPACE CLASS:
+B- Above FL 145 up to FL 165.
+C-From 2000 FT AGL up to FL 145
 
 TMA CÓRDOBA
 Desde 314958S - 0650403W, siguiendo un arco
@@ -260,6 +782,61 @@ CLASE DE ESPACIO AÉREO:
 A- Por encima de FL 195 hasta FL 245.
 B- Por encima de FL 145 hasta FL 195.
 C-Desde 2000 FT AGL hasta FL 145
+From 314958S - 0650403W, following an arc of
+55 NM radius centered at VOR/DME CBA
+(311848S - 0641213W) to the N to 320858S -
+0634903W to 314958S - 0650403W.
+FL 245
+2000 FT AGL
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 245.
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL up to FL 145
+ACC CÓRDOBA
+CÓRDOBA CONTROL/
+CÓRDOBA CONTROL
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+H 24
+119.10 MHz
+120.65 MHz
+121.50 MHz
+EMERG
+Se brinda vigilancia ATS.
+Es obligatorio el uso del
+respondedor de a bordo en modo
+A/ 3 y C.
+ATS surveillance is provided.
+The use of the on-board
+transponder in mode A/3 and
+mode C is mandatory.
+AIP ARGENTINA ENR 2.1-18
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
 
 TMA LA RIOJA
 Círculo de 30 NM de radio con centro en
@@ -269,6 +846,22 @@ FL 165
 CLASE DE ESPACIO AÉREO:
 B- Por encima de FL 145 hasta FL 165.
 C-Desde 2000 FT AGL hasta FL 145
+Circle of 30 NM radius centered at
+VOR/DME LAR (292319S - 0664813W).
+FL 165
+2000 FT AGL
+AIRSPACE CLASS:
+B- Above FL 145 up to FL 165.
+C- From 2000 FT AGL up to FL 145
+TWR LA RIOJA
+LA RIOJA TORRE/ LA
+RIOJA TOWER
+ESPAÑOL/ SPANISH
+DOM A VIE
+/ SUN TO FRI
+1900 a 2400
+118.45 MHz
+119.15 MHz
 
 TMA RÍO CUARTO
 Desde 330704S - 0645134W, siguiendo un arco
@@ -283,6 +876,55 @@ CLASE DE ESPACIO AÉREO:
 A- Por encima de FL 195 hasta FL 245.
 B- Por encima de FL 145 hasta FL 195.
 C- Desde 2000 FT AGL hasta FL 145.
+From 330704S - 0645134W, following an arc of
+30 NM radius centered at VOR/DME RCU
+(330532S - 0641554W) to NE until 333258S -
+0643031W, following VILLA REYNOLDS TMA
+limit to N to 330704S - 0645134W.
+TWR RÍO CUARTO
+RÍO CUARTO TORRE/
+RÍO CUARTO TOWER
+ESPAÑOL/ SPANISH
+LUN a VIE / MON to
+FRI
+1100 a 2300
+118.75 MHz
+119.55 MHz
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 2.1-19
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+FL 245
+2000 FT AGL
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 245.
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL up to FL 145.
 
 TMA SALTA
 Círculo de 55 NM de radio con centro en
@@ -293,6 +935,24 @@ CLASE DE ESPACIO AÉREO:
 A- Por encima de FL 195 hasta FL 245.
 B- Por encima de FL 145 hasta FL 195.
 C-Desde 2000 FT AGL hasta FL 145.
+Circle of 55 NM radius centered at VOR/DME
+SAL (245108S - 0652902W).
+FL 245
+2000 FT AGL
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 245.
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL up to FL 145.
+TWR SALTA
+SALTA CONTROL/
+SALTA CONTROL
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+H 24
+124.60 MHz
+126.00 MHz
+121.50 MHz
+EMERG
 
 TMA SANTA ROSA DE CONLARA
 Circulo de 15 NM de radio con centro en
@@ -300,6 +960,50 @@ VOR/DME SRC (322221S - 0651100W)
 FL 135
 FL 95
 CLASE DE ESPACIO AÉREO: C
+Circle of 15 NM radius centered at VOR/DME
+SRC (322221S - 0651100W)
+FL 135
+FL 95
+AIRSPACE CLASS: C
+TWR SANTA ROSA DE
+CONLARA
+CONLARA TORRE
+CONLARA TOWER
+ESPAÑOL/ SPANISH
+1200 a/to 1800
+(DIAS HABILES /
+WORKING DAYS)
+119.95 MHz
+118.85 MHz
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 2.1-20
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
 
 TMA SANTIAGO DEL ESTERO
 Círculo de 30 NM de radio con centro en VOR
@@ -307,6 +1011,21 @@ SDE (274532S - 0641810W).
 FL 95
 2000 FT AGL
 CLASE DE ESPACIO AÉREO: C
+Circle of 30 NM radius centered at VOR SDE
+(274532S - 0641810W).
+FL 95
+2000 FT AGL
+AIRSPACE CLASS: C
+TWR SANTIAGO DEL
+ESTERO
+SANTIAGO TORRE/
+SANTIAGO TOWER
+ESPAÑOL/ SPANISH
+1000 a/to 2400
+118.70 MHz
+119.25 MHz
+121.50 MHz
+EMERG
 
 TMA TUCUMÁN
 Desde 253958S - 0650003W 255558S -
@@ -325,6 +1044,58 @@ FL 195
 CLASE DE ESPACIO AÉREO:
 B- Por encima de FL 145 hasta FL 195.
 C- Desde 2000 FT AGL Hasta FL 145
+From 253958S - 0650003W 255558S -
+0650003W, following an arc of 55 NM radius
+centered at VOR/DME TUC (265045S -
+0650630W) to the E to 271600S - 0641144W,
+following the SDE TMA limit to the W to
+274421S - 0645157W, following an arc of 55
+NM radius centered at VOR/DME to the NW to
+255758S- 0652303W 254558S - 0652503W,
+TWR TUCUMÁN
+TUCUMÁN TORRE/
+TUCUMÁN TOWER
+ESPAÑOL/INGLÉS
+SPANISH / ENGLISH
+H 24
+123.85 MHz
+122.50 MHz
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 2.1-21
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+following the Salta TMA limit to the E to
+253958S - 0650003W.
+FL 195
+2000 FT AGL
+AIRSPACE CLASS:
+B - Above FL 145 up to FL 195.
+C - From 2000 FT AGL up to FL 145
 
 TMA BAHÍA BLANCA
 Desde 391959S-0630003W, siguiendo un arco
@@ -336,6 +1107,26 @@ FL 195
 CLASE DE ESPACIO AÉREO:
 B- Por encima de FL 145 hasta FL 195:
 C- Desde 2000 FT AGL/AMSL hasta FL 145.
+From 391959S-0630003W, following an arc of
+55NM radius centered at BCA VOR/DME
+(384312S-0620930W) to the N to 393559S -
+0622603W to 391959S - 0630003W.
+FL 195
+2000 FT AGL/AMSL
+AIRSPACE CLASS:
+B- Above FL 145 up to FL 195:
+C- From 2000 FT AGL/AMSL up to FL 145.
+TWR BAHÍA BLANCA
+BAHÍA BLANCA
+CONTROL/ BAHÍA
+BLANCA CONTROL
+ESPAÑOL/ SPANISH
+H 24
+124.80 MHz
+119.15 MHz
+118.10 MHz
+121.50 MHz.
+EMERG
 
 TMA BAIRES
 Desde 335428S - 0582732W 335958S -
@@ -404,6 +1195,252 @@ A- Por encima de FL 195 hasta FL 245.
 B- Por encima de FL 145 hasta FL 195.
 C- Desde (I) 2500 FT AGL/AMSL y (II) FL 45
 respectivamente hasta FL 145.
+From 335428S - 0582732W 335958S -
+0582402W 343458S - 0575002W 345258S -
+0570602W 350358S - 0564302W 350358S -
+0572802W, following an arc of 55 NM radius
+centered at VOR/DME EZE (344927S -
+0583207W) to the SW to 335428S - 0582732W.
+(I) FL 245
+2500 FT AGL/ AMSL
+(II) FL 245
+FL 45
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 245.
+B- Above FL 145 up to FL 195.
+C- From (I) 2500 FT AGL/AMSL and (II) FL 45
+respectively up to FL 145.
+124.90 MHz
+125.30 MHz
+121.50 MHz
+EMERG
+aproximadamente 5 NM hacia el
+Norte, continuando al Noreste
+con una paralela a la trayectoria
+AWY A314 aproximadamente a 5
+NM en el tramo EZEIZA
+VOR/PAPIX. Como consecuencia
+el TMA BAIRES queda dividido
+en dos (2) sectores de control a
+saber:
+BAIRES NORTE Y BAIRES SUR
+EL LÍMITE VERTICAL INFERIOR
+DEL TMA BAIRES ESTA DIVIDIDO
+EN DOS SECTORES: (I) 2.500 FT
+AGL /AMSL y (II) FL 45.
+(I) El límite vertical inferior
+2.500 FT AGL/AMSL
+comprende el espacio aéreo
+desde intersección límite FIR
+EZEIZA/FIR MONTEVIDEO
+con el meridiano 05753W
+hasta 344958S-0575402W,
+siguiendo por la línea de la
+costa del Río de la Plata
+hasta 350358S-0572802W,
+continuando con un arco de
+55 NM de radio con centro
+en VOR/DME EZE, hasta la
+intersección con un arco de
+25 NM de radio con centro
+en VOR PTA continuando por
+este arco hasta interceptar
+un arco de 25 NM de radio
+con centro en VOR/DME
+EZE, siguiendo por este arco
+hasta interceptar un arco de
+25 NM de radio con centro
+en VOR/DME FDO,
+continuando por este arco
+hasta la intersección del
+límite común de la FIR
+EZEIZA/MONTEVIDEO,
+AIP ARGENTINA ENR 2.1-31
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+siguiendo por este límite
+hacia el S hasta interceptar
+el meridiano 05753W.
+(II) El límite vertical inferior FL 45
+comprende el resto del
+espacio aéreo del TMA
+BAIRES
+ÁREA PARA DESCARGA RÁPIDA
+DE COMBUSTIBLE
+La descarga rápida de
+combustible en vuelo se
+realizará en la siguiente área;
+Límites: Desde 3514S - 05700W
+3518S - 05647W 3545S-05647W
+3535S - 05700W, continuando
+por límite E de la SAR 13 PUNTA
+INDIO hasta 3514S - 05500W,
+extendiéndose en su proyección
+vertical entre los FL 045 a FL 085
+y se encuentra comprendida
+entre los radiales 115 y 135 VOR
+PTA, el centro de esta área está
+ubicado a 90NM del VOR/DME
+EZE en radial 120.
+NOTA: Las normas para su
+utilización se encuentran
+publicadas en el volumen II Parte
+AD 2.22 PROCEDIMIENTOS DE
+VUELOS de los AD SABE, AD SAEZ
+y AD SADF.
+The use of the on-board
+transponder in mode A/ 3 and C
+is mandatory.
+BAIRES TMA DIVISION - BAIRES
+NORTH SECTOR AND BAIRES
+SOUTH SECTOR.
+An imaginary line has been
+determined parallel to the W 9
+AIP ARGENTINA ENR 2.1-32
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+trajectory in the URINO/EZEIZA
+VOR section and distant
+approximately 5 NM to the
+North, continuing to the
+Northeast with a parallel to the
+A314 AWY trajectory
+approximately 5 NM in the
+EZEIZA VOR/PAPIX section. As a
+consequence, the BAIRES TMA is
+divided into two (2) control
+sectors:
+NORTH BAIRES AND SOUTH
+BAIRES
+THE LOWER VERTICAL LIMIT OF
+THE BAIRES TMA IS DIVIDED
+INTO TWO SECTORS: (I) 2.500 FT
+AGL /AMSL and (II) FL 45
+(I) The lower vertical limit 2.500
+FT AGL/AMSL includes the
+airspace from the
+intersection of the EZEIZA FIR
+/ MONTEVIDEO FIR limit
+with the meridian 05753W
+hasta 344958S-0575402W,
+following the coast line of
+the Río de la Plata to
+350358S-0572802W,
+continuing with an arc of 55
+NM radius centered at
+VOR/DME EZE, until the
+intersection with an arc of 25
+NM radius centered at VOR
+PTA continuing along this arc
+until intercepting an arc of
+25 NM radius centered at
+VOR /DME EZE, continuing
+along this arc until
+intercepting an arc of 25 NM
+radius centered at VOR/DME
+FDO, continuing along this
+arc until the intersection of
+the common limit of the
+AIP ARGENTINA ENR 2.1-33
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+EZEIZA/MONTEVIDEO FIR,
+continuing along this limit to
+the S until intercepting
+meridian 05753W.
+(II) The lower vertical limit FL 45
+includes the rest of the
+airspace of the BAIRES TMA
+RAPID FUEL DISCHARGE AREA
+Rapid defueling in flight will be
+performed in the following area;
+Limits: From 3514S - 05700W
+3518S - 05647W 3545S -05647W
+3535S - 05700W, continuing by E
+limit of SAR 13 PUNTA DE INDIO
+to 3514s - 05500W, extending in
+its vertical projection between FL
+045 to FL 085 and it is between
+radials 115 and 135 PTA VOR the
+center of this area is located
+90NM from the VOR/DME EZE
+on radial 120.
+NOTE: The rules for its use are
+published in volume II Part AD
+2.22 FLIGHT PROCEDURES of AD
+SABE, AD SAEZ and AD SADF.
 
 TMA CONCORDIA
 Arco de 30 NM de radio con centro en punto de
@@ -412,6 +1449,49 @@ notificación obligatorio KOLGO (311803S -
 FL 75
 2000 FT AGL
 CLASE DE ESPACIO AÉREO: C
+Arc of 30 NM radius centered at mandatory
+notification point KOLGO (311803S -
+0580000W) and EZEIZA / MONTEVIDEO FIR
+limit.
+FL 75
+2000 FT AGL
+AIRSPACE CLASS: C
+TWR CONCORDIA
+CONCORDIA TORRE/
+CONCORDIA TOWER
+ESPAÑOL / SPANISH
+1100 a/to 1900
+118.30 MHz
+122.10 MHz
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 2.1-34
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
 
 TMA GUALEGUAYCHU
 Arco de 30 NM de radio con centro en
@@ -420,6 +1500,21 @@ FIR EZEIZA/MONTEVIDEO.
 FL 75
 2000 FT AGL
 CLASE DE ESPACIO AÉREO: C
+Arc of 30 NM radius centered at VOR/DME GUA
+(330035S-0583651W) and
+EZEIZA/MONTEVIDEO FIR limit.
+FL 75
+2000 FT AGL
+AIRSPACE CLASS: C
+TWR GUALEGUAYCHU
+GUALEGUAYCHU
+TORRE/
+GUALEGUAYCHU
+TOWER
+ESPAÑOL/ SPANISH
+1100 a/to 1900
+118.40 MHz
+119.30 MHZ
 
 TMA MAR DEL PLATA
 Desde 371159S - 0581502W, siguiendo un arco
@@ -439,6 +1534,140 @@ CLASE DE ESPACIO AÉREO:
 A- Por encima de FL 195 hasta FL 245.
 B- Por encima de FL 145 hasta FL 195.
 C- Desde 2000 FT AGL/AMSL hasta FL 145
+From 371159S - 0581502W, following an arc of
+55 NM radius centered at VOR/DME MDP
+(375547S - 0573435W) to the NE to 370040S -
+0573440W, continuing with a 30 NM radius arc
+TWR MAR DEL PLATA
+MAR DEL PLATA
+TORRE/ MAR DEL
+PLATA TOWER
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+H24
+118.75 MHz
+118.20 MHz
+121.50 MHz
+EMERG
+Es obligatorio el uso del
+respondedor de a bordo en
+modo A/ 3 y C.
+AIP ARGENTINA ENR 2.1-35
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+centered at 371405S - 0570126W to the NE to
+372800S/0562700W 381300S/0570300W,
+following a 30 NM radius arc centered at
+VOR/DME MDP to the S to 373559S/0580244W
+to 371159S/0581502W.
+FL 245
+2000 FT AGL/AMSL
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 245.
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL/AMSL up to FL 145
+The use of the on-board
+transponder in mode A/ 3 and C
+is mandatory.
+TMA NEUQUÉN
+Se encuentra conformada por dos sectores:
+Sector I:
+Limite lateral: Círculo de 30 NM de radio con
+centro en DVOR/DME NEU (385701S -
+0680917W).
+Limite vertical:
+FL 195
+4500 FT MSL
+Sector II:
+Limite lateral: Polígono cerrado por 384832S-
+0683211W, 384840S-0674725W, 390649S-
+0674725W, 390641S-0683223W, 384832S-
+0683211W.
+Limite vertical:
+4500 FT MSL
+3500 FT MSL
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 195.
+C- Desde 3500 FT MSL hasta FL 145.
+It is composed of two sectors.
+Sector I:
+Lateral limit: Circle of 30 NM radius centered at
+DVOR /DME NEU (385701S - 0680917W).
+Vertical Limit:
+FL 195
+4500 FT MSL
+TWR NEUQUÉN
+NEUQUÉN TORRE/
+NEUQUÉN TOWER
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+H 24
+119.80 MHz
+118.85 MHz
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 2.1-36
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+Sector II:
+Lateral limit: Closed polygon by 384832S-
+0683211W, 384840S-0674725W, 390649S-
+0674725W, 390641S-0683223W, 384832S-
+0683211W.
+Vertical limit:
+4500 FT MSL
+3500 FT MSL
+AIRSPACE CLASS:
+B- Above FL 145 up to FL 195.
+C- From 3500 FT MSL up to FL 145.
 
 TMA PARANÁ
 Desde 323058S-0611002W, siguiendo un arco
@@ -453,6 +1682,54 @@ FL 195
 CLASE DE ESPACIO AÉREO:
 B- Por encima de FL 145 hasta FL 195.
 C-Desde 2000 FT AGL hasta FL 145.
+From 323058S-0611002W following a 55 NM
+radius arc centered at VOR/DME PAR (314830S
+- 0602905W), to the NW to 324158S -
+0601402W, following an arc of 30 NM radius
+centered at VOR/DME ROS (325418S -
+0604653W), to the W hasta 323058S -
+0611002W.
+FL 195
+2000FT AGL
+AIRSPACE CLASS:
+B- Above FL 145 up to FL 195.
+C-From 2000 FT AGL up to FL 145.
+TWR PARANÁ
+PARANÁ TORRE/
+PARANA TOWER
+ESPAÑOL/ SPANISH
+1000 a/to 0100
+119.60 MHz
+118.50 MHz
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 2.1-37
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
 
 TMA ROSARIO
 Desde 325658S - 0612232W, siguiendo un arco
@@ -465,6 +1742,27 @@ FL 195
 CLASE DE ESPACIO AÉREO:
 B- Por encima de FL 145 hasta FL 195.
 C-Desde 2000 FT AGL/ hasta FL 145
+From 325658S - 0612232W, following an arc of
+30NM radius centered at VOR/DME ROS
+(325418S - 0604653W) to the NE to 332310S -
+0603702W to 325658S -0612232W.
+FL 195
+2000FT AGL/AMSL
+AIRSPACE CLASS:
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL/ up to FL 145
+TWR ROSARIO
+ROSARIO TORRE/
+ROSARIO TOWER
+ESPAÑOL / INGLÉS/
+SPANISH / ENGLISH
+H 24
+125.40 MHz
+123.75 MHz
+127.40 MHz
+ATIS
+121.50 MHz
+EMERG
 
 TMA SAN CARLOS DE BARILOCHE
 Arco de 35 NM de radio con centro en
@@ -476,6 +1774,66 @@ CLASE DE ESPACIO AÉREO:
 A- Por encima de FL 195 hasta FL 245.
 B- Por encima de FL 145 hasta FL 195.
 C- Desde 2000 FT AGL hasta FL 145.
+Arc of 35 NM radius centered at VOR/DME BAR
+(410825S - 0711120W) and EZEIZA/PUERTO
+MONTT FIR limit.
+TWR BARILOCHE
+BARILOCHE TORRE/
+BARILOCHE TOWER
+ESPAÑOL/ INGLÉS
+SPANISH / ENGLISH
+H24
+119.10 MHz
+118.65 MHz
+127.90 MHz
+ATIS
+121.50 MHz.
+EMERG
+TWR BARILOCHE no provee ATS
+en sector TMA entre RDL 145-
+RDL 270 y entre RDL 320-RDL
+045 desde 10NM fuera del VOR
+BAR, desde 2000 ft AGL hasta
+6500 ft MSL.
+TWR Bariloche ATS is not
+provided in TMA sector between
+RDL 145- RDL 270 and between
+RDL 320- RDL 045 from 10NM
+out of BAR VOR and from 2000 ft
+AGL until 6500 ft MSL.
+AIP ARGENTINA ENR 2.1-38
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+FL 245
+2000 FT AGL
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 245.
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL up to FL 145
 
 TMA SAN MARTIN DE LOS ANDES
 Arco de 31 NM de radio con centro en
@@ -486,6 +1844,43 @@ FL 195
 CLASE DE ESPACIO AÉREO:
 B- Por encima de FL 145 hasta FL 195
 C- Desde 2000 FT AGL Hasta FL 145
+Arc of 31 NM radius centered at VOR/DME CHP
+(400256S - 0710543W) and EZEIZA / PUERTO
+MONTT FIR limit.
+FL 195
+2000FT AGL
+AIRSPACE CLASS:
+B- Above FL 145 up to FL 195
+C- From 2000 FT AGL up to FL 145
+TWR CHAPELCO
+CHAPELCO TORRE/
+CHAPELCO TOWER
+ESPAÑOL/ SPANISH
+1200 a/to 2000
+119.60 MHz
+118.35 MHz
+121.50 MHz.
+EMERG
+TWR CHAPELCO no provee ATS
+en sector TMA entre RDL 170 -
+RDL 230 desde 12 NM VOR/DME
+CHP (400256S - 0710543W)
+hasta límite de TMA y entre RDL
+230 – RDL 260 desde 25 NM
+VOR/DME CHP (400256S -
+0710543W) hasta límite de TMA.
+Desde 2000 FT AGL a 8000 FT
+MSL.
+CHAPELCO TWR ATS is not
+provided in TMA sector between
+RDL 170 -RDL 230 from 12 NM
+VOR/DME CHP (400256S -
+0710543W) to TMA limit and
+between RDL 230 – RDL 260
+from 25 NM VOR/DME CHP
+(400256S - 0710543W) to TMA
+limit. From 2000 FT AGL to 8000
+FT MSL.
 
 TMA SANTA ROSA
 Círculo de 30 NM de radio con centro en
@@ -493,6 +1888,54 @@ VOR/DME OSA (363501S - 0641622W).
 FL 075
 2000 FT AGL
 CLASE DE ESPACIO AÉREO: C
+Circle of 30 NM radius centered at VOR/DME
+OSA (363501S - 0641622W).
+TWR SANTA ROSA
+SANTA ROSA TORRE/
+SANTA ROSA TOWER
+ESPAÑOL/ SPANISH
+LUN a VIE 11:00-
+01:00, SAB 19:00-
+23:00 y DOM 11:00-
+23:59. /
+118.30 MHz
+119.70 MHz
+121.50 MHz.
+EMERG
+AIP ARGENTINA ENR 2.1-39
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+FL 075
+2000 FT AGL
+AIRSPACE CLASS: C
+MON to FRI 11:00-
+01:00, SAT 19:00-
+23:00 and SUN
+11:00-23:59
 
 TMA TANDIL
 Desde 361559S - 0593502W, siguiendo un arco
@@ -511,6 +1954,59 @@ CLASE DE ESPACIO AÉREO:
 A- Por encima de FL 195 Hasta FL 245.
 B- Por encima de FL 145 hasta FL 195.
 C- Desde 2000 FT AGL hasta FL 145
+From 361559S - 0593502W, following an arc of
+60 NM radius centered at VOR/DME DIL
+(371330S - 0591346W) to the E to 362741S -
+0582526W 371159S - 0581502W, following the
+limit of MAR DEL PLATA TMA to the South to
+375159S - 0581202W, 380759S - 0594402W,
+following an arc of 60 NM radius centered at
+VOR/DME DIL to the W to 373117S - 0602503W
+to 361559S - 0593502W.
+FL 245
+2000 FT AGL
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 245.
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL up to FL 145
+TWR TANDIL
+TANDIL TORRE/
+TANDIL TOWER
+ESPAÑOL/ SPANISH
+LUN a VIE / MON to
+FRI
+12:00 a/to 20:00 UTC
+120.90 MHz
+119.40 MHz
+121.50 MHz.
+EMERG
+AIP ARGENTINA ENR 2.1-40
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
 
 TMA MALARGÜE
 Círculo de 30 NM de radio con centro en
@@ -520,6 +2016,49 @@ FL 175
 CLASE DE ESPACIO AÉREO:
 B- Por encima de FL 145 hasta FL 175.
 C- Desde 2000 FT AGL hasta FL 145
+Circle of 30 NM radius centered at VOR/DME
+MLG (352910S - 0693443W).
+FL 175
+2000 FT AGL
+AIRSPACE CLASS:
+B- Above FL 145 up to FL 175.
+C- From 2000 FT AGL up to FL 145
+TWR MALARGÜE
+MALARGÜE TORRE/
+MALARGÜE TOWER
+ESPAÑOL/ SPANISH
+1100 a/to 1900
+118.25 MHz
+119.55 MHz
+121.50 MHz.
+EMERG
+AIP ARGENTINA ENR 2.1-43
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
 
 TMA MENDOZA
 Desde 320258S - 0681403W, siguiendo un arco
@@ -539,6 +2078,66 @@ CLASE DE ESPACIO AÉREO:
 A- Por encima de FL 195 hasta FL 245.
 B- Por encima de FL 145 hasta FL 195.
 A- C- Desde 2000 FT AGL hasta FL 145
+From 320258S - 0681403W, following an arc of
+55 NM radius centered at VOR/DME DOZ
+(324955S - 0684727W) to the E to 334358S -
+0684403W, 335958S - 0684603W, 335458S -
+0695204W, following MENDOZA/SANTIAGO
+FIR limit until 324758S - 0700604W, 324658S -
+0695304W, following an arc of 55 NM radius
+centered at VOR/DME DOZ to the N to 315458S
+0685203W, following the JUA TMA limit to
+320258S -0681403W.
+FL 245
+2000 FT AGL
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 245.
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL up to FL 145
+ACC MENDOZA
+MENDOZA CONTROL
+ESPAÑOL/INGLÉS
+SPANISH / ENGLISH
+H 24
+124.20 MHz
+122.10 MHz
+127.60 MHz
+ATIS
+121.50 MHz.
+EMERG
+Es obligatorio el uso del
+respondedor de a bordo en
+modo A/ 3 y C.
+The use of the on-board
+transponder in mode A/ 3 and C
+is mandatory.
+AIP ARGENTINA ENR 2.1-44
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
 
 TMA SAN JUAN
 Círculo de 30 NM de radio con centro en
@@ -548,6 +2147,22 @@ FL 165
 CLASE DE ESPACIO AÉREO:
 B- Por encima de FL 145 hasta FL 165.
 C-Desde 2000 FT AGL hasta FL 145.
+Circle of 30 NM radius centered at VOR/DME
+JUA (313350S - 0682517W).
+FL 165
+2000 FT AGL
+AIRSPACE CLASS:
+B- Above FL 145 up to FL 165.
+C- From 2000 FT AGL up to FL 145.
+TWR SAN JUAN
+SAN JUAN TORRE/
+SAN JUAN TOWER
+ESPAÑOL/ SPANISH
+1000 a/ to 2359
+119.35 MHz
+118.05 MHz
+121.50 MHz.
+EMERG
 
 TMA SAN LUIS
 Círculo de 25 NM de radio con centro en VOR
@@ -555,6 +2170,20 @@ UIS (331606S-0662129W).
 FL 95
 2000 FT AGL
 CLASE DE ESPACIO AÉREO: C
+Circle of 25 NM radius centered at VOR UIS
+(331606S-0662129W).
+FL 95
+2000 FT AGL
+AIRSPACE CLASS: C
+TWR SAN LUIS
+SAN LUIS TORRE/
+SAN LUIS TOWER
+ESPAÑOL / SPANISH
+11:00-23:00.
+118.40 MHz
+119.85 MHz
+121.50 MHz.
+EMERG
 
 TMA SAN RAFAEL
 Desde 334358S - 0684403W 340558S -
@@ -602,6 +2231,15 @@ Remarks
 FL 105
 2000 FT AGL
 CLASE DE ESPACIO AÉREO: C
+From 334358S - 0684403W 340558S -
+0683203W, following an arc of 30 NM radius
+centered at VOR SRA (343522S - 0682341W) to
+the E to 341358S - 0684903W 335858S -
+0690003W, following DOZ TMA limit to
+334358S - 0684403W.
+FL 105
+2000 FT AGL
+AIRSPACE CLASS: C
 
 TMA VILLA REYNOLDS
 Desde 330658S - 0655303W, siguiendo un arco
@@ -618,6 +2256,58 @@ CLASE DE ESPACIO AÉREO:
 A- Por encima de FL 195 hasta FL 245.
 B- Por encima de FL 145 hasta FL 195.
 C- Desde 2000 FT AGL hasta FL 145
+From 330658S - 0655303W, following an arc of
+45 NM radius centered at VOR/DME RYD
+(334343S - 0652252W) to the E to 342858S -
+0653003W 340858S - 0660803W, following an
+arc of 45 NM radius centered at VOR/DME RYD
+to the W to 334058S - 0661703W, following the
+UIS TMA limit to 330658S -0655303W.
+TWR VILLA REYNOLDS
+REYNOLDS TORRE/
+REYNOLDS TOWER
+ESPAÑOL/ SPANISH
+LUN a VIE / MON to
+FRI (DIAS HABILES /
+WORKING DAYS)
+11:00 a/to 21:59 UTC
+119.30 MHz
+118.50 MHz
+121.50 MHz.
+EMERG
+AIP ARGENTINA ENR 2.1-46
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+FL 245
+2000 FT AGL
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 245.
+B- Above FL 145 up to FL 195.
+C- From 2000 FT AGL up to FL 145
 
 TMA PASO DE LOS LIBRES
 Círculo de 25 NM de radio con centro en
@@ -626,6 +2316,90 @@ de las FIR RESISTENCIA y CURITIBA.
 FL 095
 2000 FT AGL
 CLASE DE ESPACIO AÉREO: C
+Circle of 25 NM radius centered at 294141S -
+0570853W, conteined within RESISTENCIA and
+CURITIBA FIR.
+FL 095
+2000 FT AGL
+AIRSPACE CLASS: C
+TWR PASO DE LOS
+LIBRES
+LIBRES TORRE/
+LIBRES TOWER
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+LUN A VIE / MON TO
+FRI
+12:30 A/TO 20:30 UTC
+120.30 MHz
+118.50 MHz
+TMA POSADAS
+Sector circular de 15 NM de radio con centro en
+VOR/DME POS (272308S - 0555809W)
+contenido en la FIR ASUNCIÓN y sector circular
+de 30 NM de radio con centro en el VOR/DME
+POS contenido en la FIR RESISTENCIA.
+FL 095
+(*)1000 FT / 2000 FT AGL
+TWR POSADAS
+POSADAS TORRE/
+POSADAS TOWER
+ESPAÑOL/ SPANISH
+Inglés a requerimiento
+con 72 hr de
+antelación/ English on
+120.10 MHz
+118.50 MHz
+121.50 MHz.
+EMERG
+(*) 1000 FT AGL dentro de un
+círculo de 10 NM de radio con
+centro en el VOR/DME POS y
+2.000 FT AGL en el resto del
+TMA.
+AIP ARGENTINA ENR 2.1-51
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+CLASE DE ESPACIO AÉREO: C
+Circular sector of 15 NM radius centered at POS
+VOR/DME (272308S - 0555809W) contained
+within ASUNCIÓN FIR and 30 NM radius circular
+sector centered at POS VOR/DME contained
+within RESISTENCIA FIR.
+FL 095
+(*)1000 FT / 2000 FT AGL
+AIRSPACE CLASS: C
+request with 72 hrs
+advanced
+H24
+(*) 1000 FT AGL within a circle of
+10 NM radius centered on the
+VOR/DME POS and 2,000 FT AGL
+in the rest of the TMA.
 
 TMA RECONQUISTA
 Desde 285058S-0591802W, siguiendo un arco
@@ -638,6 +2412,27 @@ radio con centro en VOR/DME RTA (291231S -
 FL 075
 2000 FT AGL
 CLASE DE ESPACIO AÉREO: C
+From 285058S-0591802W, following an arc of
+15 NM radius centered at 290600S - 0591500W
+to the E to 291958S - 0590902W following an
+arc of 30 NM radius centered at VOR/DME RTA
+(291231S - 0594057W) to the SW to 285058S -
+0591802W.
+FL 075
+2000 FT AGL
+AIRSPACE CLASS: C
+TWR RECONQUISTA
+RECONQUISTA TORRE/
+RECONQUISTA TOWER
+ESPAÑOL/ SPANISH
+LUN a VIE 10:00-22:00
+UTC.
+MON to FRI 10:00-
+22:00 UTC.
+120.85 MHz
+118.50 MHz
+121.50 MHz.
+EMERG
 
 TMA RESISTENCIA
 Desde 260858S - 0583002W, siguiendo un arco
@@ -650,6 +2445,251 @@ CONTROL
 119.40 MHz
 120.40 MHz
 EL LÍMITE VERTICAL INFERIOR DEL
+TMA RESISTENCIA SE ENCUENTRA
+DIVIDIDO EN DOS SECTORES:
+AIP ARGENTINA ENR 2.1-52
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+hasta la intersección al SE del VOR/DME FSA
+con el límite FIR ASUNCIÓN/ RESISTENCIA,
+continuando con este límite hasta la
+intersección con un arco de 35 NM de radio con
+centro en VOR/DME SIS (272649S - 0590326W)
+al NE siguiendo por este arco dentro de la FIR
+ASUNCIÓN hacia el S hasta la intersección con
+el límite de la FIR ASUNCIÓN/RESISTENCIA
+continuando por este límite hacia el E hasta la
+intersección con un arco de 55 NM de radio con
+centro en VOR/DME SIS, siguiendo con este
+arco hacia el S hasta 263358S-0584702W hasta
+260858S - 0583002W.
+(I) FL 195 (II) FL 195
+2000 FT AGL FL 045
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 195
+C- (I) Desde 2000 FT AGL hasta FL 145
+(II) Desde FL 045 Hasta FL 145
+From 260858S - 0583002W, following a circular
+arc of 15 NM radius centered at FSA VOR/DME
+(261237S - 0581329W) to the NE, projecting
+within Asunción FIR until the intersection SE of
+FSA VOR/DME with ASUNCIÓN/ RESISTENCIA
+FIR limit, continuing this limit until the
+intersection with an arc of 35 NM radius
+centered at SIS VOR/DME (272649S -
+0590326W) to the NE following this arc inside
+ASUNCIÓN FIR to the S until the intersection of
+the ASUNCIÓN/RESISTENCIA FIR limit
+continuing along this limit the E until the
+intersection with an arc of 55 NM radius
+centered at SIS VOR/DME continuing along this
+arc to the S to 263358S-0584702W to 260858S
+- 0583002W.
+(I) FL 195 (II) FL 195
+2000 FT AGL FL 045
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+H 24
+121.50 MHz
+EMERG
+(I) 2000 FT AGL
+(II) FL 045
+(I) El límite vertical inferior 2.000
+FT AGL: abarca el espacio
+aéreo comprendido por un
+arco de 35 NM de radio
+dentro de la FIR Asunción y
+otro arco de 30 NM de radio
+dentro de la FIR Resistencia,
+ambos arcos con centro en el
+VOR/DME Resistencia y
+límites FIR Resistencia/
+Asunción.
+(II) El límite vertical inferior FL
+045 comprende el resto del
+espacio aéreo del TMA.
+THE LOWER VERTICAL LIMIT OF
+RESISTENCIA TMA IS DIVIDED
+INTO TWO SECTORS:
+(I) 2000 FT AGL
+(II) FL 045
+(I) The lower vertical limit 2000
+FT AGL: covers the airspace
+comprised by an arc of 35
+NM radius within the
+Asunción FIR and another
+arc of 30 NM radius within
+the Resistencia FIR, both arcs
+centered on the VOR /DME
+Resistencia and limits
+Resistencia / Asunción FIR.
+(II) The lower vertical limit FL 045
+includes the rest of the
+airspace of the TMA.
+AIP ARGENTINA ENR 2.1-53
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+AIRSPACE CLASS:
+B- Above FL 145 to FL 195
+C- (I) From 2000 FT AGL to FL 145
+(II) From FL 045 to FL 145
+CTR MONTE AGRADABLE (MOUNT PLEASANT)
+Desde 503436S - 0582512W, siguiendo un arco
+de 75 NM de radio con centro en VOR MTP
+(514936S - 0582515W) hacia el Este del VOR
+hasta 530436S - 0582512W, continuando por el
+paralelo 530436S hasta el meridiano
+0620000W, siguiendo un arco de 150 NM de
+radio con centro en VOR MTP hasta 503436S -
+0615500W y continuando por este paralelo
+hacia el Este hasta 503436S - 0582512W.
+FL 500
+GND/MSL
+CLASE DE ESPACIO AÉREO: D
+From 503436S - 0582512W, following an arc of
+75 NM radius centered at MPT VOR (514936S -
+0582515W) to the East of the VOR to 530436S -
+0582512W, continuing along the parallel
+530436S to the 0620000W meridian, following
+an arc of 150 NM radius centered at MTP VOR
+to 503436S - 0615500W and continuing along
+this parallel to the East to 503436S - 0582512W.
+FL 500
+GND/MSL
+AIRSPACE CLASS: D
+APP MOUNT
+PLEASANT
+MOUNT PLEASANT
+RADAR
+INGLÉS/ ENGLISH
+131.50 MHz
+118.50 MHz
+257.30 MHz
+Servicios de Tránsito Aéreo
+facilitados por la Administración
+del Reino Unido.
+Consultar AIP del Reino Unido.
+Air Traffic Services provided by
+the United Kingdom
+Administration.
+See UK AIP.
+ATZ ESCUELA DE AVIACION MILITAR
+Círculo de 4 NM de radio con centro en NDB
+ESC (312616S - 0641633W) y límite Río
+Primero.
+2500 FT
+GND
+TWR ESCUELA DE
+AVIACIÓN MILITAR
+ESCUELA TORRE/
+ESCUELA TOWER
+ESPAÑOL/ SPANISH
+HJ
+120.60 MHz
+118.50 MHz
+121.50 MHz
+EMERG
+Se brinda Servicio Control de
+Aeródromo.
+El Servicio de Control de
+Aproximación lo brinda TWR
+CÓRDOBA.
+Aeródromo MILITAR:
+AIP ARGENTINA ENR 2.1-54
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+CLASE DE ESPACIO AÉREO: C
+Circle of 4 NM radius centered at ESC NDB
+(312616S - 0641633W) and Río Primero
+boundary.
+2500 FT
+GND
+AIRSPACE CLASS: C
+TWR ESCUELA DE
+AVIACIÓN MILITAR
+ESCUELA
+HJ
+Consultar el MADHEL
+https://ais.anac.gob.ar/madhel/
+Aerodrome Control Service is
+provided.
+The Approach Control Service is
+provided by CÓRDOBA TWR.
+MILITARY airfield:
+Consult the MADHEL
+https://ais.anac.gob.ar/madhel/
 
 SECTORES TMA BAIRES
 EL LÍMITE VERTICAL INFERIOR
@@ -808,3 +2848,1925 @@ Asunción.
 045 comprende el resto del
 espacio aéreo del TMA.
 THE LOWER VERTICAL LIMIT OF
+
+FIR COMODORO RIVADAVIA
+Desde 3917S - 06307W 4600S - 04500W,
+siguiendo por el paralelo 4600S hasta 4600S -
+01000W, continuando por este meridiano hasta
+el Polo Sur, siguiendo por el meridiano 07400W
+hasta el paralelo 6000S, continuando por este
+paralelo hasta el meridiano 06716W, siguiendo
+por este meridiano hasta 5821S - 06716W,
+5622S - 06716W, 5622S - 06543W, 5522S -
+06543W, 5511S - 06604W, 5507S - 06625W,
+siguiendo el límite internacional de frontera
+argentino/chilena hasta el paralelo 4127S,
+continuando con un arco de 35 NM de radio
+con centro en VOR/DME BAR hacia el S hasta
+4120S - 07027W hasta 3917S - 06307W.
+UNL
+GND/MSL
+CLASE DE ESPACIO AÉREO:
+F - Por encima de FL 245 hasta FL 600 inclusive
+sobre el territorio nacional y sobre el mar
+hasta 100 NM de la costa.
+G - 1) Desde GND/MSL hasta FL 245.
+2) Todo el espacio aéreo sobre el mar, más
+allá de las 100 NM de la costa es clase
+"G”.
+3) Por encima de FL 450 hasta UNL
+From 3917S - 06307W 4600S - 04500W,
+following the parallel 4600S to 4600S -
+01000W, continuing along this meridian to the
+South Pole, following the meridian 07400W to
+the parallel 6000S, continuing along this
+parallel to the meridian 06716W, following this
+meridian to 5821S – 06716W, 5622S – 06716W,
+5622S – 06543W, 5522S – 06543W, 5511S –
+06604W, 5507S - 06625W, following
+Argentine/Chilean international border
+boundary to the parallel 4127S, continuing with
+an arc of 35 NM radius centered at VOR/DME
+BAR to the S to 4120S - 07027W to 3917S -
+06307W.
+ACC COMODORO
+RIVADAVIA
+COMODORO CENTRO/
+COMODORO CENTER
+ESPAÑOL / INGLÉS/
+SPANISH / ENGLISH
+H 24
+SECTOR NORTE/
+NORTH SECTOR
+125.50 MHz
+134.35 MHz
+2965 KHz
+5547 KHz
+11282 KHz
+121.50 MHz.
+EMERG
+SECTOR SUR/
+SOUTH SECTOR
+125.70 MHz
+133.80 MHz
+2965 KHz
+5547 KHz
+11282 KHz
+121.50 MHz.
+EMERG
+FIR SAVF
+COMODORO
+RIVADAVIA
+LOGON SAVC –
+CPDLC /
+ADS – C
+DIVISIÓN DEL ESPACIO AÉREO EN
+SECTOR NORTE Y SUR:
+Es determinado por el paralelo
+4500S extendiéndose desde el
+límite Oeste hasta el límite Este de
+la FIR.
+Verticalmente se divide en:
+FIR ESPACIO AÉREO INFERIOR
+FL 245
+GND/MSL
+FIR ESPACIO AÉREO SUPERIOR
+UNL
+FL 245
+ESPACIO AÉREO RVSM
+Descripto en partes ENR 1.8 y
+ENR 1.7
+AORRA:
+Descripto parte ENR 1.8
+DIVISION OF AIRSPACE INTO
+NORTH AND SOUTH SECTOR:
+It is determined by the 4500S
+parallel extending from the
+western limit to the eastern limit
+of the FIR.
+Vertically, it is divided into:
+LOWER AIRSPACE FIR
+FL 245
+GND/MSL
+AIP ARGENTINA ENR 2.1-2
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+UNL
+GND/MSL
+AIRSPACE CLASS:
+F – Above FL 245 up to and including FL 600
+over national territory and over the sea
+until 100 NM from the coast.
+G - 1) From GND/MSL up to FL 245.
+2) All airspace over the sea beyond 100 NM
+from the coast is class "G”.
+3) Above FL 450 up to UNL
+FIR UPPER AIRSPACE
+UNL
+FL 245
+RVSM AIRSPACE
+Described in sections ENR 1.8 and
+ENR 1.7
+AORRA:
+Described in section ENR 1.8
+Dentro de la FIR COMODORO RIVADAVIA se
+establecen las siguientes Áreas de Control
+(CTA) con Vigilancia:
+ÁREA DE CONTROL (CTA) COMODORO
+RIVADAVIA NORTE
+Límite lateral:
+Desde 411950S - 0702734W continuando por
+el límite de la FIR Comodoro Rivadavia / FIR
+Ezeiza hasta 391705S - 0630657W luego en
+línea recta hasta 402335S - 0604746W, desde
+allí hasta 425107S - 0622041W, desde allí hasta
+450006S - 0635829W desde allí hasta 450015S
+- 0713257W siguiendo el límite internacional
+de frontera argentino / chilena hasta 412701S -
+0715044W luego continuando un arco de
+35NM con centro en el VOR/DME BAR (410825
+- 711120W) hacia el este hasta 411950S -
+0702734W
+Límite vertical:
+FL 600
+FL195
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 600
+ACC COMODORO
+RIVADAVIA
+COMODORO NORTE/
+NORTH COMODORO
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+H 24
+SECTOR NORTE/
+NORTH SECTOR
+125.50 MHz
+134.35 MHz
+2965 KHz
+5547 KHz
+11282 KHz
+121.50 MHz
+EMERG
+Se brinda control por vigilancia
+ATS
+Es obligatorio el uso del
+respondedor de a bordo en modo
+A/3 y modo C.
+ATS surveillance control is
+provided.
+The use of the on-board
+transponder in mode A/3 and
+mode C is mandatory.
+AIP ARGENTINA ENR 2.1-3
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+Within the COMODORO RIVADAVIA FIR, the
+following Control Areas (CTA) with Surveillance
+are established:
+NORTH COMODORO RIVADAVIA CONTROL
+AREA (CTA)
+Lateral limit:
+From 411950S - 0702734W continuing along
+the border of the Comodoro Rivadavia FIR /
+Ezeiza FIR until 391705S - 0630657W then in a
+straight line to 402335S - 0604746W, from
+there to 425107S - 0622041W, from there to
+450006S - 0635829W from there to 450015S -
+0713257W following Argentine / Chilean
+international border boundary to 412701S -
+0715044W then continuing with an arc of
+35NM centered at VOR/DME BAR (410825 -
+711120W) to the east until 411950S -
+0702734W
+Vertical limit:
+FL 600
+FL195
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 600
+ÁREA DE CONTROL (CTA) COMODORO
+RIVADAVIA SUR
+Límite lateral:
+Desde 450016S - 0692653W en línea recta
+hasta 450006S - 0635829W, luego hasta
+511337S - 0660003W, luego hasta 551341S -
+0655946W, luego continuando por el límite
+internacional de frontera argentino/chilena
+hasta 504726S - 0721758W desde allí hasta
+503610S - 0712529W, luego hasta 471504S -
+0680105W y desde allí hasta 450016S -
+0692653W.
+Límite vertical:
+FL 600
+FL 195
+ACC COMODORO
+RIVADAVIA
+COMODORO SUR /
+SOUTH COMODORO
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+H 24
+SECTOR SUR /
+SOUTH SECTOR
+125.70 MHz
+133.80 MHz
+2965 KHz
+5547 KHz
+11282 KHz
+121.50 MHz
+EMERG
+Se brinda control por vigilancia
+ATS
+Es obligatorio el uso del
+respondedor de a bordo en
+modo A/3 y modo C.
+ATS surveillance control is
+provided.
+The use of the on-board
+transponder in mode A/3 and
+mode C is mandatory.
+AIP ARGENTINA ENR 2.1-4
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 600
+SOUTH COMODORO RIVADAVIA CONTROL
+AREA (CTA)
+Lateral limit:
+From 450016S - 0692653W in a straight line to
+450006S - 0635829W, then to 511337S -
+0660003W, then to 551341S - 0655946W, then
+continuing along the Argentine/Chilean
+international border boundary to 504726S -
+0721758W from there to 503610S - 0712529W,
+then up to 471504S - 0680105W and from there
+to 450016S - 0692653W.
+Vertical limit:
+FL 600
+FL 195
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 600
+TMA BALMACEDA (CHILE)
+En su proyección en territorio argentino abarca
+el espacio aéreo comprendido desde 453449S -
+0714400W, siguiendo un arco de 20 NM de
+radio con centro en VOR/DME BAL 455447S –
+0714245W hasta 461440S - 0714452W,
+siguiendo luego el límite internacional
+argentino/chileno hasta 453449S - 0714400W.
+CHILE: FL 245 ARGENTINA: FL 90
+2000 FT AGL 2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+A- Encima de FL 195 hasta FL 245
+E- 1) EN CHILE: Desde 2000 FT AGL hasta FL195
+2) EN ARGENTINA: Desde 2000 FT AGL hasta
+9000 FT.
+APP/RDR* BALMACEDA
+BALMACEDA RADAR/
+ESPAÑOL / INGLÉS/
+SPANISH / ENGLISH
+Invierno 1230 a 2200
+Verano 1130 a 2100/
+Winter 1230 to 2200
+Summer 1130 to 2100
+119.70 MHz Servicios de Tránsito Aéreo
+facilitado por la APP/RDR
+BALMACEDA.
+Consultar AIP de Chile.
+*RDR =RADAR
+Air Traffic Services provided by
+the BALMACEDA APP/RDR.
+Consult AIP of Chile.
+*RDR =RADAR
+AIP ARGENTINA ENR 2.1-5
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+In its projection in Argentine territory, is the
+airspace defined by: 453449S - 0714400W,
+following an arc of 20 NM radius centered at
+VOR/DME BAL 455447S – 0714245W to
+461440S - 0714452W, then following the
+Argentine/Chilean international border
+boundary to 453449S - 0714400W.
+CHILE: FL 245 ARGENTINA: FL 90
+2000 FT AGL 2000 FT AGL
+AIRSPACE CLASS:
+A- Above FL 195 to FL 245
+E- 1) IN CHILE: From 2000 FT AGL up to FL195
+2) IN ARGENTINA: From 2000 FT AGL up to
+9000 FT.
+
+FIR CÓRDOBA
+Desde 2215S - 06240W, 2435S-06156W, 2649S
+- 06149W, 3008S - 0603630W, 3013S - 06012W,
+3055S - 06045W, siguiendo un arco de 55 NM
+de radio con centro en VOR/DME PAR, hacia el
+W hasta 3156S - 06133W, 3229S - 06159W,
+siguiendo un arco de 15 NM de radio con
+centro en VOR MJZ hacia el SE del VOR hasta
+3254S - 06219W, 3402S - 06317W, 3348S -
+06430W, siguiendo un arco de 45 NM de radio
+con centro en VOR/DME RYD hacia el NW del
+VOR hasta 3307S - 06553W, 3053S-06715W,
+2830S y límite internacional de frontera con
+Chile, siguiendo por este y límite con Bolivia
+hasta 2215S - 06240W.
+UNL
+GND
+CLASE DE ESPACIO AÉREO:
+F- Por encima de FL 245 hasta FL 600 inclusive.
+G- 1) Desde GND hasta FL 245
+2) Por encima de FL 600 hasta UNL.
+From 2215S - 06240W, 2435S-06156W, 2649S -
+06149W, 3008S - 0603630W, 3013S - 06012W,
+3055S - 06045W, following an arc of 55 NM de
+radius centered at VOR/DME PAR, to the W
+until 3156S - 06133W 3229S - 06159W,
+following an arc of 15 NM radius centered at
+VOR MJZ to the SE of the VOR to 3254S -
+06219W, 3402S - 06317W, 3348S - 06430W,
+ACC CÓRDOBA
+CÓRDOBA CENTRO/
+CÓRDOBA CENTER
+ESPAÑOL/INGLÉS
+SPANISH / ENGLISH
+H 24
+SECTOR NORTE/
+NORTH SECTOR
+128.25 MHz
+125.10 MHz
+121.50 MHz
+EMERG
+SECTOR SUR/
+SOUTH SECTOR
+128.80 MHz
+126.50 MHz
+121.50 MHz
+EMERG
+Verticalmente se divide en:
+FIR ESPACIO AÉREO INFERIOR
+GND/FL 245
+FIR ESPACIO AÉREO SUPERIOR
+FL 245/UNL
+DIVISIÓN DEL ESPACIO AÉREO
+SUPERIOR E INFERIOR EN
+SECTOR NORTE Y SECTOR SUR
+La división se encuentra
+determinada por una línea
+imaginaria que se extiende
+desde 3103S - 06707W y FIR
+MENDOZA, continuando con un
+arco de radio de 150 NM con
+centro en VOR/DME CBA con
+sentido NE hasta 2900S -
+06258W, luego en línea recta
+hasta 2814S - 06118W y FIR
+RESISTENCIA.
+ESPACIO AÉREO RVSM:
+Descripto en partes ENR 1.8 y
+ENR 1.7
+Se brinda control por vigilancia
+ATS.
+Es obligatorio el uso del
+respondedor de a bordo en
+modo A/ 3 y modo C.
+Vertically it is divided into:
+AIP ARGENTINA ENR 2.1-14
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+following an arc of 45 NM radius centered at
+VOR/DME RYD to the NW of the VOR to 3307S
+- 06553W, 3053S-06715W, 2830S and the
+international border with Chile, following this
+border and the border with Bolivia to 2215S -
+06240W.
+UNL
+GND
+AIRSPACE CLASS:
+F- Above FL 245 up to and including FL 600.
+G- 1) From GND up to FL 245
+2) Above FL 600 up to UNL.
+LOWER AIRSPACE FIR
+GND/FL 245
+UPPER AIRSPACE FIR
+FL 245/UNL
+DIVISION OF THE UPPER AND
+LOWER AIRSPACE INTO THE
+NORTH SECTOR AND THE SOUTH
+SECTOR
+The division is determined by an
+imaginary line that extends from
+3103S - 06707W and MENDOZA
+FIR, continuing with a 150 NM
+radius arc centered at VOR/DME
+CBA with a NE direction until
+2900S - 06258W, then in a straight
+line up to 2814S - 06118W and
+RESISTENCIA FIR.
+RVSM AIRSPACE: Described in
+parts ENR 1.8 y ENR 1.7
+ATS surveillance control is
+provided.
+The use of the on-board
+transponder in mode A/3 and
+mode C is mandatory.
+Dentro de la FIR CÓRDOBA se establece la
+siguiente Área de Control (CTA) con Vigilancia
+ATS:
+ÁREA DE CONTROL (CTA) CÓRDOBA NORTE
+Límite lateral
+Desde 310331S - 0670837W en línea recta
+hasta 300933S - 0675900W luego hasta
+272053S -0661822W luego hasta 235900S -
+0653348W luego hasta 235833S - 0643959W
+luego hasta 245736S - 0642944W luego hasta
+251631S - 0615356W luego hasta 264809S -
+0614942W luego hasta 281538S - 0611849W
+luego hasta 290148S - 0625922W y desde allí
+siguiendo un arco de 150 NM de radio con
+ACC CÓRDOBA
+CÓRDOBA NORTE/
+CÓRDOBA NORTH
+ESPAÑOL/INGLÉS
+SPANISH / ENGLISH
+H 24
+SECTOR NORTE/
+NORTH SECTOR
+125.10 MHz
+128.25 MHz
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 2.1-15
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+centro en el VOR/DME CBA 310331S -
+0670837W.
+Límite vertical:
+FL 600
+FL245
+CLASE DE ESPACIO AÉREO:
+A - Por encima de FL 245 hasta FL 600
+Within the CÓRDOBA FIR the following Control
+Area (CTA) with ATS Surveillance is established:
+NORTH CÓRDOBA CONTROL AREA (CTA)
+Lateral limit
+From 310331S - 0670837W in a straight line to
+300933S - 0675900W then to 272053S -
+0661822W then to 235900S - 0653348W then
+to 235833S - 0643959W then to 245736S -
+0642944W then to 251631S - 0615356W then
+to 264809S - 0614942W then to 281538S -
+0611849W then to 290148S - 0625922W and
+from there following an arc of150 NM radius
+centered at VOR/DME CBA 310331S -
+0670837W.
+Vertical limit:
+FL 600
+FL245
+AIRSPACE CLASS:
+A - Above FL 245 up to FL 600
+Dentro de la FIR CÓRDOBA se establece la
+siguiente Área de Control (CTA) con Vigilancia
+ATS:
+ÁREA DE CONTROL (CTA) CÓRDOBA SUR
+Coincidente con los límites laterales de FIR
+CÓRDOBA SECTOR CÓRDOBA SUR:
+FL 600
+FL 195
+ACC CÓRDOBA
+CÓRDOBA SUR/
+CÓRDOBA SOUTH
+SECTOR SUR/
+SOUTH SECTOR
+126.50 MHz
+128.80 MHz
+Se brinda control por vigilancia
+ATS.
+Es obligatorio el uso del
+respondedor de a bordo en modo
+A/ 3 y modo C
+AIP ARGENTINA ENR 2.1-16
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+CLASE DE ESPACIO AÉREO:
+A - Por encima de FL 195 hasta FL 600
+Within the CÓRDOBA FIR the following Control
+Area (CTA) with ATS Surveillance is established:
+SOUTH CÓRDOBA CONTROL AREA (CTA)
+Coincident with the lateral limits of CÓRDOBA
+FIR CÓRDOBA SOUTH SECTOR:
+FL 600
+FL 195
+AIRSPACE CLASS:
+A - Above FL 195 up to FL 600
+ESPAÑOL/INGLÉS
+SPANISH / ENGLISH
+H 24
+121.50 MHz
+EMERG
+ATS surveillance control is
+provided.
+The use of the on-board
+transponder in mode A/3 and
+mode C is mandatory.
+
+FIR EZEIZA
+Desde 3013S - 06012W 3042S - 05745W 3123S
+- 05759W 3302S - 05824W 3350S - 05831W
+3400S - 05824W 3435S - 05750W 3453S -
+05706W 3600S - 05450W 4000S - 04500W
+3900S - 04430W 3900S - 01000W 4600S -
+01000W 4600S - 04500W 3917S - 06307W
+4120S - 07027W, siguiendo un arco de 35 NM
+de radio con centro en VOR/DME BAR hacia el
+S hasta interceptar el paralelo 4127S y límite
+internacional de frontera de Argentina y Chile,
+continuando por este límite hacia el N hasta el
+paralelo 3830S y desde este punto hasta 3554S
+-06450W 3348S - 06430W 3402S - 06317W
+3254S - 06219W, siguiendo un arco de 15 NM
+de radio con centro en VOR MJZ hacia el E del
+VOR hasta 3229S-06159W 3156S - 06133W,
+siguiendo un arco de 55 NM de radio con
+centro en VOR/DME PAR hacia el W hasta
+3055S - 06045W hasta 3013S - 06012W.
+UNL
+GND/MSL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 245 hasta FL 600 inclusive
+sobre el territorio nacional y sobre el mar
+hasta 100 NM de la costa.
+G- 1) Desde GND hasta FL 245.
+2) Todo espacio aéreo sobre el mar, más allá
+de las 100 NM de costa es clase G.
+3) Por encima de FL 600 hasta UNL.
+ACC EZEIZA
+EZEIZA CENTRO/
+EZEIZA CENTER
+ESPAÑOL/INGLÉS
+SPANISH / ENGLISH
+H 24
+SECTOR NORTE/
+NORTH SECTOR
+135.50 MHz
+134.50 MHz
+121.50 MHz
+EMERG
+SECTOR SUR/
+SOUTH SECTOR
+125.20 MHz
+124.10 MHz
+121.50 MHz
+EMERG
+SECTOR
+OCEÁNICO/
+OCEAN SECTOR
+FIR SAEF
+LOGON SAEZ –
+CPDLC /
+ADS – C
+121.50 MHz
+EMERG
+Verticalmente se divide en:
+FIR ESPACIO AÉREO INFERIOR
+FL 245
+GND/MSL
+FIR ESPACIO AÉREO SUPERIOR
+UNL
+FL 245
+DIVISIÓN DEL ESPACIO EN
+SECTOR NORTE, SECTOR SUR
+Y SECTOR OCEÁNICO
+ESPACIO AÉREO INFERIOR:
+a) DIVISIÓN DEL SECTOR NORTE
+Y SECTOR SUR
+Se ha determinado una línea
+imaginaria que se extiende
+desde 3410S - 06432W,
+hasta 3418S - 06344W (estos
+puntos son coincidentes con
+el límite Norte de la SAR 33)
+continuando hacia el Este
+hasta el límite del TMA
+BAIRES 3450S - 05939W,
+ubicado a 10 NM al Sur del
+punto notificación URINO.
+Quedando dividido el
+espacio aéreo en SECTOR
+NORTE y SECTOR SUR, con
+frecuencias de
+AIP ARGENTINA ENR 2.1-22
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+From 3013S - 06012W 3042S - 05745W 3123S -
+05759W 3302S - 05824W 3350S - 05831W
+3400S - 05824W 3435S - 05750W 3453S -
+05706W 3600S - 05450W 4000S - 04500W
+3900S - 04430W 3900S - 01000W 4600S -
+01000W 4600S - 04500W 3917S - 06307W
+4120S - 07027W, following an arc of 35 NM
+radius centered at VOR/DME BAR to the S until
+intercepting parallel 4127S and the
+international border limit of Argentina and
+Chile, continuing along this limit to the N until
+parallel 3830S and from this point to 3554S -
+06450W 3348S - 06430W 3402S - 06317W
+3254S - 06219W, following an arc of 15 NM
+radius centered at VOR MJZ to the E of the VOR
+to 3229S-06159W 3156S - 06133W, following
+an arc of 55 NM radius centered at VOR/DME
+PAR to the W to 3055S - 06045W to 3013S -
+06012W.
+UNL
+GND/MSL
+AIRSPACE CLASS:
+A- Above FL 245 up to and including FL 600
+over national territory and over the sea
+until 100 NM from the coast.
+G- 1) From GND up to FL 245.
+2) All airspace over the sea beyond 100 NM
+from the coast is class G.
+3) Above FL 600 up to UNL.
+comunicaciones propias
+para cada sector.
+b) DIVISIÓN DEL SECTOR SUR Y
+SECTOR OCEÁNICO
+Se ha determinado una línea
+imaginaria que se extiende
+desde la intersección del
+meridiano 05500W con el
+límite FIR EZEIZA /
+MONTEVIDEO
+(aproximadamente a 200
+NM al Este del VOR / DME
+EZE) siguiendo por dicho
+meridiano hacia el Sur hasta
+el paralelo 3900S,
+continuando hacia el
+Sudoeste hasta 4100S -
+05918W (límite FIR EZEIZA /
+COMODORO RIVADAVIA),
+quedando dividido el
+espacio aéreo en SECTOR
+SUR y SECTOR OCEÁNICO,
+con frecuencias de
+comunicaciones propias
+para cada sector.
+ESPACIO AÉREO SUPERIOR
+a) DIVISIÓN DEL SECTOR NORTE
+Y SECTOR SUR.
+Se ha determinado una línea
+imaginaria que se extiende
+desde 3410S - 06432W,
+hasta 3418 - S06344W (estos
+puntos son coincidentes con
+el límite Norte de la SAR 33)
+continuando hacia el Este
+hasta 3450S -05939W,
+continuando hasta el VOR
+/DME EZE EZEIZA, siguiendo
+hasta 5 NM al Sur del VOR
+PTA LA PLATA, continuando
+hacia el Este con una
+AIP ARGENTINA ENR 2.1-23
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+paralela a la trayectoria de la
+ruta UA 306
+aproximadamente a 5 NM al
+Sur en el tramo LA PLATA PTA
+/ UGIMI hasta el límite FIR
+Montevideo. Quedando
+dividido el espacio aéreo
+SECTOR NORTE y SECTOR
+SUR, con frecuencias de
+comunicaciones propias
+para cada sector.
+b) DIVISIÓN DEL SECTOR SUR Y
+SECTOR OCEÁNICO
+Se ha determinado una línea
+imaginaria que se extiende
+desde la intersección del
+meridiano 05500W con el
+límite FIR EZEIZA /
+MONTEVIDEO
+(aproximadamente a 200
+NM al Este del VOR/DME EZE
+EZEIZA) siguiendo por dicho
+meridiano hacia el Sur hasta
+el paralelo 3900S,
+continuando hacia el
+Sudoeste hasta 4100S -
+05918W (límite FIR
+EZEIZA/COMODORO
+RIVADAVIA), quedando
+dividido el espacio aéreo en
+SECTOR SUR y SECTOR
+OCEÁNICO con frecuencias
+de comunicaciones propias
+para cada sector.
+ESPACIO AÉREO RVSM
+Descripto en partes ENR 1.8 y ENR
+1.7
+AORRA:
+Descripto parte ENR 1.8
+AIP ARGENTINA ENR 2.1-24
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+Vertically is divided into:
+LOWER AIRSPACE FIR
+FL 245
+GND/MSL
+UPPER AIRSPACE FIR
+UNL
+FL 245
+DIVISION OF SPACE INTO NORTH
+SECTOR, SOUTH SECTOR AND
+OCEAN SECTOR LOWER AIRSPACE:
+a) DIVISION OF THE NORTH
+SECTOR AND SOUTH SECTOR
+An imaginary line has been
+determined that extends
+from 3410S - 06432W, to
+3418S - 06344W (these
+points are coincident with
+the Northern limit of SAR 33)
+continuing towards the East
+to the limit of the BAIRES
+TMA 3450S - 05939W,
+located at 10 NM South of
+the URINO notification point.
+The airspace being divided
+into NORTH SECTOR and
+SOUTH SECTOR, with
+communications frequencies
+specific to each sector.
+b) DIVISION OF THE SOUTH
+SECTOR AND OCEAN SECTOR
+An imaginary line has been
+determined that extends
+from the intersection of the
+05500W meridian with the
+EZEIZA / MONTEVIDEO FIR
+limit (approximately 200 NM
+east of the EZE VOR / DME)
+following the meridian to the
+South to parallel 3900S,
+AIP ARGENTINA ENR 2.1-25
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+continuing to the Southwest
+to 4100S - 05918W (EZEIZA /
+COMODORO RIVADAVIA FIR
+limit), the airspace being
+divided into SOUTH SECTOR
+and OCEANIC SECTOR with
+communications frequencies
+for each sector.
+UPPER AIRSPACE
+a) DIVISION OF THE NORTH
+SECTOR AND SOUTH
+SECTOR.
+An imaginary line has been
+determined that extends
+from 3410S - 06432W, to
+3418S - 06344W (these
+points are coincident with
+the Northern limit of SAR 33)
+continuing towards the East
+until 3450S -05939W,
+continuing to EZEIZA VOR
+/DME, following to 5 NM
+South of PTA LA PLATA VOR,
+continuing to the East with a
+parallel to the trajectory of
+the UA 306 route
+approximately 5 NM to the
+South in the LA PLATA PTA /
+UGIMI section to the
+Montevideo FIR limit. The
+airspace being divided into
+the NORTH SECTOR and
+SOUTH SECTOR, with
+communications frequencies
+for each sector.
+b) DIVISION OF THE
+SOUTHSECTOR AND OCEAN
+SECTOR
+An imaginary line has been
+determined that extends
+from the intersection of the
+05500W meridian with the
+AIP ARGENTINA ENR 2.1-26
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+EZEIZA/ MONTEVIDEO FIR
+limit (approximately 200 NM
+east of the EZE VOR/ DME)
+following the meridian to the
+South to parallel 3900S,
+continuing to the Southwest
+to 4100S - 05918W (EZEIZA/
+COMODORO RIVADAVIA FIR
+limit), the airspace being
+divided into SOUTH SECTOR
+and OCEANIC SECTOR with
+communications frequencies
+for each sector.
+RVSM AIRSPACE
+Described in parts ENR 1.8 and
+ENR 1.7
+AORRA:
+Described part ENR 1.8
+Dentro de la FIR EZEIZA se establece la
+siguiente Área de Control (CTA):
+ÁREA DE CONTROL (CTA) EZEIZA I y II
+LÍMITE LATERAL:
+Desde intersección del límite FIR EZEIZA /
+MONTEVIDEO siguiendo un arco de 150NM de
+radio con centro en VOR/DME EZE (344927S -
+0583207W), en sentido antihorario hasta su
+intersección con el límite de la FIR
+MONTEVIDEO/EZEIZA.
+LÍMITE VERTICAL:
+- FL 600/FL 145 en el espacio aéreo
+comprendido entre los arcos de 150NM y
+100NM de radio con centro en VOR/DME
+EZE, y
+- FL 600/FL 95 en el espacio aéreo
+comprendido dentro del arco de 100NM de
+radio con centro en VOR/DME EZE, con
+excepción del espacio aéreo
+correspondiente a TMA BAIRES.
+ACC EZEIZA
+EZEIZA CONTROL/
+EZEIZA CONTROL
+ESPAÑOL/INGLÉS
+SPANISH / ENGLISH
+H 24
+SECTOR NORTE/
+NORTH SECTOR
+134.50 MHz
+135.50 MHz
+133.55 MHz
+121.50 MHz
+EMERG
+SECTOR SUR/
+SOUTH SECTOR
+133.35 MHz
+124.10 MHz
+125.20 MHz
+133.95 MHz
+CTA EZEIZA I y II:
+DIVISIÓN DEL ESPACIO AÉREO
+EN SECTOR NORTE Y SECTOR
+SUR:
+La división del espacio aéreo de
+la FIR EZEIZA en SECTOR NORTE
+y SECTOR SUR, determinados en
+el espacio inferior y superior, son
+asimismo de aplicación en la CTA
+EZEIZA. Quedando de esta
+manera dividida la CTA EZEIZA en
+dos (2) sectores de CONTROL:
+SECTOR NORTE (I) Y SECTOR SUR
+(II), con frecuencias de
+comunicaciones establecidas
+para cada sector.
+Se brinda control por vigilancia
+ATS.
+AIP ARGENTINA ENR 2.1-27
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+FL 600
+FL 95
+CLASE DE ESPACIO AÉREO:
+A- por encima de FL 195 hasta FL 600
+B - por encima de FL 95 hasta FL 195
+Within the EZEIZA FIR, the following Control
+Area (CTA) is established:
+CONTROL AREA (CTA) EZEIZA I and II
+LATERAL LIMIT:
+From the intersection of the EZEIZA /
+MONTEVIDEO FIR limit following an arc of
+150NM radius centered at VOR/DME EZE
+(344927S - 0583207W counterclockwise until
+its intersection with the limit of the
+MONTEVIDEO/EZEIZA FIR.
+VERTICAL LIMIT:
+- FL 600/FL 145 in the airspace between the
+150NM and 100NM radius arcs centered at
+VOR/DME EZE, and
+- FL 600/FL 95 in the airspace included within
+the 100NM radius arc centered at VOR/DME
+EZE, with the exception of the airspace
+corresponding to BAIRES TMA.
+FL 600
+FL 95
+AIRSPACE CLASS:
+A- Above FL 195 up to FL 600
+B- Above FL 95 up to FL 195
+121.50 MHz
+EMERG
+Es obligatorio el uso del
+respondedor de a bordo en
+modo A/ 3 y C.
+CTA EZEIZA I and II:
+DIVISION OF AIRSPACE INTO
+NORTH SECTOR AND SOUTH
+SECTOR:
+The division of the airspace of
+the EZEIZA FIR into NORTH
+SECTOR and SOUTH SECTOR,
+determined in the lower and
+upper space, is also applicable in
+the EZEIZA CTA. The EZEIZA CTA
+is thus divided into two (2)
+CONTROL sectors:
+NORTH SECTOR (I) AND SOUTH
+SECTOR (II), with
+communications frequencies
+established for each sector.
+ATS surveillance control is
+provided.
+The use of the on-board
+transponder in mode A/ 3 and C
+is mandatory.
+CTA EZEIZA III SECTOR NORTE
+LÍMITE LATERAL:
+COINCIDENTE CON FIR EZEIZA SECTOR NORTE.
+EXCLUYE CTA EZEIZA I
+LÍMITE VERTICAL:
+ACC EZEIZA
+EZEIZA CONTROL /
+EZEIZA CONTROL
+ESPAÑOL/INGLÉS
+SPANISH / ENGLISH
+SECTOR NORTE/
+NORTH SECTOR
+125.80 MHz
+135.50 MHz
+134.50 MHz
+Se brinda control por vigilancia
+ATS.
+Es obligatorio el uso del
+respondedor de a bordo en
+modo A / 3 y modo C.
+AIP ARGENTINA ENR 2.1-28
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+FL 600
+FL 195
+CLASE DE ESPACIO AÉREO:
+A - por encima de FL 195 Hasta FL 600
+G – Desde FL 600 hasta UNL
+LATERAL LIMIT:
+COINCIDENT WITH EZEIZA FIR NORTH SECTOR.
+EXCLUDES EZEIZA CTA I
+VERTICAL LIMIT:
+FL 600
+FL 195
+AIRSPACE CLASS:
+A - Above FL 195 up to FL 600
+G – From FL 600 up to UNL
+H 24 133.55 MHz
+121.50 MHz
+EMERG
+ATS surveillance control is
+provided.
+The use of the on-board
+transponder in mode A/ 3 and C
+is mandatory.
+CTA EZEIZA IV SECTOR SUR
+LÍMITE LATERAL:
+COINCIDENTE CON FIR EZEIZA SECTOR SUR.
+EXCLUYE SECTOR OCEÁNICO y CTA EZEIZA II
+LÍMITE VERTICAL:
+FL 600
+FL 195
+CLASE DE ESPACIO AÉREO:
+A - Por encima de FL 195 hasta FL 600
+G – Desde FL 600 hasta UNL
+LATERAL LIMIT:
+COINCIDENT WITH EZEIZA FIR SOUTH SECTOR.
+EXCLUDES OCEAN SECTOR and EZEIZA CTA II.
+VERTICAL LIMIT:
+FL 600
+FL 195
+ACC EZEIZA
+EZEIZA CONTROL /
+EZEIZA CONTROL
+ESPAÑOL/INGLÉS
+SPANISH / ENGLISH
+H 24
+SECTOR SUR/
+SOUTH SECTOR
+125.20 MHz
+124.10 MHz
+133.95 MHz
+121.50 MHz
+EMERG
+Se brinda control por vigilancia
+ATS.
+Es obligatorio el uso del
+respondedor de a bordo en
+modo A / 3 y modo C.
+ATS surveillance control is
+provided.
+The use of the on-board
+transponder in mode A/ 3 and C
+is mandatory.
+AIP ARGENTINA ENR 2.1-29
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+AIRSPACE CLASS:
+A - Above FL 195 up to FL 600
+G – From FL 600 up to UNL
+
+FIR MENDOZA
+Desde 2830S y límite internacional de frontera
+de ARGENTINA/CHILE hasta 3053S - 06715W,
+3307S - 06553W, siguiendo un arco de 45 NM
+de radio con centro en VOR/DME RYD hacia el
+E del VOR/DME hasta 3348S - 06430W, 3554S -
+06450W y desde este punto hasta el paralelo
+3830S y límite internacional de frontera de
+ARGENTINA/CHILE, siguiendo por este límite
+hasta 2830S.
+UNL
+GND
+CLASE DE ESPACIO AÉREO:
+F – Por encima de FL 245 hasta FL 600 inclusive
+G – 1) Desde GND hasta FL 245
+2) Por encima de FL 600 hasta UNL.
+From 2830S and international border limit of
+ARGENTINA/CHILE to 3053S - 06715W, 3307S -
+06553W, following an arc of 45 NM radius
+centered at VOR/DME RYD to the E of the
+VOR/DME to 3348S - 06430W, 3554S - 06450W
+and from this point to parallel 3830S and the
+international border limit of
+ARGENTINA/CHILE, continuing along this limit
+until 2830S.
+UNL
+GND
+AIRSPACE CLASS:
+F – Above FL 245 up to and including FL 600
+G – 1) From GND up to FL 245
+2) Above FL 600 to UNL.
+ACC MENDOZA
+MENDOZA CENTRO/
+MENDOZA CENTER
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+H 24
+126.60 MHz
+134.70 MHz
+121.50 MHz.
+EMERG
+Verticalmente se divide en:
+FIR ESPACIO AÉREO INFERIOR
+FL 245
+GND
+FIR ESPACIO AÉREO SUPERIOR
+UNL
+FL 245
+ESPACIO AÉREO RVSM:
+Descripto en partes ENR 1.8 y
+ENR 1.7
+Vertically it is divided into:
+LOWER AIRSPACE FIR
+FL 245
+GND
+UPPER AIRSPACE FIR
+UNL
+FL 245
+RVSM AIRSPACE:
+Described in parts ENR 1.8 and
+ENR 1.7
+Dentro de la FIR MENDOZA se establece la
+siguiente Área de control (CTA) con vigilancia:
+ÁREA DE CONTROL (CTA) MENDOZA LÍMITE
+LATERAL
+AIP ARGENTINA ENR 2.1-41
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+(I) desde 324635S - 0700642W hasta el límite
+FIR CÓRDOBA/MENDOZA en 300933S -
+0675900W siguiendo todo el límite por el
+E de FIR CÓRDOBA/MENDOZA y FIR
+EZEIZA/MENDOZA hasta 372517S -
+0682238W desde este punto hasta
+353859S - 0682905W siguiendo por
+352012S - 0702549W y desde este punto
+por el W siguiendo límite internacional de
+frontera de ARGENTINA / CHILE hasta
+324635S-0700642W.
+(II) desde 352012S - 0702549W siguiendo
+hasta 353859S-0682905W y desde este
+punto hasta su intersección con el límite
+de la FIR EZEIZA/MENDOZA en 372517S -
+0682238W siguiendo hacia el W hasta
+383018S - 0705432W y desde este punto
+por el W siguiendo límite internacional de
+frontera de ARGENTINA/CHILE hasta
+352012S - 0702549W.
+(I) FL 600
+FL 195
+(II) FL 600
+FL 295
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 600
+Within the MENDOZA FIR, the following Control
+Area (CTA) with surveillance is established:
+(I) from 324635S - 0700642W to the
+CÓRDOBA/MENDOZA FIR limit at 300933S
+-0675900W following the entire E limit of
+the CÓRDOBA/MENDOZA FIR and
+EZEIZA/MENDOZA FIR to 372517S -
+0682238W from this point to 353859S -
+0682905W following by 352012S -
+0702549W and from this point along the
+W following the international border limit
+ACC MENDOZA
+MENDOZA CENTRO/
+MENDOZA CENTER
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+H 24
+126.60 MHz
+134.70 MHz
+121.50 MHz.
+EMERG
+Se brinda control por vigilancia
+ATS.
+Es obligatorio el uso del
+respondedor de a bordo en
+modo A/ 3 y modo C.
+ATS surveillance control is
+provided.
+The use of the on-board
+transponder in mode A/ 3 and C
+is mandatory.
+AIP ARGENTINA ENR 2.1-42
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+of ARGENTINA / CHILE until 324635S-
+0700642W.
+(II) from 352012S - 0702549W continuing to
+353859S-0682905W and from this point to
+its intersection with EZEIZA/MENDOZA FIR
+limit at 372517S - 0682238W continuing to
+the W to 383018S - 0705432W and from
+this point along the W following the
+international border limit of ARGENTINA /
+CHILE until 352012S - 0702549W.
+(I) FL 600
+FL 195
+(II) FL 600
+FL 295
+AIRSPACE CLASS:
+A - Above FL 195 up to FL 600
+
+FIR RESISTENCIA
+Desde 2215S-06240W, siguiendo el límite
+internacional de frontera de ARGENTINA con
+PARAGUAY y BRASIL hasta 3015S-05737W,
+3042S-05745W, 3008S-0603630W, 2649S
+06149W, 2435S-06156W hasta 2215S-06240W.
+UNL
+GND
+CLASE DE ESPACIO AÉREO:
+F- Por encima de FL 245 hasta FL 600 inclusive.
+G- 1) Desde GND hasta FL 245.
+2) Por encima de FL 600
+Dentro de la FIR RESISTENCIA se establece la
+siguiente Área de Control (CTA):
+ÁREA DE CONTROL (CTA) RESISTENCIA
+Límites laterales:
+(I) Desde 272719S - 0571215W, siguiendo hacia
+el E por el límite de FIR RESISTENCIA/FIR
+ASUNCIÓN y FIR CURITIBA hasta 284342S -
+0560834W y desde allí en línea recta hasta
+272719S - 0571215W
+Límites verticales:
+FL 600
+FL 195
+(II) Desde 261516S-0615047W hasta 251001S -
+0574621W, siguiendo hacia el SE por el
+límite de FIR RESISTENCIA/FIR ASUNCIÓN
+ACC RESISTENCIA
+RESISTENCIA CENTRO/
+RESISTENCIA CENTER
+ESPAÑOL/INGLÉS/
+SPANISH / ENGLISH
+H 24
+134.30 MHz
+125.75 MHz
+121.50 MHz
+EMERG
+ACC SIS
+134.30 MHz
+125.75 MHz
+121.50 MHz
+EMERG
+Verticalmente se divide en:
+FIR ESPACIO AÉREO INFERIOR
+FL 245
+GND
+FIR ESPACIO AÉREO SUPERIOR
+UNL
+FL 245
+ESPACIO AÉREO RVSM:
+Descripto en partes ENR 1.8 y
+ENR 1.7.
+Se brinda control por vigilancia
+ATS.
+Es obligatorio el uso de
+respondedor de a bordo en
+modo A/3 y modo C.
+Vertically it is divided into:
+LOWER AIRSPACE FIR
+FL 245
+GND
+UPPER AIRSPACE FIR
+UNL
+FL 245
+RVSM AIRSPACE:
+Described in parts ENR 1.8 and
+ENR 1.7.
+AIP ARGENTINA ENR 2.1-47
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+hasta 272719S - 0571215W y desde allí en
+línea recta hasta 284342S - 0560834W,
+siguiendo por el límite de FIR
+RESISTENCIA/FIR CURITIBA hasta 301500S -
+0573700W, 304200S - 0574500W, 300800S
+- 0603630W, 264900S - 06149000W, hasta
+261516S - 0615047W.
+Límites verticales:
+FL 600
+FL 195
+(III) Desde 240424S - 0595648W, siguiendo el
+límite de FIR RESISTENCIA/FIR ASUNCIÓN
+hasta 251001S - 0574621W y desde allí en
+línea recta hasta 261516S - 0615047W
+siguiendo por el límite de FIR
+RESISTENCIA/FIR CÓRDOBA hasta 245351S
+- 0615501W, desde allí en línea recta hasta
+240424S - 0595648W.
+Límites verticales:
+FL 600
+FL 245
+CLASE DE ESPACIO AÉREO
+A – Por encima de FL 195/245 hasta FL 600
+From 2215S - 06240W, following the
+international border of ARGENTINA with
+PARAGUAY and BRASIL to 3015S - 05737W,
+3042S - 05745W, 3008S – 0603630W, 2649S -
+06149W, 2435S-06156W to 2215S - 06240W.
+UNL
+GND
+AIRSPACE CLASS:
+F- Above FL 245 up to and including FL 600.
+G- 1) From GND up to FL 245.
+2) Above FL 600
+ATS surveillance control is
+provided.
+The use of the on-board
+transponder in mode A/ 3 and C
+is mandatory.
+AIP ARGENTINA ENR 2.1-48
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+Within RESISTENCIA FIR the following Control
+Area (CTA) is established:
+RESISTENCIA CONTROL AREA (CTA)
+Lateral Limit:
+(I) From 272719S - 0571215W, continuing E
+along the RESISTENCIA FIR / ASUNCIÓN FIR
+limit and CURITIBA FIR to 284342S -
+0560834W and from there in a straight line
+to 272719S - 0571215W
+Vertical limits:
+FL 600
+FL 195
+(II) From 261516S-0615047W to 251001S -
+0574621W, following SE along the
+boundary of RESISTENCIA FIR / ASUNCIÓN
+FIR to 272719S - 0571215W and from there
+in straight line until 284342S - 0560834W,
+following anlong the RESISTENCIA FIR /
+CURITIBA FIR limit to 301500S -0573700W,
+304200S - 0574500W, 300800S -
+0603630W, 264900S - 06149000W, to
+261516S - 0615047W.
+Vertical limits:
+FL 600
+FL 195
+(III) From 240424S - 0595648W, following the
+RESISTENCIA FIR/ASUNCIÓN FIR limit to
+251001S - 0574621W and from there in
+straight line to 261516S - 0615047W
+following the RESISTENCIA FIR/CÓRDOBA
+FIR limit to 245351S - 0615501W, and from
+there in straight line to 240424S -
+0595648W.
+Vertical limits:
+FL 600
+FL 245
+AIP ARGENTINA ENR 2.1-49
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+AIRSPACE CLASS
+A – Above FL 195/245 up to FL 600
+TMA ASUNCIÓN
+Sector circular de 50 NM de radio con centro en
+el VOR/DME VAS (251436S - 0573118W),
+contenido en la FIR ASUNCIÓN y sector circular
+de 35 NM de radio con centro en VOR/DME
+VAS, contenido en la FIR Resistencia.
+FL 195
+*1000 FT
+2000 FT AGL
+CLASE DE ESPACIO AÉREO: B
+Circular sector of 50 NM radius centered at VAS
+VOR/DME (251436S - 0573118W), contained
+within ASUNCIÓN FIR and 35 NM radius circular
+sector centered at VAS VOR/DME, contained
+within Resistencia FIR.
+FL 195
+*1000 FT
+2000 FT AGL
+AIRSPACE CLASS: B
+APP ASUNCIÓN
+ASUNCIÓN
+APROXIMACIÓN/
+ASUNCIÓN APPROACH
+ESPAÑOL/GUARANÍ
+/INGLÉS
+SPANISH/GUARANÍ
+/ENGLISH
+H 24
+119.70 MHz
+120.00 MHz
+121.50 MHz
+EMERG
+*1000 FT AGL dentro de la FIR
+Asunción y 2000 FT AGL dentro
+de la FIR Resistencia.
+Consultar AIP de Paraguay.
+*1000 FT AGL within the
+Asunción FIR and 2000 FT AGL
+within the Resistencia FIR.
+Consult AIP of Paraguay.
+TMA FOZ
+Sector circular de 40 NM (74 KM) de radio con
+centro en VOR/DME FOZ (253500S -
+0543013W) contenido en las partes de las FIR
+ASUNCIÓN, RESISTENCIA y CURITIBA.
+FL 195
+3500 FT AGL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 145 hasta FL 195
+APP FOZ
+FOZ APROXIMACIÓN/
+FOZ APPROACH
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+H 24
+CONTROL RADAR/
+RADAR CONTROL
+H24
+120.30 MHz
+119.15 MHz
+121.50 MHz.
+EMERG
+(*) Dentro de la FIR Resistencia/
+Asunción.
+Consultar AIP de Brasil.
+Consultar AIP de Paraguay.
+(*) Within the
+Resistencia/Asunción FIR.
+Consult AIP of Brazil.
+Consult AIP of Paraguay.
+AIP ARGENTINA ENR 2.1-50
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+C- 1) Desde 3500 FT AGL hasta FL 145.
+2) Desde 3500 FT AGL hasta FL 195 (*)
+Circular sector of 40 NM (74 KM) radius
+centered at FOZ VOR/DME (253500S -
+0543013W) contained within ASUNCIÓN,
+RESISTENCIA and CURITIBA FIR.
+FL 195
+3500 FT AGL
+AIRSPACE CLASS:
+A- Above FL 145 up to FL 195
+C- 1) From 3500 FT AGL up to FL 145.
+2) From 3500 FT AGL up to FL 195 (*)

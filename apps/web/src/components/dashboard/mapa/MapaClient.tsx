@@ -4,10 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Loader2, Navigation, Square } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Loader2, Navigation, Radio, Square } from "lucide-react";
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { EspacioAereo } from "@/lib/espacios-aereos";
 import { aMagnetico } from "@/lib/navegacion";
+import { dependenciasDeRuta, dependenciasEn, type Dependencia } from "@/lib/firs";
 import {
   consultasDeRuta,
   duracionCorta,
@@ -132,6 +133,16 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
   const [tas, setTas] = useState(String(tasDelHangar ?? TAS_POR_DEFECTO));
   const tasNum = Number(tas) > 30 ? Number(tas) : null;
 
+  // La altitud de crucero decide con quién hablás: a FL 060 pasás por arriba de un ATZ de
+  // 2500 ft y por debajo del piso de una TMA de FL 45 no estás en la TMA. Sin altitud, se
+  // toma cualquier espacio que te contenga lateralmente.
+  const [altitud, setAltitud] = useState("");
+  const altitudNum = altitud.trim() ? Number(altitud) : null;
+  const cambios = useMemo(
+    () => (capas?.firs && puntos.length > 1 ? dependenciasDeRuta(puntos, altitudNum, capas.espacios, capas.firs) : []),
+    [puntos, altitudNum, capas]
+  );
+
   /* --------------------------------------------------------------- vuelo --- */
   const [volando, setVolando] = useState(false);
   const [lectura, setLectura] = useState<Lectura | null>(null);
@@ -181,6 +192,14 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
   const destino = volando && puntos.length ? puntos[Math.min(proximo, puntos.length - 1)] : null;
   const hacia = lectura && destino ? haciaPunto(lectura, destino, lectura.gsKt) : null;
   const dentro = lectura && capas ? espaciosEn(lectura, capas.espacios).sort((a, b) => "ATZCTRTMA".indexOf(a.tipo) - "ATZCTRTMA".indexOf(b.tipo)) : [];
+  // Con quién hablás ahora (con la altura del GPS) y el próximo cambio sobre lo que queda de ruta.
+  const ahora = lectura && capas?.firs ? dependenciasEn(lectura, lectura.altitudFt, capas.espacios, capas.firs)[0] ?? null : null;
+  const despues =
+    lectura && capas?.firs && destino
+      ? dependenciasDeRuta([lectura, ...puntos.slice(proximo)], lectura.altitudFt, capas.espacios, capas.firs).find(
+          (c) => c.desdeNm > 0 && ahora && c.dependencia.distintivo !== ahora.distintivo
+        ) ?? null
+      : null;
 
   const empezar = () => {
     setProximo(0);
@@ -294,6 +313,19 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
                     </div>
                   </div>
                 )}
+                {ahora && (
+                  <div className="rounded-2xl bg-aviation-blue/10 border border-aviation-blue/20 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-aviation-blue mb-1 flex items-center gap-1.5">
+                      <Radio className="w-3.5 h-3.5" /> Hablás con
+                    </p>
+                    <DependenciaFila d={ahora} grande />
+                    {despues && (
+                      <p className="mt-2 text-xs text-zinc-500">
+                        En {despues.desdeNm.toFixed(0)} NM: <b className="text-zinc-700 dark:text-zinc-300">{despues.dependencia.distintivo}</b> {despues.dependencia.mhz.join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">Estás dentro de</p>
                   {dentro.length ? (
@@ -373,6 +405,18 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
                   <p className="text-sm font-bold text-zinc-900 dark:text-white tabular-nums">{totalNm.toFixed(1)} NM</p>
                   <p className="text-[11px] text-zinc-500">{tasNum ? `${duracionCorta((totalNm / tasNum) * 60)} sin viento` : "Poné la TAS"}</p>
                 </div>
+                <div className="flex flex-col items-end gap-1.5">
+                <label className="flex items-center gap-1.5 text-xs text-zinc-500">
+                  Altitud
+                  <input
+                    value={altitud}
+                    onChange={(e) => setAltitud(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                    inputMode="numeric"
+                    placeholder="6000"
+                    className="w-16 rounded-lg bg-white dark:bg-black/30 border border-zinc-200 dark:border-white/10 px-2 py-1 text-right text-sm font-semibold text-zinc-900 dark:text-white tabular-nums placeholder:text-zinc-300"
+                  />
+                  ft
+                </label>
                 <label className="flex items-center gap-1.5 text-xs text-zinc-500">
                   TAS
                   <input
@@ -383,8 +427,29 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
                   />
                   kt
                 </label>
+                </div>
               </div>
             )}
+          </section>
+        )}
+
+        {cambios.length > 0 && !volando && (
+          <section>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5 flex items-center gap-1.5">
+              <Radio className="w-3.5 h-3.5" /> Con quién hablás
+            </p>
+            <ol className="space-y-2">
+              {cambios.map((c, i) => (
+                <li key={i} className="flex gap-2.5">
+                  <span className="w-12 shrink-0 text-right text-[11px] tabular-nums text-zinc-400 pt-0.5">{c.desdeNm === 0 ? "salida" : `${c.desdeNm.toFixed(0)} NM`}</span>
+                  <DependenciaFila d={c.dependencia} />
+                </li>
+              ))}
+            </ol>
+            <p className="mt-1.5 text-[11px] text-zinc-500">
+              {altitudNum === null ? "Poné la altitud de crucero para saber si pasás por arriba o por debajo de cada espacio. " : `A ${miles(altitudNum)} ft; la salida y la llegada, en el suelo. `}
+              Del AIP: torres (AD 2.18), TMA y centros (ENR 2.1).
+            </p>
           </section>
         )}
 
@@ -472,6 +537,25 @@ function Dato({ etiqueta, valor, unidad }: { etiqueta: string; valor: string; un
         {valor}
         {unidad && <span className="text-[11px] font-medium text-zinc-500 ml-0.5">{unidad}</span>}
       </p>
+    </div>
+  );
+}
+
+/** "ATZ SAN FERNANDO (I)" → "ATZ San Fernando (I)": las siglas y los números romanos quedan. */
+function nombreLindo(t: string): string {
+  return t
+    .split(" ")
+    .map((w) => (/^(CTR|ATZ|TMA|FIR|\(?[IV]+\)?|·)$/.test(w) ? w : w.charAt(0) + w.slice(1).toLowerCase()))
+    .join(" ")
+    .replace(/\bDe\b|\bDel\b|\bLa\b|\bLos\b/g, (m) => m.toLowerCase());
+}
+
+function DependenciaFila({ d, grande = false }: { d: Dependencia; grande?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <p className={`${grande ? "text-base" : "text-sm"} font-semibold text-zinc-900 dark:text-white leading-snug`}>{d.distintivo}</p>
+      <p className={`${grande ? "text-sm" : "text-xs"} tabular-nums text-zinc-700 dark:text-zinc-300`}>{d.mhz.join(" · ")}</p>
+      <p className="text-[11px] text-zinc-500 leading-snug">{nombreLindo(d.donde)}</p>
     </div>
   );
 }
