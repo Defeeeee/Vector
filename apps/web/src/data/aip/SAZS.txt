@@ -171,6 +171,25 @@ NIL 250x150 NIL NIL NIL
 (*) Margen de pista asfaltado, ancho 6 m a cada lado. /
 Margin of asphalted runway, 6 m wide on each side.
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /Designation and lateral limits CTR SAN CARLOS DE BARILOCHE
+Círculo de 10 NM de radio con centro en VOR/DME BAR (410825S
+0711120W). /
+SAN CARLOS DE BARILOCHE CTR
+10NM radius circle with center at BAR VOR/DME (410825S
+0711120W).
+2 Límites verticales / Vertical limits GND/7500 FT MSL
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+BARILOCHE TORRE/ BARILOCHE TOWER
+Idioma(s) / language(s) Español – inglés/ Spanish – English
+5 Altitud de transición / Transition altitude 8000 ft
+6 Horas de aplicación / Hours of applicability H24
+7 Observaciones / Remarks No
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio / Service

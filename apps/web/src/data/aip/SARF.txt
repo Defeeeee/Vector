@@ -177,6 +177,33 @@ reduced to 75 m
 due to OBST
 No No No No
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR Formosa
+Arco de 15 NM de RDO con centro en VOR/DME FSA (261237S -
+0581329W) y límite FIR RESISTENCIA / ASUNCIÓN.
+Formosa CTR
+15 NM RDO arc with center at FSA VOR/DME (261237S -
+0581329W) and RESISTENCIA / ASUNCIÓN FIR boundary.
+2 Límites verticales / Vertical limits FL 65
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+FORMOSA TORRE / FORMOSA TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 3.000 ft / 3,000 ft
+6 Horas de aplicación / Hours of applicability Ver AD 2.3-7 /
+See AD 2.3-7
+7
+Observaciones / Remarks Se podría adoptar la clasificación “G” solamente en las
+circunstancias que se detallan en ENR 1.4. /
+The “G” classification could be adopted only in the circumstances
+detailed in ENR 1.4.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

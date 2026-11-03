@@ -148,6 +148,50 @@ DTHR 35 MOVE
 200 m por / per
 OBST
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+ATZ EL PALOMAR
+Desde Río Reconquista (343202S - 0583620W) hacia el E hasta el
+cruce de FFCC Mitre (Ramal Zárate) y RP 4 (343202S- 0583437W).
+Continuando al SE sobre las vías del FFCC Mitre (Ramal Zárate)
+hasta la Estación José León Suárez (343205S - 0583433W). Luego
+continuar hacia el E hasta Torre Ader (343202S - 0583242W).
+Siguiendo hacia el S hasta Liceo Gral. San Martín (343400S
+0583321W), luego hacia el S hasta Est. Caseros (343617S -
+0583353W). Continuando hacia el S hasta Hospital Posadas
+(343754S - 0583433W), y luego hacia el W por RN 7 (Acceso
+Oeste) hasta interceptar Río Reconquista (343743S- 0584328W),
+siguiendo por Río Reconquista hacia el NE hasta 343202S -
+0583620W) /
+EL PALOMAR ATZ
+From Reconquista River (343202S - 0583620W) towards E to the
+junction of Mitre Railroad (Zárate Branch) and Provincial Route 4
+(343202S- 0583437W). Continuing SE on the tracks of Mitre
+Railroad (Zárate Branch) to José León Suárez Station (343205S -
+0583433W). Then continue E to Ader Tower (343202S -
+0583242W). Continuing S to Liceo General San Martín (343400S
+0583321W), then S to Caseros Station (343617S - 0583353W).
+AIP ARGENTINA SADP AD 2.9
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE (Cont.)
+Continuing S to Posadas Hospital (343754S - 0583433W), then W
+along National Route 7 (Acceso Oeste) to intercept Reconquista
+River (343743S- 0584328W), following Reconquista River NE to
+343202S - 0583620W).
+2 Límites verticales / Vertical limits GND/2.500 ft
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+PALOMAR TORRE / PALOMAR TOWER
+Idioma(s) / language(s) Español – inglés (O/R) con 72 HR de antelación /
+Spanish – English (O/R) 72 HR in advance
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability H24
+7 Observaciones / Remarks NIL
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

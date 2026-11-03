@@ -157,6 +157,38 @@ NIL 300x150 NIL NIL NIL
 (*) Franja de RWY sector sur, reducida a 75 m por desnivel del terreno /
 (*) RWY strip in the southern sector, reduced to 75 m due to unevenness of the terrain.
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales / Designation and lateral limits CTR CATARATAS DEL IGUAZÚ
+Desde 253958S - 0542607W, 254422S - 0540807W, luego
+siguiendo un arco de 31.5 km (17 NM) de RDO con centro en
+VOR/DME CATARATAS DEL IGUAZÚ (254404S - 0542909W) hasta
+255758S - 0541449W, continuando por el paralelo 255758S hacia
+el W hasta la intersección del límite FIR de ASUNCIÓN y
+RESISTENCIA, siguiendo por este límite hacia el N hasta el paralelo
+254021S hasta 253958S - 0542607W./
+IGUAZU FALLS CTR (CATARATAS DEL IGUAZÚ CTR)
+From 253958S - 0542607W, 254422S - 0540807W, then following
+an arc of 31,5 km (17 NM) from RDO with center at CATARATAS
+DEL IGUAZÚ VOR/DME (254404S - 0542909W) to 255758S -
+0541449W, continuing along parallel 255758S to the W to the
+intersection of the FIR boundary of ASUNCIÓN and RESISTENCIA,
+following this boundary to the N to parallel 254021S to 253958S -
+0542607W.
+2 Límites verticales / Vertical limits FL 65
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+CATARATAS TORRE / CATARATAS TOWER
+Idioma(s) / language(s) Español – inglés / Spanish – English
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability H24
+7 Observaciones / Remarks NIL
+AIP ARGENTINA SARI AD 2.7
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

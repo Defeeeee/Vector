@@ -155,6 +155,54 @@ NIL NIL 2.445x280 90x60 NIL NIL Franjas con
 desniveles /
 Strips with slopesNIL NIL 90x60 NIL NIL
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR SAUCE VIEJO (*)
+Desde el QDR 252° y la intersección del círculo de 15 NM de RDO,
+siguiendo por este curso magnético hasta la intersección con el
+circulo de 10 NM, continuando luego por este círculo en sentido
+horario hasta interceptar QDR 175°, continuar por este curso
+magnético hasta interceptar el circulo de 15 NM, continuar por
+dicho circulo hacia el W hasta interceptar nuevamente el QDR
+252°. Los QDR y distancias se encuentran todos referidos al NDB
+SVO (314242S - 0644823W)
+ATZ SAUCE VIEJO (*)
+Círculo de 5 NM de RDO con centro en NDB SVO. /
+SAUCE VIEJO CTR (*)
+From QDR 252° and the intersection of the 15 NM circle of RDO,
+following this magnetic course until the intersection with the 10
+NM circle, then continuing along this circle clockwise until
+intercepting QDR 175°, continue along this magnetic course until
+intercepting the 15 NM circle, continue along this circle W until
+intercepting again QDR 252°. The QDR and distances are all
+referenced to the SVO NDB (314242S - 0644823W).
+SAUCE VIEJO ATZ (*)
+5 NM circle of RDO with center at SVO NDB.
+2
+Límites verticales / Vertical limits (*) FL 45
+GND
+(*) 2500 ft
+GND
+3 Clasificación del espacio aéreo / Airspace classification (*) C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+(*) SAUCE VIEJO TORRE / SAUCE VIEJO TOWER
+Idioma(s) / language(s) Español – inglés (O/R con 72 h de antelación) / Spanish – English
+(O/R 72 h in advance)
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability 10:00-01:00 UTC
+7
+Observaciones / Remarks (*) Se brinda servicio de control de aeródromo y servicio de
+aproximación no radar.
+Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4./
+(*) Aerodrome control and non-radar approach service is provided
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

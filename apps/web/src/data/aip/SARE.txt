@@ -163,6 +163,32 @@ Remarks
 No 800x150 2.890X280 90x90 No No NIL
 No 220x150 90x90 No No NIL
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR RESISTENCIA
+Desde 271358S 0585402W, 273922S 0585402W, siguiendo un
+arco de 15 NM de RDO con centro en VOR/DME SIS (272649S
+0590326) hacia el W hasta 271358S 0585402W /
+RESISTENCIA CTR
+From 271358S 0585402W, 273922S 0585402W, following a 15
+NM arc of RDO with center at SIS VOR/DME (272649S 0590326)
+W to 271358S 0585402W
+2 Límites verticales / Vertical limits FL 65
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+Resistencia Torre / Resistencia Tower
+Idioma(s) / language(s) Español – inglés / Spanish – English
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability H24
+7 Observaciones / Remarks NIL
+AIP ARGENTINA SARE AD 2.7
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

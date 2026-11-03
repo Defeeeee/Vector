@@ -190,6 +190,54 @@ Wide body aircraft must make a 180° turn only on RWY 13 and 31 runway turn pads
 AIP ARGENTINA SABE AD 2.9
 DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2024 28 NOVIEMBRE 2024
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR AEROPARQUE JORGE NEWBERY
+Desde 341836S 0584612W hacia el E siguiendo por un arco de 33
+NM de RDO con centro en VOR/DME EZE 344927S 0583207W
+hasta 342058S 0581202W, continuar hacia el E hasta 342058S
+0580342W, luego hacia el SE hasta 343058S 0575357W, posterior
+hacia el W hasta 343058S 0580202W, continuar hacia el SW hasta
+344528S 0581802W, luego hacia el NW hasta 343658S
+0582802W, siguiendo hacia el W hasta Hospital Posadas 343754S
+0583433W, continuando por RN 7 (Acc. Oeste) hasta río
+Reconquista 343743S 0584328W, siguiendo hacia el N hasta
+Estación José C. Paz 343109S 0584500W, posterior continuando
+hacia el N hasta la intersección de la RN 8 (Ramal Pilar) y la RP 26
+342627S 0584657W siguiendo hacia el N hasta 342347S
+0584750W luego hacia el NE hasta 341836S 0584612W. /
+AEROPARQUE JORGE NEWBERY CTR
+From 341836S 0584612W E following 33 NM arc of RDO with
+center at VOR/DME EZE 344927S 0583207W to 342058S
+0581202W, continue E to 342058S 0580342W, then SE to 343058S
+0575357W, then W to 343058S 0580202W, continue SW to
+344528S 0581802W, then NW to 343658S 0582802W, continuing
+W to Hospital Posadas 343754S 0583433W, continuing on RN 7
+(Acceso Oeste) to Reconquista river 343743S 0584328W,
+continuing N to Estación José C. Paz 343109S 0584500W, then
+continuing N to the intersection of National Route 8 (Ramal Pilar)
+and RP 26 342627S 0584657W continuing N to 342347S
+0584750W then NE to 341836S 0584612W.
+2 Límites verticales / Vertical limits FL 55
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+AEROPARQUE TORRE / AEROPARQUE TOWER
+Idioma(s) / language(s) Español - inglés / Spanish - English
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability H24
+7
+Observaciones / Remarks Es obligatorio el uso del Respondedor de a bordo en modo A/3 y
+C, excepto en Corredores o Sectores VFR /
+It is mandatory to use the on-board Responder in mode A/3 and C,
+except in VFR Corridors or Sectors
+AIP ARGENTINA SABE AD 2.11
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

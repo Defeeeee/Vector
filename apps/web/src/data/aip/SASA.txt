@@ -184,6 +184,23 @@ AVBL turning apron at RWY 06/24 thresholds - SFC ASPH.
 (*) RWY 06/24 solo para rodaje /
 RWY 06/24 only for taxiing
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /Designation and lateral limits CTR SALTA
+Círculo de 10 NM de RDO con centro en VOR/DME SAL (245108S
+652902W) /
+SALTA CTR
+10 NM circle of RDO with center at VOR/DME SAL (245108S -
+652902W).
+2 Límites verticales / Vertical limits FL 95
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4 Distintivo de llamada de la dependencia ATS /ATS unit callsign SALTA TORRE / SALTA TOWER
+Idioma(s) / language(s) Español - inglés / Spanish - English
+5 Altitud de transición / Transition altitude 9.000 ft
+6 Horas de aplicación / Hours of applicability H24
+7 Observaciones / Remarks No
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio /

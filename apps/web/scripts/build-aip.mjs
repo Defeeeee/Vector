@@ -24,8 +24,8 @@
  * ## Qué guarda, y por qué guarda texto y no campos
  *
  * Escribe `src/data/aip/<ICAO>.txt` con los bloques **AD 2.2** (datos geográficos y
- * administrativos), **AD 2.4** (combustible), **AD 2.12** (pistas) y **AD 2.18**
- * (comunicaciones) extraídos del PDF, *verbatim*, y `src/data/aip-fuentes.tsv` con el
+ * administrativos), **AD 2.4** (combustible), **AD 2.12** (pistas), **AD 2.17** (espacio
+ * aéreo, desde la 3.0.0) y **AD 2.18** (comunicaciones) extraídos del PDF, *verbatim*, y `src/data/aip-fuentes.tsv` con el
  * documento, la edición y la fecha de vigencia de cada uno.
  *
  * El texto crudo es la red de seguridad. Los valores que la app muestra viven en
@@ -440,6 +440,9 @@ async function main() {
       ["AD 2.2", "AD 2.3"],
       ["AD 2.4", "AD 2.5"],
       ["AD 2.12", "AD 2.13"],
+      // El espacio aéreo (CTR, ATZ) que dibuja En vuelo (`lib/espacios-aereos.ts`). Con el
+      // título entero: "AD 2.17" a secas puede aparecer antes, en una referencia.
+      ["AD 2.17 ESPACIO", "AD 2.18"],
       ["AD 2.18", "AD 2.19"],
     ].map(([desde, hasta]) => [desde, bloque(texto, desde, hasta)]);
     const seccion = (n) => secciones.find(([d]) => d === n)?.[1] ?? null;

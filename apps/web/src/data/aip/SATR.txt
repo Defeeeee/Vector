@@ -228,6 +228,100 @@ No No 100 x 68 No No NIL
 No No 2920x280 90 x 100 No No NIL
 No No 90 x 100 No No NIL
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1 Designación y límites laterales /Designation and lateral limits
+CTR RECONQUISTA
+Círculo de 10 NM de RDO con centro en VOR/ DME RTA (291231S-
+0594057W).
+RECONQUISTA CTR
+Circle of 10 NM of RDO with center at RTA VOR/ DME (291231S-
+0594057W).
+2 Límites verticales / Vertical limits FL35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4 Distintivo de llamada de la dependencia ATS /ATS unit callsign RECONQUISTA TORRE / RECONQUISTA TOWER
+5 Idioma(s) / language(s) Español / Spanish
+6 Altitud de transición / Transition altitude 3.000 ft
+7 Horas de aplicación / Hours of applicability LUN a VIE 10:00-22:00 UTC. SAB, DOM y FERIADOS O/R /
+MON to FRI 10:00-22:00 UTC. SAT, SUN and HOLIDAYS O/R
+8 Observaciones / Remarks
+Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4./
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+AIP ARGENTINA SATR AD 2.8
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2024 27 NOVIEMBRE 2025
+AD 2.19 RADIOAYUDAS PARA LA NAVEGACIÓN Y EL ATERRIZAJE / NAVIGATIONAL AND LANDING AIDS
+Tipo de ayuda, MAG
+VAR, Tipo de operación
+apoyada para ILS/GNSS,
+CAT ILS, declinación para
+VOR/ILS /
+Type of aid, MAG VAR,
+Type of supported
+operation for ILS / GNSS,
+ILS CAT, declination for
+VOL/ILS
+ID
+Frecuencia
+y Canal /
+Frequency
+and channel
+Horas de
+operación /
+Hours of
+operation
+COORD GEO del
+emplazamiento de la
+antena transmisora /
+Position of
+transmitting antenna
+coordinates
+Elevación de la
+antena
+transmisora del
+DME /
+Elevation of DME
+transmitting
+antenna
+Observaciones /
+Remarks
+1 2 3 4 5 6 7
+VOR/DME RTA 117.1 MHz H24 291231.18S
+0594056.60W 8,70 m DME CH 118X (343 km)
+AD 2.20 REGLAMENTO LOCAL DEL AERÓDROMO / LOCAL AERODROME REGULATIONS
+- Las OPS VFR deberán ajustarse a lo establecido en el ANEXO BRAVO, excepto el inciso c) donde debe reemplazarse el valor por 2.000 ft.
+- Precaución por presencia de aves en proximidades del AD.
+- En las circunstancias detalladas en el ENR 1.4, el piloto que decida realizar vuelos VFR, deberá coordinar previamente con el Jefe de
+Aeródromo y/o Explotador de Aeródromo la asignación de PSN para estacionamiento, también con el Proveedor de Combustible (en
+caso de necesitarlo) y otras coordinaciones operativas necesarias. /
+- VFR OPS shall conform to BRAVO ANNEX, except c) where the value should be replaced by 2,000 ft.
+- Caution due to presence of birds near the AD.
+- In the circumstances detailed in ENR 1.4, the pilot who decides to perform VFR flights must previously coordinate with the Aerodrome
+Head and/or Aerodrome Operator the assignment of PSN for parking, also with the Fuel Supplier (in case of need) and other necessary
+operational coordination.
+AD 2.21 PROCEDIMIENTOS DE ATENUACIÓN DEL RUIDO / NOISE ABATEMENT PROCEDURES
+NIL
+AD 2.22 PROCEDIMIENTOS DE VUELO / FLIGHT PROCEDURES
+- Circuitos de tránsito para RWY 10 y 02 deberá efectuarse por derecha. Para RWY 20 y 28 circuito normal. /
+- Traffic circuits for RWY 10 and 02 should be made on the right. For RWY 20 and 28 normal circuit.
+AD 2.23 INFORMACIÓN SUPLEMENTARIA / ADDITIONAL INFORMATION
+- Funciona con fuente secundaria de energía (GEL). Pertenece al SNA. /
+- It works with secondary energy source (GEL). It belongs to the SNA.
+AD 2.24 CARTAS RELATIVAS AL AERÓDROMO / CHARTS RELATED TO THE AERODROME
+Plano de aeródromo – OACI / Aerodrome Chart – ICAO SATR AD 2.A1-A2
+Plano de estacionamiento y atraque de aeronaves – OACI / Aircraft Parking/Docking Chart – ICAO SATR AD 2.B1-B2-B3-B4
+Plano de obstáculos de aeródromos – OACI, Tipo B / Aerodrome obstacle chart – ICAO, Type B SATR AD 2.E1
+Cartas de Aproximación por instrumentos – OACI / Instrument Approach Chart – ICAO
+VOR Z PISTA / RWY 10 SATR AD 2.M1
+VOR Y PISTA / RWY 10 SATR AD 2.M2
+VOR Z PISTA / RWY 28 SATR AD 2.M3
+VOR Y PISTA / RWY 28 SATR AD 2.M4
+RNP PISTA / RWY 10 SATR AD 2.M5-M6-M7
+RNP PISTA / RWY 28 SATR AD 2. M8-M9-M10
+AD 2.25 PENETRACIÓN DE LA SUPERFICIE DEL TRAMO VISUAL (VSS) / VISUAL SEGMENT SURFACE (VSS) PENETRATION
+No
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio / Service

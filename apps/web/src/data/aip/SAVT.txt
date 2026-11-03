@@ -154,6 +154,28 @@ NIL NIL NIL NIL NIL
 AIP ARGENTINA SAVT AD 2.5
 DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2024 11 JULIO 2024
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR TRELEW
+Círculo de 10 NM de RDO con centro en VOR/DME TRE (431209S
+0651450W) /
+TRELEW CTR
+10 NM circle of RDO with center at TRE VOR/DME (431209S -
+0651450W)
+2 Límites verticales / Vertical limits FL 35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+TRELEW TORRE / TRELEW TOWER
+Idioma(s) / language(s) Español – inglés / Spanish - English
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability H24
+7 Observaciones / Remarks No
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

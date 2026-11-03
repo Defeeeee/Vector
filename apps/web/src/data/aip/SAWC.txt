@@ -164,6 +164,32 @@ Runway shoulders ASPH width 7.5 m
 AIP ARGENTINA SAWC AD 2.6
 DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2024 11 JULIO 2024
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR EL CALAFATE
+Círculo de 15 NM de RDO con centro en VOR/DME ECA (501642S
+0720244W) /
+EL CALAFATE CTR
+15 NM circle of RDO with center at ECA VOR/DME (501642S -
+0720244W)
+2
+Límites verticales / Vertical limits 4.500 ft
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /ATS unit callsign CALAFATE TORRE / CALAFATE TOWER
+Idioma(s) / Language(s) Español – inglés (O/R) con 72 HR de antelación /
+Spanish – English (O/R) 72 HR in advance
+5 Altitud de transición / Transition altitude 7.000 ft
+6 Horas de aplicación / Hours of applicability 10:00-23:59 UTC
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

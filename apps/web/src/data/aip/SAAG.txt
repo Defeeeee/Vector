@@ -146,6 +146,34 @@ Remarks
 NIL NIL 1.451x150 NIL NIL NIL NIL
 NIL NIL NIL NIL NIL NIL
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR GUALEGUAYCHÚ
+Círculo de 10 NM de RDO con centro en VOR / DME GUA (330035S
+- 0583651W). /
+GUALEGUAYCHÚ CTR
+10 NM circle of RDO with center at GUA VOR / DME (330035S -
+0583651W).
+2 Límites verticales / Vertical limits FL 35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+GUALEGUAYCHÚ TORRE / GUALEGUAYCHÚ TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability 11:00-19:00 UTC
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+AIP ARGENTINA SAAG AD 2.6
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio /

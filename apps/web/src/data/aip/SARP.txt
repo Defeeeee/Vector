@@ -176,6 +176,31 @@ THR 02 0 130,50 0,31%
 1500 116,50 0,10%
 THR 20 2252 114,25
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales / Designation and lateral limits CTR POSADAS
+Arco de círculo de 5 NM de RDO con centro en VOR/DME POS
+(272308S 0555809W), proyectándose sólo dentro de la FIR
+Resistencia hasta los límites internacionales. /
+POSADAS CTR
+Circle arc of 5 NM RDO with center at POS VOR/DME (272308S -
+0555809W), projecting only into the Resistencia FIR to
+international boundaries.
+2 Límites verticales / Vertical limits 2.500 ft
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /ATS unit callsign POSADAS TORRE / POSADAS TOWER
+Idioma(s) / language(s) Español – inglés O/R con 72 HR de antelación. / Spanish – English
+O/R with 72 HR in advance.
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability H24
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4 /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio /

@@ -181,6 +181,138 @@ No No
 No No 90x60 No No DTHR 23 275 m
 por/per OBST.
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+ATZ SAN FERNANDO
+Desde RN 9 (Ramal Escobar) bifurcación con RN 8 (Ramal Pilar)
+(342813S - 0584056W) hacia el E por Arco DME de 5 NM con
+centro en VOR/DME FDO (342705S - 0583503W) hasta
+desembocadura del Río San Antonio (342610S - 0582906W).
+Luego hacia el SW hasta 342813S - 0583319W, continuando
+hacia el S por Av. Sucre hasta 342927S 0583327W, hasta RN 9
+(Panamericana) y RP 4 (Camino de Cintura) (342948S -
+0583315W), siguiendo hacia el SW por RP 4 (Camino de Cintura)
+hasta el cruce con FFCC Mitre Ramal Zárate (343202S-
+0583437W). Luego hacia el W hasta Río Reconquista (343202S -
+0583620W), desde allí siguiendo Río Reconquista hacia el S hasta
+cruce con Calle Gral. Rawson (343351S - 0583901W). Siguiendo
+por calle Gral. Rawson hacia el N hasta RP 8 (343334S-
+0583906W), continuar hacia el W por RP 8 hasta Calle Gral.
+Ideoate (343330S- 0583918W) y luego al N hasta Estación Don
+Torcuato (343006S - 0583838W)
+AIP ARGENTINA SADF AD 2.10
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2024 11 JULIO 2024
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE (Cont.)
+1
+Posterior siguiendo al NW por Av. del Libertador Gral. San Martín
+hasta RN 9 (Ramal Escobar) bifurcación con RN 8 (Ramal Pilar)
+(342813S - 0584056W) /
+SAN FERNANDO ATZ
+From National Route 9 (Escobar Branch) bifurcation with
+National Route 8 (Pilar Branch) (342813S - 0584056W) towards
+E along 5 NM DME Arc with center at FDO VOR/DME (342705S -
+0583503W) to the mouth of San Antonio River (342610S -
+0582906W). Then SW to 342813S - 0583319W, continuing S on
+Sucre Avenue to 342927S 0583327W, to RN 9 (Panamericana)
+and Provincial Route 4 (Camino de Cintura) (342948S -
+0583315W), continuing SW on Provincial Route 4 (Camino de
+Cintura) to the junction with Mitre Railroad, Zárate Branch
+(343202S- 0583437W). Then towards the W until Reconquista
+River (343202S - 0583620W), from there following Reconquista
+River towards the S until crossing with General Rawson Street
+(343351S - 0583901W). Following General Rawson Street to the
+N until Provincial Route 8 (343334S- 0583906W), continue to the
+W by Provincial Route 8 until Calle General Ideoate Street
+(343330S- 0583918W) and then to the N until Don Torcuato
+Station (343006S - 0583838W). Then continuing NW along Del
+Libertador General San Martín Avenue up to National Route 9
+(Escobar Branch) fork with National Route 8 (Pilar Branch)
+(342813S - 0584056W)
+2
+Límites verticales / Vertical limits El límite vertical superior del ATZ San Fernando está dividido en
+dos sectores:
+(I) GND / 2500 ft: Desde RN 9 (Ramal Escobar) bifurcación con
+RN 8 (Ramal Pilar) (342813S-0584056W) hacia el E por Arco
+DME de 5 NM con centro en VOR/DME FDO (342705S-
+0583503W) hasta desembocadura del Río San Antonio
+(342610S-0582906W). Luego hacia el SW hasta el VOR FDO,
+continuando hacia el sur hasta la intersección de vía del FFCC
+Mitre ramal Zárate con FFCC Gral. Belgrano Norte (343017S-
+0583526W). Luego hacia el W sobre la Vía de FFCC Gral.
+Belgrano Norte hasta Estación Don Torcuato (343006S-
+0583838W), siguiendo al NW por Av. del Libertador Gral. San
+Martín hasta RN 9 (Ramal Escobar) bifurcación con RN 8
+(Ramal Pilar) (342813S-0584056W)
+(II) GND / 1500 ft: Desde desembocadura del Río San Antonio
+(342610S-0582906W) hacia el SW hasta 342813S-0583319W,
+continuando hacia el S por Av. Sucre hasta 342927S
+0583327W, hasta R N 9 (Panamericana) y R P 4 (Camino de
+Cintura) (342948S-0583315W), siguiendo hacia el SW por RP
+4 (Camino de Cintura) hasta el cruce con FFCC Mitre Ramal
+Zárate (343202S-0583437W). Luego hacia el W hasta Río
+Reconquista (343202S-0583620W), desde allí siguiendo Río
+Reconquista hacia el S hasta cruce con Calle Gral. Rawson
+(343351S - 0583901W). Siguiendo por calle Gral. Rawson
+hacia el N hasta RP 8 (343334S- 0583906W), continuar hacia
+el W por RP 8 hasta Calle Gral. Ideoate (343334S- 0583906W),
+siguiendo hasta (343330S- 0583918W) y luego al N hasta
+Estación Don Torcuato (343006S - 0583838W). Posterior hacia
+el E hasta el cruce de FFCC Belgrano con FFCC Mitre (343022S
+- 0583531W), continuando hacia el Norte hasta el VOR FDO,
+luego hacia el NE hasta desembocadura del Río San Antonio
+(342610S-0582906W) /
+The upper vertical limit of the San Fernando ATZ is divided into two
+sectors:
+(I) GND / 2500 ft: From National Route 9 (Escobar Branch)
+fork with National Route 8 (Pilar Branch) (342813S-0584056W) E
+AIP ARGENTINA SADF AD 2.11
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE (Cont.)
+2
+along 5 NM DME Arc with center at FDO VOR/DME
+(342705S-0583503W) to mouth of San Antonio River
+(342610S-0582906W). Then SW to FDO VOR, continuing
+south to intersection of Mitre Railroad, Zárate branch track
+with General Belgrano Norte Railroad (343017S-
+0583526W). Belgrano Norte to Don Torcuato Station
+(343006S-0583838W), continuing NW along Del Libertador
+General San Martín Avenue to National Route 9 (Escobar
+Branch) junction with National Route 8 (Pilar Branch)
+(342813S-0584056W)
+(II) GND / 1500 ft: From the mouth of the San Antonio River
+(342610S-0582906W) SW to 342813S-0583319W,
+continuing S on Sucre Avenue to 342927S 0583327W, to
+National Route 9 (Panamericana) and Provincial Route 4
+(Camino de Cintura) (342948S-0583315W), continuing SW
+on Provincial Route 4 (Camino de Cintura) to the junction
+with Mitre Railroad, Zárate Branch (343202S-0583437W).
+Then towards the W until Reconquista River (343202S-
+0583620W), from there following Reconquista River towards
+the S until crossing with General Rawson Street (343351S -
+0583901W). Continuing along General Rawson Street n to
+the N until Provincial Route8 (343334S- 0583906W),
+continuing W along Provincial Route 8 until General Ideoate
+Street (343334S- 0583906W), continuing until (343330S-
+0583918W) and then N until Don Torcuato Station (343006S
+- 0583838W). Then E to the junction of Belgrano Railroad
+with Mitre Railroad (343022S - 0583531W), continuing north
+to the FDO VOR, then NE to the mouth of the San Antonio
+River (342610S-0582906W)
+3 Clasificación del espacio aéreo / Airspace classification C
+4 Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+FERNANDO TORRE / FERNANDO TOWER
+Idioma(s) / language(s) Español – inglés / Spanish - English
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability H24
+7
+Observaciones / Remarks Se brinda Servicio Control de Aeródromo. El Servicio Control de
+Aproximación lo brinda la TWR AEROPARQUE /
+Aerodrome Control Service is provided. The Approach Control
+Service is provided by AEROPARQUE TWR
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

@@ -160,6 +160,93 @@ carpeta asfáltica. /
 RWY 18/36 operations of turbine-powered aircraft and propulsion units under the planes are prohibited due to the detachment of the
 asphalt layer.
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR PASO DE LOS LIBRES
+Dos arcos de círculo de 10 NM (18.5 km) de RDO con centro en
+coordenadas geográficas 294141S - 0570853W y 294700S -
+0570213W) unidos por rectas tangentes, contenido en la parte de
+las FIR RESISTENCIA y CURITIBA. /
+PASO DE LOS LIBRES CTR
+Two 10 NM (18.5 km) circle arcs of RDO with center at geographic
+coordinates 294141S - 0570853W and 294700S - 0570213W
+joined by tangent lines, contained in the part of the FIR
+RESISTENCIA and CURITIBA.
+2 Límites verticales / Vertical limits FL 35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4 Distintivo de llamada de la dependencia ATS / ATS unit callsign LIBRES TORRE / LIBRES TOWER
+Idioma(s) / language(s) Español – inglés. / Spanish – English.
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability LUN a VIE 12:30-20:30 UTC. / MON to FRI 12:30-20:30 UTC.
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+AIP ARGENTINA SARL AD 2.7
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+AD 2.19 RADIOAYUDAS PARA LA NAVEGACIÓN Y EL ATERRIZAJE / NAVIGATIONAL AND LANDING AIDS
+Tipo de ayuda, MAG VAR,
+Tipo de operación
+apoyada para ILS/GNSS,
+CAT ILS, declinación para
+VOR/ILS /
+Type of aid, MAG VAR,
+Type of supported
+operation for ILS / GNSS,
+ILS CAT, declination for
+VOL/ILS
+ID
+Frecuencia y Canal /
+Frequency and
+channel
+Horas de
+operación /
+Hours of
+operation
+COORD GEO
+del
+emplazamient
+o de la antena
+transmisora /
+Position of
+transmitting
+antenna
+coordinates
+Elevación de
+la antena
+transmisora
+del DME /
+Elevation of
+DME
+transmitting
+antenna
+Observaciones /
+Remarks
+1 2 3 4 5 6 7
+No
+AD 2.20 REGLAMENTO LOCAL DEL AERÓDROMO / LOCAL AERODROME REGULATIONS
+− Las operaciones se ajustarán a las normas operativas generales, Anexo BRAVO, establecidas en la parte ENR 1.1, reemplazando el punto
+C, cuyo valor es de 2.000 ft.
+− Prohibidas las operaciones sin enlace con el control.
+− Circuito de tránsito de AD se realizará exclusivamente al Oeste del eje de pista 18/36. Las aeronaves en circuito de tránsito no deberán
+transponer el Río Uruguay.
+− Concentración de aves.
+− En las circunstancias detalladas en el ENR 1.4, el piloto que decida realizar vuelos VFR, deberá coordinar previamente con el Jefe de
+Aeródromo y/o Explotador de Aeródromo la asignación de PSN para estacionamiento, también con el Proveedor de Combustible (en
+caso de necesitarlo) y otras coordinaciones Operativas necesarias. /
+− Operations will be in accordance with the general operating rules, Annex BRAVO, established in part ENR 1.1, replacing point C, whose
+value is 2,000 ft.
+− Prohibited operations without link with control.
+− AD traffic circuit shall be exclusively to the West of runway axis 18/36. Aircraft on traffic circuit shall not transverse the Uruguay River.
+− Bird concentration.
+− In the circumstances detailed in ENR 1.4, the pilot who decides to perform VFR flights, must previously coordinate with the Aerodrome
+Manager and/or Aerodrome Operator the assignment of PSN for parking, also with the Fuel Supplier (if needed) and other necessary
+Operational coordination
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

@@ -133,6 +133,23 @@ NIL NIL NIL 90x80 NIL NIL NIL
 NIL NIL NIL NIL NIL NIL
 Observaciones /Remarks RWY 05/23 - Tierra – ILE Portátil / RWY 05/23 - Earth - Portable ILE
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /Designation and lateral limits CTR BASE MARAMBIO
+Círculo de 20 NM de RDO con centro en VOR/DME MBI (641405S
+0563712 W). /
+BASE MARAMBIO CTR
+20 NM circle of RDO with center at MBI VOR/DME (641405S
+0563712 W).
+2 Límites verticales / Vertical limits FL 65
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4 Distintivo de llamada de la dependencia ATS /ATS unit callsign MARAMBIO TORRE / MARAMBIO TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude NIL
+6 Horas de aplicación / Hours of applicability NIL
+7 Observaciones / Remarks NIL
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

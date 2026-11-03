@@ -61,10 +61,10 @@ async function getDashboardData() {
     // todas las secciones para que abajo nadie saque conclusiones de las listas
     // vacías. Ver `pilotStatus`.
     return {
-      flights: [], aircraft: [], profile: null, session: { active: false }, packs: [],
+      flights: [], aircraft: [], profile: null, packs: [],
       documents: [], logbooks: [] as Logbook[], planned: [] as PlannedFlight[],
       transactions: [] as Transaction[], balance: 0,
-      unavailable: ["profile", "aircraft", "flights", "session", "packs", "transactions", "audit", "documents"],
+      unavailable: ["profile", "aircraft", "flights", "packs", "transactions", "audit", "documents"],
     };
   }
 
@@ -87,7 +87,6 @@ async function getDashboardData() {
     flights: data.flights || [],
     aircraft: data.aircraft || [],
     profile: (data.profile as Profile) || null,
-    session: data.session || { active: false },
     packs: (data.packs as FlightPack[]) || [],
     documents: (data.documents as PilotDocument[]) || [],
     // Son lo que hace posible mostrar cuánto salió cada vuelo. Ver `src/lib/costos.ts`.
@@ -112,7 +111,7 @@ async function getDashboardData() {
  * bloques para alguien que abre la app a ver si puede volar el sábado.
  */
 export default async function Dashboard() {
-  const { flights: bitacora, aircraft, profile, session, packs, documents, logbooks, planned, unavailable, transactions, balance } =
+  const { flights: bitacora, aircraft, profile, packs, documents, logbooks, planned, unavailable, transactions, balance } =
     await getDashboardData();
 
   /*
@@ -165,31 +164,16 @@ export default async function Dashboard() {
           </h2>
         </div>
 
-        {session.active ? (
-          <Link
-            href="/dashboard/log-flight"
-            className="inline-flex items-center gap-3 pl-3 pr-4 py-2.5 rounded-full bg-green-500/10 border border-green-500/20 hover:bg-green-500/15 transition-colors self-start md:self-auto"
-          >
-            <span className="relative flex w-2 h-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 animate-blip" />
-            </span>
-            <span className="text-sm font-semibold text-green-600 dark:text-green-400">
-              Vuelo en curso · {(aircraft as Aircraft[]).find((a) => a.id === session.session?.aircraft_id)?.registration || "Unknown"}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
-          </Link>
-        ) : (
-          // La acción principal de la app, con su nombre. El "+" del rail y de la
-          // píldora del teléfono no dicen qué hacen, y un alumno nuevo no tiene por
-          // qué adivinarlo.
-          <Link
-            href="/dashboard/log-flight"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold shadow-cal-highlight dark:shadow-none hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors self-start md:self-auto"
-          >
-            <Plus className="w-4 h-4" strokeWidth={2.5} />
-            Registrar vuelo
-          </Link>
-        )}
+        {/* La acción principal de la app, con su nombre. El "+" del rail y de la
+            píldora del teléfono no dicen qué hacen, y un alumno nuevo no tiene por
+            qué adivinarlo. */}
+        <Link
+          href="/dashboard/log-flight"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold shadow-cal-highlight dark:shadow-none hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors self-start md:self-auto"
+        >
+          <Plus className="w-4 h-4" strokeWidth={2.5} />
+          Registrar vuelo
+        </Link>
       </section>
 
       {/* Las horas de la carrera, como en el Resumen. Federico pidió el 2026-10-10 que el

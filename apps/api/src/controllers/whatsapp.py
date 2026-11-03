@@ -123,10 +123,6 @@ class WhatsAppController(Controller):
         flights_resp = service_client.table("flights").select("*").eq("user_id", user_id).execute()
         flights = [Flight(**data).model_dump(mode="json") for data in flights_resp.data]
 
-        # 3. Active Session
-        session_resp = service_client.table("flight_sessions").select("*").eq("user_id", user_id).execute()
-        session_data = session_resp.data[0] if session_resp.data else None
-
         # 4. Flight Packs
         packs_data = []
         try:
@@ -168,7 +164,6 @@ class WhatsAppController(Controller):
             "profile": profile,
             "aircraft": aircraft,
             "flights": flights,
-            "session": {"active": bool(session_data), "session": session_data},
             "packs": packs_data,
             "transactions": transactions_data,
             "balance": balance,

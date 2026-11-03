@@ -169,6 +169,57 @@ Remarks
 206x45 No 3104x280 No No No NIL
 208x45 No No No No NIL
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR NEUQUÉN
+Poligono cerrado por 385022S 0682432W, 385028S 0675403W,
+390328S 0675404W, 390323S 0682438W, 385022S 0682432W
+NEUQUEN CTR
+Polygon closed by 385022S 0682432W, 385028S 0675403W,
+390328S 0675404W, 390323S 0682438W, 385022S 0682432W
+2 Límites verticales / Vertical limits 3500 FT AMSL
+GND
+3 Clasificación del espacio aéreo / Airspace classification D
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+NEUQUÉN TORRE / NEUQUÉN TOWER
+Idioma(s) / language(s) Español – inglés / Spanish – English
+5 Altitud de transición / Transition altitude 10.000 ft
+AD 2.14 LUCES DE APROXIMACIÓN Y DE PISTA / APPROACH AND RUNWAY LIGHTING (cont.)
+LEN, Separación, Color,
+INTST RCLL / RCLL LEN,
+Spacing, Color, INTST
+LEN, Separación, Color, INTST
+REDL /
+REDL LEN, Spacing, Color, INSTS
+Color RENL y WBAR /
+RENL Color and WBAR
+LEN y Color STWL /
+STWL LEN and Color
+Observaciones /
+Remarks
+6 7 8 9 10
+No 2.570 m, 50 m, Blanco, 5 LIH/
+2,570 m, 50 m, White, 5 LIH
+Rojo, empotrada, No/
+Red, recessed, No
+206 m, Rojo /
+206 m, Red NIL
+No 2.570 m, 50 m, Blanco, 5 LIH/
+2,570 m, 50 m, White, 5 LIH
+Rojo, empotrada, No/
+Red, recessed, No
+208 m, Rojo
+208 m, Red NIL
+AIP ARGENTINA SAZN AD 2.8
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE (Cont)
+6 Horas de aplicación / Hours of applicability H24
+7 Observaciones / Remarks NIL
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

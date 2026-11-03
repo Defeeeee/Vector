@@ -164,6 +164,28 @@ NIL NIL NIL NIL NIL
 (*) RWY 06/24 dispone de REILS. / (*) RWY 06/24 has REILS.
 Plataforma de viraje en pista: 06/24 – PCN 42/R/A/W/- Runway turning apron: 06/24 - PCN 42/R/A/W
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR SAN MARTIN DE LOS ANDES/AVIADOR C. CAMPOS Círculo de
+10 NM de RDO con centro en VOR/DME CHP (400256S -
+0710543W) /
+SAN MARTIN DE LOS ANDES/AVIADOR C. CAMPOS CTR 10 NM
+circle of RDO with center at CHP VOR/DME (400256S - 0710543W)
+2 Límites verticales / Vertical limits 5.500 FT
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4 Distintivo de llamada de la dependencia ATS /ATS unit callsign CHAPELCO TORRE / CHAPELCO TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 10.000 ft
+6 Horas de aplicación / Hours of applicability 12:00-20:00 UTC.
+7
+Observaciones / Remarks Se adoptará la clasificación “G” solamente en las circunstancias
+que se detallan en ENR 1.4.
+The "G" classification shall be adopted only in the circumstances
+detailed in ENR 1.4.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio / Service

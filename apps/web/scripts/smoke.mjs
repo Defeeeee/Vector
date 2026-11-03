@@ -143,7 +143,15 @@ const ROUTES = [
     json: (b) => b.punto?.clase === "fix" && Math.abs(b.punto.lat - -34.71611) < 0.0001,
   },
   // Sin sesión el middleware tiene que redirigir, no explotar.
+  // Las capas del Mapa (3.0.0): leen el texto del AIP y arman los espacios aéreos. Si el
+  // build no copió `src/data/aip/`, no hay TMA Baires.
+  {
+    path: "/api/mapa",
+    expect: (s) => s === 200,
+    json: (b) => b.espacios?.some((e) => e.nombre === "TMA BAIRES") && b.aerodromos?.length > 500,
+  },
   { path: "/dashboard", expect: (s) => s === 307 || s === 302 },
+  { path: "/dashboard/mapa", expect: (s) => s === 307 || s === 302 },
   { path: "/dashboard/log-flight", expect: (s) => s === 307 || s === 302 },
   { path: "/dashboard/airports", expect: (s) => s === 307 || s === 302 },
   { path: "/dashboard/calendario", expect: (s) => s === 307 || s === 302 },
@@ -207,6 +215,7 @@ const AUTH_ROUTES = [
   "/dashboard/tools",
   "/dashboard/calendario",
   "/dashboard/planificador",
+  "/dashboard/mapa",
   "/dashboard/clima",
   // La red: la Red, sus pestañas, Publicar (que lee los vuelos) y un perfil que no
   // existe, que adentro de la app también tiene que ser 404 y no 500.

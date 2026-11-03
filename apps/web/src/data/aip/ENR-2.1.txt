@@ -1,0 +1,810 @@
+# ENR 2.1 — TMA, extraído de https://ais.anac.gob.ar/descarga/aip-69e11f6302403
+# AIP ARGENTINA · edición 01/26 · vigente desde 11-Jun-26
+# Generado por scripts/build-espacios.mjs. NO EDITAR A MANO: es la copia verbatim contra
+# la que espacios-aereos.test.ts contrasta los polígonos.
+TMA COMODORO RIVADAVIA
+Círculo de 55 NM de radio con centro en
+VOR/DME CRV (454624S-0672218W)
+FL 245
+2000FT AGL/AMSL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 245
+B- Por encima de FL 145 hasta FL 195
+C- Desde 2000 FT AGL/AMSL hasta FL 145
+
+TMA EL CALAFATE
+Desde el Límite lateral del FIR COMODORO
+RIVADAVIA / PUNTA ARENAS 494600S -
+0732718W en dirección E hasta 494643S -
+0721441W desde allí en línea recta sentido
+NNE hasta 492722S - 0720431W continuando
+con un Arco de 49 NM con centro VOR/DME
+ECA, hasta 494119S - 0710923W, desde allí en
+línea recta en sentido SSW hasta 495959S -
+0712402W, donde continúa en un arco de 30
+NM en sentido horario con centro VOR/DME
+ECA hasta 504419S -0722059W, continuando
+por el límite del FIR COMODORO RIVADAVIA /
+PUNTA ARENAS hasta 494600S - 0732718W.
+(I) FL 135
+2000FT/AGL
+(II) FL135
+FL095
+CLASE DE ESPACIO AÉREO:
+C - 1) Desde 2000 FT AGL hasta FL 135
+2) Por encima de FL 095 hasta FL 135
+
+TMA ESQUEL
+Desde 414147S – 0705922W, 422259S -
+0705704W, siguiendo un arco de 30 NM de
+radio con centro en VOR/DME ESQ (425314S -
+0710601W) hacia el Este hasta 422329S –
+0711734W, 414229S - 0711834W, siguiendo un
+TWR ESQUEL
+ESQUEL TORRE/
+ESQUEL TOWER
+ESPAÑOL/ SPANISH
+1100 a /to 2200
+118.80 MHz
+118.10 MHz
+121.50 MHz.
+EMERG
+AIP ARGENTINA ENR 2.1-8
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+arco de 35 NM de radio con centro en
+VOR/DME BAR (410825S - 0711120W) hacia el
+Este hasta 414147S - 0705922W.
+FL 245
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 245
+B- Por encima de FL 145 hasta FL 195.
+C-Desde 2000 FT AGL hasta FL 145
+
+TMA MARAMBIO
+Círculo de 60 NM de radio con centro en
+VOR/DME MBI (641405S - 0563712W).
+FL 450
+2000 FT AGL/AMSL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 450.
+B- Por encima de FL 145 hasta FL 195.
+C- Desde 2000 FT AGL/AMSL hasta FL 145
+
+TMA RÍO GALLEGOS
+Desde la intersección de un arco de 55 NM de
+radio con centro en VOR/DME GAL (513642S-
+0691950W) con el límite común de las FIR
+COMODORO RIVADAVIA / PUNTA ARENAS al
+SW del VOR GAL, siguiendo por este arco hacia
+el N hasta 510800S - 0680504W continuando
+por este meridiano hasta el paralelo 520600S,
+siguiendo con un arco de 55 NM de radio con
+centro en VOR/DME GAL hacia el SW hasta la
+intersección del límite FIR COMODORO
+RIVADAVIA / PUNTA ARENAS, continuando por
+este límite hasta el punto de origen, y franja
+hacia el S de 5 NM a ambos lados del eje de la
+trayectoria del VOR GAL / VOR GRA, hasta la
+intersección con las FIR PUNTA ARENAS /
+COMODORO RIVADAVIA en el lado W,
+continuando hacia el E por el límite del TMA
+RÍO GRANDE hasta 5 NM al E del eje de la
+mencionada trayectoria.
+FL 195
+FL 55
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 195.
+C- Desde FL 55 hasta FL 145.
+
+TMA RÍO GRANDE
+Desde intersección entre arco de 64 NM de
+radio con centro en VOR/DME Río Grande
+(534631S - 0674445W) y límite FIR
+COMODORO RIVADAVIA / PUNTA ARENAS,
+continuar sobre arco hacia el E hasta el
+meridiano 06600W. Continuar por este
+meridiano hacia el S hasta el límite FIR
+COMODORO RIVADAVIA / PUNTA ARENAS.
+Seguir por este límite hacia el W hasta
+intersección con arco de 39 NM de radio con
+centro en DVOR USU (545017S - 0681703W).
+Continuar por arco hacia el N hasta el paralelo
+05430S. Continuar por paralelo 05430S hacia el
+W hasta límite FIR COMODORO RIVADAVIA /
+PUNTA ARENAS y seguir sobre el límite hacia el
+N hasta el primer punto.
+TWR RÍO GRANDE
+GRANDE TORRE/
+GRANDE TOWER
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+0900 a/to 0300
+118.30 MHz
+120.20 MHz
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 2.1-11
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+FL 135
+2000 FT AGL/AMSL
+CLASE DE ESPACIO AÉREO:
+C- Desde 2000 FT AGL/AMSL hasta FL 135
+
+TMA TRELEW
+Círculo de 55 NM de radio con centro en
+VOR/DME TRE (431209S - 0651450W).
+FL195
+2000 FT AGL/AMSL
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 195.
+C-Desde 2000 FT AGL/AMSL hasta FL 145
+
+TMA VIEDMA
+Círculo de 30 NM de radio con centro en VOR
+VIE (405202S - 0630003W).
+TWR VIEDMA
+VIEDMA TORRE/
+VIEDMA TOWER
+118.30 MHz
+120.40 MHz
+AIP ARGENTINA ENR 2.1-13
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+FL 75
+2000 FT AGL/AMSL
+CLASE DE ESPACIO AÉREO: C
+
+TMA CATAMARCA
+Desde 274458S - 0652003W 280858S -
+0652903W, siguiendo un arco de 30 NM de
+radio con centro en VOR/DME CAT (283501S -
+0654448W) hacia el SE hasta 285858S -
+0660603W 290858S - 0661703W, siguiendo el
+límite del TMA LA RIOJA hacia el NW hasta
+285958S - 0662603W 285158S - 0661503W,
+siguiendo un arco de 30 NM de radio con
+centro en VOR/DME CAT, hacia el NW hasta
+280558S - 0654103W 274058S - 0653203W,
+siguiendo el límite del TMA TUCUMÁN hacia el
+E hasta 274458S - 0652003W.
+FL 165
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 165.
+C-Desde 2000 FT AGL hasta FL 145
+
+TMA CÓRDOBA
+Desde 314958S - 0650403W, siguiendo un arco
+de 55 NM de radio con centro en VOR/DME
+CBA (311848S - 0641213W) hacia el N hasta
+320858S - 0634903W hasta 314958S -
+0650403W.
+FL 245
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 245.
+B- Por encima de FL 145 hasta FL 195.
+C-Desde 2000 FT AGL hasta FL 145
+
+TMA LA RIOJA
+Círculo de 30 NM de radio con centro en
+VOR/DME LAR (292319S - 0664813W).
+FL 165
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 165.
+C-Desde 2000 FT AGL hasta FL 145
+
+TMA RÍO CUARTO
+Desde 330704S - 0645134W, siguiendo un arco
+de 30 NM de radio con centro en VOR/DME
+RCU (330532S - 0641554W) hacia el NE hasta
+333258S - 0643031W, siguiendo el límite del
+TMA VILLA REYNOLDS hacia el N hasta 330704S
+- 0645134W.
+FL 245
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 245.
+B- Por encima de FL 145 hasta FL 195.
+C- Desde 2000 FT AGL hasta FL 145.
+
+TMA SALTA
+Círculo de 55 NM de radio con centro en
+VOR/DME SAL (245108S - 0652902W).
+FL 245
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 245.
+B- Por encima de FL 145 hasta FL 195.
+C-Desde 2000 FT AGL hasta FL 145.
+
+TMA SANTA ROSA DE CONLARA
+Circulo de 15 NM de radio con centro en
+VOR/DME SRC (322221S - 0651100W)
+FL 135
+FL 95
+CLASE DE ESPACIO AÉREO: C
+
+TMA SANTIAGO DEL ESTERO
+Círculo de 30 NM de radio con centro en VOR
+SDE (274532S - 0641810W).
+FL 95
+2000 FT AGL
+CLASE DE ESPACIO AÉREO: C
+
+TMA TUCUMÁN
+Desde 253958S - 0650003W 255558S -
+0650003W, siguiendo un arco de 55 NM de
+radio con centro en VOR/DME TUC (265045S -
+0650630W) hacia el E hasta 271600S -
+0641144W, siguiendo el límite del TMA SDE
+hacia el W hasta 274421S - 0645157W,
+siguiendo un arco de 55 NM de radio con
+centro en VOR/DME hacia el NW hasta
+255758S- 0652303W 254558S - 0652503W,
+siguiendo el límite del TMA Salta hacia el E
+hasta 253958S - 0650003W.
+FL 195
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 195.
+C- Desde 2000 FT AGL Hasta FL 145
+
+TMA BAHÍA BLANCA
+Desde 391959S-0630003W, siguiendo un arco
+de 55NM de radio con centro en VOR/DME BCA
+(384312S-0620930W) hacia el N hasta 393559S
+-0622603W hasta 391959S - 0630003W.
+FL 195
+2000 FT AGL/AMSL
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 195:
+C- Desde 2000 FT AGL/AMSL hasta FL 145.
+
+TMA BAIRES
+Desde 335428S - 0582732W 335958S -
+0582402W 343458S - 0575002W 345258S -
+0570602W 350358S - 0564302W 350358S -
+0572802W, siguiendo un arco de 55 NM de
+radio con centro en el VOR/DME EZE (344927S
+- 0583207W) hacia el SW hasta 335428S -
+0582732W.
+(I) FL 245
+2500 FT AGL/ AMSL
+ACC EZEIZA
+BAIRES CONTROL
+ESPAÑOL / INGLÉS/
+SPANISH / ENGLISH
+H 24
+SECTOR NORTE/
+NORTH SECTOR
+125.90 MHz
+133.95 MHz
+121.50 MHz.
+EMERG
+SECTOR SUR/
+SOUTH SECTOR
+Es obligatorio el uso del
+respondedor de a bordo en
+modo A/ 3 y C.
+DIVISIÓN TMA BAIRES - SECTOR
+BAIRES NORTE Y SECTOR BAIRES
+SUR.
+Se ha determinado una línea
+imaginaria paralela a la
+trayectoria W 9 en el tramo
+URINO/EZEIZA VOR y distante
+AIP ARGENTINA ENR 2.1-30
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+(II) FL 245
+FL 45
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 245.
+B- Por encima de FL 145 hasta FL 195.
+C- Desde (I) 2500 FT AGL/AMSL y (II) FL 45
+respectivamente hasta FL 145.
+
+TMA CONCORDIA
+Arco de 30 NM de radio con centro en punto de
+notificación obligatorio KOLGO (311803S -
+0580000W) y límite FIR EZEIZA / MONTEVIDEO.
+FL 75
+2000 FT AGL
+CLASE DE ESPACIO AÉREO: C
+
+TMA GUALEGUAYCHU
+Arco de 30 NM de radio con centro en
+VOR/DME GUA (330035S-0583651W) y límite
+FIR EZEIZA/MONTEVIDEO.
+FL 75
+2000 FT AGL
+CLASE DE ESPACIO AÉREO: C
+
+TMA MAR DEL PLATA
+Desde 371159S - 0581502W, siguiendo un arco
+de 55 NM de radio con centro en VOR/DME
+MDP (375547S - 0573435W) hacia el NE hasta
+370040S - 0573440W, continuando con un arco
+de 30 NM de radio con centro en 371405S -
+0570126W hacia el NE hasta
+372800S/0562700W 381300S/0570300W,
+siguiendo un arco de 30 NM de radio con
+centro en VOR/DME MDP hacia el S hasta
+373559S/0580244W hasta
+371159S/0581502W.
+FL 245
+2000 FT AGL/AMSL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 245.
+B- Por encima de FL 145 hasta FL 195.
+C- Desde 2000 FT AGL/AMSL hasta FL 145
+
+TMA PARANÁ
+Desde 323058S-0611002W, siguiendo un arco
+de 55 NM de radio con centro en VOR/DME PAR
+(314830S - 0602905W), hacia el NW hasta
+324158S - 0601402W, siguiendo un arco de 30
+NM de radio con centro en VOR/DME ROS
+(325418S - 0604653W), hacia el W hasta
+323058S - 0611002W.
+FL 195
+2000FT AGL
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 195.
+C-Desde 2000 FT AGL hasta FL 145.
+
+TMA ROSARIO
+Desde 325658S - 0612232W, siguiendo un arco
+de 30NM de radio con centro en VOR/DME ROS
+(325418S - 0604653W) hacia el NE hasta
+332310S - 0603702W hasta 325658S -
+0612232W.
+FL 195
+2000FT AGL/AMSL
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 195.
+C-Desde 2000 FT AGL/ hasta FL 145
+
+TMA SAN CARLOS DE BARILOCHE
+Arco de 35 NM de radio con centro en
+VOR/DME BAR (410825S - 0711120W) y límite
+FIR EZEIZA/PUERTO MONTT.
+FL 245
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 245.
+B- Por encima de FL 145 hasta FL 195.
+C- Desde 2000 FT AGL hasta FL 145.
+
+TMA SAN MARTIN DE LOS ANDES
+Arco de 31 NM de radio con centro en
+VOR/DME CHP (400256S - 0710543W) y límite
+FIR EZEIZA / PUERTO MONTT.
+FL 195
+2000FT AGL
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 195
+C- Desde 2000 FT AGL Hasta FL 145
+
+TMA SANTA ROSA
+Círculo de 30 NM de radio con centro en
+VOR/DME OSA (363501S - 0641622W).
+FL 075
+2000 FT AGL
+CLASE DE ESPACIO AÉREO: C
+
+TMA TANDIL
+Desde 361559S - 0593502W, siguiendo un arco
+de 60 NM de radio con centro en VOR/DME DIL
+(371330S - 0591346W) hacia el E hasta
+362741S - 0582526W 371159S - 0581502W,
+siguiendo el límite del TMA MAR DEL PLATA
+hacia el SUR hasta 375159S - 0581202W,
+380759S - 0594402W, siguiendo un arco de 60
+NM de radio con centro en VOR/DME DIL hacia
+el W hasta 373117S - 0602503W hasta 361559S
+- 0593502W.
+FL 245
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 Hasta FL 245.
+B- Por encima de FL 145 hasta FL 195.
+C- Desde 2000 FT AGL hasta FL 145
+
+TMA MALARGÜE
+Círculo de 30 NM de radio con centro en
+VOR/DME MLG (352910S - 0693443W).
+FL 175
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 175.
+C- Desde 2000 FT AGL hasta FL 145
+
+TMA MENDOZA
+Desde 320258S - 0681403W, siguiendo un arco
+de 55 NM de radio con centro en VOR/DME
+DOZ (324955S - 0684727W) hacia el E hasta
+334358S - 0684403W, 335958S - 0684603W,
+335458S -0695204W, siguiendo el límite FIR
+MENDOZA/SANTIAGO hasta 324758S -
+0700604W, 324658S - 0695304W, siguiendo un
+arco de 55 NM de radio con centro en
+VOR/DME DOZ hacia el N hasta 315458S -
+0685203W, siguiendo el límite del TMA JUA
+hasta 320258S -0681403W.
+FL 245
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 245.
+B- Por encima de FL 145 hasta FL 195.
+A- C- Desde 2000 FT AGL hasta FL 145
+
+TMA SAN JUAN
+Círculo de 30 NM de radio con centro en
+VOR/DME JUA (313350S - 0682517W).
+FL 165
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 165.
+C-Desde 2000 FT AGL hasta FL 145.
+
+TMA SAN LUIS
+Círculo de 25 NM de radio con centro en VOR
+UIS (331606S-0662129W).
+FL 95
+2000 FT AGL
+CLASE DE ESPACIO AÉREO: C
+
+TMA SAN RAFAEL
+Desde 334358S - 0684403W 340558S -
+0683203W, siguiendo un arco de 30 NM de
+radio con centro en VOR SRA (343522S -
+0682341W) hacia el E hasta 341358S -
+0684903W 335858S -0690003W, siguiendo el
+límite del TMA DOZ hasta 334358S - 0684403W.
+TWR SAN RAFAEL
+SAN RAFAEL TORRE/
+SAN RAFAEL TOWER
+ESPAÑOL/ SPANISH
+1000 a/ to 2359.
+118.10 MHz
+119.15 MHz
+121.50 MHz.
+EMERG
+AIP ARGENTINA ENR 2.1-45
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+FL 105
+2000 FT AGL
+CLASE DE ESPACIO AÉREO: C
+
+TMA VILLA REYNOLDS
+Desde 330658S - 0655303W, siguiendo un arco
+de 45 NM de radio con centro en VOR/DME
+RYD (334343S - 0652252W) hacia el E hasta
+342858S - 0653003W 340858S - 0660803W,
+siguiendo un arco de 45 NM de radio con
+centro en VOR/DME RYD hacia el W hasta
+334058S - 0661703W, siguiendo el límite del
+TMA UIS hasta 330658S -0655303W.
+FL 245
+2000 FT AGL
+CLASE DE ESPACIO AÉREO:
+A- Por encima de FL 195 hasta FL 245.
+B- Por encima de FL 145 hasta FL 195.
+C- Desde 2000 FT AGL hasta FL 145
+
+TMA PASO DE LOS LIBRES
+Círculo de 25 NM de radio con centro en
+294141S - 0570853W, contenido en las partes
+de las FIR RESISTENCIA y CURITIBA.
+FL 095
+2000 FT AGL
+CLASE DE ESPACIO AÉREO: C
+
+TMA RECONQUISTA
+Desde 285058S-0591802W, siguiendo un arco
+de 15 NM de radio con centro en 290600S -
+0591500W hacia el E hasta 291958S -
+0590902W, siguiendo un arco de 30 NM de
+radio con centro en VOR/DME RTA (291231S -
+0594057W) hacia el SW hasta 285058S -
+0591802W.
+FL 075
+2000 FT AGL
+CLASE DE ESPACIO AÉREO: C
+
+TMA RESISTENCIA
+Desde 260858S - 0583002W, siguiendo un arco
+de círculo de 15 NM de radio con centro en el
+VOR/DME FSA (261237S - 0581329W) hacia el
+NE, proyectándose dentro de la FIR Asunción
+ACC RESISTENCIA
+RESISTENCIA
+CONTROL
+119.40 MHz
+120.40 MHz
+EL LÍMITE VERTICAL INFERIOR DEL
+
+SECTORES TMA BAIRES
+EL LÍMITE VERTICAL INFERIOR
+DEL TMA BAIRES ESTA DIVIDIDO
+EN DOS SECTORES: (I) 2.500 FT
+AGL /AMSL y (II) FL 45.
+(I) El límite vertical inferior
+2.500 FT AGL/AMSL
+comprende el espacio aéreo
+desde intersección límite FIR
+EZEIZA/FIR MONTEVIDEO
+con el meridiano 05753W
+hasta 344958S-0575402W,
+siguiendo por la línea de la
+costa del Río de la Plata
+hasta 350358S-0572802W,
+continuando con un arco de
+55 NM de radio con centro
+en VOR/DME EZE, hasta la
+intersección con un arco de
+25 NM de radio con centro
+en VOR PTA continuando por
+este arco hasta interceptar
+un arco de 25 NM de radio
+con centro en VOR/DME
+EZE, siguiendo por este arco
+hasta interceptar un arco de
+25 NM de radio con centro
+en VOR/DME FDO,
+continuando por este arco
+hasta la intersección del
+límite común de la FIR
+EZEIZA/MONTEVIDEO,
+AIP ARGENTINA ENR 2.1-31
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+siguiendo por este límite
+hacia el S hasta interceptar
+el meridiano 05753W.
+(II) El límite vertical inferior FL 45
+comprende el resto del
+espacio aéreo del TMA
+BAIRES
+
+SECTORES TMA RESISTENCIA
+EL LÍMITE VERTICAL INFERIOR DEL
+TMA RESISTENCIA SE ENCUENTRA
+DIVIDIDO EN DOS SECTORES:
+AIP ARGENTINA ENR 2.1-52
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+ENR 2. ESPACIO AÉREO DE LOS SERVICIOS DE TRÁNSITO AÉREO / AIRSPACE FOR AIR TRAFFIC SERVICES
+ENR 2.1 FIR, UIR, TMA, CTA
+Nombre. Límites laterales. Límites verticales.
+Clase de espacio aéreo
+/
+Name. Lateral limits. Vertical limits. Airspace
+class
+Identificación de la
+dependencia que
+presta el servicio.
+Distintivo de llamada.
+Idiomas. Horas de
+servicio UTC /
+Identification of the
+unit providing the
+service. Call sign.
+Languages.
+Hours of service UTC
+Frecuencia
+- Propósito /
+Frequency -
+purpose
+Observaciones
+/
+Remarks
+hasta la intersección al SE del VOR/DME FSA
+con el límite FIR ASUNCIÓN/ RESISTENCIA,
+continuando con este límite hasta la
+intersección con un arco de 35 NM de radio con
+centro en VOR/DME SIS (272649S - 0590326W)
+al NE siguiendo por este arco dentro de la FIR
+ASUNCIÓN hacia el S hasta la intersección con
+el límite de la FIR ASUNCIÓN/RESISTENCIA
+continuando por este límite hacia el E hasta la
+intersección con un arco de 55 NM de radio con
+centro en VOR/DME SIS, siguiendo con este
+arco hacia el S hasta 263358S-0584702W hasta
+260858S - 0583002W.
+(I) FL 195 (II) FL 195
+2000 FT AGL FL 045
+CLASE DE ESPACIO AÉREO:
+B- Por encima de FL 145 hasta FL 195
+C- (I) Desde 2000 FT AGL hasta FL 145
+(II) Desde FL 045 Hasta FL 145
+From 260858S - 0583002W, following a circular
+arc of 15 NM radius centered at FSA VOR/DME
+(261237S - 0581329W) to the NE, projecting
+within Asunción FIR until the intersection SE of
+FSA VOR/DME with ASUNCIÓN/ RESISTENCIA
+FIR limit, continuing this limit until the
+intersection with an arc of 35 NM radius
+centered at SIS VOR/DME (272649S -
+0590326W) to the NE following this arc inside
+ASUNCIÓN FIR to the S until the intersection of
+the ASUNCIÓN/RESISTENCIA FIR limit
+continuing along this limit the E until the
+intersection with an arc of 55 NM radius
+centered at SIS VOR/DME continuing along this
+arc to the S to 263358S-0584702W to 260858S
+- 0583002W.
+(I) FL 195 (II) FL 195
+2000 FT AGL FL 045
+ESPAÑOL / INGLÉS
+SPANISH / ENGLISH
+H 24
+121.50 MHz
+EMERG
+(I) 2000 FT AGL
+(II) FL 045
+(I) El límite vertical inferior 2.000
+FT AGL: abarca el espacio
+aéreo comprendido por un
+arco de 35 NM de radio
+dentro de la FIR Asunción y
+otro arco de 30 NM de radio
+dentro de la FIR Resistencia,
+ambos arcos con centro en el
+VOR/DME Resistencia y
+límites FIR Resistencia/
+Asunción.
+(II) El límite vertical inferior FL
+045 comprende el resto del
+espacio aéreo del TMA.
+THE LOWER VERTICAL LIMIT OF

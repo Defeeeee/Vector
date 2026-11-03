@@ -150,6 +150,28 @@ No No 90x90 No No NIL
 AIP ARGENTINA SANT AD 2.5
 DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR TUCUMÁN
+Círculo de 10 NM de RDO con centro en VOR/DME TUC (265045S
+0650630W) /
+TUCUMÁN CTR
+10 NM circle of RDO with center at TUC VOR/DME (265045S
+0650630W).
+2 Límites verticales / Vertical limits FL 75
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+TUCUMÁN TORRE / TUCUMÁN TOWER
+Idioma(s) / language(s) Español – inglés / Spanish – English
+5 Altitud de transición / Transition altitude 6.500 ft
+6 Horas de aplicación / Hours of applicability H24
+7 Observaciones / Remarks No
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

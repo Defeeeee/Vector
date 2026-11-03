@@ -156,6 +156,51 @@ Remarks (*)
 (*) Franja de pista sector S reducida a 75 m / Franja de pista sector N, entre 350 y 1200 M, reducida a 75 m.
 (*) Runway strip S sector reduced to 75 m / Runway strip N sector, between 350 and 1200 m, reduced to 75 m.
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR USHUAIA
+Desde el límite FIR Comodoro Rivadavia - Punta Arenas y el
+paralelo 543500S, siguiendo por este paralelo hacia el E hasta el
+meridiano 671800W, continuando por este hacia el S hasta el
+límite FIR Comodoro Rivadavia - Punta Arenas, siguiendo por este
+límite hacia el W hasta el primer punto. /
+USHUAIA CTR
+From the Comodoro Rivadavia -Punta Arenas FIR limit and the
+parallel 543500S, following this parallel towards the E to the
+meridian 671800W, continuing along this towards the S to the
+Comodoro Rivadavia - Punta Arenas FIR limit, following this limit
+towards the W to the first point.
+2 Límites verticales / Vertical limits FL 105
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4 Distintivo de llamada de la dependencia ATS /ATS unit callsign USHUAIA TORRE /USHUAIA TOWER
+Idioma(s) / language(s) Español – inglés / Spanish -English
+5 Altitud de transición / Transition altitude 8.000 ft
+AIP ARGENTINA SAWH AD 2.8
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE (cont.)
+6 Horas de aplicación / Hours of applicability 10:00-02:00 UTC, rest O/R
+7 Observaciones / Remarks Se adoptará la clasificación “G” solamente en las circunstancias
+que se detallan en ENR 1.4 y AD 2.20.
+TWR USHUAIA no provee SER ATC en SECT CTR FM el límite FIR
+COMODORO RIVADAVIA - PUNTA ARENAS y el PARALELO 543500S
+hacia el E hasta el meridiano 0671800W. luego hacia el S hasta
+544723S 0671800W, hacia el W hasta 544734.07S 0683543.46W
+BTW VALLES Y CAÑADONES DE LA CORDILLERA, luego en línea
+recta hacia el N hasta límite FIR COMODORO RIVADAVIA - PUNTA
+ARENAS y el paralelo 543500S. FM GND / 6000 FT.
+The “G” classification will be adopted only in the circumstances
+detailed in ENR 1.4 and AD 2.20.
+TWR USHUAIA do not provide ATC SER in sect CTR SECT FM the
+limit FIR COMODORO RIVADAVIA - PUNTA ARENAS and the
+parallel 543500S to the E till meridian 0671800W. then to the S
+til 544723S 0671800W, to the W till 544734.07S 0683543.46W
+BTN VALLEYS AND CANYONS OF THE MOUNTAIN RANGE, then
+in a straight line to the N till limit the FIR COMODORO RIVADAVIA
+- PUNTA ARENAS and the parallel 543500S FM GND/6000 FT.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio / Service

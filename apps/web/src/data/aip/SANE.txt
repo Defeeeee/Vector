@@ -155,6 +155,27 @@ NIL NIL 90x90 NIL NIL NIL
 (*) Reducida 74 m medido del RCL entre THR 03 hasta los 837 m de dicho THR en sector SW. /
 Reduced 74 m measured from the RCL between THR 03 to 837 m of said THR in SW sector.
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales / Designation and lateral limits CTR SANTIAGO DE ESTERO
+Círculo de 10 NM de RDO con centro en VOR SDE (274532S -
+0641810W). /
+SANTIAGO DE ESTERO CTR
+Circle of 10 NM of RDO with center at SDE VOR (274532S -
+0641810W).
+2 Límites verticales / Vertical limits FL_35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4 Distintivo de llamada de la dependencia ATS / ATS unit callsign SANTIAGO TORRE/SANTIAGO TOWER
+Idioma(s) / language(s) Español/Spanish
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability 10:00-23:59 UTC
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

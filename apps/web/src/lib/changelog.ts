@@ -78,6 +78,34 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.0.0",
+    fecha: "2026-11-03",
+    titulo: "El Mapa: planificá y volá sobre la carta",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Planificá sobre el mapa",
+        texto: "Una pantalla que es todo mapa. Escribí la ruta, con aerovías si querés, o tocá los aeródromos, y se dibuja al instante con la distancia y el rumbo de cada tramo, los espacios aéreos que cruza y, si lo pedís, la meteo y los NOTAM.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+      {
+        icono: "avion",
+        titulo: "Volá con el GPS del teléfono",
+        texto: "Tocá Volar y la misma pantalla te muestra dónde estás, tu velocidad, el próximo punto con su distancia, rumbo y tiempo, y en qué espacio aéreo estás. La pantalla queda prendida. Es una ayuda VFR: no reemplaza la carta.",
+        href: "/dashboard/mapa",
+        cta: "Probarlo",
+      },
+      {
+        icono: "brujula",
+        titulo: "Las CTR, ATZ y TMA del AIP",
+        texto: "61 espacios aéreos dibujados desde el texto del AIP de ANAC, con sus límites y su clase. Los que el AIP define con radiales o sin coordenadas no se dibujan, y el mapa lo dice.",
+        href: "/dashboard/mapa",
+        cta: "Ver el Mapa",
+      },
+    ],
+  },
+  {
     version: "2.40.0",
     fecha: "2026-11-03",
     titulo: "Los NOTAM de todo el país",

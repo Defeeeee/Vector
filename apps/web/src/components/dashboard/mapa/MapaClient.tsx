@@ -1,0 +1,499 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Loader2, Navigation, Square } from "lucide-react";
+import type { PuntoResuelto } from "@/lib/resolucion-puntos";
+import type { EspacioAereo } from "@/lib/espacios-aereos";
+import { aMagnetico } from "@/lib/navegacion";
+import {
+  consultasDeRuta,
+  duracionCorta,
+  espaciosEn,
+  espaciosEnRuta,
+  haciaPunto,
+  lecturaGps,
+  proximoPunto,
+  puntosDeRuta,
+  tokensDeRuta,
+  tramosDeRuta,
+  variacionDeRuta,
+} from "@/lib/mapa-ruta";
+import type { CapasMapa, Posicion } from "./MapaLeaflet";
+import BriefingRuta from "../BriefingRuta";
+
+/**
+ * **El Mapa** (3.0.0): todo es mapa, con la tarjeta de la ruta flotando arriba a la izquierda.
+ *
+ * - **Planificar:** se escribe la ruta (aeródromos, radioayudas, puntos, aerovías, como en el
+ *   Planificador) o se tocan aeródromos en el mapa, y se dibuja al instante con sus tramos,
+ *   los espacios aéreos que cruza y, a pedido, la meteo y los NOTAM.
+ * - **Volar:** la misma tarjeta pasa a mostrar la posición del GPS del teléfono, el próximo
+ *   punto con su distancia, rumbo y tiempo, y en qué espacio aéreo estás. Mantiene la
+ *   pantalla prendida. Es una ayuda VFR y lo dice: no reemplaza la carta ni el instrumental.
+ *
+ * Reemplaza a la sesión en vivo (el cronómetro de puesta en marcha), que se sacó en la 3.0.0.
+ *
+ * Se dibuja en un portal sobre `body`: el `main` del layout tiene padding y su propio
+ * contexto de apilado, y el mapa tiene que ir de borde a borde, al lado de la barra.
+ */
+
+const MapaLeaflet = dynamic(() => import("./MapaLeaflet"), {
+  ssr: false,
+  loading: () => (
+    <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-900">
+      <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+    </div>
+  ),
+});
+
+const TAS_POR_DEFECTO = 100;
+const ANCHO_TARJETA = 380;
+const clave = (c: { q: string; desde: string; hasta: string }) => `${c.q}|${c.desde}|${c.hasta}`;
+const grados = (n: number) => String(Math.round(n) % 360 || 360).padStart(3, "0");
+/** "4.500", sin `toLocaleString` (invariante 1). */
+const miles = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+const COLOR_TIPO: Record<EspacioAereo["tipo"], string> = {
+  TMA: "text-blue-600 dark:text-blue-400 bg-blue-500/10",
+  CTR: "text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-500/10",
+  ATZ: "text-pink-600 dark:text-pink-400 bg-pink-500/10",
+};
+
+type Lectura = ReturnType<typeof lecturaGps>;
+
+export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial: string; tasDelHangar: number | null }) {
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+
+  /* --------------------------------------------------------------- capas --- */
+  const [capas, setCapas] = useState<CapasMapa | null>(null);
+  const [errorCapas, setErrorCapas] = useState(false);
+  useEffect(() => {
+    fetch("/api/mapa")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then(setCapas)
+      .catch(() => setErrorCapas(true));
+  }, []);
+
+  /* --------------------------------------------------------------- ruta --- */
+  const [texto, setTexto] = useState(rutaInicial);
+  const [textoFirme, setTextoFirme] = useState(rutaInicial);
+  useEffect(() => {
+    const t = setTimeout(() => setTextoFirme(texto), 350);
+    return () => clearTimeout(t);
+  }, [texto]);
+  const tokens = useMemo(() => tokensDeRuta(textoFirme), [textoFirme]);
+  const consultas = useMemo(() => consultasDeRuta(tokens), [tokens]);
+
+  // Cada token contra el directorio del Planificador (`/api/puntos`, que anda sin señal).
+  const cache = useRef(new Map<string, PuntoResuelto | null>());
+  const enCurso = useRef(new Set<string>());
+  const [, setVersion] = useState(0);
+  useEffect(() => {
+    for (const c of consultas) {
+      const k = clave(c);
+      if (cache.current.has(k) || enCurso.current.has(k)) continue;
+      enCurso.current.add(k);
+      fetch(`/api/puntos?${new URLSearchParams(c)}`)
+        .then((r) => (r.ok ? r.json() : { punto: null }))
+        .then((d: { punto: PuntoResuelto | null }) => cache.current.set(k, d.punto && Number.isFinite(d.punto.lat) ? d.punto : null))
+        .catch(() => undefined) // sin señal y sin copia: queda "buscando" y se reintenta al cambiar algo
+        .finally(() => {
+          enCurso.current.delete(k);
+          setVersion((v) => v + 1);
+        });
+    }
+  }, [consultas]);
+  const resueltos = consultas.map((c) => (cache.current.has(clave(c)) ? cache.current.get(clave(c)) : undefined));
+  const firmaResueltos = resueltos.map((r) => (r === undefined ? "?" : r === null ? "-" : `${r.codigo}${r.tramo?.length ?? ""}`)).join("|");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { puntos, sinUbicar, buscando } = useMemo(() => puntosDeRuta(tokens, resueltos), [tokens, firmaResueltos]);
+  const { tramos, totalNm } = useMemo(() => tramosDeRuta(puntos), [puntos]);
+  const cruzados = useMemo(() => (capas ? espaciosEnRuta(puntos, capas.espacios) : []), [puntos, capas]);
+  const variacion = variacionDeRuta(puntos);
+
+  // La ruta en la URL, como el Planificador: se comparte mandando el link.
+  useEffect(() => {
+    const q = tokens.length ? `?ruta=${encodeURIComponent(tokens.join("-"))}` : window.location.pathname;
+    window.history.replaceState(null, "", q);
+  }, [tokens]);
+
+  const agregar = useCallback((codigo: string) => {
+    setTexto((t) => {
+      const actual = tokensDeRuta(t);
+      if (actual[actual.length - 1] === codigo) return t;
+      return `${t.trim()} ${codigo}`.trim();
+    });
+  }, []);
+
+  const [tas, setTas] = useState(String(tasDelHangar ?? TAS_POR_DEFECTO));
+  const tasNum = Number(tas) > 30 ? Number(tas) : null;
+
+  /* --------------------------------------------------------------- vuelo --- */
+  const [volando, setVolando] = useState(false);
+  const [lectura, setLectura] = useState<Lectura | null>(null);
+  const [errorGps, setErrorGps] = useState<string | null>(null);
+  const [proximo, setProximo] = useState(0);
+  const [seguir, setSeguir] = useState(true);
+  const puedeGps = montado && typeof navigator !== "undefined" && "geolocation" in navigator;
+
+  useEffect(() => {
+    if (!volando) return;
+    setErrorGps(null);
+    const id = navigator.geolocation.watchPosition(
+      (p) => setLectura(lecturaGps(p.coords)),
+      (e) =>
+        setErrorGps(
+          e.code === e.PERMISSION_DENIED
+            ? "El navegador no dio permiso para usar la ubicación. Habilitalo en los ajustes del sitio."
+            : "Todavía no hay señal de GPS. Con cielo a la vista tarda menos."
+        ),
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 30000 }
+    );
+    // La pantalla prendida mientras volás. Si el sistema la suelta (otra app), se vuelve a pedir.
+    let bloqueo: { release: () => Promise<void> } | null = null;
+    const pedir = async () => {
+      try {
+        bloqueo = await (navigator as Navigator & { wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> } }).wakeLock?.request("screen") ?? null;
+      } catch {
+        bloqueo = null;
+      }
+    };
+    pedir();
+    const alVolver = () => document.visibilityState === "visible" && pedir();
+    document.addEventListener("visibilitychange", alVolver);
+    return () => {
+      navigator.geolocation.clearWatch(id);
+      document.removeEventListener("visibilitychange", alVolver);
+      bloqueo?.release().catch(() => undefined);
+    };
+  }, [volando]);
+
+  useEffect(() => {
+    if (!volando || !lectura || puntos.length === 0) return;
+    setProximo((prev) => proximoPunto(puntos, lectura, prev));
+  }, [volando, lectura, puntos]);
+
+  const posicion: Posicion | null = volando && lectura ? { lat: lectura.lat, lon: lectura.lon, trackT: lectura.gsKt && lectura.gsKt > 15 ? lectura.trackT : null } : null;
+  const destino = volando && puntos.length ? puntos[Math.min(proximo, puntos.length - 1)] : null;
+  const hacia = lectura && destino ? haciaPunto(lectura, destino, lectura.gsKt) : null;
+  const dentro = lectura && capas ? espaciosEn(lectura, capas.espacios).sort((a, b) => "ATZCTRTMA".indexOf(a.tipo) - "ATZCTRTMA".indexOf(b.tipo)) : [];
+
+  const empezar = () => {
+    setProximo(0);
+    setSeguir(true);
+    setLectura(null);
+    setVolando(true);
+    setPlegada(false);
+  };
+
+  /* ------------------------------------------------------------- tarjeta --- */
+  const [plegada, setPlegada] = useState(false);
+  const [briefing, setBriefing] = useState(false);
+  const [escritorio, setEscritorio] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const leer = () => setEscritorio(mq.matches);
+    leer();
+    mq.addEventListener("change", leer);
+    return () => mq.removeEventListener("change", leer);
+  }, []);
+  const aerodromosDeRuta = puntos.filter((p) => p.clase === "aerodromo");
+
+  if (!montado) return null;
+
+  const tarjeta = (
+    <div
+      className="absolute z-10 top-3 left-3 right-3 lg:top-4 lg:left-4 lg:right-auto lg:w-[380px] max-h-[calc(100%-7.5rem-env(safe-area-inset-bottom))] lg:max-h-[calc(100%-2rem)] flex flex-col rounded-3xl bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-2xl shadow-black/10 overflow-hidden"
+    >
+      {/* Encabezado: el modo y, en el teléfono, plegar para ver el mapa entero. */}
+      <div className="flex items-center gap-2 px-4 pt-4 pb-3 shrink-0">
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{volando ? "En vuelo" : "Ruta"}</p>
+          {plegada && (
+            <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">
+              {volando && destino ? `→ ${destino.codigo}${hacia ? ` · ${hacia.distanciaNm.toFixed(1)} NM` : ""}` : tokens.join(" ") || "Sin ruta"}
+            </p>
+          )}
+        </div>
+        {volando ? (
+          <button
+            onClick={() => setVolando(false)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-semibold px-3 py-1.5"
+          >
+            <Square className="w-3 h-3" fill="currentColor" /> Terminar
+          </button>
+        ) : (
+          <button
+            onClick={empezar}
+            disabled={!puedeGps}
+            title={puedeGps ? "Seguir la ruta con el GPS del teléfono" : "Este navegador no tiene GPS"}
+            className="inline-flex items-center gap-1.5 rounded-full bg-aviation-blue text-white text-xs font-semibold px-3 py-1.5 disabled:opacity-40"
+          >
+            <Navigation className="w-3.5 h-3.5" /> Volar
+          </button>
+        )}
+        <button
+          onClick={() => setPlegada((v) => !v)}
+          aria-label={plegada ? "Abrir la tarjeta" : "Plegar la tarjeta"}
+          className="lg:hidden w-8 h-8 rounded-full flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform ${plegada ? "" : "rotate-180"}`} />
+        </button>
+      </div>
+
+      <div className={`${plegada ? "hidden" : "flex"} flex-col min-h-0 overflow-y-auto custom-scrollbar px-4 pb-4 gap-4`}>
+        {volando && (
+          <section className="space-y-3">
+            {errorGps && !lectura && <p className="text-sm text-amber-600 dark:text-amber-400">{errorGps}</p>}
+            {!lectura && !errorGps && (
+              <p className="text-sm text-zinc-500 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Buscando el GPS…
+              </p>
+            )}
+            {lectura && (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  <Dato etiqueta="GS" valor={lectura.gsKt !== null ? Math.round(lectura.gsKt).toString() : "—"} unidad="kt" />
+                  <Dato etiqueta="Track" valor={lectura.trackT !== null && (lectura.gsKt ?? 0) > 15 ? grados(variacion !== null ? aMagnetico(lectura.trackT, variacion) : lectura.trackT) : "—"} unidad={variacion !== null ? "°M" : "°V"} />
+                  <Dato etiqueta="Alt. GPS" valor={lectura.altitudFt !== null ? miles(lectura.altitudFt) : "—"} unidad="ft" />
+                </div>
+                {destino && hacia && (
+                  <div className="rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 p-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setProximo((i) => Math.max(0, i - 1))}
+                        disabled={proximo === 0}
+                        aria-label="Punto anterior"
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-500 hover:bg-zinc-200 dark:hover:bg-white/10 disabled:opacity-30"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <div className="flex-1 min-w-0 text-center">
+                        <p className="text-[11px] text-zinc-500">Próximo punto · {proximo + 1} de {puntos.length}</p>
+                        <p className="text-lg font-bold text-zinc-900 dark:text-white truncate">
+                          {destino.codigo} <span className="text-sm font-medium text-zinc-500">{destino.label}</span>
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setProximo((i) => Math.min(puntos.length - 1, i + 1))}
+                        disabled={proximo >= puntos.length - 1}
+                        aria-label="Punto siguiente"
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-500 hover:bg-zinc-200 dark:hover:bg-white/10 disabled:opacity-30"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                      <Dato etiqueta="Distancia" valor={hacia.distanciaNm.toFixed(1)} unidad="NM" />
+                      <Dato etiqueta="Rumbo" valor={grados(variacion !== null ? aMagnetico(hacia.rumboT, variacion) : hacia.rumboT)} unidad={variacion !== null ? "°M" : "°V"} />
+                      <Dato etiqueta="Tiempo" valor={hacia.eteMin !== null ? duracionCorta(hacia.eteMin) : "—"} />
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">Estás dentro de</p>
+                  {dentro.length ? (
+                    <ListaEspacios espacios={dentro} />
+                  ) : (
+                    <p className="text-sm text-zinc-500">Ningún espacio controlado de los que dibuja el mapa.</p>
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-2 text-[11px] text-zinc-500">
+                  <span>Precisión ±{Math.round(lectura.precisionM)} m{lectura.precisionM > 100 ? " · señal débil" : ""}</span>
+                  {!seguir && (
+                    <button onClick={() => setSeguir(true)} className="inline-flex items-center gap-1 font-semibold text-aviation-blue">
+                      <Crosshair className="w-3.5 h-3.5" /> Seguir
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+            <p className="text-[11px] leading-snug text-zinc-500 flex gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" />
+              Ayuda VFR con el GPS del teléfono: no reemplaza la carta ni la navegación. La altura es la del GPS, no la del altímetro.
+            </p>
+          </section>
+        )}
+
+        <section className="space-y-2">
+          <textarea
+            value={texto}
+            onChange={(e) => setTexto(e.target.value.toUpperCase())}
+            rows={2}
+            spellCheck={false}
+            autoCapitalize="characters"
+            placeholder="SADF DCT SADM · o con aerovías: SADF UGIMI W18 BCA SAZB"
+            className="w-full resize-none rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-3 py-2.5 font-mono text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-aviation-blue/40"
+          />
+          {!volando && <p className="text-[11px] text-zinc-500">Aeródromos, radioayudas, puntos y aerovías, como en el Planificador. También podés tocar un aeródromo en el mapa.</p>}
+          {sinUbicar.length > 0 && <p className="text-xs text-amber-600 dark:text-amber-400">No encontré {sinUbicar.join(", ")}: no se dibuja.</p>}
+          {buscando && (
+            <p className="text-xs text-zinc-500 flex items-center gap-1.5">
+              <Loader2 className="w-3 h-3 animate-spin" /> Buscando…
+            </p>
+          )}
+        </section>
+
+        {puntos.length > 0 && (
+          <section>
+            <ol className="space-y-px">
+              {puntos.map((p, i) => {
+                const tramo = i > 0 ? tramos[i - 1] : null;
+                return (
+                  <li
+                    key={`${p.codigo}-${i}`}
+                    className={`flex items-center gap-2.5 rounded-xl px-2 py-1.5 ${volando && i === proximo ? "bg-aviation-blue/10" : ""}`}
+                  >
+                    <span className="w-5 h-5 shrink-0 rounded-full border-2 border-aviation-blue text-[10px] font-bold text-aviation-blue flex items-center justify-center">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">
+                        {p.codigo} <span className="font-normal text-zinc-500">{p.label !== p.codigo ? p.label : ""}</span>
+                      </p>
+                      {p.aerovia && <p className="text-[11px] text-zinc-500">por {p.aerovia}</p>}
+                    </div>
+                    {tramo && (
+                      <span className="text-xs tabular-nums text-zinc-500 text-right shrink-0">
+                        {tramo.distanciaNm.toFixed(1)} NM
+                        <br />
+                        {grados(tramo.rumboM ?? tramo.rumboT)}
+                        {tramo.rumboM !== null ? "°M" : "°V"}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+            {tramos.length > 0 && (
+              <div className="mt-2 flex items-center justify-between gap-3 rounded-2xl bg-zinc-50 dark:bg-white/5 px-3 py-2.5">
+                <div>
+                  <p className="text-sm font-bold text-zinc-900 dark:text-white tabular-nums">{totalNm.toFixed(1)} NM</p>
+                  <p className="text-[11px] text-zinc-500">{tasNum ? `${duracionCorta((totalNm / tasNum) * 60)} sin viento` : "Poné la TAS"}</p>
+                </div>
+                <label className="flex items-center gap-1.5 text-xs text-zinc-500">
+                  TAS
+                  <input
+                    value={tas}
+                    onChange={(e) => setTas(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                    inputMode="numeric"
+                    className="w-14 rounded-lg bg-white dark:bg-black/30 border border-zinc-200 dark:border-white/10 px-2 py-1 text-right text-sm font-semibold text-zinc-900 dark:text-white tabular-nums"
+                  />
+                  kt
+                </label>
+              </div>
+            )}
+          </section>
+        )}
+
+        {puntos.length > 0 && capas && (
+          <section>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">Espacios aéreos que cruza</p>
+            {cruzados.length ? (
+              <ListaEspacios espacios={cruzados} />
+            ) : (
+              <p className="text-sm text-zinc-500">Ninguno de los que dibuja el mapa.</p>
+            )}
+            <p className="mt-1.5 text-[11px] text-zinc-500">
+              Lateralmente: la altura la decidís vos con sus límites. Del AIP (AD 2.17 y ENR 2.1); {capas.descartados.length} no se dibujan porque el AIP los define con radiales o límites sin coordenadas.
+            </p>
+          </section>
+        )}
+        {errorCapas && <p className="text-xs text-amber-600 dark:text-amber-400">No se pudieron traer los espacios aéreos ni los aeródromos del mapa.</p>}
+
+        {aerodromosDeRuta.length > 0 && (
+          <section>
+            <button
+              onClick={() => setBriefing((v) => !v)}
+              className="w-full flex items-center justify-between rounded-2xl border border-zinc-200 dark:border-white/10 px-3 py-2.5 text-sm font-semibold text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-white/5"
+            >
+              <span className="flex items-center gap-2">
+                <CloudSun className="w-4 h-4 text-zinc-500" /> Meteo y NOTAM de la ruta
+              </span>
+              <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${briefing ? "rotate-180" : ""}`} />
+            </button>
+            {/* Recién al abrirla: pide METAR, TAF y NOTAM de cada aeródromo, y no hace falta en cada tecla. */}
+            {briefing && (
+              <div className="mt-3">
+                <BriefingRuta
+                  puntos={aerodromosDeRuta.map((p) => ({
+                    codigo: p.codigo,
+                    label: p.label,
+                    lat: p.lat,
+                    lon: p.lon,
+                    elevacionFt: p.elevacionFt,
+                    pistas: p.pistas,
+                    variacionW: p.variacionW,
+                  }))}
+                />
+              </div>
+            )}
+          </section>
+        )}
+
+        {tokens.length > 1 && !volando && (
+          <Link
+            href={`/dashboard/planificador?ruta=${encodeURIComponent(tokens.join("-"))}`}
+            className="text-xs font-semibold text-aviation-blue hover:underline"
+          >
+            Viento, combustible y planilla en el Planificador →
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+
+  return createPortal(
+    <div className="fixed inset-x-0 bottom-0 top-16 lg:top-0 lg:left-20 z-[35]">
+      <MapaLeaflet
+        capas={capas}
+        puntos={puntos}
+        proximo={volando ? proximo : null}
+        posicion={posicion}
+        seguir={volando && seguir}
+        volando={volando}
+        onAgregar={agregar}
+        onArrastre={() => setSeguir(false)}
+        margenIzquierdo={escritorio ? ANCHO_TARJETA : 0}
+      />
+      {tarjeta}
+    </div>,
+    document.body
+  );
+}
+
+function Dato({ etiqueta, valor, unidad }: { etiqueta: string; valor: string; unidad?: string }) {
+  return (
+    <div className="rounded-xl bg-white dark:bg-black/20 border border-zinc-200 dark:border-white/10 px-2 py-1.5 text-center">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{etiqueta}</p>
+      <p className="text-base font-bold tabular-nums text-zinc-900 dark:text-white leading-tight">
+        {valor}
+        {unidad && <span className="text-[11px] font-medium text-zinc-500 ml-0.5">{unidad}</span>}
+      </p>
+    </div>
+  );
+}
+
+function ListaEspacios({ espacios }: { espacios: EspacioAereo[] }) {
+  return (
+    <ul className="space-y-1">
+      {espacios.map((e) => (
+        <li key={e.id} className="flex items-start gap-2">
+          <span className={`mt-0.5 shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold ${COLOR_TIPO[e.tipo]}`}>{e.tipo}</span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-zinc-900 dark:text-white leading-snug">
+              {e.nombre.replace(/^(CTR|ATZ|TMA)\s+/, "")}
+              {e.clase && <span className="font-normal text-zinc-500"> · Clase {e.clase}</span>}
+            </p>
+            <p className="text-[11px] text-zinc-500 leading-snug">
+              {e.limites}
+              {e.aproximado ? " · contorno aproximado" : ""}
+            </p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}

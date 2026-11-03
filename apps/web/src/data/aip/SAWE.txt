@@ -189,6 +189,30 @@ between THR 26
 and progressive
 250.
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR RÍO GRANDE Círculo de 10 NM de RDO con centro en
+VOR/DME (534631S - 0674445W). /
+RIO GRANDE CTR 10 NM circle of RDO with center at VOR/DME
+(534631S - 0674445W)
+2 Límites verticales / Vertical limits FL 35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+GRANDE TORRE / GRANDE TOWER
+Idioma(s) / language(s) Español – inglés / Spanish - English
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability Ver AD 2.3.7/See AD 2.3.7
+7
+Observaciones / Remarks Se podría adoptar la clasificación “G” solamente en las
+circunstancias que se detallan en ENR 1.4 /
+The “G” classification could be adopted only in the circumstances
+detailed in ENR 1.4.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio / Service

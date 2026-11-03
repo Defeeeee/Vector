@@ -1,0 +1,32 @@
+import { NextResponse } from "next/server";
+import { allAirports } from "@/lib/airports";
+import { espaciosAereos } from "@/lib/espacios-aereos-servidor";
+import { allRadioayudas } from "@/lib/radioayudas";
+
+/**
+ * GET /api/mapa — las capas fijas del Mapa: aeródromos, radioayudas y espacios aéreos.
+ *
+ * Una sola respuesta, compacta (arrays y no objetos, coordenadas a 4 decimales: ~11 m), y
+ * cacheada un día como el resto de lo que sale del AIP: cambia con un deploy. El service
+ * worker la guarda para que el mapa ande sin señal en vuelo.
+ */
+const r4 = (n: number) => Math.round(n * 1e4) / 1e4;
+
+export async function GET() {
+  const { espacios, descartados } = espaciosAereos();
+  const aerodromos = allAirports()
+    .filter((a) => a.country === "AR" && typeof a.lat === "number" && typeof a.lon === "number")
+    .map((a) => [a.icao, a.local ?? "", a.label || a.name, r4(a.lat!), r4(a.lon!), a.size]);
+  const radioayudas = allRadioayudas()
+    .filter((r) => r.lat < -20 && r.lat > -56 && r.lon < -52 && r.lon > -75)
+    .map((r) => [r.ident, r.tipo, r.nombre, r4(r.lat), r4(r.lon), r.khz ?? null]);
+  return NextResponse.json(
+    {
+      aerodromos,
+      radioayudas,
+      espacios: espacios.map((e) => ({ ...e, poligono: e.poligono.map(([la, lo]) => [r4(la), r4(lo)]) })),
+      descartados: descartados.map((d) => d.nombre),
+    },
+    { headers: { "Cache-Control": "public, max-age=86400" } }
+  );
+}

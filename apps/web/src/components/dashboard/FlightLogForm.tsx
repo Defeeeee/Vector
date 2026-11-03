@@ -105,11 +105,8 @@ interface FlightLogFormProps {
     discount_amount?: number;
     purpose?: string;
   };
-  onSuccess?: () => void;
   /**
-   * A dónde navegar tras guardar, cuando no hay un `onSuccess` que cierre un
-   * modal — el caso de `/dashboard/log-flight` como página completa, sin
-   * diálogo que cerrar. Un string y no una función porque quien renderiza esta
+   * A dónde navegar tras guardar (`/dashboard/log-flight` es una página completa). Un string y no una función porque quien renderiza esta
    * pantalla es un Server Component, y una función no cruza esa frontera.
    *
    * `router.replace` y no `push`: `logFlight` ya no hace su propio `redirect()`
@@ -120,18 +117,11 @@ interface FlightLogFormProps {
    */
   redirectTo?: string;
   /**
-   * Sin la tarjeta propia: la dibuja el modal que cierra una sesión en vivo
-   * (`FlightLogModal`). Hubo otro, el de Nuevo Vuelo, que además traía un
-   * "Cancelar" y las acciones fijas abajo; se sacó en septiembre de 2026 junto
-   * con esas dos opciones, que sólo usaba él.
-   */
-  inModal?: boolean;
-  /**
    * El vuelo programado que esta carga cierra, si el piloto llegó por "Completar".
    *
    * Viaja como `<input type="hidden">` y no como argumento de la acción porque
    * `handleSubmit` recibe el `FormData` del form y nada más: sumarlo al payload es
-   * una línea, y así `logFlight` lo encuentra igual venga de la página o del modal.
+   * una línea, y así `logFlight` lo encuentra sin tocar su firma.
    */
   plannedId?: string;
   /** El plan de vuelo que se está registrando: `logFlight` lo une al vuelo. */
@@ -182,7 +172,7 @@ function isValidCode(code: string, airport: AirportRef | null): boolean {
   return cleaned.length === 4 && /^[A-Z0-9]+$/.test(cleaned);
 }
 
-export default function FlightLogForm({ aircraft, logbooks = [], initialData, onSuccess, redirectTo, inModal = false, plannedId, planVueloId, autoridades = {}, cadConectado = false }: FlightLogFormProps) {
+export default function FlightLogForm({ aircraft, logbooks = [], initialData, redirectTo, plannedId, planVueloId, autoridades = {}, cadConectado = false }: FlightLogFormProps) {
   const router = useRouter();
   const { notificar } = useAvisos();
   const [isPending, setIsPending] = useState(false);
@@ -402,7 +392,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, on
       }
       /*
         La única confirmación real de que el vuelo se guardó. Antes de esto no había
-        ninguna — cerrar el modal o volver a Historial no le dice al piloto que la
+        ninguna — volver a Historial no le dice al piloto que la
         carga salió bien, sólo que el formulario terminó. Con los datos que este
         mismo formulario ya tiene, sin pedirle nada más al backend.
       */
@@ -428,8 +418,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, on
             : { tipo: "error", titulo: "No se cargó en el CAD", detalle: `${cad.mensaje} Podés pasarlo desde Pasar al CAD.` }
         );
       }
-      if (onSuccess) onSuccess();
-      else if (redirectTo) {
+      if (redirectTo) {
         // Con el id, la Bitácora ofrece compartir el vuelo recién cargado
         // (`BannerCompartirVuelo`).
         const separador = redirectTo.includes("?") ? "&" : "?";
@@ -479,17 +468,9 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, on
         )}
       </AnimatePresence>
 
-      {/* On the page this is the card, and `overflow-hidden` clips its rounded
-          corners. Inside a dialog the dialog draws its own card, so this box
-          stays bare. */}
-      <div
-        className={`${
-          inModal
-            ? ""
-            : "bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-3xl md:rounded-[2.5rem] shadow-cal dark:shadow-none overflow-hidden"
-        } flex flex-col transition-colors`}
-      >
-        {!inModal && (
+      {/* La tarjeta: `overflow-hidden` recorta sus esquinas redondeadas. Hasta la 3.0.0
+          también se dibujaba sin tarjeta, adentro del modal que cerraba la sesión en vivo. */}
+      <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-3xl md:rounded-[2.5rem] shadow-cal dark:shadow-none overflow-hidden flex flex-col transition-colors">
           <div className="p-6 md:p-8 border-b border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 flex items-center justify-between">
             <div className="space-y-1">
               <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">
@@ -501,9 +482,8 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, on
               <Compass className="w-5 h-5 md:w-6 md:h-6 text-zinc-900 dark:text-white" />
             </div>
           </div>
-        )}
 
-        <div className={`${inModal ? "p-0" : "p-6 md:p-8"} space-y-8 md:space-y-10`}>
+        <div className="p-6 md:p-8 space-y-8 md:space-y-10">
           {/* 01. General */}
           <div className="space-y-6">
             <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">01. Información general</p>
@@ -1051,13 +1031,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, on
         </div>
         )}
 
-        <div
-          className={
-            inModal
-              ? "p-0 pt-6 flex items-center gap-3"
-              : "p-6 md:p-8 border-t border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5"
-          }
-        >
+        <div className="p-6 md:p-8 border-t border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5">
           <motion.button
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}

@@ -208,7 +208,6 @@ function buildFlightContext(
   packs: any[],
   transactions: any[],
   balance: number,
-  session: any,
   documents: any[] = []
 ): string {
   const aircraftMap = new Map(aircraft.map((a: any) => [a.id, a]));
@@ -272,10 +271,6 @@ function buildFlightContext(
     return `- Pack "${p.name}": ${p.remaining_hours.toFixed(1)} hs restantes de ${p.total_hours.toFixed(1)} hs totales (aviones: ${acRegs}) | ${p.is_active ? "Activo" : "Inactivo"}`;
   }).join("\n");
 
-  const activeSessionStr = session?.active 
-    ? `Sí, activo en ${aircraftMap.get(session.session.aircraft_id)?.registration || "Desconocido"} desde las ${new Date(session.session.start_time).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC`
-    : "No hay vuelo en curso.";
-
   // Expiries live in the documents table now, so the copilot can answer about
   // the licence or the insurance too — not only the medical.
   const documentLines = documents
@@ -325,9 +320,6 @@ ${txLines || "(Sin transacciones registradas)"}
 
 ## Packs de Horas (Modo Packs de Horas)
 ${packLines || "(Sin packs de horas registrados)"}
-
-## Vuelo en Vivo (Flight Helper)
-Vuelo actual en curso: ${activeSessionStr}
 
 ## Resumen estadístico de bitácora
 Total vuelos registrados: ${flights.length}
@@ -642,7 +634,6 @@ export async function POST(req: NextRequest) {
     const packs = userData.packs || [];
     const transactions = userData.transactions || [];
     const balance = userData.balance || 0;
-    const session = userData.session || { active: false };
     const documents = userData.documents || [];
     const logbooks = userData.logbooks || [];
 
@@ -741,7 +732,6 @@ export async function POST(req: NextRequest) {
       packs,
       transactions,
       balance,
-      session,
       documents
     );
 
@@ -791,12 +781,6 @@ La fecha actual de hoy es: ${currentLocalDate} (formato YYYY-MM-DD). Usa esta fe
    - El desglose PIC/SIC no puede sumar más que la duración del vuelo. Si lo intentás, la herramienta te lo rechaza con el detalle.
 4. Si el usuario te pide editar ('update_flight') o eliminar ('delete_flight') un vuelo, busca el UUID de ese vuelo en tu contexto de vuelos registrados (representado como [ID: uuid]) y úsalo para llamar a la función. Si no estás seguro de cuál vuelo se refiere, muéstrale los candidatos con sus datos y pídele confirmación.
 5. Si falta cualquier dato requerido, detente y pregunta amablemente. No inventes nada.
-
-## REGLAS PARA INICIAR/FINALIZAR VUELO EN VIVO (cronómetro):
-1. El contexto te indica si el piloto ya tiene un vuelo en curso ("Vuelo en Vivo" arriba). Úsalo para decidir si el piloto quiere iniciar o finalizar.
-2. Si el piloto avisa que está por despegar o iniciar un vuelo, llama a 'start_flight_session' con la matrícula de la aeronave. NO pidas confirmación previa para esto (a diferencia de 'log_flight'), es una acción reversible de bajo riesgo.
-3. Si el piloto avisa que aterrizó o terminó el vuelo, llama a 'end_flight_session'. Al recibir la respuesta, informa la duración calculada y, si te devuelve un link, compártelo para que el piloto revise y guarde el vuelo completo con todos los detalles.
-4. Solo incluye el parámetro 'time' si el piloto menciona una hora explícita (ej. "arranqué a las 14:30"); si no la menciona, omite el parámetro por completo para que se use la hora actual.
 
 ## LÍMITE OPERATIVO (no negociable):
 Los datos de aeródromo, pistas, frecuencias y teléfonos que devuelven tus herramientas son de referencia y pueden estar desactualizados. Cuando informes pistas, frecuencias, combustible o cualquier dato para una operación, cerrá SIEMPRE recordando que hay que verificarlo contra el AIP y los NOTAM vigentes antes de volar. Nunca presentes esta información como apta para tomar una decisión operativa por sí sola.
@@ -909,29 +893,6 @@ ${flightContext}`;
                   discount_amount: { type: Type.NUMBER, description: "Nuevo monto de descuento (opcional)" }
                 },
                 required: ["flight_id"]
-              }
-            },
-            {
-              name: "start_flight_session",
-              description: "Inicia el cronómetro de un vuelo en curso (check-in) en una aeronave. Úsala cuando el piloto avise que está por despegar o iniciar un vuelo (ej. 'arranco vuelo en LV-S153', 'despego ahora'). Si el piloto no menciona una hora explícita, NO incluyas el parámetro 'time' y se usará la hora actual del mensaje.",
-              parameters: {
-                type: Type.OBJECT,
-                properties: {
-                  aircraft_registration: { type: Type.STRING, description: "Matrícula de la aeronave (ej. LV-S153)" },
-                  time: { type: Type.STRING, description: "Hora de despegue en formato 24hs HH:MM, SOLO si el piloto la menciona explícitamente (opcional)" }
-                },
-                required: ["aircraft_registration"]
-              }
-            },
-            {
-              name: "end_flight_session",
-              description: "Finaliza el vuelo en curso (check-out) y calcula la duración automáticamente. Úsala cuando el piloto avise que aterrizó o terminó el vuelo (ej. 'aterricé', 'terminé el vuelo'). Si el piloto no menciona una hora explícita, NO incluyas el parámetro 'time' y se usará la hora actual del mensaje.",
-              parameters: {
-                type: Type.OBJECT,
-                properties: {
-                  time: { type: Type.STRING, description: "Hora de aterrizaje en formato 24hs HH:MM, SOLO si el piloto la menciona explícitamente (opcional)" }
-                },
-                required: []
               }
             },
             {
@@ -1194,58 +1155,6 @@ ${flightContext}`;
                 response: { result: `Vuelo actualizado exitosamente (duración calculada: ${duration}h)`, flight: resData }
               });
             }
-          } else if (call.name === "start_flight_session" || call.name === "end_flight_session") {
-            const isStart = call.name === "start_flight_session";
-
-            if (isStart) {
-              const ac = aircraft.find(
-                (a: any) => a.registration.trim().toUpperCase() === args.aircraft_registration?.trim().toUpperCase()
-              );
-              if (!ac) {
-                toolResults.push({
-                  name: call.name,
-                  response: { error: `La aeronave con matrícula '${args.aircraft_registration}' no está registrada en tu hangar.` }
-                });
-                continue;
-              }
-              args._resolvedRegistration = ac.registration;
-            }
-
-            const nowIso = new Date().toISOString();
-            const timestamp = args.time
-              ? `${nowIso.split('T')[0]}T${args.time}:00Z`
-              : nowIso;
-
-            const payload: Record<string, unknown> = {
-              action: isStart ? "start" : "end",
-              timestamp
-            };
-            if (isStart) {
-              payload.aircraft = args._resolvedRegistration;
-            }
-
-            const response = await fetch(`${API_URL}/flight-helper/session/shortcut`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-API-Key": userApiKey
-              },
-              body: JSON.stringify(payload)
-            });
-
-            const resData = await response.json().catch(() => ({}));
-            if (!response.ok) {
-              toolResults.push({
-                name: call.name,
-                response: { error: resData.detail || resData.message || "Error al procesar el vuelo en curso" }
-              });
-            } else {
-              toolResults.push({
-                name: call.name,
-                response: { result: resData.message, link: resData.link }
-              });
-            }
-
           } else if (call.name === "get_airport_weather") {
             const icao = args.icao_code?.trim().toUpperCase();
             if (!icao) {

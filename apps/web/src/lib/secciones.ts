@@ -72,6 +72,9 @@ export const SECCIONES: Seccion[] = [
     label: "Preparar vuelo",
     pestanas: [
       { href: "/dashboard/planificador", label: "Planificador" },
+      // El Mapa (3.0.0): planificar sobre el mapa y volar con el GPS del teléfono. Segundo,
+      // no primero: el ícono de Preparar vuelo sigue abriendo el Planificador de siempre.
+      { href: "/dashboard/mapa", label: "Mapa" },
       // Los planes de vuelo guardados para EANA (2026-10-19). Al lado del planificador,
       // que es de donde sale la mayoría.
       { href: "/dashboard/plan-de-vuelo", label: "Plan de vuelo" },

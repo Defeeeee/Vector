@@ -156,6 +156,47 @@ NIL NIL NIL NIL NIL NIL NIL
 AIP ARGENTINA SADJ AD 2.5
 DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2023 30 NOVIEMBRE 2023
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+ATZ MARIANO MORENO
+Desde RN 8 (Ramal Pilar) y Puente el Chingolo (342708S -
+0585523W) hacia el E por RN 8 (Ramal Pilar) hasta RP 26 (342627S
+- 0584657W). Luego continúa hacia el S hasta Est. José C. Paz
+(343109S - 0584500W), siguiendo hacia el S hasta RN 7 (Acc.
+Oeste) y Camino del Buen Ayre (343743S - 0584318W). Siguiendo
+hacia el W por RN 7 (Acc. Oeste) hasta 343650S - 0585124W, y
+luego hacia el N hasta RN 8 (Ramal Pilar) y Puente el Chingolo
+(342708S - 0585523W).
+MARIANO MORENO ATZ
+From National Route 8 (Pilar Line) and Puente el Chingolo
+(342708S - 0585523W) towards the E along National Route 8
+(Pilar Line) and Puente el Chingolo (342708S - 0585523W 8 (Pilar
+Line) to Provincial Route 26 (342627S - 0584657W). Then it
+continues S to José C. Paz Station (343109S - 0584500W),
+continuing S to National Route 7 (Acceso Oeste) and Camino del
+Buen Ayre (343743S - 0584318W). Continuing W along National
+Route 7 (Acceso Oeste) to 343650S - 0585124W, and then N to
+National Route 8 (Pilar Line) and Puente el Chingolo (342708S -
+0585523W).
+2 Límites verticales / Vertical limits 1.500 ft
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+MORENO TORRE / MORENO TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude NIL
+6 Horas de aplicación / Hours of applicability LUN a VIE 11:00-17:00 UTC /
+MON to FRI 11:00-17:00 UTC
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

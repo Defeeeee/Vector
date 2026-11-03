@@ -104,6 +104,8 @@ const PAGINAS_CACHEABLES = [
   "/dashboard/balance",
   "/dashboard/calendario",
   "/dashboard/planificador",
+  // El Mapa (3.0.0): se usa en vuelo, que es justo donde no hay señal.
+  "/dashboard/mapa",
   "/dashboard/airports",
   "/dashboard/tools",
   "/dashboard/novedades",
@@ -168,9 +170,11 @@ export const RUTAS_DE_DATOS = [
   "/api/airports/search",
   "/api/airports/near",
   "/api/aerovias",
+  // Las capas del Mapa: aeródromos, radioayudas y espacios aéreos (3.0.0).
+  "/api/mapa",
 ];
 
-/** La única de las cuatro que el service worker puede contestar por su cuenta. */
+/** La única de las cinco que el service worker puede contestar por su cuenta. */
 export const RUTA_PUNTOS = "/api/puntos";
 
 /**

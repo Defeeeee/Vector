@@ -169,6 +169,36 @@ NIL NIL 90x60 NIL NIL
 (*) RWY 09/27 CLSD. Extremo RWY 32 352901.68S 0693458.58W - ELEV 1.421,75 m 4.665 ft. THR 14 MOV 470 m por OBST. /
 RWY 09/27 CLSD. RWY 32 end 352901.68S 0693458.58W - ELEV 1.421,75 m 4.665 ft. THR 14 MOV 470 m due to OBST.
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR MALARGÜE
+Círculo de 10 NM de RDO con centro en VOR / DME MLG (352910S
+- 0693443W)
+MALARGÜE CTR
+10 NM circle of RDO with center at MLG VOR / DME (352910S -
+0693443W)
+2 Límites verticales / Vertical limits FL 105
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+MALARGÜE TORRE / MALARGÜE TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 9.000 ft
+6 Horas de aplicación / Hours of applicability 11:00-19:00 UTC – O/R (*)
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4.
+(*) COOR móvil (+54 9 260) 4306895 y (+54 9 260) 4582461. Ver
+AIC apertura anticipada o extensión de servicios. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+(*) COOR mobile (+54 9 260) 4306895 and (+54 9 260) 4582461.
+See AIC opening or service extension.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

@@ -149,6 +149,34 @@ Remarks
 No No 2.926x280 90x60 No No No
 No No No No No
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR LA RIOJA
+Círculo de 10 NM de RDO con centro en VOR LAR (292319S
+0664813W).
+LA RIOJA CTR
+10 NM circle of RDO with center at LAR VOR (292319S 0664813W).
+2 Límites verticales / Vertical limits FL75
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+LA RIOJA TORRE / LA RIOJA TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 7.000 ft
+6 Horas de aplicación / Hours of applicability DOM a VIE 1900 - 2359 UTC. resto (O/R) /
+SUN to FRI 1900 - 2359 UTC. resto (O/R)
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+AIP ARGENTINA SANL AD 2.7
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio / Service

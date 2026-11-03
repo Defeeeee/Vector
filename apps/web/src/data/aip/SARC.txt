@@ -166,6 +166,37 @@ PERM due to OBST
 No No 90x90 No No DTHR 20 150 m
 PERM.
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR CORRIENTES
+Desde 271928S 0585402W, siguiendo un arco de 10 NM de RDO
+con centro en VOR CRS (272614S 0584542W), hacia el E hasta
+273316S 0585402W hasta 271928S 0585402W/
+CORRIENTES CTR
+From 271928S 0585402W, following a 10 NM arc of RDO with
+center at CRS VOR (272614S 0584542W), to the E until 273316S
+0585402W until 271928S 0585402W
+AIP ARGENTINA SARC AD 2.7
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE (Cont.)
+2 Límites verticales / Vertical limits FL 65
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+CORRIENTES TORRE / CORRIENTES TOWER
+Idioma(s) / language(s) Español – inglés / Spanish – English
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability 09:00-23:59 UTC
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

@@ -164,6 +164,32 @@ Remarks(*)
 NIL NIL 2.320x280 90x90 NIL NIL
 NIL NIL 2.390x280 NIL NIL NIL
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR MAR DEL PLATA
+Círculo de 10 NM de RDO con centro en VOR DME MDP (375547S
+- 0573435W). /
+MAR DEL PLATA CTR
+10 NM circle of RDO with center at VOR DME MDP (375547S -
+0573435W).
+2 Límites verticales / Vertical limits FL 35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+MAR DEL PLATA TORRE /MAR DEL PLATA TOWER
+Idioma(s) / language(s) Español – inglés / Spanish - English
+5 Altitud de transición / Transition altitude 3.000 ft / 3,000 ft
+6 Horas de aplicación / Hours of applicability H24
+7
+Observaciones / Remarks Es obligatorio el uso del Respondedor de a bordo en modo A/3 y
+C, excepto en corredores o sectores VFR. /
+The use of the on-board Responder is mandatory in mode A/3 and
+C, except in VFR corridors or sectors.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio /

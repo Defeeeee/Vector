@@ -196,6 +196,31 @@ Observaciones /Remarks:
 Extremo RWY 35R 384255.31S 0620928.32W – ELEV 76 m 249 ft. Dispone de área de 150 m de longitud en SFC CONC/
 End RWY 35R 384255.31S 0620928.32W - ELEV 76 m 249 ft. 150 m long area available in SFC CONC
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR ESPORA
+Círculo de 18 NM de RDO con centro en VOR/DME BCA
+(384312S - 0620930W)/
+SPORA CTR
+18 NM RDO circle with center at BCA VOR/DME (384312S -
+0620930W)
+2 Límites verticales / Vertical limits FL 65
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+ESPORA TORRE/ESPORA TOWER
+Idioma(s) / language(s) Español/Spanish
+AIP ARGENTINA SAZB AD 2.8
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2023 30 NOVIEMBRE 2023
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE Cont.)
+5 Altitud de transición / Transition altitude 3.000 ft/3,000 ft
+6 Horas de aplicación / Hours of applicability H24
+7 Observaciones / Remarks No
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

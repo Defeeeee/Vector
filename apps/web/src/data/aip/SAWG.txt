@@ -169,6 +169,27 @@ No No No NIL NIL
 AIP ARGENTINA SAWG AD 2.6
 DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR RÍO GALLEGOS
+Círculo de 20 NM de RDO con centro en VOR/DME GAL (513642S
+0691950W) /
+RÍO GALLEGOS CTR
+20 NM circle of RDO with center at GAL VOR/DME (513642S
+0691950W).
+2 Límites verticales / Vertical limits FL 55
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign GALLEGOS TORRE / GALLEGOS TOWER
+Idioma(s) / language(s) Español – inglés / Spanish - English
+5 Altitud de transición / Transition altitude 3.000 ft. / 3,000 ft.
+6 Horas de aplicación / Hours of applicability H24
+7 Observaciones / Remarks NIL
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

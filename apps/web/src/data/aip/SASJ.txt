@@ -155,6 +155,32 @@ Remarks
 No 900x150 3.076x280 90x80 No No NIL
 No No No No NIL
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR JUJUY
+Círculo de 10 NM de RDO con centro en VOR/DME JUJ (242337S
+0650534W) /
+JUJUY CTR
+10 NM circle of RDO with center at JUJ VOR/DME (242337S
+0650534W)
+2 Límites verticales / Vertical limits FL 95
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+JUJUY TORRE / JUJUY TOWER
+Idioma(s) / language(s) Español – inglés / Spanish – English
+5 Altitud de transición / Transition altitude 9.000 ft / 9,000 ft
+6 Horas de aplicación / Hours of applicability H24
+7
+Observaciones / Remarks Se podrá adoptar la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4 /
+The “G” classification shall be adopted in the circumstances
+detailed in ENR 1.4
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

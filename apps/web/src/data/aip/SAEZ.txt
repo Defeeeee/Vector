@@ -212,6 +212,55 @@ PERM due to OBST
 AIP ARGENTINA SAEZ AD 2.6
 DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2023 30 NOVIEMBRE 2023
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR EZEIZA
+Desde 344152S - 0585507W hacia el E hasta RP 40 en 344238S -
+0584742W, continuando hacia el NE manteniéndose al W de la RP
+40 hasta Río Reconquista en 343933S - 0584520W, continuando
+por E hasta RN 7 (Acceso Oeste) y río Reconquista (343743S -
+0584328W). Luego hacia el E por RN 7 (Acceso Oeste) hasta Hosp.
+Posadas (343754S - 0583433W), luego continuando al E hasta
+343658S - 0582802W. Luego hacia el SE hasta 344520S -
+0581753W continuando hacia el SE hasta 345333S - 0580750W.
+Luego hacia el W siguiendo un arco de 20 NM de RDO con centro
+en VOR/DME EZE (344927S - 0583207W) hasta 344152S -
+0585507W /
+EZEIZA CTR
+From 344152S - 0585507W towards E to Provincial Route 40 at
+344238S - 0584742W, continuing NE keeping W of Provincial
+Route 40 to Reconquista River at 343933S - 0584520W, then
+continuing E to National Route 7 (Acceso Oeste) and Reconquista
+River (343743S - 0584328W). Then E along National Route 7
+(Acceso Oeste) to Posadas Hospital (343754S - 0583433W), then
+continuing E to 343658S - 0582802W. Then SE to 344520S -
+0581753W continuing SE to 345333S - 0580750W. Then W
+following a 20 NM arc of RDO with center at EZE VOR/DME
+(344927S - 0583207W) to 344152S - 0585507W
+2 Límites verticales / Vertical limits FL 55
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+EZEIZA TORRE / EZEIZA TOWER
+Idioma(s) / language(s) Español – inglés / Spanish - English
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability H24
+7
+Observaciones / Remarks Es obligatorio el uso del Respondedor de a bordo en modo A/3 y
+C excepto en Corredores o Sectores VFR. La excepción a los vuelos
+VFR controlados dispuesta en el párrafo 106.4 del Reglamento de
+Vuelos, no es aplicable dentro del circuito de tránsito (a menos de
+5 NM del VOR/DME EZEIZA) /
+It is mandatory the use of the on-board A/3 and C mode A/3 and
+C mode A/R except in VFR Corridors or Sectors. The exception to
+controlled VFR flights provided in paragraph 106.4 of the Flight
+Regulations is not applicable within the traffic circuit (within 5 NM
+of the EZEIZA VOR/DME)
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

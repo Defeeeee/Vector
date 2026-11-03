@@ -163,6 +163,38 @@ NIL NIL 2420x280 90x90 NIL NIL
 NIL NIL NIL NIL
 Observaciones /Remarks:
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR SANTA ROSA
+Círculo de 10 NM de RDO con centro en VOR/ DME OSA
+(363501S 0641622W). /
+SANTA ROSA CTR
+10 NM circle of RDO with center at OSA VOR/ DME
+(363501S 0641622W).
+2 Límites verticales / Vertical limits FL 35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+SANTA ROSA TORRE/SANTA ROSA TOWER
+Idioma(s) / language(s) Español/Spanish
+5 Altitud de transición / Transition altitude 3.000 ft
+6
+Horas de aplicación / Hours of applicability LUN a VIE 12:00 a 23:00 UTC. SAB 17:00 a 23:00 UTC. DOM 13:00
+a 21:00 UTC/
+MON to FRI 12:00 to 23:00 UTC. SAT 17:00 to 23:00 UTC. SUN
+13:00 to 21:00 UTC
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+“G" classification shall be adopted in the circumstances detailed
+in ENR 1.4.
+AIP ARGENTINA SAZR AD 2.8
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

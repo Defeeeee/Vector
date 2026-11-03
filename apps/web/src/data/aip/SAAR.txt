@@ -190,6 +190,28 @@ until 1,781
 progressive
 No 240x90 No No No
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR ROSARIO
+Círculo de 10 MN de RDO con centro en VOR/DME ROS (325418S
+- 0604653W) /
+ROSARIO CTR
+Circle of 10 NM of RDO with center in ROS VOR/DME (325418S -
+0604653W).
+2 Límites verticales / Vertical limits FL 35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit call sign
+ROSARIO TORRE / ROSARIO TOWER
+Idioma(s) /language(s) Español - inglés / Spanish - English
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability NIL
+7 Observaciones / Remarks NIL
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

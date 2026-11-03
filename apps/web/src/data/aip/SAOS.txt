@@ -158,6 +158,27 @@ Remarks
 NIL NIL 2.670x280 90x90 NIL NIL NIL
 NIL NIL NIL NIL NIL
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales / Designation and lateral limits CTR SANTA ROSA DE CONLARA
+Circulo de 15 NM de RDO con centro en VOR/DME SRC (322221S
+- 0651100W). /
+SANTA ROSA DE CONLARA CTR
+15 NM RDO circle with center at SRC VOR/DME (322221S -
+0651100W).
+2 Límites verticales / Vertical limits FL 95
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4 Distintivo de llamada de la dependencia ATS /ATS unit callsign CONLARA TORRE / CONLARA TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 8.600 ft
+6 Horas de aplicación / Hours of applicability 12:00-18:00 UTC, días hábiles, resto O/R/ working days, rest O/R
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio / Service

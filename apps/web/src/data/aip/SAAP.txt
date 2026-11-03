@@ -172,6 +172,41 @@ NIL NIL 90x90 NIL NIL NIL
 Observaciones /Remarks: Acceso a THR 20 sector militar, distancia 2.778 m – 1.50 NM - RDL 016. /
 Access to THR 20 military sector, distance 2,778 m - 1.50 NM - RDL 016.
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR PARANÁ (*)
+Arco de 15 NM de RDO con centro en VOR/DME PAR (314830S -
+0602904W) y límite E de la CTR Sauce Viejo.
+ATZ PARANÁ (**)
+Circulo de 5 NM de RDO con centro en el punto de referencia del
+aeródromo, coordenadas 314737S - 0602852W./
+PARANÁ CTR (*)
+15 NM arc of RDO with center at PAR VOR/DME (314830S -
+0602904W) and E boundary of Sauce Viejo CTR.
+PARANA ATZ (**)
+5 NM RDO circle with center at the aerodrome reference point,
+coordinates 314737S - 0602852W.
+2
+Límites verticales / Vertical limits (*) FL 45
+GND
+(**) 2.500 ft
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+PARANA TORRE / PARANA TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability 10:00-01:00 UTC
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

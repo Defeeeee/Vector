@@ -395,29 +395,6 @@ export async function deleteAircraft(id: string) {
   }
 }
 
-export async function toggleFlightSession(formData: FormData) {
-  const aircraft_id = formData.get("aircraft_id") as string;
-  const route = formData.get("route") as string;
-  const landings = parseInt(formData.get("landings") as string, 10) || 0;
-
-  const body = aircraft_id ? JSON.stringify({ aircraft_id, route, landings }) : undefined;
-
-  const response = await apiFetch("/flight-helper/session", {
-    method: "POST",
-    body,
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to toggle session");
-  }
-
-  const data = await response.json();
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/history");
-  return data;
-}
-
 export async function bulkLogFlights(flights: any[]) {
   try {
     for (const f of flights) {

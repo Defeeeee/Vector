@@ -177,6 +177,30 @@ NIL NIL 2.517x150 No NIL NIL NIL
 NIL NIL NIL NIL NIL
 Observaciones / Remarks: RWY 10/28 Clausurada / RWY 10/28 Closed
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /Designation and lateral limits CTR VILLA REYNOLDS
+Círculo de 10 NM de RDO con centro en VOR/DME RYD (334343S-
+0652252W). /
+VILLA REYNOLDS CTR
+10 NM circle of RDO with center at RYD VOR/DME (334343S-
+0652252W).
+2 Límites verticales / Vertical limits FL 35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4 Distintivo de llamada de la dependencia ATS /ATS unit callsign REYNOLDS TORRE / REYNOLDS TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 3.500 ft
+6 Horas de aplicación / Hours of applicability 11:00-21:59 UTC LUN a VIE (días hábiles). /
+11:00-21:59 UTC MON to FRI (working days).
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+AIP ARGENTINA SAOR AD 2.7
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

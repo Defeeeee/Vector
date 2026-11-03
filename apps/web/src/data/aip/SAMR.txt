@@ -157,6 +157,96 @@ No No 90x60 No No NIL
 Observaciones / Remarks: (*) Sector derecho reducida 75 m entre THR 29 y progresiva 200 m /
 (*) Right sector reduced 75 m between THR 29 and progressive 200 m
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR SAN RAFAEL
+Círculo de 10 NM de RDO con centro en VOR SRA (343522S -
+0682341W) /
+SAN RAFAEL CTR
+10 NM circle of RDO with center at SRA VOR (343522S -
+0682341W)
+2 Límites verticales / Vertical limits FL 55
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+SAN RAFAEL TORRE / SAN RAFAEL TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 5.000 ft
+6 Horas de aplicación / Hours of applicability LUN – VIE 10:00-23:59 UTC / MON and FRI 10:00-23:59 UTC
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4 /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4
+AIP ARGENTINA SAMR AD 2.7
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+AD 2.21 PROCEDIMIENTOS DE ATENUACIÓN DEL RUIDO / NOISE ABATEMENT PROCEDURES
+- Se aplicarán los procedimientos generales de atenuación de ruido establecidos en la Parte 2 – ENR 1.5 /
+- The general noise abatement procedures set forth in Part 2 - ENR 1.5 shall apply
+AD 2.19 RADIOAYUDAS PARA LA NAVEGACIÓN Y EL ATERRIZAJE / NAVIGATIONAL AND LANDING AIDS
+Tipo de ayuda, MAG VAR,
+Tipo de operación apoyada
+para ILS/GNSS, CAT ILS,
+declinación para VOR/ILS /
+Type of aid, MAG VAR, Type
+of supported operation for
+ILS / GNSS, ILS CAT,
+declination for VOL/ILS
+ID
+Frecuencia
+y Canal /
+Frequency
+and
+channel
+Horas de
+operación /
+Hours of
+operation
+COORD GEO del
+emplazamiento de
+la antena
+transmisora /
+Position of
+transmitting
+antenna coordinates
+Elevación de la
+antena
+transmisora del
+DME /
+Elevation of
+DME
+transmitting
+antenna
+Observaciones /
+Remarks
+(*)
+1 2 3 4 5 6 7
+VOR/DME SRA 116.9 MHz H24 343522.00S
+0682341.00W
+747.50 m
+2.452 ft
+DME CH 116X (330 km).
+Restricciones: Ver ENR
+4.1. /
+Restrictions: See ENR 4.1.
+AD 2.20 REGLAMENTO LOCAL DEL AERÓDROMO / LOCAL AERODROME REGULATIONS
+- Las OPS VFR deberán ajustarse a lo establecido en el ANEXO BRAVO, excepto el inciso c) donde debe reemplazarse el valor por 1.000 ft.
+- En las circunstancias detalladas en el ENR 1.4, el piloto que decida realizar vuelos VFR, deberá coordinar previamente con el Jefe de
+Aeródromo y/o Explotador de Aeródromo la asignación de PSN para estacionamiento, también con el Proveedor de Combustible (en
+caso de necesitarlo) y otras coordinaciones operativas necesarias. /
+- VFR OPS shall conform to BRAVO ANNEX, except c) where the value should be replaced by 1,000 ft.
+- In the circumstances detailed in ENR 1.4, the pilot who decides to perform VFR flights must previously coordinate with the Aerodrome
+Head and/or Aerodrome Operator the assignment of PSN for parking, also with the Fuel Supplier (in case of need) and other necessary
+operational coordination
+AD 2.22 PROCEDIMIENTOS DE VUELO / FLIGHT PROCEDURES
+NIL
+AD 2.23 INFORMACIÓN SUPLEMENTARIA / ADDITIONAL INFORMATION
+Pertenece al SNA / It belongs to the SNA
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio /

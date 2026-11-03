@@ -170,6 +170,40 @@ NIL NIL 1.299x60 90x60 NIL NIL NIL
 NIL NIL NIL NIL NIL
 Observaciones / Remarks: RWY 08/26 CLSD
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR ESQUEL
+Círculo de 10 NM de RDO con centro en VOR/DME ESQ (425314S
+0710601W)
+ESQUEL CTR
+Circle of 10 NM of RDO with center at ESQ VOR/DME (425314S
+0710601W)
+2 Límites verticales / Vertical limits FL 95
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+ESQUEL TORRE / ESQUEL TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 10000 ft
+6 Horas de aplicación / Hours of applicability 11:00-22:00 UTC
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4.
+Aclaración de AD 2.3: Las aeronaves que deban operar en franjas
+horarias donde se brindan extensiones/aperturas a
+requerimiento
+de otros vuelos deben hacerlo bajo las reglas de vuelo del espacio
+aéreo controlado clase C./
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+Clarification in AD 2.3: The aircraft that must operate in time slots
+where extensions/openings required by other flights must do it
+under the rules of controlled airspace class C.
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

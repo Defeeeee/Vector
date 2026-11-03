@@ -6,6 +6,14 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.0.0 — El Mapa: planificá y volá sobre la carta
+
+_3 de noviembre de 2026_
+
+- **Planificá sobre el mapa** — Una pantalla que es todo mapa. Escribí la ruta, con aerovías si querés, o tocá los aeródromos, y se dibuja al instante con la distancia y el rumbo de cada tramo, los espacios aéreos que cruza y, si lo pedís, la meteo y los NOTAM.
+- **Volá con el GPS del teléfono** — Tocá Volar y la misma pantalla te muestra dónde estás, tu velocidad, el próximo punto con su distancia, rumbo y tiempo, y en qué espacio aéreo estás. La pantalla queda prendida. Es una ayuda VFR: no reemplaza la carta.
+- **Las CTR, ATZ y TMA del AIP** — 61 espacios aéreos dibujados desde el texto del AIP de ANAC, con sus límites y su clase. Los que el AIP define con radiales o sin coordenadas no se dibujan, y el mapa lo dice.
+
 ## v2.40.0 — Los NOTAM de todo el país
 
 _3 de noviembre de 2026_

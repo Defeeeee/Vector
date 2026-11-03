@@ -161,6 +161,30 @@ No No 2.580x280 150 x 90 No No NIL
 No No 150 x 90 No No NIL
 Observaciones /Remarks: Dispone de márgenes ASPH - Ancho 7,5 m. / ASPH margins available - 7.5 m wide.
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /Designation and lateral limits CTR SAN JUAN
+Círculo de 10 NM de RDO con centro en VOR / DME JUA 313350S
+0682517W /
+SAN JUAN CTR
+10 NM circle of RDO with center at JUA VOR / DME 313350S
+0682517W
+2 Límites verticales / Vertical limits FL 55
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /ATS unit callsign SAN JUAN TORRE / SAN JUAN TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 5.500 ft
+6 Horas de aplicación / Hours of applicability 10:00-23:59 UTC
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4. /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+AIP ARGENTINA SANU AD 2.8
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

@@ -33,7 +33,6 @@ function buildFlightContext(
   packs: any[],
   transactions: any[],
   balance: number,
-  session: any,
   documents: PilotDocument[] = []
 ): string {
   const aircraftMap = new Map(aircraft.map(a => [a.id, a]));
@@ -97,10 +96,6 @@ function buildFlightContext(
     return `- Pack "${p.name}": ${p.remaining_hours.toFixed(1)} hs restantes de ${p.total_hours.toFixed(1)} hs totales (aviones: ${acRegs}) | ${p.is_active ? "Activo" : "Inactivo"}`;
   }).join("\n");
 
-  const activeSessionStr = session?.active 
-    ? `Sí, activo en ${aircraftMap.get(session.session.aircraft_id)?.registration || "Desconocido"} desde las ${new Date(session.session.start_time).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC`
-    : "No hay vuelo en curso.";
-
   // Expiries come from the documents table now, not a column on the profile, so
   // the copilot can answer about the licence or the insurance too — not just
   // the medical.
@@ -127,9 +122,6 @@ ${txLines || "(Sin transacciones registradas)"}
 
 ## Packs de Horas (Modo Packs de Horas)
 ${packLines || "(Sin packs de horas registrados)"}
-
-## Vuelo en Vivo (Flight Helper)
-Vuelo actual en curso: ${activeSessionStr}
 
 ## Resumen estadístico de bitácora
 Total vuelos registrados: ${flights.length}
@@ -370,7 +362,6 @@ async function conversar(
     const packs = data.packs || [];
     const transactions = data.transactions || [];
     const balance = data.balance || 0;
-    const session = data.session || { active: false };
     const documents: PilotDocument[] = data.documents || [];
 
     const todayStr = new Date().toLocaleDateString("es-AR", {
@@ -389,7 +380,6 @@ async function conversar(
       packs,
       transactions,
       balance,
-      session,
       documents
     );
 

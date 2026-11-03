@@ -153,6 +153,43 @@ Remarks
 NIL NIL NIL 90x96 NIL NIL NIL
 NIL NIL NIL NIL NIL
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR TANDIL
+Desde 370259S - 0592632W, siguiendo un arco de 15 NM de RDO
+con centro en VOR/DME DIL (371330S - 0591346W) hacia el E
+hasta 370659S - 0585732W; 371059S - 0590744W; 371759S -
+0590744W; 372029S - 0590502W, siguiendo un arco de 10 NM
+de RDO con centro en VOR/DME DIL hacia el SW hasta 371259S
+- 0592632W, hasta 370259S - 0592632W./
+TANDIL CTR
+From 370259S - 0592632W, following a 15 NM arc of RDO with
+center at DIL VOR/DME (371330S - 0591346W) E to 370659S -
+0585732W; 371059S - 0590744W; 371759S - 0590744W;
+372029S - 0590502W, following a 10 NM arc of RDO with center
+at DIL VOR/DME SW to 371259S - 0592632W, to 370259S -
+0592632W.
+2 Límites verticales / Vertical limits FL 35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+TANDIL TORRE/TANDIL TOWER
+Idioma(s) / language(s) Español/Spanish
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability Lunes a viernes 12:00 a 20:00 UTC. Resto O/R (*) /
+MON to FRI 12:00 - 20:00 UTC. Rest O/R.
+7
+Observaciones / Remarks Los vuelos deben ajustarse a los procedimientos del espacio aéreo
+clase “C”, excepto operaciones aéreas militares (Ver AD 2.20). /
+Flights must comply with Class “C” airspace procedures, except for
+military air operations (See AD 2.20).
+AIP ARGENTINA SAZT AD 2.7
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio /

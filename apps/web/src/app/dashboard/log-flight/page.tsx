@@ -4,7 +4,6 @@ import { esAlumno } from "@/lib/licencias";
 import VueloAlumnoForm from "@/components/dashboard/VueloAlumnoForm";
 import Link from "next/link";
 import FlightLogForm from "@/components/dashboard/FlightLogForm";
-import LiveSessionController from "@/components/dashboard/LiveSessionController";
 import SinAeronaves from "@/components/dashboard/SinAeronaves";
 import { parsePrefill } from "@/lib/prefill";
 import { ChevronLeft } from "lucide-react";
@@ -14,32 +13,29 @@ import { estadoConexionCad } from "@/actions/cad-vector";
 import { redirect } from "next/navigation";
 
 async function getData() {
-  // Order matters and has already bitten once: `/logbooks` was added in the
-  // middle of this array without moving the names, so `logbooks` got the session
-  // object and the page died on `logbooks.find is not a function`.
-  const [acRes, lbRes, sessionRes, perfilRes, recientesRes] = await Promise.all([
+  // El orden importa y ya mordió una vez: se agregó `/logbooks` en el medio del array
+  // sin mover los nombres y la página murió con `logbooks.find is not a function`.
+  const [acRes, lbRes, perfilRes, recientesRes] = await Promise.all([
     apiFetch("/aircraft"),
     apiFetch("/logbooks"),
-    apiFetch("/flight-helper/session"),
-    // Al final, por lo de arriba: el alumno piloto ve un formulario más simple.
+    // El alumno piloto ve un formulario más simple.
     apiFetch("/profiles"),
     // Los últimos vuelos, del más nuevo al más viejo: de ahí sale la autoridad para el CAD
     // que el formulario propone en cada finalidad (`autoridadesPorFinalidad`).
     apiFetch("/flights/history?limit=100"),
   ]);
 
-  if (acRes.status === 401 || sessionRes.status === 401) {
+  if (acRes.status === 401) {
     console.log("LogFlightPage: 401 Unauthorized. Redirecting to logout...");
     redirect("/api/auth/logout?redirect=/?expired=true");
   }
   
   const aircraft: Aircraft[] = acRes.ok ? await acRes.json() : [];
   const logbooks = lbRes.ok ? await lbRes.json() : [];
-  const session = sessionRes.ok ? await sessionRes.json() : { active: false };
   const perfiles: Profile[] = perfilRes.ok ? await perfilRes.json() : [];
   const recientes = recientesRes.ok ? ((await recientesRes.json()) as { items?: Flight[] }).items ?? [] : [];
 
-  return { aircraft, session, logbooks, alumno: esAlumno(perfiles[0]?.license_type), autoridades: autoridadesPorFinalidad(recientes) };
+  return { aircraft, logbooks, alumno: esAlumno(perfiles[0]?.license_type), autoridades: autoridadesPorFinalidad(recientes) };
 }
 
 interface PageProps {
@@ -52,7 +48,7 @@ export default async function LogFlightPage({ searchParams }: PageProps) {
   // de iOS. Ver `src/lib/prefill.ts`.
   const { initialData: prefillData, plannedId, planVueloId } = parsePrefill(resolvedParams);
 
-  const [{ aircraft, session, logbooks, alumno, autoridades }, conexionCad] = await Promise.all([getData(), estadoConexionCad()]);
+  const [{ aircraft, logbooks, alumno, autoridades }, conexionCad] = await Promise.all([getData(), estadoConexionCad()]);
   // "Cargarlo también en tu CAD" sólo con la cuenta de ANAC conectada y andando.
   const cadConectado = !!conexionCad?.disponible && conexionCad.conectado && conexionCad.estado === "ok";
 
@@ -91,17 +87,9 @@ export default async function LogFlightPage({ searchParams }: PageProps) {
       ) : (
       /*
         Ésta es la única forma de registrar un vuelo desde que se sacó el modal
-        interceptado, así que el formulario va primero y a lo ancho: al lado del
-        cronómetro, en dos tercios de la pantalla, sus dos columnas quedaban
-        apretadas en casi cualquier notebook. El cronómetro va al costado recién
-        donde sobra lugar (`xl`), y abajo en el resto.
-
-        La excepción es un vuelo en curso: ahí el piloto vino a cortar el
-        cronómetro —el cartel "Vuelo en curso" del inicio trae acá—, así que va
-        arriba del formulario.
+        interceptado. Hasta la 3.0.0 tenía al costado el cronómetro de la sesión en
+        vivo, que casi nadie usaba; se sacó y el formulario quedó solo, a lo ancho.
       */
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-8 md:gap-12 items-start">
-        <div className={session?.active ? "order-2 xl:order-1" : undefined}>
           <FlightLogForm
             aircraft={aircraft}
             logbooks={logbooks}
@@ -117,12 +105,6 @@ export default async function LogFlightPage({ searchParams }: PageProps) {
             */
             redirectTo="/dashboard/history"
           />
-        </div>
-
-        <div className={session?.active ? "order-1 xl:order-2" : undefined}>
-          <LiveSessionController aircraft={aircraft} activeSession={session} />
-        </div>
-      </div>
       )}
     </div>
   );

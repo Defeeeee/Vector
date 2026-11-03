@@ -182,6 +182,52 @@ Strip of RWY 11, SOUTH sector between THR 11 and Progressive 100 m, reduced to 7
 AIP ARGENTINA SAVV AD 2.6
 DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales / Designation and lateral limits CTR VIEDMA
+Círculo de 10 NM de RDO con centro en VOR VI (405202S -
+0630003W). /
+VIEDMA CTR
+Circle of 10 NM of RDO with center at VI VOR (405202S -
+0630003W).
+2 Límites verticales / Vertical limits FL 35
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4 Distintivo de llamada de la dependencia ATS / ATS unit callsign VIEDMA TORRE / VIEDMA TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 3.000 ft
+6 Horas de aplicación / Hours of applicability 11:00-23:00 UTC
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4./
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4.
+AD 2.16 ZONA DE ATERRIZAJE PARA HELICÓPTEROS / HELICOPTER LANDING AREA
+1
+COORD GEO y GUND del centro geométrico de la TLOF /
+TLOF geometric center GEO COORD and GUND
+NIL
+COORD GEO y GUND THR de cada FATO /
+Each FATO GEO COORD and GUND
+NIL
+2 Elevación del área TLOF / TLOF elevation area NIL
+Elevación del área FATO / FATO elevation area NIL
+3
+Dimensiones de las áreas TLOF y FATO, su tipo de superficie,
+carga admisible y señales /
+TLOF and FATO area dimensions, Surface type, bearing strength
+and markings
+NIL
+4 BRG GEO de la FATO / BRG GEO of the FATO NIL
+5 Distancias declaradas disponibles /
+Declared distances available
+NIL
+6 LGT de aproximación / Approach LGT NIL
+LGT de la FATO / FATO LGT NIL
+7 Observaciones / Remarks NIL
+AIP ARGENTINA SAVV AD 2.8
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 2/2025 27 NOVIEMBRE 2025
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación
 del Servicio /

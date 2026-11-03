@@ -150,6 +150,32 @@ CONC - 550
 AIP ARGENTINA SANR AD 2.5
 DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR TERMAS DE RÍO HONDO
+Círculo de 15 NM de RDO con centro en VOR /DME TRH (272948S-
+0645601W) /
+TERMAS DE RIO HONDO CTR
+15 NM circle of RDO with center at TRH VOR /DME
+(272948S0645601W)
+2 Límites verticales / Vertical limits FL 045
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+Termas Torre / Termas Tower
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 4.000 ft
+6 Horas de aplicación / Hours of applicability O/R
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4 /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio / Service

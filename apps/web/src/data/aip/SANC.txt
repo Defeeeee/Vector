@@ -153,6 +153,36 @@ Remarks
 No No 2920x280 90x90 No No No
 No No 90x90 No No No
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR CATAMARCA
+Círculo de 10 NM de RDO con centro en VOR/DME CAT (283501S
+- 0654448W).
+CATAMARCA CTR
+10 NM circle of RDO with center at CAT VOR/DME (283501S -
+0654448W).
+2 Límites verticales / Vertical limits FL 85
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+CATAMARCA TORRE / CATAMARCA TOWER
+Idioma(s) / language(s) Español / Spanish
+5 Altitud de transición / Transition altitude 8.000 ft
+6
+Horas de aplicación / Hours of applicability LUN a VIE 10:00-23:00 UTC, SAB 12:00-17:00 UTC, DOM 17:00-
+23:00 UTC, resto O/R (**) /
+MON to FRI 10:00-23:00 UTC, SAT 12:00-17:00 UTC, SUN 17:00-
+23:00 UTC, rest O/R (**)
+7
+Observaciones / Remarks Se adoptará la clasificación “G” en las circunstancias que se
+detallan en ENR 1.4 /
+The "G" classification shall be adopted in the circumstances
+detailed in ENR 1.4
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio /

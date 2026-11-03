@@ -210,6 +210,34 @@ Remarks
 Sí / Yes Sí / Yes Sí / Yes Sí / Yes NIL
 Sí / Yes Sí / Yes Sí / Yes Sí / Yes NIL
 
+AD 2.17 ESPACIO AÉREO DE LOS ATS / ATS AIRSPACE
+1
+Designación y límites laterales /
+Designation and lateral limits
+CTR MENDOZA
+Círculo de 15 NM de RDO con centro en VOR/DME DOZ (324955S
+- 0684727W) /
+MENDOZA CTR
+15 NM circle of RDO with center at DOZ VOR/DME (324955S -
+0684727W)
+2 Límites verticales / Vertical limits FL 65
+GND
+3 Clasificación del espacio aéreo / Airspace classification C
+4
+Distintivo de llamada de la dependencia ATS /
+ATS unit callsign
+MENDOZA TORRE/ MENDOZA TOWER
+Idioma(s) / language(s) Español – inglés / Spanish – English
+5 Altitud de transición / Transition altitude 6.000 ft
+6 Horas de aplicación / Hours of applicability H24
+7
+Observaciones / Remarks Es obligatorio el uso del Respondedor de a bordo en modo A/3 y
+C, excepto en corredores o sectores VFR /
+It is mandatory the use of the on-board A/3 and C mode A/3 and
+C, except in VFR Corridors or Sectors
+AIP ARGENTINA SAME AD 2.7
+DEPARTAMENTO INFORMACIÓN AERONÁUTICA AMDT AIRAC 1/2026 11 JUNIO 2026
+
 AD 2.18 INSTALACIONES DE COMUNICACIONES DE LOS ATS / ATS COMMUNICATION FACILITIES
 Designación del
 Servicio /

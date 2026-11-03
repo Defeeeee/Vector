@@ -50,9 +50,6 @@ class DashboardController(Controller):
         def _flights():
             return supabase_client.table("flights").select("*").eq("user_id", user_id).execute()
 
-        def _session():
-            return supabase_client.table("flight_sessions").select("*").eq("user_id", user_id).execute()
-
         def _transactions():
             return (
                 supabase_client.table("transactions").select("*")
@@ -72,13 +69,12 @@ class DashboardController(Controller):
             )
 
         (
-            profile_resp, aircraft_resp, flights_resp, session_resp,
+            profile_resp, aircraft_resp, flights_resp,
             packs_result, transactions_resp, findings_resp, documents_resp,
         ) = await asyncio.gather(
             asyncio.to_thread(_profile),
             asyncio.to_thread(_aircraft),
             asyncio.to_thread(_flights),
-            asyncio.to_thread(_session),
             # Ya es async; entra directo al gather sin hilo propio.
             FlightPacksController._get_packs_with_hours(user_id, supabase_client),
             asyncio.to_thread(_transactions),
@@ -109,12 +105,12 @@ class DashboardController(Controller):
         # ahí el frontend deja de afirmar cosas sobre el piloto.
         reintentos = {
             "profile": _profile, "aircraft": _aircraft, "flights": _flights,
-            "session": _session, "transactions": _transactions,
+            "transactions": _transactions,
             "audit": _findings, "documents": _documents,
         }
         respuestas = {
             "profile": profile_resp, "aircraft": aircraft_resp, "flights": flights_resp,
-            "session": session_resp, "transactions": transactions_resp,
+            "transactions": transactions_resp,
             "audit": findings_resp, "documents": documents_resp,
         }
         for nombre, consulta in reintentos.items():
@@ -130,7 +126,6 @@ class DashboardController(Controller):
         profile_resp = respuestas["profile"]
         aircraft_resp = respuestas["aircraft"]
         flights_resp = respuestas["flights"]
-        session_resp = respuestas["session"]
         transactions_resp = respuestas["transactions"]
         findings_resp = respuestas["audit"]
         documents_resp = respuestas["documents"]
@@ -158,8 +153,6 @@ class DashboardController(Controller):
 
         flights = [Flight(**data).model_dump(mode="json") for data in _rows("flights", flights_resp)]
 
-        session_rows = _rows("session", session_resp)
-        session_data = session_rows[0] if session_rows else None
 
         packs_data = []
         if isinstance(packs_result, Exception):
@@ -191,7 +184,6 @@ class DashboardController(Controller):
             "profile": profile,
             "aircraft": aircraft,
             "flights": flights,
-            "session": {"active": bool(session_data), "session": session_data},
             "packs": packs_data,
             "transactions": transactions_data,
             "balance": balance,
