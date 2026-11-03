@@ -254,7 +254,8 @@ workflows y sólo corren si el push toca su carpeta:
 - **La API:** `api-ci.yml` (los `test_*.py`, el import y ruff) y `api-deploy.yml`, que
   reinicia `flightlog-7477` y `grabador-adsb`, con el mismo rollback.
 - `secretos.yml` (gitleaks) corre sobre todo el repo, `aip.yml` los martes, `madhel.yml` el
-  día 3 de cada mes y `notam.yml` cada 15 minutos.
+  día 3 de cada mes y `notam.yml` cada 15 minutos, disparado por el crontab del VPS
+  (`infra/cron/vector-notam.sh`): el `schedule:` de GitHub no la sostenía.
 
 **En el VPS cada app tiene su propio clon** del monorepo, con sparse-checkout:
 `~/Vector/web` (PM2 corre en `~/Vector/web/apps/web`) y `~/Vector/api` (en
@@ -276,8 +277,8 @@ Por eso **a ANAC le pregunta el navegador del piloto**, con su IP:
   Federico después de un día de pruebas (en su mayoría con `curl`): **no probar contra ANAC
   con `curl` ni scripts**; que lo haga el navegador, o simularlo en la pestaña;
 - **una pantalla nueva que necesite ANAC va por ahí**;
-- **los NOTAM salen de la descarga del país** (2.40.0): `.github/workflows/notam.yml` mira
-  cada 15 min la "Última actualización" de ANAC y, si cambió, trae los NOTAM vigentes de todo
+- **los NOTAM salen de la descarga del país** (2.40.0): `.github/workflows/notam.yml`, que el
+  crontab del VPS dispara cada 15 min (`infra/cron/vector-notam.sh`; el VPS no le pide nada a ANAC), mira la "Última actualización" de ANAC y, si cambió, trae los NOTAM vigentes de todo
   el país en un pedido (`POST /notam/json` con el indicador vacío) al VPS
   (`~/Vector/datos/notams-anac.json`). `lib/notams-descargados.ts` los usa **mientras se hayan
   verificado hace menos de 45 min**; ahí un aeródromo sin NOTAM es "no hay" de verdad. Atrasada,

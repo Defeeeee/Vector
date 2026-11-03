@@ -15,11 +15,11 @@ name: NOTAM
 # hora), el workflow se apaga solo y avisa por ntfy**: cada corrida de GitHub sale de otra IP,
 # y seguir insistiendo después de un bloqueo sería esquivarlo. Para volver a prenderlo:
 # `gh workflow enable notam.yml`.
+#
+# **Lo dispara el crontab del VPS** (`infra/cron/vector-notam.sh`, minutos 7, 22, 37 y 52),
+# no un `schedule:` de GitHub: el 2026-11-03 el programador de GitHub la corrió una sola vez
+# en nueve horas. El VPS sólo la dispara; a ANAC le pide esta corrida, desde GitHub.
 on:
-  schedule:
-    # Cada 15 min, fuera de los minutos redondos: GitHub demora mucho las corridas
-    # programadas a las :00, :15, :30 y :45, que es cuando las pide todo el mundo.
-    - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
 
 permissions:
