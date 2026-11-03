@@ -1,0 +1,98 @@
+name: NOTAM
+
+# **Los NOTAM de todo el país, cada 15 minutos** (2026-11-03): la fuente principal de Vector
+# mientras estén al día (`apps/web/src/lib/notams-descargados.ts`).
+#
+# ANAC da los NOTAM vigentes de todo el país —aeroclubes incluidos— en un solo pedido
+# (`POST /notam/json` con el indicador vacío). Cada corrida:
+#
+# 1. mira la "Última actualización" de `ais.anac.gob.ar/notam` (un pedido de 16 KB);
+# 2. si es la misma que tenemos, sólo anota en el VPS que verificó;
+# 3. si cambió, trae todo (un pedido de ~100 KB), lo valida y lo deja en el VPS
+#    (`~/Vector/datos/notams-anac.json`), con un reemplazo atómico.
+#
+# Se presenta como Vector, sin imitar un navegador. **Si ANAC falla 4 veces seguidas (una
+# hora), el workflow se apaga solo y avisa por ntfy**: cada corrida de GitHub sale de otra IP,
+# y seguir insistiendo después de un bloqueo sería esquivarlo. Para volver a prenderlo:
+# `gh workflow enable notam.yml`.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: notam
+  cancel-in-progress: false
+
+jobs:
+  descargar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+      UA: "Vector/1.0 (bitacora de vuelo; https://vector.fdiaznem.com.ar; NOTAM cada 15 min)"
+    steps:
+      - name: Llave del VPS
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USUARIO: ${{ secrets.DEPLOY_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/vps
+          chmod 600 ~/.ssh/vps
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          echo "VPS=$USUARIO@$HOST" >> "$GITHUB_ENV"
+
+      - name: Mirar ANAC y traer todo si cambió
+        run: |
+          set -u
+          vps() { ssh -i ~/.ssh/vps -o BatchMode=yes "$VPS" "$@"; }
+          vps 'mkdir -p ~/Vector/datos'
+
+          # ANAC no contestó: se cuenta, y a la cuarta seguida el workflow se apaga solo.
+          fallo() {
+            n=$(vps 'f=~/Vector/datos/notams-anac.fallas; n=$(( $(cat "$f" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$f"; echo "$n"')
+            echo "ANAC falló ($1): $n seguidas."
+            if [ "${n:-0}" -ge 4 ]; then
+              gh workflow disable notam.yml -R "$GITHUB_REPOSITORY" || true
+              [ -n "$NTFY_TOPIC" ] && curl -s -H "Title: Vector: NOTAM apagado" -d "ANAC no contestó 4 veces seguidas ($1). La descarga se apagó sola; Vector vuelve a pedirlos como antes. Para prenderla: gh workflow enable notam.yml" "https://ntfy.sh/$NTFY_TOPIC" > /dev/null || true
+            fi
+            exit 1
+          }
+
+          html=$(curl -sf -m 20 -A "$UA" https://ais.anac.gob.ar/notam) || fallo "la página"
+          act=$(printf '%s' "$html" | grep -oP 'id="pibupdate"[^>]*>\s*Última actualización:\s*\K[^<]+' | head -1 | xargs || true)
+          anterior=$(vps 'cat ~/Vector/datos/notams-anac.actualizacion 2>/dev/null' || true)
+          echo "Última actualización de ANAC: '${act}' · la nuestra: '${anterior}'"
+
+          if [ -n "$act" ] && [ "$act" = "$anterior" ]; then
+            vps 'cd ~/Vector/datos && date -u +%Y-%m-%dT%H:%M:%SZ > notams-anac.verificado && echo 0 > notams-anac.fallas'
+            echo "Sin cambios: sólo se anotó la verificación."
+            exit 0
+          fi
+
+          sleep 2
+          curl -sf -m 40 -A "$UA" -H "X-Requested-With: XMLHttpRequest" -H "Content-Type: application/x-www-form-urlencoded" \
+            --data "indicador=" -o todos.json https://ais.anac.gob.ar/notam/json || fallo "los NOTAM"
+
+          # Que sea lo que esperamos: una lista de NOTAM. Si no, no se pisa lo que hay.
+          ACT="$act" python3 - > notams-anac.json <<'PY' || fallo "una respuesta que no es la lista de NOTAM"
+          import json, os, sys, datetime
+          d = json.load(open("todos.json"))
+          ok = isinstance(d, list) and len(d) >= 10 and all(isinstance(x, dict) and x.get("indicador") and x.get("notam") for x in d)
+          if not ok:
+              sys.exit(2)
+          ahora = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          json.dump({"actualizacion": os.environ["ACT"], "descargado": ahora, "notams": d}, sys.stdout, ensure_ascii=False)
+          print(f"{len(d)} NOTAM de {len({x['indicador'] for x in d})} indicadores", file=sys.stderr)
+          PY
+
+          scp -i ~/.ssh/vps -o BatchMode=yes notams-anac.json "$VPS:Vector/datos/notams-anac.json.nuevo"
+          printf '%s\n' "$act" | vps 'cd ~/Vector/datos && mv notams-anac.json.nuevo notams-anac.json && cat > notams-anac.actualizacion && date -u +%Y-%m-%dT%H:%M:%SZ > notams-anac.verificado && echo 0 > notams-anac.fallas'
+          echo "NOTAM actualizados en el VPS."

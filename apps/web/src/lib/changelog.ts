@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "2.40.0",
+    fecha: "2026-11-03",
+    titulo: "Los NOTAM de todo el país",
+    novedades: [
+      {
+        icono: "campana",
+        titulo: "NOTAM de ANAC, cada 15 minutos",
+        texto: "Vector trae los NOTAM vigentes de todo el país, aeroclubes incluidos, cada 15 minutos. Los ves en la ficha de cada aeródromo con la hora de la última actualización de ANAC, y el copiloto los usa para contestarte.",
+        href: "/dashboard/airports",
+        cta: "Ver Aeropuertos",
+      },
+    ],
+  },
+  {
     version: "2.39.0",
     fecha: "2026-11-02",
     titulo: "El copiloto, al instante",

@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v2.40.0 — Los NOTAM de todo el país
+
+_3 de noviembre de 2026_
+
+- **NOTAM de ANAC, cada 15 minutos** — Vector trae los NOTAM vigentes de todo el país, aeroclubes incluidos, cada 15 minutos. Los ves en la ficha de cada aeródromo con la hora de la última actualización de ANAC, y el copiloto los usa para contestarte.
+
 ## v2.39.0 — El copiloto, al instante
 
 _2 de noviembre de 2026_

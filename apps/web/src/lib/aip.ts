@@ -278,9 +278,15 @@ export interface FichaCompuesta extends CamposMadhel {
 /**
  * Junta lo que contestó MADHEL con lo que publica el AIP.
  *
- * **La regla es una sola: MADHEL manda donde publica; el AIP llena lo que quedó vacío.**
- * Y se decide **campo por campo**, no aeródromo por aeródromo — así la regla se sostiene
- * sola el día que ANAC empiece a publicar alguno de estos datos en MADHEL.
+ * **La regla es una sola: el AIP manda donde publica; MADHEL llena lo que el AIP no tiene.**
+ * Y se decide **campo por campo**, no aeródromo por aeródromo.
+ *
+ * Hasta el 2026-11-03 era al revés (MADHEL mandaba). Se dio vuelta por pedido de Federico,
+ * que quiere el AIP descargado como fuente principal, y porque es lo correcto:
+ * - el propio MADHEL dice que, si difiere del AIP, vale el AIP;
+ * - nuestro AIP está validado contra el PDF oficial, número por número (invariante 12), y
+ *   se actualiza solo cada semana (`aip.yml`);
+ * - lo que originó la regla de antes (abajo) era un dato **escrito a mano**, no el AIP.
  *
  * ## Por qué esta función existe en vez de cinco líneas en cada ruta
  *
@@ -298,22 +304,24 @@ export interface FichaCompuesta extends CamposMadhel {
  * controlados, así que ese renglón queda vacío y se ve vacío. Ver la nota en `DatosAip`.
  */
 export function componerFicha(madhel: Partial<CamposMadhel>, aip: DatosAip | null): FichaCompuesta {
-  const runways = madhel.runways?.length ? madhel.runways : (aip?.pistas ?? []).map(textoPista);
-  const radio = madhel.radio?.length ? madhel.radio : (aip?.frecuencias ?? []).map(textoFrecuencia);
-  const localization = madhel.localization?.trim() || aip?.ubicacion || "";
-  const fuel = madhel.fuel?.trim() || aip?.combustible || "";
+  const delAip = {
+    runways: (aip?.pistas ?? []).map(textoPista),
+    radio: (aip?.frecuencias ?? []).map(textoFrecuencia),
+    localization: aip?.ubicacion?.trim() ?? "",
+    fuel: aip?.combustible?.trim() ?? "",
+  };
+  const runways = delAip.runways.length ? delAip.runways : (madhel.runways ?? []);
+  const radio = delAip.radio.length ? delAip.radio : (madhel.radio ?? []);
+  const localization = delAip.localization || madhel.localization?.trim() || "";
+  const fuel = delAip.fuel || madhel.fuel?.trim() || "";
 
   /*
-    Se declara el AIP como fuente sólo si **realmente aportó algo**. Un aeródromo del que
-    MADHEL contesta todo no tiene por qué mostrar una fecha de vigencia del AIP: sería
-    atribuirle a un documento un dato que no salió de ahí, que es la versión educada del
-    error que originó todo esto.
+    Se declara el AIP como fuente sólo si **realmente aportó algo**. Un aeródromo que no
+    está en el AIP no tiene por qué mostrar una fecha de vigencia del AIP: sería
+    atribuirle a un documento un dato que no salió de ahí.
   */
   const aporto =
-    (!madhel.runways?.length && runways.length > 0) ||
-    (!madhel.radio?.length && radio.length > 0) ||
-    (!madhel.localization?.trim() && localization !== "") ||
-    (!madhel.fuel?.trim() && fuel !== "");
+    delAip.runways.length > 0 || delAip.radio.length > 0 || delAip.localization !== "" || delAip.fuel !== "";
 
   return {
     runways,

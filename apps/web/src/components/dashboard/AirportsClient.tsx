@@ -141,6 +141,8 @@ export default function AirportsClient({
   const [notams, setNotams] = useState<NotamItem[] | null>([]);
   /** Cuándo se le preguntó a ANAC: si salen de lo guardado, la pantalla lo dice. */
   const [notamsDe, setNotamsDe] = useState<string | null>(null);
+  /** La "Última actualización" de ANAC, si los NOTAM salieron de la descarga del país. */
+  const [notamsAnac, setNotamsAnac] = useState<string | null>(null);
   const [madhelFull, setMadhelFull] = useState<MadhelFull | null>(null);
   const [jeppesenCharts, setJeppesenCharts] = useState<CartaJeppesen[]>([]);
   const [loadingWx, setLoadingWx] = useState(false);
@@ -233,6 +235,7 @@ export default function AirportsClient({
       if (notamRes) {
         setNotams(Array.isArray(notamRes.notams) ? notamRes.notams : null);
         setNotamsDe(notamRes.notamsCapturadosEn ?? null);
+        setNotamsAnac(notamRes.notamsFuente === "descarga" ? (notamRes.notamsActualizacion ?? null) : null);
         setMadhelFull(notamRes.madhel || null);
       }
       if (chartsRes && chartsRes.ok) {
@@ -738,10 +741,18 @@ export default function AirportsClient({
                   <h3 className="text-lg font-display font-bold text-zinc-900 dark:text-white tracking-tight mt-1">
                     NOTAMs en vivo
                   </h3>
-                  {!loadingNotams && notams !== null && antiguedad(notamsDe, new Date()) && (
+                  {!loadingNotams && notams !== null && notamsAnac ? (
                     <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
-                      Consultados {antiguedad(notamsDe, new Date())}
+                      Última actualización de ANAC: {notamsAnac}
                     </p>
+                  ) : (
+                    !loadingNotams &&
+                    notams !== null &&
+                    antiguedad(notamsDe, new Date()) && (
+                      <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                        Consultados {antiguedad(notamsDe, new Date())}
+                      </p>
+                    )
                   )}
                 </div>
 

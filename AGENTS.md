@@ -253,8 +253,8 @@ workflows y sólo corren si el push toca su carpeta:
   fuentes de Google rompió un build el 2026-11-03.
 - **La API:** `api-ci.yml` (los `test_*.py`, el import y ruff) y `api-deploy.yml`, que
   reinicia `flightlog-7477` y `grabador-adsb`, con el mismo rollback.
-- `secretos.yml` (gitleaks) corre sobre todo el repo, `aip.yml` los martes y `madhel.yml` el
-  día 3 de cada mes.
+- `secretos.yml` (gitleaks) corre sobre todo el repo, `aip.yml` los martes, `madhel.yml` el
+  día 3 de cada mes y `notam.yml` cada 15 minutos.
 
 **En el VPS cada app tiene su propio clon** del monorepo, con sparse-checkout:
 `~/Vector/web` (PM2 corre en `~/Vector/web/apps/web`) y `~/Vector/api` (en
@@ -276,9 +276,17 @@ Por eso **a ANAC le pregunta el navegador del piloto**, con su IP:
   Federico después de un día de pruebas (en su mayoría con `curl`): **no probar contra ANAC
   con `curl` ni scripts**; que lo haga el navegador, o simularlo en la pestaña;
 - **una pantalla nueva que necesite ANAC va por ahí**;
-- lo que corre en el servidor (el copiloto, el mail del briefing, la meteo del plan de
-  vuelo) sigue con `fetchAnac` (`lib/anac.ts`, tope de 6 s), y casi siempre dice "no se pudo
-  consultar". El proxy de oraclex64 (`infra/proxy-anac/`, `ANAC_PROXY`) quedó, pero bloqueado.
+- **los NOTAM salen de la descarga del país** (2.40.0): `.github/workflows/notam.yml` mira
+  cada 15 min la "Última actualización" de ANAC y, si cambió, trae los NOTAM vigentes de todo
+  el país en un pedido (`POST /notam/json` con el indicador vacío) al VPS
+  (`~/Vector/datos/notams-anac.json`). `lib/notams-descargados.ts` los usa **mientras se hayan
+  verificado hace menos de 45 min**; ahí un aeródromo sin NOTAM es "no hay" de verdad. Atrasada,
+  se vuelve a preguntarle a ANAC (`fetchAnac` desde el servidor, el navegador en las
+  pantallas). Si ANAC falla 4 veces seguidas, el workflow se apaga solo y avisa;
+- **el AIP manda sobre MADHEL** en la ficha (`componerFicha`), campo por campo: está validado
+  contra el PDF (invariante 12) y MADHEL mismo dice que vale el AIP;
+- desde el servidor se presenta como `Vector` (`USER_AGENT_VECTOR`), **nunca imitando un
+  navegador**. El proxy de oraclex64 (`infra/proxy-anac/`, `ANAC_PROXY`) quedó, pero bloqueado.
 
 No copiar archivos ni reiniciar PM2 a mano. Para desplegar sin esperar al CI está el
 botón de `workflow_dispatch` de cada deploy.

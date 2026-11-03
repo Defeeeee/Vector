@@ -25,6 +25,7 @@ import {
   yaAvisadoDelLimite,
 } from "@/lib/copilot-guards";
 import { fetchAnac } from "@/lib/anac";
+import { USER_AGENT_VECTOR, notamsCrudos } from "@/lib/notams-descargados";
 
 // Compares the caller-supplied secret against the configured one without leaking timing info,
 // and without throwing when lengths differ (timingSafeEqual requires equal-length buffers).
@@ -92,7 +93,7 @@ async function getAirportInfoHelper(icao: string) {
   try {
     const madhelRes = await fetchAnac(`https://datos.anac.gob.ar/madhel/api/v2/airports/${indicator}/`, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+        "User-Agent": USER_AGENT_VECTOR
       }
     });
 
@@ -165,22 +166,12 @@ async function getAirportInfoHelper(icao: string) {
     madhelSummary = `Error consultando MADHEL: ${e.message}`;
   }
 
-  // Fetch NOTAMs
+  // Fetch NOTAMs: de la descarga del país si está al día; si no, preguntándole a ANAC.
   try {
-    const notamRes = await fetchAnac("https://ais.anac.gob.ar/notam/json", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-Requested-With": "XMLHttpRequest",
-        "Referer": "https://ais.anac.gob.ar/notam",
-        "User-Agent": "Mozilla/5.0"
-      },
-      body: `indicador=${encodeURIComponent(indicator)}`
-    });
-
-    if (notamRes.ok) {
-      const nJson = await notamRes.json();
-      if (Array.isArray(nJson) && nJson.length > 0) {
+    const { items: nJson, fuente, actualizacion } = await notamsCrudos(indicator);
+    if (nJson) {
+      const origen = fuente === "descarga" && actualizacion ? ` (ANAC, última actualización ${actualizacion} hora argentina)` : "";
+      if (nJson.length > 0) {
         notamSummary = nJson.map((item: any, i: number) => {
           const rawBody = (item.novedad || "").replace(/<\/?[^>]+(>|$)/g, "").trim();
           let textEsp = rawBody;
@@ -189,9 +180,9 @@ async function getAirportInfoHelper(icao: string) {
           }
           const toVal = item.hasta === "0000-00-00 00:00:00" ? "PERMANENTE" : item.hasta;
           return `NOTAM ${i + 1} [${item.notam || "NOTAM"}] Desde: ${item.desde || ""} | Hasta: ${toVal}\n${textEsp}`;
-        }).join("\n\n");
+        }).join("\n\n") + (origen ? `\n\nFuente${origen}.` : "");
       } else {
-        notamSummary = "Sin NOTAMs activos.";
+        notamSummary = `Sin NOTAMs activos${origen}.`;
       }
     }
   } catch (e: any) {

@@ -1,6 +1,6 @@
 import { anacIndicator } from "./madhel-reference";
 import type { NotamAnac } from "./meteo-plan";
-import { fetchAnac } from "./anac";
+import { notamsCrudos } from "./notams-descargados";
 
 /**
  * Los NOTAM de un aeródromo, del servicio JSON de ANAC (el mismo que lee `/api/notams`).
@@ -14,20 +14,9 @@ import { fetchAnac } from "./anac";
  */
 export async function notamsDeAnac(codigo: string): Promise<(NotamAnac & { textoEsp: string })[] | null> {
   try {
-    const res = await fetchAnac("https://ais.anac.gob.ar/notam/json", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-Requested-With": "XMLHttpRequest",
-        Referer: "https://ais.anac.gob.ar/notam",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
-      body: `indicador=${encodeURIComponent(anacIndicator(codigo))}`,
-      next: { revalidate: 300 },
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    if (!Array.isArray(json)) return null;
+    // De la descarga del país si está al día; si no, preguntándole a ANAC (`notamsCrudos`).
+    const { items: json } = await notamsCrudos(anacIndicator(codigo), 300);
+    if (!json) return null;
     return json.map((item: { notam?: string; desde?: string; hasta?: string; novedad?: string }) => {
       const cuerpo = (item.novedad ?? "").replace(/<\/?[^>]+(>|$)/g, "");
       const [ingles, castellano] = cuerpo.split("Versión en Español:");

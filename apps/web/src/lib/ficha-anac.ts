@@ -49,8 +49,12 @@ export interface FichaAnac {
    * caído, la ficha decía "No hay NOTAMs vigentes".
    */
   notams: NotamItem[] | null;
-  /** Cuándo se le preguntó a ANAC por los NOTAM, si fue desde el navegador (`lib/anac-navegador.ts`). */
+  /** Cuándo se obtuvieron los NOTAM (ISO): la última verificación de la descarga, o el pedido del navegador. */
   notamsCapturadosEn?: string | null;
+  /** De dónde salieron: la descarga del país (`lib/notams-descargados.ts`), ANAC desde el servidor, o el navegador. */
+  notamsFuente?: "descarga" | "anac" | "navegador" | null;
+  /** La "Última actualización" de ANAC, tal cual ("02 Nov 2026 21:33"), si vino de la descarga. */
+  notamsActualizacion?: string | null;
 }
 
 const texto = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -102,17 +106,7 @@ export function leerMadhel(json: unknown, icao: string, datosDelAip: DatosAip | 
     locStr = ""; // Clear the useless AIP reference string
   }
 
-  /*
-    **El AIP rellena, nunca pisa.** Para un aeródromo controlado MADHEL devuelve
-    `rwy: []`, `radio: []`, `fuel: ""` y `telephone: []` —ANAC publica eso en el AIP
-    y no acá—, así que el hueco es real y hay que llenarlo. Lo que no se puede es
-    llenarlo cuando MADHEL sí contestó: la versión anterior de esto hacía
-    `fallback ? fallback.rwy : ...`, y con eso La Plata mostraba una pista de tierra
-    escrita a mano en vez de la de asfalto que ANAC publica.
-
-    Se elige por campo y no por aeródromo, que es lo que hace que la regla se sostenga
-    sola cuando MADHEL empiece a publicar alguno de estos datos.
-  */
+  // **El AIP manda donde publica; MADHEL llena el resto**, campo por campo (`componerFicha`).
   const ficha = componerFicha(
     {
       runways: lista(mJson.data?.rwy),

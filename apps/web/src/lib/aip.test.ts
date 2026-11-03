@@ -318,34 +318,34 @@ describe("componerFicha", () => {
     expect(f.aip?.vigenteDesde).toMatch(/^\d{2}-[A-Za-z]{3}-\d{2}$/);
   });
 
-  it("**MADHEL manda donde publica**, y ése era el bug", () => {
+  it("**el AIP manda donde publica** (desde el 2026-11-03)", () => {
     /*
-      La versión anterior hacía `fallback ? fallback.rwy : madhel.rwy`, o sea al revés: el
-      dato escrito a mano pisaba al de ANAC. Con eso La Plata mostraba una pista de tierra
-      de 1435 m donde MADHEL publica asfalto de 1427, y uno de sus siete teléfonos.
+      Antes mandaba MADHEL, por un bug viejo en el que un dato escrito a mano pisaba al de
+      ANAC. El AIP no es eso: está validado contra el PDF oficial (invariante 12), y el
+      propio MADHEL dice que, si difieren, vale el AIP.
     */
-    const deAnac = {
-      runways: ["02/20: 1427x45 M - ASPH – AUW 25t/1 33t/2 54t/4"],
-      radio: ["COOP 123.50 MHz"],
-      localization: "5 KM al SE de la ciudad de LA PLATA",
-      fuel: "AVGAS 100LL / JET A-1",
-      telephone: ["(0221) 4861568", "(0221) 5032510"],
+    const deMadhel = {
+      runways: ["05/23 1800x30 M - ASPH (de MADHEL)"],
+      radio: ["TWR 118.45 MHz (de MADHEL)"],
+      localization: "algo distinto",
+      fuel: "AVGAS 100LL",
+      telephone: ["(011) 4714-0000"],
     };
-    // Se le pasa el AIP de San Fernando a propósito: aunque hubiera datos, no deben ganar.
-    const f = componerFicha(deAnac, datosAip("SADF"));
-    expect(f).toMatchObject({ ...deAnac, aip: null });
+    const f = componerFicha(deMadhel, datosAip("SADF"));
+    expect(f.runways[0]).toContain("05/23");
+    expect(f.runways).not.toContain("05/23 1800x30 M - ASPH (de MADHEL)");
+    expect(f.radio[0]).toContain("119.00 MHz");
+    expect(f.fuel).toBe("AVGAS 100LL, JET A-1");
+    expect(f.localization).toBe("2 km al SW de la ciudad de San Fernando");
+    // Los teléfonos el AIP no los tiene: quedan los de MADHEL.
+    expect(f.telephone).toEqual(["(011) 4714-0000"]);
+    expect(f.aip).not.toBeNull();
   });
 
-  it("se decide campo por campo, no aeródromo por aeródromo", () => {
-    /*
-      El día que ANAC publique las frecuencias de un controlado en MADHEL, esas ganan y las
-      pistas siguen saliendo del AIP, sin que nadie tenga que tocar una lista.
-    */
-    const f = componerFicha({ ...vacio, radio: ["TWR 119.00 MHz (de MADHEL)"] }, datosAip("SADF"));
-    expect(f.radio).toEqual(["TWR 119.00 MHz (de MADHEL)"]);
-    expect(f.runways[0]).toContain("05/23");
-    // El AIP sigue siendo fuente de las pistas, así que la fecha se muestra igual.
-    expect(f.aip).not.toBeNull();
+  it("donde el AIP no tiene el dato, va el de MADHEL", () => {
+    // Un aeródromo que no está en el AIP (casi todos los no controlados): todo de MADHEL.
+    const deMadhel = { runways: ["17/35 1400x21 M – Tierra."], radio: [], localization: "6 KM al SW", fuel: "", telephone: [] };
+    expect(componerFicha(deMadhel, null)).toEqual({ ...deMadhel, aip: null });
   });
 
   it("sin AIP no inventa nada", () => {
@@ -354,7 +354,7 @@ describe("componerFicha", () => {
   });
 
   it("no atribuye al AIP un dato que no salió del AIP", () => {
-    // MADHEL contestó todo: la ficha no debe mostrar fecha de vigencia del AIP.
+    // Sin AIP para ese aeródromo, la ficha no debe mostrar fecha de vigencia del AIP.
     const completo = {
       runways: ["18/36 1080x30 M"],
       radio: ["COOP 123.50 MHz"],
@@ -362,7 +362,7 @@ describe("componerFicha", () => {
       fuel: "AVGAS 100LL",
       telephone: [],
     };
-    expect(componerFicha(completo, datosAip("SADF")).aip).toBeNull();
+    expect(componerFicha(completo, null).aip).toBeNull();
   });
 
   it("los teléfonos nunca los pone el AIP", () => {

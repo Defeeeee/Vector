@@ -172,15 +172,36 @@ async function designador(icao: string, signal?: AbortSignal): Promise<string> {
 }
 
 /**
+ * ¿El servidor tiene los NOTAM del país al día (`/api/notams/estado`)? Si los tiene, el
+ * navegador no le pregunta los NOTAM a ANAC: la descarga es la fuente principal. Se
+ * recuerda 5 minutos.
+ */
+let estadoDescarga: { alDia: boolean; hasta: number } | null = null;
+
+async function descargaAlDia(signal?: AbortSignal): Promise<boolean> {
+  if (estadoDescarga && Date.now() < estadoDescarga.hasta) return estadoDescarga.alDia;
+  try {
+    const res = await fetch("/api/notams/estado", { signal });
+    const alDia = res.ok ? Boolean((await res.json())?.alDia) : false;
+    estadoDescarga = { alDia, hasta: Date.now() + 5 * 60000 };
+    return alDia;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * La ficha de un aeródromo con lo que dice ANAC: la misma forma que devuelve `/api/notams`
  * (`FichaAnac`), más `notamsCapturadosEn`, para que la pantalla diga de cuándo son.
  * `indicador` es el designador ANAC si ya se sabe (`AirportRef.local`); si no, se busca.
  */
 export async function fichaDesdeElNavegador(icao: string, indicador?: string, signal?: AbortSignal): Promise<FichaAnac> {
   const ind = indicador || (await designador(icao, signal));
+  const sinPreguntar: Crudo = { valor: null, capturadoEn: null };
   const [madhel, notams] = await Promise.all([
     obtener("madhel", ind, VIGENCIA_MADHEL_MIN),
-    obtener("notams", ind, VIGENCIA_NOTAM_MIN),
+    // Con la descarga del país al día, los NOTAM los pone el servidor.
+    descargaAlDia(signal).then((alDia) => (alDia ? sinPreguntar : obtener("notams", ind, VIGENCIA_NOTAM_MIN))),
   ]);
 
   try {
@@ -191,7 +212,8 @@ export async function fichaDesdeElNavegador(icao: string, indicador?: string, si
       signal,
     });
     if (!res.ok) throw new Error(`notams ${res.status}`);
-    const ficha: FichaAnac = { ...((await res.json()) as FichaAnac), notamsCapturadosEn: notams.capturadoEn };
+    const compuesta = (await res.json()) as FichaAnac;
+    const ficha: FichaAnac = { ...compuesta, notamsCapturadosEn: compuesta.notamsCapturadosEn ?? notams.capturadoEn };
     // Sólo lo que trajo algo: "no se pudo consultar" no pisa una ficha buena guardada.
     if (madhel.valor !== null || notams.valor !== null) void guardarParaSinSenal(icao, ficha);
     return ficha;
