@@ -927,6 +927,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "2.39.3",
+    fecha: "2026-11-02",
+    motivo: "El navegador le pide a ANAC lo menos posible: reusa la ficha de MADHEL 24 h y los NOTAM 15 min, y la tarjeta dice de cuándo son. Para que ANAC no bloquee la IP del piloto. Sin anuncio.",
+  },
+  {
     version: "2.39.2",
     fecha: "2026-11-02",
     motivo: "La ficha del aeródromo y el briefing le piden MADHEL y los NOTAM a ANAC desde el navegador del piloto, porque ANAC bloquea a nuestros servidores. Vuelve a andar lo de siempre, sin anuncio.",

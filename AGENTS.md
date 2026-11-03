@@ -266,6 +266,10 @@ Por eso **a ANAC le pregunta el navegador del piloto**, con su IP:
 - la ficha de Aeropuertos y el briefing de la ruta usan `fichaDesdeElNavegador`
   (`lib/anac-navegador.ts`), que le pide MADHEL y los NOTAM a ANAC (CORS abierto, sin
   extensión) y los compone con `POST /api/notams` (`lib/ficha-anac.ts`);
+- **se le pregunta lo menos posible** (`lib/anac-vigencia.ts`): MADHEL se reusa 24 h y los
+  NOTAM 15 min, y la pantalla dice de cuándo son. ANAC también bloqueó la IP de la Mac de
+  Federico después de un día de pruebas (en su mayoría con `curl`): **no probar contra ANAC
+  con `curl` ni scripts**; que lo haga el navegador, o simularlo en la pestaña;
 - **una pantalla nueva que necesite ANAC va por ahí**;
 - lo que corre en el servidor (el copiloto, el mail del briefing, la meteo del plan de
   vuelo) sigue con `fetchAnac` (`lib/anac.ts`, tope de 6 s), y casi siempre dice "no se pudo

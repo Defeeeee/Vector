@@ -23,6 +23,7 @@ import {
 import { AirportRef } from "@/types";
 import FiltroAerodromos from "./FiltroAerodromos";
 import { fichaDesdeElNavegador } from "@/lib/anac-navegador";
+import { antiguedad } from "@/lib/anac-vigencia";
 
 export interface NotamItem {
   code: string;
@@ -138,6 +139,8 @@ export default function AirportsClient({
   const [weather, setWeather] = useState<Weather | null>(null);
   // `null`: no se pudo preguntar a ANAC, que no es "no hay NOTAM" (invariante 2).
   const [notams, setNotams] = useState<NotamItem[] | null>([]);
+  /** Cuándo se le preguntó a ANAC: si salen de lo guardado, la pantalla lo dice. */
+  const [notamsDe, setNotamsDe] = useState<string | null>(null);
   const [madhelFull, setMadhelFull] = useState<MadhelFull | null>(null);
   const [jeppesenCharts, setJeppesenCharts] = useState<CartaJeppesen[]>([]);
   const [loadingWx, setLoadingWx] = useState(false);
@@ -229,6 +232,7 @@ export default function AirportsClient({
       }
       if (notamRes) {
         setNotams(Array.isArray(notamRes.notams) ? notamRes.notams : null);
+        setNotamsDe(notamRes.notamsCapturadosEn ?? null);
         setMadhelFull(notamRes.madhel || null);
       }
       if (chartsRes && chartsRes.ok) {
@@ -734,6 +738,11 @@ export default function AirportsClient({
                   <h3 className="text-lg font-display font-bold text-zinc-900 dark:text-white tracking-tight mt-1">
                     NOTAMs en vivo
                   </h3>
+                  {!loadingNotams && notams !== null && antiguedad(notamsDe, new Date()) && (
+                    <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                      Consultados {antiguedad(notamsDe, new Date())}
+                    </p>
+                  )}
                 </div>
 
                 {loadingNotams ? (

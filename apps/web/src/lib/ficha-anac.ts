@@ -49,6 +49,8 @@ export interface FichaAnac {
    * caído, la ficha decía "No hay NOTAMs vigentes".
    */
   notams: NotamItem[] | null;
+  /** Cuándo se le preguntó a ANAC por los NOTAM, si fue desde el navegador (`lib/anac-navegador.ts`). */
+  notamsCapturadosEn?: string | null;
 }
 
 const texto = (v: unknown): string => (typeof v === "string" ? v : "");
