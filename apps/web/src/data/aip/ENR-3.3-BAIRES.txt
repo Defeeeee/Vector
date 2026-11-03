@@ -1,5 +1,5 @@
-# ENR 3.3 — corredores y sectores VFR debajo de la TMA Baires, extraído de (PDF local)
-# AIP ARGENTINA · edición ? · vigente desde ?
+# ENR 3.3 — corredores y sectores VFR debajo de la TMA Baires, extraído de https://ais.anac.gob.ar/descarga/aip-6700467f22536
+# AIP ARGENTINA · edición 02/24 · vigente desde 28-Nov-24
 # Generado por scripts/build-espacios.mjs. NO EDITAR A MANO.
 CORREDORES VFR PARA VUELOS VFR DEBAJO DE LAS
 TMA BAIRES
