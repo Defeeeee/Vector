@@ -990,6 +990,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.1.1",
+    fecha: "2026-11-03",
+    motivo: "El Mapa pide sus capas con la versión en la dirección: después de la 3.1.0, Safari seguía mostrando las de la 3.0.0, sin las FIR. Arreglo, sin anuncio.",
+  },
+  {
     version: "2.40.2",
     fecha: "2026-11-03",
     motivo: "Público o privado, y controlado o no, salen del texto que muestra ANAC y no de un campo de MADHEL que a veces lo contradice (Luján figuraba privado). Arreglo, sin anuncio.",

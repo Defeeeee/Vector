@@ -73,7 +73,10 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
   const [capas, setCapas] = useState<CapasMapa | null>(null);
   const [errorCapas, setErrorCapas] = useState(false);
   useEffect(() => {
-    fetch("/api/mapa")
+    // Con la versión en la URL: la respuesta se guarda un día (y el service worker la sirve
+    // primero de lo guardado), así que sin esto una versión nueva mostraba las capas de la
+    // anterior. Le pasó a Federico con las FIR de la 3.1.0 en Safari.
+    fetch(`/api/mapa?v=${process.env.NEXT_PUBLIC_APP_VERSION ?? ""}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then(setCapas)
       .catch(() => setErrorCapas(true));
