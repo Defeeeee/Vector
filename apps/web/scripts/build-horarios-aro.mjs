@@ -17,10 +17,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractText, getDocumentProxy } from "unpdf";
+import { UA_VECTOR } from "./ua-vector.mjs";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATOS = path.join(RAIZ, "src", "data");
-const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+const UA = UA_VECTOR;
 
 const leerTsv = (archivo) =>
   fs
@@ -47,7 +48,7 @@ export function renglonAro(texto) {
 async function main() {
   const filas = [];
   for (const [icao, , edicion, vigente, url] of fichas.sort()) {
-    const res = await fetch(url, { headers: { "User-Agent": UA, Referer: "https://ais.anac.gob.ar/aip" } });
+    const res = await fetch(url, { headers: { "User-Agent": UA } });
     if (!res.ok) {
       console.error(`  ${icao}: la descarga contestó ${res.status}`);
       continue;

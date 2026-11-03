@@ -47,6 +47,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractText, getDocumentProxy } from "unpdf";
+import { UA_VECTOR } from "./ua-vector.mjs";
 
 const BASE = "https://ais.anac.gob.ar";
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -115,8 +116,7 @@ function cartasDelListado(html) {
   return filas.sort();
 }
 
-const UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+const UA = UA_VECTOR;
 
 /**
  * El listado de documentos AD del AIP.
@@ -127,7 +127,7 @@ const UA =
  */
 async function listadoAd() {
   const res = await fetch(`${BASE}/aip/ad`, {
-    headers: { "User-Agent": UA, Referer: `${BASE}/aip`, "X-Requested-With": "XMLHttpRequest" },
+    headers: { "User-Agent": UA, "X-Requested-With": "XMLHttpRequest" },
   });
   if (!res.ok) throw new Error(`El listado AD contestó ${res.status}`);
   return res.text();
@@ -384,6 +384,10 @@ async function main() {
   if (!local) {
     console.log("Pidiendo el listado AD del AIP…");
     html = await listadoAd();
+    if (process.env.AIP_GUARDAR_PDF) {
+      fs.mkdirSync(process.env.AIP_GUARDAR_PDF, { recursive: true });
+      fs.writeFileSync(path.join(process.env.AIP_GUARDAR_PDF, "ad.html"), html);
+    }
   } else {
     console.log(`Leyendo PDF de ${local}`);
     const guardado = path.join(local, "ad.html");
@@ -416,12 +420,19 @@ async function main() {
         Object.assign(meta, { edicion, vigenteDesde, url });
       }
     } else {
-      const res = await fetch(meta.url, { headers: { "User-Agent": UA, Referer: `${BASE}/aip` } });
+      const res = await fetch(meta.url, { headers: { "User-Agent": UA } });
       if (!res.ok) {
         console.error(`  ${icao}: la descarga contestó ${res.status}`);
         continue;
       }
       bytes = Buffer.from(await res.arrayBuffer());
+      // Con `AIP_GUARDAR_PDF=<carpeta>` deja lo bajado en el formato que lee el modo local
+      // (`npm run build:aip -- <carpeta>`): para armar un parser nuevo sin volver a pedirle
+      // los PDF a ANAC.
+      if (process.env.AIP_GUARDAR_PDF) {
+        fs.writeFileSync(path.join(process.env.AIP_GUARDAR_PDF, `${icao}.pdf`), bytes);
+        fs.writeFileSync(path.join(process.env.AIP_GUARDAR_PDF, `${icao}.meta`), [meta.edicion, meta.vigenteDesde, meta.url].join("\t"));
+      }
     }
 
     const texto = await textoDelPdf(bytes);

@@ -25,6 +25,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { UA_VECTOR } from "./ua-vector.mjs";
 
 const LIST = "https://datos.anac.gob.ar/madhel/api/v2/airports/";
 const detailUrl = (code) => `${LIST}${encodeURIComponent(code)}/?format=json`;
@@ -60,7 +61,7 @@ async function getJson(url) {
     try {
       res = await fetch(url, {
         headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          "User-Agent": UA_VECTOR
         }
       });
     } catch (err) {

@@ -38,6 +38,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractText, getDocumentProxy } from "unpdf";
+import { UA_VECTOR } from "./ua-vector.mjs";
 
 const BASE = "https://ais.anac.gob.ar";
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -45,8 +46,7 @@ const SALIDA = path.join(RAIZ, "src", "data", "fixes.tsv");
 const FUENTES = path.join(RAIZ, "src", "data", "aip-fuentes.tsv");
 const CLAVE = "ENR4.4";
 
-const UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+const UA = UA_VECTOR;
 
 /**
  * La fila de ENR 4.4 en el listado En-Route.
@@ -56,7 +56,7 @@ const UA =
  */
 async function documento() {
   const res = await fetch(`${BASE}/aip/enr`, {
-    headers: { "User-Agent": UA, Referer: `${BASE}/aip`, "X-Requested-With": "XMLHttpRequest" },
+    headers: { "User-Agent": UA, "X-Requested-With": "XMLHttpRequest" },
   });
   if (!res.ok) throw new Error(`El listado ENR contestó ${res.status}`);
   const html = await res.text();
@@ -113,7 +113,7 @@ async function main() {
       process.exit(1);
     }
     meta = doc;
-    const res = await fetch(doc.url, { headers: { "User-Agent": UA, Referer: `${BASE}/aip` } });
+    const res = await fetch(doc.url, { headers: { "User-Agent": UA } });
     if (!res.ok) {
       console.error(`La descarga contestó ${res.status}.`);
       process.exit(1);

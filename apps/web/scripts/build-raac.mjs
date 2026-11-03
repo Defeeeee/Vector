@@ -26,6 +26,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractText, getDocumentProxy } from "unpdf";
+import { UA_VECTOR } from "./ua-vector.mjs";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FUENTES = {
@@ -50,7 +51,7 @@ const fuente = FUENTES[parte];
 
 const bytes = local
   ? fs.readFileSync(local)
-  : Buffer.from(await (await fetch(fuente.url, { headers: { "User-Agent": "Mozilla/5.0 (Vector)" } })).arrayBuffer());
+  : Buffer.from(await (await fetch(fuente.url, { headers: { "User-Agent": UA_VECTOR } })).arrayBuffer());
 const pdf = await getDocumentProxy(new Uint8Array(bytes));
 const { text: paginas } = await extractText(pdf, { mergePages: false });
 

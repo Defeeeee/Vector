@@ -42,6 +42,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractText, getDocumentProxy } from "unpdf";
+import { UA_VECTOR } from "./ua-vector.mjs";
 
 const BASE = "https://ais.anac.gob.ar";
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -53,12 +54,11 @@ const DOCS = [
   { clave: "ENR3.2", buscar: "ENR-3.2", archivo: "enr32.pdf" },
 ];
 
-const UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+const UA = UA_VECTOR;
 
 async function listadoEnr() {
   const res = await fetch(`${BASE}/aip/enr`, {
-    headers: { "User-Agent": UA, Referer: `${BASE}/aip`, "X-Requested-With": "XMLHttpRequest" },
+    headers: { "User-Agent": UA, "X-Requested-With": "XMLHttpRequest" },
   });
   if (!res.ok) throw new Error(`El listado ENR contestó ${res.status}`);
   return res.text();
@@ -153,7 +153,7 @@ async function main() {
         continue;
       }
       meta = d;
-      const res = await fetch(d.url, { headers: { "User-Agent": UA, Referer: `${BASE}/aip` } });
+      const res = await fetch(d.url, { headers: { "User-Agent": UA } });
       if (!res.ok) {
         console.error(`  ${doc.buscar}: la descarga contestó ${res.status}`);
         continue;

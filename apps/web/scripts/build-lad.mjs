@@ -20,6 +20,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { UA_VECTOR } from "./ua-vector.mjs";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SALIDA = path.join(RAIZ, "src", "data", "lad.tsv");
@@ -29,7 +30,7 @@ const [local] = process.argv.slice(2);
 const lista = local
   ? JSON.parse(fs.readFileSync(local, "utf8"))
   : await (async () => {
-      const r = await fetch(FUENTE, { headers: { "User-Agent": "Mozilla/5.0 (Vector)", Accept: "application/json" } });
+      const r = await fetch(FUENTE, { headers: { "User-Agent": UA_VECTOR, Accept: "application/json" } });
       if (!r.ok) throw new Error(`El CAD contestó ${r.status}`);
       return r.json();
     })();
