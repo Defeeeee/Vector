@@ -70,14 +70,17 @@ interface Props {
   onArrastre: () => void;
   /** Cuánto ocupa la tarjeta a la izquierda, para que la ruta no quede debajo. */
   margenIzquierdo: number;
+  /** Con "Agregar puntos" prendido, un toque en el mapa suma esa coordenada a la ruta. */
+  agregando?: boolean;
+  onPuntoLibre?: (lat: number, lon: number) => void;
 }
 
-export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, volando, onAgregar, onArrastre, margenIzquierdo }: Props) {
+export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, volando, onAgregar, onArrastre, margenIzquierdo, agregando = false, onPuntoLibre }: Props) {
   const contenedor = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capasRef = useRef<{ ruta: L.LayerGroup; avion: L.LayerGroup; espacios: L.LayerGroup; firs: L.LayerGroup; aerodromos: L.LayerGroup; radioayudas: L.LayerGroup } | null>(null);
-  const callbacks = useRef({ onAgregar, onArrastre });
-  callbacks.current = { onAgregar, onArrastre };
+  const callbacks = useRef({ onAgregar, onArrastre, onPuntoLibre, agregando });
+  callbacks.current = { onAgregar, onArrastre, onPuntoLibre, agregando };
   const ultimoEncuadre = useRef("");
 
   // El mapa, una sola vez.
@@ -108,6 +111,10 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
     capasRef.current = { ruta, avion, espacios, firs, aerodromos, radioayudas };
 
     m.on("dragstart", () => callbacks.current.onArrastre());
+    // Un toque en el mapa (no en un aeródromo ni una radioayuda, que suman su código).
+    m.on("click", (e: L.LeafletMouseEvent) => {
+      if (callbacks.current.agregando) callbacks.current.onPuntoLibre?.(e.latlng.lat, e.latlng.lng);
+    });
     mapa.current = m;
     // Si nace antes de que el layout se asiente, Leaflet mide cero: un invalidate lo arregla.
     const t = setTimeout(() => m.invalidateSize(), 150);
@@ -190,6 +197,8 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
         weight: 1.2,
         fillColor: grande ? "#18181b" : "#ffffff",
         fillOpacity: 1,
+        // El toque suma el código del aeródromo; no tiene que llegar al mapa y sumar además la coordenada.
+        bubblingMouseEvents: false,
       })
         .bindTooltip(`<b>${escapar(codigo)}</b>${local && local !== codigo ? ` · ${escapar(local)}` : ""} — ${escapar(nombre)}`, { direction: "top", offset: [0, -4] })
         .on("click", () => callbacks.current.onAgregar(codigo))
@@ -198,7 +207,7 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
 
     for (const [ident, tipo, nombre, lat, lon, khz] of capas.radioayudas) {
       const mhz = khz && khz > 2000 ? `${(khz / 1000).toFixed(2)} MHz` : khz ? `${khz} kHz` : "";
-      L.circleMarker([lat, lon], { radius: 4, color: "#059669", weight: 1.5, fillColor: "#d1fae5", fillOpacity: 1 })
+      L.circleMarker([lat, lon], { radius: 4, color: "#059669", weight: 1.5, fillColor: "#d1fae5", fillOpacity: 1, bubblingMouseEvents: false })
         .bindTooltip(`<b>${escapar(ident)}</b> ${escapar(tipo)} — ${escapar(nombre)}${mhz ? `<br>${mhz}` : ""}`, { direction: "top", offset: [0, -4] })
         .on("click", () => callbacks.current.onAgregar(ident))
         .addTo(c.radioayudas);
@@ -232,9 +241,10 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
         .addTo(c.ruta);
     });
 
-    // Encuadra cuando cambian los puntos, no en cada render, y nunca en vuelo.
+    // Encuadra cuando cambian los puntos, no en cada render; nunca en vuelo ni mientras se
+    // agregan puntos tocando el mapa (se movería debajo del dedo).
     const clave = coords.map((x) => x.join(",")).join("|");
-    if (!volando && clave !== ultimoEncuadre.current) {
+    if (!volando && !callbacks.current.agregando && clave !== ultimoEncuadre.current) {
       ultimoEncuadre.current = clave;
       const izquierda = margenIzquierdo + 32;
       if (coords.length === 1) m.setView(coords[0], 10);
@@ -262,6 +272,11 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
     L.marker([posicion.lat, posicion.lon], { icon: iconoAvion(posicion.trackT), interactive: false, zIndexOffset: 1000 }).addTo(c.avion);
     if (seguir) m.setView([posicion.lat, posicion.lon], Math.max(m.getZoom(), 10), { animate: true });
   }, [posicion, proximo, puntos, seguir]);
+
+  // La mira mientras se agregan puntos.
+  useEffect(() => {
+    if (contenedor.current) contenedor.current.style.cursor = agregando ? "crosshair" : "";
+  }, [agregando]);
 
   return (
     <div

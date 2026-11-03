@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.3.0 — Tus propios puntos, desde el mapa
+
+_3 de noviembre de 2026_
+
+- **Tocá el mapa y sumá un punto** — Prendé "Agregar puntos en el mapa" y cada toque suma esa coordenada a la ruta, para armarla por donde vas a volar de verdad. Con "Deshacer" sacás el último.
+
 ## v3.2.0 — Los corredores VFR de Baires
 
 _3 de noviembre de 2026_

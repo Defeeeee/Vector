@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Loader2, Navigation, Radio, Square } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Loader2, MapPin, Navigation, Radio, Square, Undo2 } from "lucide-react";
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { EspacioAereo } from "@/lib/espacios-aereos";
 import { aMagnetico } from "@/lib/navegacion";
@@ -141,6 +141,15 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
       return `${t.trim()} ${codigo}`.trim();
     });
   }, []);
+
+  // Puntos propios: con "Agregar puntos" prendido, cada toque en el mapa suma su coordenada a la
+  // ruta, en el formato que entiende el Planificador ("S34.4091/W58.6847", ~10 m).
+  const [agregando, setAgregando] = useState(false);
+  const agregarCoordenada = useCallback((lat: number, lon: number) => {
+    const token = `${lat < 0 ? "S" : "N"}${Math.abs(lat).toFixed(4)}/${lon < 0 ? "W" : "E"}${Math.abs(lon).toFixed(4)}`;
+    setTexto((t) => `${t.trim()} ${token}`.trim());
+  }, []);
+  const deshacer = () => setTexto((t) => t.trim().split(/\s+/).slice(0, -1).join(" "));
 
   const [tas, setTas] = useState(String(tasDelHangar ?? TAS_POR_DEFECTO));
   const tasNum = Number(tas) > 30 ? Number(tas) : null;
@@ -405,7 +414,25 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
             placeholder="SADF DCT SADM · con aerovías: SADF UGIMI W18 BCA SAZB · por un corredor VFR: SADF BENAVIDEZ SAAK"
             className="w-full resize-none rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-3 py-2.5 font-mono text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-aviation-blue/40"
           />
-          {!volando && <p className="text-[11px] text-zinc-500">Aeródromos, radioayudas, puntos y aerovías, como en el Planificador. También podés tocar un aeródromo en el mapa.</p>}
+          {!volando && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setAgregando((v) => !v)}
+                aria-pressed={agregando}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                  agregando ? "bg-aviation-blue text-white border-aviation-blue" : "border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5"
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5" /> {agregando ? "Tocá el mapa para sumar puntos" : "Agregar puntos en el mapa"}
+              </button>
+              {tokens.length > 0 && (
+                <button onClick={deshacer} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10">
+                  <Undo2 className="w-3.5 h-3.5" /> Deshacer
+                </button>
+              )}
+            </div>
+          )}
+          {!volando && <p className="text-[11px] text-zinc-500">Aeródromos, radioayudas, puntos, aerovías y puntos VFR, como en el Planificador. Tocar un aeródromo en el mapa lo suma a la ruta.</p>}
           {sinUbicar.length > 0 && <p className="text-xs text-amber-600 dark:text-amber-400">No encontré {sinUbicar.join(", ")}: no se dibuja.</p>}
           {buscando && (
             <p className="text-xs text-zinc-500 flex items-center gap-1.5">
@@ -427,7 +454,7 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
                     <span className="w-5 h-5 shrink-0 rounded-full border-2 border-aviation-blue text-[10px] font-bold text-aviation-blue flex items-center justify-center">{i + 1}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">
-                        {p.codigo} <span className="font-normal text-zinc-500">{p.label !== p.codigo ? p.label : ""}</span>
+                        {p.codigo} <span className="font-normal text-zinc-500">{p.clase === "coordenada" ? "punto propio" : p.label !== p.codigo ? p.label : ""}</span>
                       </p>
                       {p.aerovia && <p className="text-[11px] text-zinc-500">por {p.aerovia}</p>}
                     </div>
@@ -577,6 +604,8 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
         volando={volando}
         onAgregar={agregar}
         onArrastre={() => setSeguir(false)}
+        agregando={agregando && !volando}
+        onPuntoLibre={agregarCoordenada}
         margenIzquierdo={escritorio ? ANCHO_TARJETA : 0}
       />
       {tarjeta}

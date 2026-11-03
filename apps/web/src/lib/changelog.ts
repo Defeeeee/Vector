@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.3.0",
+    fecha: "2026-11-03",
+    titulo: "Tus propios puntos, desde el mapa",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Tocá el mapa y sumá un punto",
+        texto: "Prendé \"Agregar puntos en el mapa\" y cada toque suma esa coordenada a la ruta, para armarla por donde vas a volar de verdad. Con \"Deshacer\" sacás el último.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+    ],
+  },
+  {
     version: "3.2.0",
     fecha: "2026-11-03",
     titulo: "Los corredores VFR de Baires",
