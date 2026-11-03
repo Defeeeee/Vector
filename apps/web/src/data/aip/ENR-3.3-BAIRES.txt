@@ -1,0 +1,505 @@
+# ENR 3.3 — corredores y sectores VFR debajo de la TMA Baires, extraído de (PDF local)
+# AIP ARGENTINA · edición ? · vigente desde ?
+# Generado por scripts/build-espacios.mjs. NO EDITAR A MANO.
+CORREDORES VFR PARA VUELOS VFR DEBAJO DE LAS
+TMA BAIRES
+VRF CORRIDORS FOR VFR FLIGHTS BELOW THE TMA
+BAIRES
+NORMAS PARA VUELOS VFR POR DEBAJO DEL LÍMITE INFERIOR
+DEL TMA BAIRES
+GENERALIDADES
+VFR POR DEBAJO DEL LÍMITE VERTICAL DEL TMA BAIRES
+Los vuelos VFR por debajo del límite vertical del TMA Baires se
+efectuarán de acuerdo con las Regulaciones Argentinas de
+Aviación Civil (RAAC), a la “CARTA PARA VUELOS VFR POR DEBAJO
+DEL TMA BAIRES”, a lo establecido en las presentes normas y a las
+publicaciones de información aeronáutica.
+A efectos de permitir una mayor flexibilidad a los vuelos VFR, se
+han establecido dos (2) escalones al límite vertical inferior del TMA
+Baires, los que se detallan a continuación:
+II FL 45
+I 2500 FT AGL/AMSL
+Nota. – Los límites laterales y verticales del TMA Baires, de las CTR
+AEROPARQUE, EZEIZA, y de las ATZ EL PALOMAR, MORENO,
+MORÓN, LA PLATA, CAMPO DE MAYO y SAN FERNANDO, se
+muestran gráficamente en la carta VFR mencionada y se
+encuentran publicados en la parte ENR-6.10 Cartas En-Ruta - Carta
+para vuelos VFR por debajo del TMA BAIRES.
+Se podrán realizar vuelos VFR con o sin enlace radioeléctrico,
+según el espacio aéreo a sobrevolar, de acuerdo con lo que se
+establece en los puntos subsiguientes.
+RULES FOR VFR FLIGHTS BELOW THE LOWER LIMIT OF TMA
+BAIRES
+GENERAL
+VFR BELOW THE VERTICAL LIMIT OF TMA BAIRES VFR
+Flights below the vertical limit of TMA Baires shall be conducted
+in accordance with the Argentine Civil Aviation Regulations
+(RAAC), the “CHART FOR VFR FLIGHTS BELOW TMA BAIRES", the
+provisions of these rules and aeronautical information
+publications.
+To allow greater flexibility for VFR flights, two (2) steps have been
+established at the lower vertical limit of the TMA Baires, as
+detailed below:
+II FL 45
+I 2500 FT AGL/AMSL
+Note. – The lateral and vertical limits of the TMA Baires, of the
+CTR AEROPARQUE, EZEIZA, and of the ATZ EL PALOMAR,
+MORENO, MORÓN, LA PLATA, CAMPO DE MAYO and SAN
+FERNANDO, are shown graphically in the aforementioned VFR
+chart and are published in part ENR-6.10 Cartas En-Ruta - Carta
+para vuelos VFR por debajo del TMA BAIRES
+VFR flights may be conducted with or without radio link,
+depending on the airspace to be overflown, according to what is
+established in the following points.
+SECTOR VFR ESCUELA DE MORÓN
+El sector VFR Escuela de Morón se encuentra en un área no
+poblada próximo a Morón, la cual está conectada a través de
+Corredores Visuales. En el límite E se encuentra el aeródromo MER
+y sus proximidades se encuentran las ATZ MOR y ENO, en las
+proximidades del límite W se encuentra el aeródromo GEZ y en las
+proximidades del límite NW se encuentra el aeródromo GRZ y en
+las proximidades del límite S se encuentra el aeródromo MSP.
+ESCUELA DE MORÓN VFR SECTOR
+The Escuela de Morón VFR sector is located in an unpopulated
+area near Morón, which is connected through Visual Corridors. In
+the E limit is the MER aerodrome and in its vicinity are the MOR
+and ENO ATZs, in the proximity of the W limit is the GEZ
+aerodrome and near the NW limit is the GRZ aerodrome and in
+the proximity of the S limit is the MSP aerodrome.
+Limites laterales del sector VFR Escuela de Morón Lateral limits of the Escuela de Morón VFR sector
+Punto / Point Latitud /
+Latitude
+Longitud / Longitude
+Ruta Provincial 7 y Río de la Reconquista / Provincial Route 7 and
+Reconquista River
+343936S 0584522W
+Al Norte del Puente de Hierro / North of the Puente de Hierro 344346S 0584834W
+Al Sur del Puente de Hierro / South of the Puente de Hierro 344451S 0584756W
+Ruta Provincial 40 / Provincial Route 40 344517S 0584956W
+Ruta Provincial 6 / Provincial Route 6 344653S 0585748W
+Ruta Provincial 6 / Provincial Route 6 344503S 0590005W
+Cruce Ruta Provincial 6 y Ruta Provincial 24 / Junction of
+Provincial Route 6 and Provincial Route 24
+344315S 0590036W
+Ruta Provincial 6 / Provincial Route 6 343954S 0590214W
+Cruce Ruta Provincial 6 y Ruta Provincial 7 / Junction of Provincial
+Route 6 and Provincial Route 7
+343519S 0590215W
+Límites verticales: GND/2000 FL AGL; clasificación de espacio
+aéreo G; responsable servicio de información de vuelo y alerta:
+ACC EZE.
+Vertical limits: GND/2000 FL AGL; airspace classification G;
+responsible for flight information and alert services: ACC EZE.
+SECTOR VFR ESCUELA DE SAN FERNANDO
+El sector VFR Escuela de San Fernando se encuentra al Norte de la
+ATZ San Fernando, dentro de la CTR AER y debajo de la TMA
+Baires, el cual está conectado a través de Corredores Visuales (1,
+2, 13 y 17).
+ESCUELA DE SAN FERNANDO VFR SECTOR
+The San Fernando Escuela VFR sector is located north of the San
+Fernando ATZ, within the CTR AER and below the TMA Baires,
+which is connected through Visual Corridors (1, 2, 13 and 17).
+AIP ARGENTINA ENR 3.3 - 2
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+Limites laterales del sector VFR Escuela de San Fernando: Lateral limits of the Escuela de San Fernando VFR sector:
+Punto / Point Latitud /
+Latitude
+Longitud / Longitude
+1 342418S 0584756W
+2 342538S 0584519W
+3 342453S 0584037W
+4 342409S 0584057W
+5 COSTA (SE) RÍO LUJÁN 341845S 0583022W
+6 COSTA (NW) RÍO LUJÁN 341440S 0584443W
+7 342418S 0584756W
+Limites verticales: GND/1.000 FT AGL; clasificación de espacio
+aéreo G; responsable servicio de información de vuelo y alerta:
+TWR AER.
+Vertical limits: GND/1,000 FT AGL; airspace classification G;
+responsible for flight information and warning services: TWR
+AER.
+VUELOS VFR SIN ENLACE RADIOELÉCTRICO CON EL CONTROL
+Aquellos vuelos VFR que realicen en espacio aéreo Clase “G”, es
+decir:
+a) Dentro de los Corredores VFR;
+b) Dentro de los sectores VFR;
+c) Por debajo del límite inferior del TMA BAIRES, manteniéndose
+fuera de las Zonas de Control (CTR);
+d) Dentro de las ATZ de aeródromos no controlados.
+A efectos de posibilitar los vuelos VFR sin enlace radioeléctrico
+dentro y/o próximo a las CTR, se designan los siguientes
+corredores VFR en ambos sentidos:
+Nº 1 PARANÁ DE LAS PALMAS - DIQUE LUJÁN - ESTACIÓN
+BENAVIDEZ
+Nº 2 AERÓDROMO ISLA MARTÍN GARCÍA - ESTACIÓN BENAVIDEZ
+Nº 3 ESTACIÓN AGUSTÍN DE ELÍA – ESTACIÓN SANTA CATALINA –
+ESTACIÓN ZEBALLOS – ESTACIÓN J. M. GUTIÉRREZ - ATZ LA PLATA
+(345718S - 0575932W).
+Nº 6 BRANDSEN – ESTACIÓN J. M. GUTIÉRREZ
+Nº 9 URIBELARREA - CAÑUELAS
+Nº 10 GRAL. LAS HERAS - M. PAZ
+Nº 11 VILLARS - M. PAZ
+Nº 13 CAPILLA DEL SEÑOR - DIQUE LUJAN
+Nº 15 BRANDSEN - CAÑUELAS - M. PAZ – FFCC GRAL BELGRANO
+Nº 16 CAÑUELAS – ETCHEVERRY
+Nº 17 ATZ MARIANO MORENO (342628S – 0584656W) – ESTACIÓN
+BENAVIDEZ
+Los vuelos VFR que se efectúen sin enlace radioeléctrico dentro de
+los Corredores, deberán realizarse de acuerdo con lo siguiente:
+1. Solamente podrán realizar vuelos dentro de los corredores VFR
+sobre zonas pobladas, aquellas aeronaves que al sobrevolar las
+mismas y teniendo en cuenta la altura máxima de vuelo
+establecida para cada corredor, se puedan ajustar a lo especificado
+en ENR 1.2, sección 5.
+2. Dentro de CTR: Altura máxima de vuelo 1000 pies, siendo
+responsabilidad del piloto mantener la separación reglamentaria
+con los obstáculos sin superar la mencionada altura (ver inciso 9).
+3. Fuera de CTR: Altura máxima de vuelo 2000 pies.
+4. Dentro de CTR el ancho del corredor es de 2500 m (1250 m a
+cada lado del eje).
+5. Fuera de CTR el ancho del corredor es de 5000 m (2500 m a cada
+lado del eje).
+6. Los vuelos por el Corredor VFR Nº 2 entre Estación Benavidez y
+límite CTR Aeroparque (15 NM) ancho del corredor en la parte Sur
+300 metros desde el eje y en la parte Norte 1250 metros. Las
+aeronaves efectuarán los vuelos lo más próximo posible al eje del
+corredor, a los efectos de no interferir las operaciones hacia y
+desde el AERÓDROMO AEROPARQUE JORGE NEWBERY y así
+VFR FLIGHTS WITHOUT RADIO LINK WITH CONTROL
+Those VFR flights performed in Class "G" airspace:
+a) Within VFR Corridors;
+b) Within VFR sectors;
+c) Below the lower limit of the BAIRES TMA, staying out of the
+Control Zones (CTR);
+d) Within the ATZs of uncontrolled aerodromes.
+For the purpose of enabling VFR flights without radio link within
+and/or near the CTRs, the following VFR corridors are designated
+in both directions:
+Nº 1 PARANÁ DE LAS PALMAS - DIQUE LUJÁN - ESTACIÓN
+BENAVIDEZ
+Nº 2 AERÓDROMO ISLA MARTÍN GARCÍA - ESTACIÓN BENAVIDEZ
+Nº 3 ESTACIÓN AGUSTÍN DE ELÍA – ESTACIÓN SANTA CATALINA
+– ESTACIÓN ZEBALLOS – ESTACIÓN J. M. GUTIÉRREZ - ATZ LA
+PLATA (345718S - 0575932W).
+Nº 6 BRANDSEN – ESTACIÓN J. M. GUTIÉRREZ
+Nº 9 URIBELARREA - CAÑUELAS
+Nº 10 GRAL. LAS HERAS - M. PAZ
+Nº 11 VILLARS - M. PAZ
+Nº 13 CAPILLA DEL SEÑOR - DIQUE LUJAN
+Nº 15 BRANDSEN - CAÑUELAS - M. PAZ – FFCC GRAL BELGRANO
+Nº 16 CAÑUELAS – ETCHEVERRY
+Nº 17 ATZ MARIANO MORENO (342628S – 0584656W) –
+ESTACIÓN BENAVIDEZ
+VFR flights without radio link within the Corridors shall be
+conducted in accordance with the following:
+1. Only those aircraft that, when flying over populated areas and
+taking into account the maximum flight altitude established for
+each corridor, can comply with ENR 1.2, section 5, may perform
+flights within VFR corridors over populated areas.
+2. Within the CTR: Maximum flight altitude 1000 feet, being the
+pilot's responsibility to maintain the regulatory separation with
+the obstacles without exceeding the mentioned altitude (see
+section 9).
+3. Outside the CTR: Maximum flight altitude 2000 feet.
+4. Within the CTR the corridor width is 2500 m (1250 m on each
+side of the axis).
+5. Outside the CTR the corridor width is 5000 m (2500 m on each
+side of the axis).
+6. Flights along VFR Corridor No. 2 between Benavidez Station
+and Aeroparque CTR limit (15 NM) corridor width on the South
+side 300 meters from the axis and on the North side 1250 meters.
+Aircraft will fly as close as possible to the axis of the corridor, in
+order not to interfere with operations to and from AEROPARQUE
+JORGE NEWBERY AIRPORT AERODROME and should avoid
+AIP ARGENTINA ENR 3.3 - 3
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+mismo deberán evitar el ingreso a la ATZ SAN FERNANDO, sin el
+permiso de tránsito e instrucciones de la TWR SAN FERNANDO.
+7. Los vuelos por el corredor Nº 3 entre las estaciones Agustín Elías
+y J. M. Gutiérrez, se desarrollarán paralelos a las vías ferroviarias
+sobre el costado derecho, según el sentido del vuelo.
+8. Para todos los vuelos que se realicen en los Corredores VFR, se
+considerará requisito mandatario, la existencia de un Techo de
+Nubes que esté por lo menos a 500 ft sobre la altura a que se
+deberá encontrar la aeronave, la que asimismo mantendrá 500 ft
+sobre el terreno o 1000 ft sobre zona poblada. Esto determina que
+el valor de Techo de Nubes deberá ser según el caso de 1000 a
+1500 pies como mínimo, caso contrario no se podrá realizar el
+vuelo.
+9. Cuando existan obstáculos en la trayectoria de vuelo de la
+aeronave y no puedan ser superados manteniendo la altura
+reglamentaria, establecida en la parte ENR 1.2 Sección 5, para
+sobrevuelos de obstáculos, los mismos deberán ser evitados
+lateralmente, a los efectos de no transgredir las alturas máximas
+de vuelo permitidas en los corredores VFR establecidos en los
+incisos precedentes.
+Los vuelos VFR sin enlace radioeléctrico, fuera de los corredores
+VFR, se ajustarán a lo siguiente:
+1. La altura máxima de vuelo será de 2000 ft y FL 035 debajo del
+límite inferior del TMA BAIRES establecido en 2500 ft y FL 045
+respectivamente.
+2. Evitarán ingresar a los espacios aéreos controlados.
+VUELOS VFR CON ENLACE RADIOELÉCTRICO OBLIGATORIO CON
+EL CONTROL DE TRANSITO AÉREO DE JURISDICCIÓN
+Aquellos que se realicen en espacio aéreo Clases “B”, “C” o “D”, es
+decir:
+1. dentro de las ATZ de aeródromos donde se brinda servicio de
+control de tránsito aéreo;
+2. dentro de las CTR AEROPARQUE y EZEIZA.
+3. dentro del TMA BAIRES.
+Previo al ingreso o antes del despegue deberán solicitar el permiso
+de tránsito e instrucciones al Control de jurisdicción.
+Las aeronaves ultralivianas motorizadas (ULM) podrán operar en
+los espacios aéreos controlados y aeródromos especificados de
+acuerdo con las Normas Operativas para Aeronaves Ultralivianas
+Motorizadas (RAAC, Parte 91, Apéndice K).
+VUELOS VFR QUE SE EFECTÚEN DENTRO DEL CORREDOR VISUAL
+PARA ESCUELAS
+Deberán realizarse de acuerdo con lo siguiente:
+1. Solamente podrá ser utilizado con aeronaves afectadas por las
+Escuelas de Vuelo reconocidas por la Autoridad Aeronáutica que
+se encuentren basadas en el Aeródromo San Fernando, estando
+eximidas de la obligación de realizar vuelos VFR Controlados
+mientras se permanezca dentro de sus límites y trayectorias.
+2. Deberán realizarse con enlace radioeléctrico permanente con la
+dependencia de Control de Tránsito Aéreo que tenga jurisdicción
+en la parte del espacio aéreo que contiene al Corredor Visual para
+Escuela.
+3. Dentro del Corredor, no están autorizados los vuelos VFR
+especiales.
+4. La altura máxima de vuelo en toda su extensión es de 850 ft,
+mientras que la altura mínima de vuelo es de 500 ft.
+5. Cuando existan obstáculos en la trayectoria de vuelo de la
+aeronave y no puedan ser superados manteniendo las alturas de
+entering the ATZ SAN FERNANDO, without the traffic permission
+and instructions of the TWR SAN FERNANDO.
+7. Flights on Corridor No. 3 between Agustín Elías and J. M.
+Gutiérrez stations shall be performed parallel to the railroad
+tracks on the right side, according to the direction of flight.
+8. For all flights performed in the VFR Corridors, it will be
+considered a mandatory requirement, the existence of a Cloud
+Ceiling at least 500 ft above the altitude at which the aircraft
+must be located, which will also maintain 500 ft over the ground
+or 1000 ft over a populated area. This determines that the value
+of the Ceiling of Clouds must be, depending on the case, from
+1000 to 1500 feet as minimum, otherwise the flight will not be
+possible.
+9. When there are obstacles in the flight path of the aircraft and
+they cannot be overcome while maintaining the regulatory
+altitude established in part ENR 1.2 Section 5, for obstacle
+overflights, they must be avoided laterally, in order not to
+transgress the maximum flight altitudes allowed in the VFR
+corridors established in the preceding paragraphs.
+VFR flights without radio link, outside the VFR corridors, shall
+comply with the following:
+1. Maximum flight altitude shall be 2000 ft and FL 035 below the
+lower limit of the BAIRES TMA set at 2500 ft and FL 045
+respectively.
+2. They shall avoid entering controlled airspace.
+VFR FLIGHTS WITH MANDATORY RADIO LINK TO THE AIR
+TRAFFIC CONTROL OF JURISDICTION
+Those that are conducted in Class "B", "C" or "D" airspace, i.e.:
+1. within the ATZs of aerodromes where air traffic control service
+is provided;
+2. within the CTR AEROPARQUE and EZEIZA.
+3. within the BAIRES TMA.
+Prior to entry or before take-off, they must request the traffic
+permit and instructions from the Control of Jurisdiction.
+Motorized Ultralight Aircraft (ULM) may operate in controlled
+airspaces and aerodromes specified in accordance with the
+Operating Rules for Motorized Ultralight Aircraft (RAAC, Part 91,
+Appendix K).
+VFR FLIGHTS TO BE PERFORMED WITHIN THE VISUAL
+CORRIDOR FOR SCHOOLS
+They shall be carried out in accordance with the following:
+1. The corridor may only be used with aircraft registered by Flight
+Schools recognized by the Aeronautical Authority that are based
+at the San Fernando Aerodrome, being exempted from the
+obligation to perform Controlled VFR flights while remaining
+within its limits and paths.
+2. They shall be carried out with permanent radio link with the
+Air Traffic Control unit having jurisdiction in the part of the
+airspace that contains the Visual Corridor for School.
+3. Within the Corridor, special VFR flights are not authorized.
+4. The maximum flight altitude along its entire length is 850 ft,
+while the minimum flight altitude is 500 ft.
+5. When there are obstacles in the flight path of the aircraft and
+they cannot be overcome while maintaining the flight altitudes
+AIP ARGENTINA ENR 3.3 - 4
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+vuelo establecidas en 4), los mismos deberán ser evitados
+lateralmente, a los efectos de no transgredir la altura máxima de
+vuelo permitida en los corredores Visuales para Escuela.
+6. El ancho total del Corredor es de 2.000 m (1.000 m. a cada lado
+del eje).
+7. Las aeronaves efectuarán los vuelos lo más próximo posible al
+eje del corredor, a los efectos de no interferir las operaciones de
+los Circuitos de Tránsito de Aeródromo de CPO, ENO y PAL.
+8. Los vuelos se realizarán de modo que la aeronave vuele en
+condiciones de visibilidad y distancia de las nubes iguales o
+superiores a las siguientes: visibilidad en vuelo 5 Km., libre de
+nubes horizontalmente y por debajo de la aeronave, verticalmente
+por encima de la aeronave 500 ft. [RAAC, Parte 91].
+9. Para dirigirse al Aeródromo M. Moreno, el eje del Corredor será:
+Desde los Circuitos de Tránsito de Aeródromo correspondientes a
+FDO, seguir por Ruta Nac. 197 hasta José C. Paz. En sentido inverso,
+para dirigirse a FDO.
+10. Para dirigirse al Aeródromo Morón, el eje del Corredor será:
+Desde los Circuitos de Tránsito de Aeródromo correspondientes a
+FDO, seguir por Ruta Nac. 197 hasta su intersección con Ruta Nac.
+8, desde allí dirigirse con curso magnético 175° hasta San Antonio
+de Padua. En sentido inverso, para dirigirse a FDO.
+11. Ninguna aeronave volando por el Corredor Visual podrá
+ingresar a los Circuitos de Tránsito de los Aeródromos
+involucrados, sin obtener previamente la correspondiente
+autorización de la Dependencia ATS de jurisdicción.
+established in 4), they must be avoided laterally, in order not to
+transgress the maximum flight altitude allowed in the Visual
+corridors for School.
+6. The total width of the corridor is 2,000 m (1,000 m on each side
+of the axis).
+7. Aircraft will fly as close as possible to the axis of the corridor,
+in order not to interfere with the operations of the Aerodrome
+Traffic Circuits of CPO, ENO and PAL.
+8. Flights shall be conducted so that the aircraft flies in conditions
+of visibility and distance from clouds equal to or greater than the
+following: visibility in flight 5 km, free of clouds horizontally and
+below the aircraft, vertically above the aircraft 500 ft. [RAAC,
+Part 91].
+9. To proceed to the M. Moreno Aerodrome, the axis of the
+Corridor will be:
+From the Aerodrome Traffic Circuits corresponding to FDO,
+follow National Route 197 to José C. Paz. In the opposite
+direction, to go to FDO.
+10. To go to Morón Aerodrome, the Corridor axis will be:
+From the Aerodrome Traffic Circuits corresponding to FDO,
+follow National Route 197 up to its intersection with National
+Route 8, from there go on magnetic heading 175° up to San
+Antonio de Padua. In reverse direction, to head to FDO.
+11. No aircraft flying through the Visual Corridor may enter the
+Traffic Circuits of the Aerodromes involved, without previously
+obtaining the corresponding authorization from the ATS Unit of
+jurisdiction.
+Número Corredor/
+Corridor Number
+Trayectoria y Coordenadas Geográficas/
+Path and Geographic Coordinates
+Rumbo
+Magnético/
+Magnetic
+Heading
+Distancias en NM/
+Distances in NM
+1
+PARANÁ DE LAS PALMAS
+341604S - 0583912W 207° / 027° 5.39 NM
+5 NMDIQUE LUJÁN
+342113S – 0584111W
+195° / 015° 3.22 NM
+3 NM
+ESTACIÓN BENAVIDEZ
+342433S – 0584105W
+2
+ISLA MARTIN GARCÍA
+341056S – 0581448W 248° / 068° 25.97 NM
+26 NMESTACIÓN BENAVIDEZ
+342433S – 0584105W
+3
+ESTACIÓN AGUSTIN DE ELIA
+344236S — 0583021W 144° / 324° 3 NM
+ATZ MAT
+344437S — 0582754W 157° / 337° 3 NM
+SANTA CATALINA
+344649S — 0582615W 110°/ 290° 9 NM
+ESTACIÓN ZEBALLOS
+344840S — 0581524W 120° / 300° 4 NM
+ESTACIÓN J. M. GUTIÉRREZ
+345002S — 0581108W
+136° / 316° 12 NMATZ LA PLATA
+345700S — 0580000W
+6
+BRANDSEN
+350948S — 0581446W 018°/198° 19.85 NM
+20 NMESTACIÓN J. M. GUTIÉRREZ
+345002S — 0581108W
+9
+URIBELARREA
+350721S — 0585355W 067°/247° 8.10 NM
+8 NMCAÑUELAS
+350304S — 0584532W
+10 GRAL LAS HERAS 042°/222°
+AIP ARGENTINA ENR 3.3 - 5
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+345529S — 0585657W 10.65 NM
+11 NM
+M. PAZ
+344632S — 0584956W
+11
+VILLARS
+344944S — 0585619S 068°/248° 6.15 NM
+6 NMM. PAZ
+344632S — 0584956W
+13
+CAPILLA DEL SEÑOR
+341714S – 0590555W 110°/290° 20.87 NM
+21 NMDIQUE LUJAN
+342113S — 0584111 W
+15
+BRANDSEN
+350948S — 0581446W 294°/114° 26.12 NM
+26 NMCAÑUELAS
+350304S — 0584532W 357°/177° 16.90 NM
+17 NMM. PAZ
+344632S — 0584956W
+357°/177° 1.10 NM
+1 NM
+FFCC GRAL BELGRANO
+344512S-0585018W
+16
+CAÑUELAS
+350304S — 0584532W 097°/277° 33.70 NM
+34 NMETCHEVERRY
+350144S — 0580431W
+17
+ESTACIÓN BENAVIDEZ
+342433S — 058410SW 074°/254° 4.8 NM
+5 NMATZ ENO
+342628S — 0584656W
+VUELOS HACIA Y DESDE LA REPÚBLICA ORIENTAL DEL URUGUAY
+VUELOS VFR CONTROLADOS ENTRE LOS AERÓDROMOS
+AEROPARQUE JORGE NEWBERY Y COLONIA POR EL CORREDOR
+SURBO
+Los vuelos se realizarán de acuerdo con las normas operativas
+establecidas en la parte AD correspondiente al aeropuerto Buenos
+Aires/ Aeroparque Jorge Newbery.
+VUELOS VFR ENTRE LOS AERÓDROMOS AEROPARQUE JORGE
+NEWBERY, SAN FERNANDO Y AERÓDROMOS UBICADOS EN LA
+REPUBLICA ORIENTAL DEL URUGUAY, EXCEPTO EL AERÓDROMO
+COLONIA
+Los mismos se efectuarán conforme a lo determinado en las
+normas operativas, publicadas en la parte AD correspondiente al
+aeropuerto Buenos Aires/ Aeroparque Jorge Newbery o San
+Fernando, según corresponda.
+FLIGHTS TO AND FROM THE REPÚBLICA ORIENTAL DEL
+URUGUAY
+CONTROLLED VFR FLIGHTS BETWEEN AERODROMES
+AEROPARQUE JORGE NEWBERY AND COLONIA THROUGH THE
+SURBO CORRIDOR
+The flights will be carried out according to the operational rules
+established in the AD part corresponding to Buenos Aires/
+Aeroparque Jorge Newbery airport.
+VFR FLIGHTS BETWEEN AERODROMES AEROPARQUE JORGE
+NEWBERY, SAN FERNANDO AND AERODROMES LOCATED IN THE
+REPÚBLICA ORIENTAL DEL URUGUAY, EXCEPT COLONIA
+AERODROME
+These shall be carried out in accordance with the operating rules,
+published in AD part corresponding to the Buenos Aires airport /
+Aeroparque Jorge Newbery or San Fernando, as appropriate.

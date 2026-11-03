@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.2.0",
+    fecha: "2026-11-03",
+    titulo: "Los corredores VFR de Baires",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Corredores y sectores VFR, clase G",
+        texto: "Los once corredores VFR debajo de la TMA Baires y los sectores Escuela de San Fernando y de Morón, del AIP. Volando por ellos no hablás con Aeroparque ni con Baires: el Mapa lo sabe, con sus alturas máximas (1.000 ft dentro de la CTR, 2.000 ft fuera).",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+      {
+        icono: "conversacion",
+        titulo: "Clase G y aeródromos no controlados",
+        texto: "Fuera de la TMA y las CTR estás en clase G, y el centro es sólo información de vuelo. Al llegar a un aeródromo no controlado, su canal de llamada. Escribí puntos VFR en la ruta (BENAVIDEZ, DIQUELUJAN, CANUELAS) y, si cruzás una CTR con un corredor cerca, el Mapa te lo sugiere.",
+        href: "/dashboard/mapa",
+        cta: "Probarlo",
+      },
+    ],
+  },
+  {
     version: "3.1.0",
     fecha: "2026-11-03",
     titulo: "Con quién hablás, de punta a punta",

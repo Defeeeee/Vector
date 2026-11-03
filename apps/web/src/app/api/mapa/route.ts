@@ -14,7 +14,7 @@ import { allRadioayudas } from "@/lib/radioayudas";
 const r4 = (n: number) => Math.round(n * 1e4) / 1e4;
 
 export async function GET() {
-  const { espacios, descartados, firs } = espaciosAereos();
+  const { espacios, descartados, firs, vfr } = espaciosAereos();
   const canales = canalesDeLlamada();
   const aerodromos = allAirports()
     // Sin los helipuertos (Federico, 2026-11-03): un avión no aterriza ahí y llenan el mapa.
@@ -42,6 +42,11 @@ export async function GET() {
       radioayudas,
       espacios: espacios.map((e) => ({ ...e, poligono: e.poligono.map(([la, lo]) => [r4(la), r4(lo)]) })),
       descartados: descartados.map((d) => d.nombre),
+      // Los corredores y sectores VFR debajo de la TMA Baires (ENR 3.3): clase G.
+      vfr: {
+        corredores: vfr.corredores.map((c) => ({ ...c, eje: c.eje.map((p) => ({ lat: r4(p.lat), lon: r4(p.lon) })) })),
+        sectores: vfr.sectores.map((s) => ({ ...s, poligono: s.poligono.map(([la, lo]) => [r4(la), r4(lo)]) })),
+      },
       // Las FIR: el polígono (con sus rodeos por afuera del país) para saber dónde estás, y
       // los bordes y la línea entre sectores para dibujar.
       firs: firs.map((f) => ({

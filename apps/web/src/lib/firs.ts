@@ -1,6 +1,13 @@
 import { distanciaNmPrecisa } from "./distance";
 import { contiene, type EspacioAereo, type Frecuencias } from "./espacios-aereos";
 import { puntoDesde, rumboVerdadero, type Punto } from "./navegacion";
+import { enVfr, type CorredorVfr, type SectorVfr } from "./corredores-vfr";
+
+/** Los corredores y sectores VFR debajo de la TMA Baires (ENR 3.3): clase G. */
+export interface Vfr {
+  corredores: CorredorVfr[];
+  sectores: SectorVfr[];
+}
 
 /**
  * **Las FIR y con quién se habla** (3.1.0): de ENR 2.1, cada FIR con su centro (ACC), sus
@@ -474,7 +481,7 @@ export type EspacioConDependencia = EspacioAereo;
  * en cuyos límites estás (a FL 060 pasás por arriba de un ATZ de 2500 ft); sin ella, todos los
  * que te contienen lateralmente.
  */
-export function dependenciasEn(p: Punto, altitudFt: number | null, espacios: EspacioConDependencia[], firs: Fir[]): Dependencia[] {
+export function dependenciasEn(p: Punto, altitudFt: number | null, espacios: EspacioConDependencia[], firs: Fir[], vfr?: Vfr): Dependencia[] {
   const out: Dependencia[] = [];
   const orden = { ATZ: 0, CTR: 1, TMA: 2 } as const;
   const adentro = espacios
@@ -485,7 +492,21 @@ export function dependenciasEn(p: Punto, altitudFt: number | null, espacios: Esp
       return !r || (altitudFt <= r.techo && altitudFt >= r.piso);
     })
     .sort((a, b) => orden[a.tipo] - orden[b.tipo]);
+  // Un corredor o sector VFR (ENR 3.3) es clase G aunque esté dentro de una CTR o debajo de la
+  // TMA: ahí no se habla con Aeroparque ni con Baires. Sólo una ATZ controlada le gana.
+  const corredor = vfr ? enVfr(p, altitudFt, vfr.corredores, vfr.sectores, espacios.filter((e) => e.tipo === "CTR").map((e) => e.poligono)) : null;
+  const atzControlada = adentro.find((e) => e.tipo === "ATZ");
+  if (corredor && !atzControlada) {
+    out.push({
+      tipo: "claseG",
+      donde: corredor.nombre,
+      distintivo: "Sin control (clase G)",
+      mhz: [],
+      nota: `${corredor.tipo === "corredor" ? "Corredor" : "Sector"} VFR de ENR 3.3: hasta ${String(corredor.techoFt).replace(/\B(?=(\d{3})+(?!\d))/g, ".")} ft.${corredor.informacion ? ` Información de vuelo y alerta: ${corredor.informacion}.` : ""}`,
+    });
+  }
   for (const e of adentro) {
+    if (corredor && !atzControlada) break;
     const d = e.dependencia!;
     out.push({
       tipo: e.tipo === "TMA" ? "tma" : "torre",
@@ -538,14 +559,15 @@ export function dependenciasDeRuta(
   firs: Fir[],
   aerodromos: Map<string, RadioDeAerodromo> = new Map(),
   /** En vuelo el primer punto es tu posición, no una salida en el suelo. */
-  desdeElAire = false
+  desdeElAire = false,
+  vfr?: Vfr
 ): Cambio[] {
   const cambios: Cambio[] = [];
   // La misma torre escrita distinto (TMA "MAR DEL PLATA TORRE", CTR "Mar del Plata Torre") es una sola.
   const clave = (d: Dependencia) => `${d.distintivo.toUpperCase()}|${d.mhz.map((m) => m.replace(/\s.*$/, "")).join(",")}`;
   let recorrido = 0;
   const mirar = (p: Punto & { codigo?: string; label?: string }, alt: number | null, nm: number, extremo = false) => {
-    const d = extremo ? enElAerodromo(p, espacios, firs, aerodromos) : dependenciasEn(p, alt, espacios, firs)[0];
+    const d = extremo ? enElAerodromo(p, espacios, firs, aerodromos) : dependenciasEn(p, alt, espacios, firs, vfr)[0];
     if (d && (!cambios.length || clave(cambios[cambios.length - 1].dependencia) !== clave(d))) cambios.push({ desdeNm: nm, dependencia: d });
   };
   if (puntos.length === 0) return cambios;

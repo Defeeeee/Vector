@@ -222,3 +222,16 @@ export function duracionCorta(minutos: number): string {
   const m = total % 60;
   return h > 0 ? `${h} h ${String(m).padStart(2, "0")} min` : `${m} min`;
 }
+
+/** El punto que está a `nm` millas desde la salida, sobre la ruta. */
+export function puntoEnRuta(puntos: Punto[], nm: number): Punto | null {
+  let resto = nm;
+  for (let i = 1; i < puntos.length; i++) {
+    const a = puntos[i - 1];
+    const b = puntos[i];
+    const d = distanciaNmPrecisa(a.lat, a.lon, b.lat, b.lon);
+    if (resto <= d) return puntoDesde(a, rumboVerdadero(a, b), resto);
+    resto -= d;
+  }
+  return puntos[puntos.length - 1] ?? null;
+}

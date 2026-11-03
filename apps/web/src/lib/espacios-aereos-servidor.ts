@@ -4,7 +4,8 @@ import { getAirport } from "./airports";
 import { datosAip } from "./aip";
 import { allRadioayudas } from "./radioayudas";
 import { armarEspacios, filasTma, type EspacioAereo, type EspacioDescartado, type Frecuencias } from "./espacios-aereos";
-import { armarFirs, frecuenciasDeFila, type Fir } from "./firs";
+import { armarFirs, frecuenciasDeFila, type Fir, type Vfr } from "./firs";
+import { corredoresVfr, sectoresVfr } from "./corredores-vfr";
 import type { Punto } from "./navegacion";
 
 /**
@@ -20,6 +21,8 @@ interface Todo {
   descartados: EspacioDescartado[];
   firs: Fir[];
   firsDescartadas: { nombre: string; motivo: string }[];
+  /** Los corredores y sectores VFR debajo de la TMA Baires (ENR 3.3). */
+  vfr: Vfr;
 }
 let memo: Todo | null = null;
 
@@ -89,6 +92,8 @@ export function espaciosAereos(): Todo {
   }
 
   const { firs, descartadas } = armarFirs(enr21, radioayudas, frontera());
-  memo = { espacios, descartados, firs, firsDescartadas: descartadas };
+  const archivoVfr = path.join(CARPETA, "ENR-3.3-BAIRES.txt");
+  const enr33 = fs.existsSync(archivoVfr) ? fs.readFileSync(archivoVfr, "utf8") : "";
+  memo = { espacios, descartados, firs, firsDescartadas: descartadas, vfr: { corredores: corredoresVfr(enr33), sectores: sectoresVfr(enr33) } };
   return memo;
 }

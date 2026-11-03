@@ -9,6 +9,7 @@ import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { EspacioAereo } from "@/lib/espacios-aereos";
 import { aMagnetico } from "@/lib/navegacion";
 import { dependenciasDeRuta, dependenciasEn, type Dependencia, type RadioDeAerodromo } from "@/lib/firs";
+import { codigoVfr, corredoresCerca, puntosVfr } from "@/lib/corredores-vfr";
 import {
   consultasDeRuta,
   duracionCorta,
@@ -17,6 +18,7 @@ import {
   haciaPunto,
   lecturaGps,
   proximoPunto,
+  puntoEnRuta,
   puntosDeRuta,
   tokensDeRuta,
   tramosDeRuta,
@@ -111,8 +113,15 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
         });
     }
   }, [consultas]);
-  const resueltos = consultas.map((c) => (cache.current.has(clave(c)) ? cache.current.get(clave(c)) : undefined));
-  const firmaResueltos = resueltos.map((r) => (r === undefined ? "?" : r === null ? "-" : `${r.codigo}${r.tramo?.length ?? ""}`)).join("|");
+  // Los puntos de los corredores VFR (ENR 3.3) se escriben en la ruta por su nombre: BENAVIDEZ,
+  // DIQUELUJAN, CANUELAS. No están en el directorio del Planificador: salen de las capas del Mapa.
+  const vfrPorCodigo = useMemo(() => puntosVfr(capas?.vfr?.corredores ?? []), [capas]);
+  const resueltos = consultas.map((c): PuntoResuelto | null | undefined => {
+    const vfr = vfrPorCodigo.get(c.q);
+    if (vfr) return { codigo: c.q, clase: "fix", label: `VFR ${vfr.nombre}`, lat: vfr.lat, lon: vfr.lon };
+    return cache.current.has(clave(c)) ? cache.current.get(clave(c)) : undefined;
+  });
+  const firmaResueltos = resueltos.map((r) => (r === undefined ? "?" : r === null ? "-" : `${r.codigo}${r.lat}${r.tramo?.length ?? ""}`)).join("|");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const { puntos, sinUbicar, buscando } = useMemo(() => puntosDeRuta(tokens, resueltos), [tokens, firmaResueltos]);
   const { tramos, totalNm } = useMemo(() => tramosDeRuta(puntos), [puntos]);
@@ -152,9 +161,31 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
     return mapa;
   }, [capas]);
   const cambios = useMemo(
-    () => (capas?.firs && puntos.length > 1 ? dependenciasDeRuta(puntos, altitudNum, capas.espacios, capas.firs, radios) : []),
+    () => (capas?.firs && puntos.length > 1 ? dependenciasDeRuta(puntos, altitudNum, capas.espacios, capas.firs, radios, false, capas.vfr) : []),
     [puntos, altitudNum, capas, radios]
   );
+  // Si la ruta cruza una CTR y hay un corredor VFR cerca, por el corredor sería clase G.
+  const sugerencia = useMemo(() => {
+    if (!capas?.vfr || (altitudNum !== null && altitudNum > 2000)) return null;
+    for (const c of cambios) {
+      if (!c.dependencia.donde.startsWith("CTR ")) continue;
+      const p = puntoEnRuta(puntos, c.desdeNm + 1);
+      const cerca = p ? corredoresCerca(p, capas.vfr.corredores, 4) : [];
+      if (!cerca.length || puntos.length < 2) continue;
+      // La ruta de ejemplo: la salida, los puntos del corredor en el orden en que se vuelan (sin
+      // los que ya son la salida o la llegada) y la llegada. "SADF BENAVIDEZ SAAK".
+      const salida = puntos[0];
+      const llegada = puntos[puntos.length - 1];
+      const d = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => Math.hypot(a.lat - b.lat, (a.lon - b.lon) * 0.82);
+      const intermedios = cerca[0].puntos
+        .map((n, i) => ({ codigo: puntosCodigo(n), p: cerca[0].eje[i] }))
+        .filter((x) => x.codigo && d(x.p, salida) > 0.02 && d(x.p, llegada) > 0.02)
+        .sort((a, b) => d(a.p, salida) - d(b.p, salida))
+        .map((x) => x.codigo);
+      return { ctr: c.dependencia.donde, corredores: cerca, ejemplo: [salida.codigo, ...intermedios, llegada.codigo].join(" ") };
+    }
+    return null;
+  }, [cambios, capas, puntos, altitudNum]);
 
   /* --------------------------------------------------------------- vuelo --- */
   const [volando, setVolando] = useState(false);
@@ -206,10 +237,10 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
   const hacia = lectura && destino ? haciaPunto(lectura, destino, lectura.gsKt) : null;
   const dentro = lectura && capas ? espaciosEn(lectura, capas.espacios).sort((a, b) => "ATZCTRTMA".indexOf(a.tipo) - "ATZCTRTMA".indexOf(b.tipo)) : [];
   // Con quién hablás ahora (con la altura del GPS) y el próximo cambio sobre lo que queda de ruta.
-  const ahora = lectura && capas?.firs ? dependenciasEn(lectura, lectura.altitudFt, capas.espacios, capas.firs)[0] ?? null : null;
+  const ahora = lectura && capas?.firs ? dependenciasEn(lectura, lectura.altitudFt, capas.espacios, capas.firs, capas.vfr)[0] ?? null : null;
   const despues =
     lectura && capas?.firs && destino
-      ? dependenciasDeRuta([lectura, ...puntos.slice(proximo)], lectura.altitudFt, capas.espacios, capas.firs, radios, true).find(
+      ? dependenciasDeRuta([lectura, ...puntos.slice(proximo)], lectura.altitudFt, capas.espacios, capas.firs, radios, true, capas.vfr).find(
           (c) => c.desdeNm > 0 && ahora && c.dependencia.distintivo !== ahora.distintivo
         ) ?? null
       : null;
@@ -371,7 +402,7 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
             rows={2}
             spellCheck={false}
             autoCapitalize="characters"
-            placeholder="SADF DCT SADM · o con aerovías: SADF UGIMI W18 BCA SAZB"
+            placeholder="SADF DCT SADM · con aerovías: SADF UGIMI W18 BCA SAZB · por un corredor VFR: SADF BENAVIDEZ SAAK"
             className="w-full resize-none rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-3 py-2.5 font-mono text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-aviation-blue/40"
           />
           {!volando && <p className="text-[11px] text-zinc-500">Aeródromos, radioayudas, puntos y aerovías, como en el Planificador. También podés tocar un aeródromo en el mapa.</p>}
@@ -459,6 +490,18 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
                 </li>
               ))}
             </ol>
+            {sugerencia && (
+              <p className="mt-2 rounded-xl bg-green-500/10 px-3 py-2 text-xs text-green-800 dark:text-green-300">
+                Cruzás la {nombreLindo(sugerencia.ctr)}. Por{" "}
+                {sugerencia.corredores.map((c, i) => (
+                  <span key={c.numero}>
+                    {i > 0 && " o "}el Corredor VFR Nº {c.numero} ({c.puntos.map((n) => nombreLindo(n.replace(/^ESTACI[ÓO]N\s+/i, ""))).join(" – ")})
+                  </span>
+                ))}{" "}
+                es clase G hasta 1.000 ft dentro de la CTR. Ruta por el corredor:{" "}
+                <b>{sugerencia.ejemplo}</b>.
+              </p>
+            )}
             <p className="mt-1.5 text-[11px] text-zinc-500">
               {altitudNum === null ? "Poné la altitud de crucero para saber si pasás por arriba o por debajo de cada espacio. " : `A ${miles(altitudNum)} ft; la salida y la llegada, en el suelo. `}
               Del AIP: torres (AD 2.18), TMA y centros (ENR 2.1).
@@ -554,11 +597,16 @@ function Dato({ etiqueta, valor, unidad }: { etiqueta: string; valor: string; un
   );
 }
 
+/** El código de un punto de corredor para la ruta, salvo los que son una ATZ (se escriben con su designador). */
+function puntosCodigo(nombre: string): string {
+  return /^ATZ\b/.test(nombre) ? "" : codigoVfr(nombre);
+}
+
 /** "ATZ SAN FERNANDO (I)" → "ATZ San Fernando (I)": las siglas y los números romanos quedan. */
 function nombreLindo(t: string): string {
   return t
     .split(" ")
-    .map((w) => (/^(CTR|ATZ|TMA|FIR|\(?[IV]+\)?|·)$/.test(w) ? w : w.charAt(0) + w.slice(1).toLowerCase()))
+    .map((w) => (/^(CTR|ATZ|TMA|FIR|VFR|Nº|\(?[IV]+\)?|·)$/.test(w) ? w : w.charAt(0) + w.slice(1).toLowerCase()))
     .join(" ")
     .replace(/\bDe\b|\bDel\b|\bLa\b|\bLos\b/g, (m) => m.toLowerCase());
 }

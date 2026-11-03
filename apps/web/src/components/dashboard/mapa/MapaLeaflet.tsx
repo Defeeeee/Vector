@@ -5,7 +5,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { TILES_OPCIONES, TILES_URL } from "@/lib/mapa-tiles";
 import type { EspacioAereo, Frecuencias } from "@/lib/espacios-aereos";
-import type { Fir } from "@/lib/firs";
+import type { Fir, Vfr } from "@/lib/firs";
 import type { PuntoMapa } from "@/lib/mapa-ruta";
 
 /** Lo que devuelve `/api/mapa`, compacto: arrays en vez de objetos. */
@@ -18,6 +18,8 @@ export interface CapasMapa {
   descartados: string[];
   /** Las FIR con su centro (3.1.0). */
   firs: Fir[];
+  /** Corredores y sectores VFR de Baires (3.2.0). */
+  vfr?: Vfr;
 }
 
 export interface Posicion {
@@ -159,6 +161,18 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
           }`,
           { sticky: true, direction: "top" }
         )
+        .addTo(c.espacios);
+    }
+
+    // Los sectores y corredores VFR (ENR 3.3), en verde: clase G, como en la carta ENR 6.10. Después de las TMA, para que queden arriba y se puedan tocar.
+    for (const s of capas.vfr?.sectores ?? []) {
+      L.polygon(s.poligono, { color: "#16a34a", weight: 1.5, dashArray: "2 4", fillColor: "#16a34a", fillOpacity: 0.08 })
+        .bindTooltip(`<b>${escapar(s.nombre)}</b><br>Clase G · GND / ${s.techoFt} ft${s.informacion ? `<br>Información: ${escapar(s.informacion)}` : ""}`, { sticky: true })
+        .addTo(c.espacios);
+    }
+    for (const co of capas.vfr?.corredores ?? []) {
+      L.polyline(co.eje.map((p) => [p.lat, p.lon] as L.LatLngTuple), { color: "#16a34a", weight: 6, opacity: 0.35, lineCap: "round" })
+        .bindTooltip(`<b>Corredor VFR Nº ${escapar(co.numero)}</b><br>${escapar(co.nombre)}<br>Clase G · 1.000 ft máx. en CTR, 2.000 ft fuera`, { sticky: true })
         .addTo(c.espacios);
     }
 

@@ -38,6 +38,7 @@ import { UA_VECTOR } from "./ua-vector.mjs";
 const BASE = "https://ais.anac.gob.ar";
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SALIDA = path.join(RAIZ, "src", "data", "aip", "ENR-2.1.txt");
+const SALIDA_VFR = path.join(RAIZ, "src", "data", "aip", "ENR-3.3-BAIRES.txt");
 const FUENTES = path.join(RAIZ, "src", "data", "aip-fuentes.tsv");
 
 async function listadoEnr() {
@@ -46,15 +47,15 @@ async function listadoEnr() {
   return res.text();
 }
 
-function documento(html) {
+function documento(html, buscar = "ENR-2.1") {
   for (const fila of html.match(/<tr[\s\S]*?<\/tr>/g) ?? []) {
     const texto = fila.replace(/<[^>]+>/g, " ").replace(/&[a-z]+;/g, " ").replace(/\s+/g, " ").trim();
-    if (!texto.includes("ENR-2.1")) continue;
+    if (!texto.includes(buscar)) continue;
     const href = /href="([^"]+)"/.exec(fila);
     const sello = /(\d{2}\/\d{2})\s+(\d{2}-[A-Za-z]{3}-\d{2})/.exec(texto);
     if (href && sello) return { url: BASE + href[1], edicion: sello[1], vigenteDesde: sello[2] };
   }
-  throw new Error("ENR-2.1 no aparece en el listado ENR");
+  throw new Error(`${buscar} no aparece en el listado ENR`);
 }
 
 /** El renglón con el que arranca una TMA: "TMA BAIRES", seguido de sus límites. */
@@ -111,8 +112,47 @@ function filas(texto, encabezado) {
 export const bloquesTma = (texto) => filas(texto, ENCABEZADO);
 export const bloquesFir = (texto) => filas(texto, ENCABEZADO_FIR);
 
+/**
+ * ENR 3.3 (3.2.0): de los corredores y sectores VFR debajo de la TMA Baires, la parte en
+ * castellano, desde el título hasta los de Córdoba. La lee `src/lib/corredores-vfr.ts`.
+ */
+export function partesBaires(texto) {
+  const i = texto.indexOf("CORREDORES VFR PARA VUELOS VFR DEBAJO DE LAS");
+  const j = texto.indexOf("CORREDORES PARA VUELOS VFR POR DEBAJO DEL TMA", i + 10);
+  if (i < 0 || j < 0) return null;
+  return texto.slice(i, j).trimEnd();
+}
+
+async function corredores(local, html) {
+  let meta = { url: "", edicion: "", vigenteDesde: "" };
+  let bytes;
+  if (local) {
+    bytes = fs.readFileSync(local);
+  } else {
+    meta = documento(html, "ENR-3.3");
+    await new Promise((r) => setTimeout(r, 2000));
+    const res = await fetch(meta.url, { headers: { "User-Agent": UA_VECTOR } });
+    if (!res.ok) throw new Error(`ENR-3.3 contestó ${res.status}`);
+    bytes = Buffer.from(await res.arrayBuffer());
+  }
+  const pdf = await getDocumentProxy(new Uint8Array(bytes));
+  const { text } = await extractText(pdf, { mergePages: true });
+  const parte = partesBaires(text);
+  if (!parte) throw new Error("ENR 3.3 no tiene la parte de Baires: el formato cambió, no se pisa lo que hay.");
+  const cabecera = [
+    `# ENR 3.3 — corredores y sectores VFR debajo de la TMA Baires, extraído de ${meta.url || "(PDF local)"}`,
+    `# AIP ARGENTINA · edición ${meta.edicion || "?"} · vigente desde ${meta.vigenteDesde || "?"}`,
+    "# Generado por scripts/build-espacios.mjs. NO EDITAR A MANO.",
+    "",
+  ].join("\n");
+  fs.writeFileSync(SALIDA_VFR, `${cabecera}${parte}\n`);
+  console.log("Corredores y sectores VFR de Baires → src/data/aip/ENR-3.3-BAIRES.txt");
+}
+
 async function main() {
   const local = process.argv[2];
+  // `-- <ENR-2.1.pdf> <ENR-3.3.pdf>` en modo local.
+  const localVfr = process.argv[3];
   let meta = { url: "", edicion: "", vigenteDesde: "" };
   let bytes;
   if (local) {
@@ -151,6 +191,7 @@ async function main() {
     fs.writeFileSync(FUENTES, [...previas, fila].sort().join("\n") + "\n");
   }
   console.log(`${bloques.length} TMA (${sectores.length} divididas en sectores) y ${firs.length} FIR → src/data/aip/ENR-2.1.txt`);
+  if (!local || localVfr) await corredores(localVfr, local ? null : await listadoEnr());
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

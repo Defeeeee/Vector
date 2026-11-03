@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.2.0 — Los corredores VFR de Baires
+
+_3 de noviembre de 2026_
+
+- **Corredores y sectores VFR, clase G** — Los once corredores VFR debajo de la TMA Baires y los sectores Escuela de San Fernando y de Morón, del AIP. Volando por ellos no hablás con Aeroparque ni con Baires: el Mapa lo sabe, con sus alturas máximas (1.000 ft dentro de la CTR, 2.000 ft fuera).
+- **Clase G y aeródromos no controlados** — Fuera de la TMA y las CTR estás en clase G, y el centro es sólo información de vuelo. Al llegar a un aeródromo no controlado, su canal de llamada. Escribí puntos VFR en la ruta (BENAVIDEZ, DIQUELUJAN, CANUELAS) y, si cruzás una CTR con un corredor cerca, el Mapa te lo sugiere.
+
 ## v3.1.0 — Con quién hablás, de punta a punta
 
 _3 de noviembre de 2026_
