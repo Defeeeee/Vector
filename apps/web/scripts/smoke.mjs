@@ -148,7 +148,8 @@ const ROUTES = [
   {
     path: "/api/mapa",
     expect: (s) => s === 200,
-    json: (b) => b.espacios?.some((e) => e.nombre === "TMA BAIRES") && b.aerodromos?.length > 500,
+    // La TMA Baires va en dos sectores por nivel: "TMA BAIRES (I)" y "(II)".
+    json: (b) => b.espacios?.some((e) => e.nombre === "TMA BAIRES (I)") && b.aerodromos?.length > 500,
   },
   { path: "/dashboard", expect: (s) => s === 307 || s === 302 },
   { path: "/dashboard/mapa", expect: (s) => s === 307 || s === 302 },
