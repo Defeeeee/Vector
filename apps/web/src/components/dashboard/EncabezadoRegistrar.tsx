@@ -23,7 +23,7 @@ export default function EncabezadoRegistrar({ importar, guardar }: { importar: b
   return createPortal(
     <header
       data-sin-encabezado-movil
-      className="lg:hidden fixed top-0 inset-x-0 z-40 bg-white dark:bg-black app:bg-zinc-100 app:dark:bg-black border-b border-zinc-200 dark:border-white/10 app:border-b-0 h-14 app:h-auto px-2 app:pt-[max(58px,calc(env(safe-area-inset-top)+0.75rem))] app:pb-2 flex items-center gap-1"
+      className="lg:hidden fixed top-0 inset-x-0 z-40 bg-white dark:bg-black app:bg-zinc-100 app:dark:bg-black border-b border-zinc-200 dark:border-white/10 app:border-b-0 h-14 app:h-[calc(max(58px,calc(env(safe-area-inset-top)_+_0.75rem))_+_3.25rem)] px-2 app:pt-[calc((max(58px,calc(env(safe-area-inset-top)_+_0.75rem))_+_env(safe-area-inset-top)_+_16px)_/_2)] app:pb-0 flex items-center app:items-start gap-1"
     >
       <Link href="/dashboard" aria-label="Volver" className="app:hidden w-11 h-11 rounded-xl flex items-center justify-center text-zinc-900 dark:text-white">
         <ChevronLeft className="w-[22px] h-[22px]" />
@@ -31,7 +31,7 @@ export default function EncabezadoRegistrar({ importar, guardar }: { importar: b
       <Link href="/dashboard/history" className="hidden app:block px-2.5 py-2.5 text-base font-bold text-aviation-blue dark:text-aviation-cyan">
         Cancelar
       </Link>
-      <h1 className="flex-1 text-lg app:text-base app:text-center font-display font-extrabold text-zinc-900 dark:text-white">
+      <h1 className="flex-1 text-lg app:text-base app:text-center app:leading-[44px] font-display font-extrabold text-zinc-900 dark:text-white">
         <span className="app:hidden">Registrar vuelo</span>
         <span className="hidden app:inline">Nuevo vuelo</span>
       </h1>

@@ -1051,6 +1051,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.4.1",
+    fecha: "2026-11-03",
+    motivo: "En la app instalada el título de arriba va centrado entre el borde y lo de abajo (Federico): un ajuste de aire de la 3.4.0, no algo nuevo para anunciar.",
+  },
+  {
     version: "3.3.1",
     fecha: "2026-11-03",
     motivo: "Las tipografías (Nunito, IBM Plex Mono) van en el repo en vez de bajarse de Google en cada build: ese pedido cortó tres builds el mismo día. Se ven igual; no hay nada que anunciar.",

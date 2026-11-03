@@ -179,20 +179,26 @@ export default async function DashboardLayout({ children }: { children: React.Re
         sesión" pasaron al Hangar. En el navegador, una barra blanca de 56 px. Instalada como app
         (`app:`), arranca debajo de la muesca, sin borde, suma el + de Nuevo vuelo (abajo hay una
         barra de pestañas y no la píldora) y en el inicio el logo deja lugar a "Hola" con la fecha
-        (`TituloTelefono`). Las medidas son las del diseño: el encabezado arranca a 58 px del
-        borde (o debajo de la muesca, si es más), apoya el título 8 px arriba de su borde de abajo,
-        y el contenido empieza 8 px después; los 44 px son los botones.
+        (`TituloTelefono`). El contenido empieza donde dice el diseño (58 px, o la muesca, más 60:
+        los 44 de los botones y 8 + 8 de aire), y el título va **centrado** entre el borde de arriba
+        de la página (debajo de la barra de estado) y ese contenido (Federico, 3.4.1): con
+        `statusBarStyle: "default"` iOS ya deja la barra de estado afuera, `safe-area-inset-top` vale
+        0 y los 58 px del diseño, que la contaban, quedaban de más arriba. La cuenta, con S la muesca:
+        el título arranca en (max(58, S + 12) + S + 16) / 2; con S = 0, 37 px arriba y 37 abajo. El
+        encabezado sigue llegando hasta 8 px antes del contenido, que pasa por debajo al scrollear.
+        En el inicio el saludo mide 57 y no 44: la página baja 13 px más y los botones también
+        (`data-titulo-inicio`), así el saludo queda centrado igual y los botones al ras de "Hola".
       */}
-      <header className="lg:hidden [body:has([data-sin-encabezado-movil])_&]:hidden fixed top-0 w-full z-40 bg-white dark:bg-black app:bg-zinc-100 app:dark:bg-black app:backdrop-blur-none backdrop-blur-xl border-b border-zinc-200 dark:border-white/10 app:border-b-0 h-14 app:h-auto px-4 app:pt-[max(58px,calc(env(safe-area-inset-top)+0.75rem))] app:pb-2 flex items-center app:items-end justify-between gap-2 transition-colors duration-300">
+      <header className="lg:hidden [body:has([data-sin-encabezado-movil])_&]:hidden fixed top-0 w-full z-40 bg-white dark:bg-black app:bg-zinc-100 app:dark:bg-black app:backdrop-blur-none backdrop-blur-xl border-b border-zinc-200 dark:border-white/10 app:border-b-0 h-14 app:h-[calc(max(58px,calc(env(safe-area-inset-top)_+_0.75rem))_+_3.25rem)] px-4 app:pt-[calc((max(58px,calc(env(safe-area-inset-top)_+_0.75rem))_+_env(safe-area-inset-top)_+_16px)_/_2)] app:pb-0 flex items-center app:items-start justify-between gap-2 transition-colors duration-300">
         <TituloTelefono fecha={todayCapitalized.replace(",", "")} nombre={profile?.first_name || "Comandante"}>
-        <Link href="/dashboard" className="flex items-center space-x-3 group">
+        <Link href="/dashboard" className="flex items-center space-x-3 group app:h-11">
           <div className="w-8 h-8 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-lg flex items-center justify-center shadow-md">
             <Compass className="w-4 h-4" strokeWidth={2} />
           </div>
           <span className="text-lg font-bold font-display tracking-tight dark:text-white">Vector</span>
         </Link>
         </TituloTelefono>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 app:[body:has([data-titulo-inicio])_&]:mt-[13px]">
             <BuscadorGlobal variante="icono" />
             <Link
               href="/dashboard/log-flight"
