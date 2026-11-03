@@ -19,6 +19,14 @@
  *
  * Columnas: designador ANAC, combustible, pistas (separadas por " | "), actualizada (de MADHEL).
  * Sólo aeródromos (no helipuertos) que MADHEL no da por cerrados.
+ *
+ * ## La ficha completa, aparte
+ *
+ * Con `MADHEL_COMPLETO=<archivo>`, además escribe ahí **la respuesta entera de cada
+ * aeródromo** (`{ descargado, fichas: { GEZ: {...} } }`), para que la ficha de Aeropuertos
+ * salga de esa copia sin depender de que el navegador del piloto llegue a ANAC
+ * (`lib/madhel-descargado.ts`). **No va al repo**, que es público: trae teléfonos de
+ * aeródromos privados. El workflow la deja en el VPS.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -61,6 +69,7 @@ async function ficha(designador) {
 }
 
 const filas = [];
+const completas = {};
 let respondidos = 0;
 let fallasSeguidas = 0;
 
@@ -70,6 +79,7 @@ for (const [i, designador] of designadores.entries()) {
     fallasSeguidas = 0;
     if (j) respondidos++;
     if (j?.data) {
+      completas[designador] = j;
       const pistas = (Array.isArray(j.data.rwy) ? j.data.rwy : []).map(limpio).filter(Boolean);
       filas.push([designador, limpio(j.data.fuel), pistas.join(" | "), limpio(j.updated_at).slice(0, 10)]);
     }
@@ -100,3 +110,37 @@ fs.writeFileSync(
     "\n",
 );
 console.log(`${filas.length} fichas (${respondidos} de ${designadores.length} contestaron) → ${path.relative(RAIZ, SALIDA)}`);
+
+/*
+  **Público o privado, controlado y estado, al día en el directorio** (`madhel.tsv`). Esas
+  columnas venían de una descarga del 2026-08-04 que nunca se actualizó, y había aeródromos
+  públicos marcados como privados (Luján, LJN, lo vio Federico). Se reescriben sólo esas
+  tres, y sólo de los aeródromos que contestaron: el resto del archivo no se toca.
+*/
+const SI_CONTROLADO = (c) => (c === "CONTROLLED" ? "C" : c ? "NC" : "");
+let corregidos = 0;
+const directorio = fs
+  .readFileSync(MADHEL_TSV, "utf8")
+  .split("\n")
+  .map((linea) => {
+    const c = linea.split("\t");
+    const meta = completas[c[0]]?.metadata;
+    if (!c[0] || !meta) return linea;
+    const nuevo = [limpio(meta.condition), SI_CONTROLADO(meta.control), limpio(meta.status)];
+    if (nuevo.join() !== [c[7], c[8], c[9]].join()) corregidos++;
+    c[7] = nuevo[0] || c[7];
+    c[8] = nuevo[1] || c[8];
+    c[9] = nuevo[2] || c[9];
+    return c.join("\t");
+  })
+  .join("\n");
+fs.writeFileSync(MADHEL_TSV, directorio);
+console.log(`madhel.tsv: ${corregidos} aeródromos con condición, control o estado al día.`);
+
+if (process.env.MADHEL_COMPLETO) {
+  fs.writeFileSync(
+    process.env.MADHEL_COMPLETO,
+    JSON.stringify({ descargado: new Date().toISOString(), fichas: completas }),
+  );
+  console.log(`${Object.keys(completas).length} fichas completas → ${process.env.MADHEL_COMPLETO}`);
+}

@@ -1,7 +1,7 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { fetchAnac } from "./anac";
+import { carpetaDeDatos } from "./madhel-descargado";
 
 /**
  * **Los NOTAM de todo el país, descargados**: la fuente principal mientras estén al día
@@ -33,7 +33,7 @@ export interface NotamsDelPais {
   items: Record<string, unknown>[];
 }
 
-const carpeta = () => process.env.NOTAMS_DIR || path.join(os.homedir(), "Vector", "datos");
+const carpeta = carpetaDeDatos;
 
 let memo: { mtimeMs: number; actualizacion: string; items: Record<string, unknown>[] } | null = null;
 

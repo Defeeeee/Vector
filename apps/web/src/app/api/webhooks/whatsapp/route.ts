@@ -26,6 +26,7 @@ import {
 } from "@/lib/copilot-guards";
 import { fetchAnac } from "@/lib/anac";
 import { USER_AGENT_VECTOR, notamsCrudos } from "@/lib/notams-descargados";
+import { fichaMadhel } from "@/lib/madhel-descargado";
 
 // Compares the caller-supplied secret against the configured one without leaking timing info,
 // and without throwing when lengths differ (timingSafeEqual requires equal-length buffers).
@@ -91,14 +92,18 @@ async function getAirportInfoHelper(icao: string) {
 
   // Fetch MADHEL
   try {
-    const madhelRes = await fetchAnac(`https://datos.anac.gob.ar/madhel/api/v2/airports/${indicator}/`, {
-      headers: {
-        "User-Agent": USER_AGENT_VECTOR
-      }
-    });
+    // De la copia mensual si la tiene (`lib/madhel-descargado.ts`); si no, a ANAC.
+    const guardada = fichaMadhel(indicator);
+    const madhelRes = guardada
+      ? null
+      : await fetchAnac(`https://datos.anac.gob.ar/madhel/api/v2/airports/${indicator}/`, {
+          headers: {
+            "User-Agent": USER_AGENT_VECTOR
+          }
+        });
 
-    if (madhelRes.ok) {
-      const mJson = await madhelRes.json();
+    if (guardada || madhelRes?.ok) {
+      const mJson: any = guardada ?? (await madhelRes!.json());
       if (mJson && mJson.metadata) {
         /*
           El AIP rellena lo que MADHEL deja vacío en los aeródromos controlados, y **nunca

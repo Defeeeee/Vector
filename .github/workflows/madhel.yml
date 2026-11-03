@@ -55,17 +55,39 @@ jobs:
 
       - name: Bajar las fichas de MADHEL
         id: bajar
+        env:
+          MADHEL_COMPLETO: ${{ runner.temp }}/madhel-fichas.json
         run: npm run build:madhel
+
+      # La ficha completa de cada aeródromo va al VPS y no al repo, que es público: trae
+      # teléfonos de aeródromos privados. De ahí sale la ficha de Aeropuertos
+      # (`lib/madhel-descargado.ts`), sin depender de que el navegador llegue a ANAC.
+      - name: La ficha completa, al VPS
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USUARIO: ${{ secrets.DEPLOY_USER }}
+          ARCHIVO: ${{ runner.temp }}/madhel-fichas.json
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/vps
+          chmod 600 ~/.ssh/vps
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          VPS="$USUARIO@$HOST"
+          ssh -i ~/.ssh/vps -o BatchMode=yes "$VPS" 'mkdir -p ~/Vector/datos'
+          scp -i ~/.ssh/vps -o BatchMode=yes "$ARCHIVO" "$VPS:Vector/datos/madhel-fichas.json.nuevo"
+          ssh -i ~/.ssh/vps -o BatchMode=yes "$VPS" 'cd ~/Vector/datos && mv madhel-fichas.json.nuevo madhel-fichas.json'
+          echo "Fichas completas en el VPS."
 
       - name: ¿Cambió algo?
         id: cambios
         run: |
-          if git diff --quiet -- src/data/madhel-fichas.tsv && [ -z "$(git ls-files --others --exclude-standard src/data/madhel-fichas.tsv)" ]; then
+          if git diff --quiet -- src/data/madhel-fichas.tsv src/data/madhel.tsv && [ -z "$(git ls-files --others --exclude-standard src/data/madhel-fichas.tsv)" ]; then
             echo "hay=no" >> "$GITHUB_OUTPUT"
             echo "MADHEL sigue igual."
           else
             echo "hay=si" >> "$GITHUB_OUTPUT"
-            git diff --stat -- src/data/madhel-fichas.tsv | tail -1
+            git diff --stat -- src/data/madhel-fichas.tsv src/data/madhel.tsv | tail -1
           fi
 
       - name: Tipos y tests
@@ -86,14 +108,14 @@ jobs:
             echo
             echo "### $ahora UTC — GitHub Actions (madhel.yml) — Las fichas de MADHEL del mes"
             echo
-            echo "**Qué cambié:** \`apps/web/src/data/madhel-fichas.tsv\` con \`npm run build:madhel\`: $filas aeródromos."
+            echo "**Qué cambié:** \`apps/web/src/data/madhel-fichas.tsv\` y las columnas de condición, control y estado de \`madhel.tsv\`, con \`npm run build:madhel\`: $filas aeródromos."
             echo "**Por qué:** la actualización mensual de las pistas y el combustible para los filtros de Aeropuertos."
             echo "**Estado:** terminado; se despliega si pasa el CI."
             echo "**Verificación:** \`tsc\` y \`npm test\` en verde."
           } >> "../../docs/bitacora/$mes.md"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data/madhel-fichas.tsv "../../docs/bitacora/$mes.md"
+          git add src/data/madhel-fichas.tsv src/data/madhel.tsv "../../docs/bitacora/$mes.md"
           git commit -q -m "MADHEL: las fichas del mes (actualización automática)"
           git push -q origin HEAD:main
           # Un push con este token no dispara el CI: se lo pide a mano. El deploy sale del CI.
@@ -107,7 +129,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -q -b "$rama"
-          git add src/data/madhel-fichas.tsv
+          git add src/data/madhel-fichas.tsv src/data/madhel.tsv
           git commit -q -m "MADHEL: las fichas del mes (para revisar: tests en rojo)"
           git push -q origin "$rama"
           url=$(gh pr create --base main --head "$rama" --title "MADHEL: las fichas del mes, para revisar" --body "Las fichas nuevas de MADHEL dan rojo en los tests. Revisar antes de mergear.")

@@ -25,7 +25,7 @@ function escribir(verificado: string, notams: unknown = PAIS) {
 
 beforeEach(() => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), "notams-"));
-  vi.stubEnv("NOTAMS_DIR", dir);
+  vi.stubEnv("VECTOR_DATOS_DIR", dir);
   fetchAnac.mockReset();
 });
 

@@ -283,6 +283,11 @@ Por eso **a ANAC le pregunta el navegador del piloto**, con su IP:
   verificado hace menos de 45 min**; ahí un aeródromo sin NOTAM es "no hay" de verdad. Atrasada,
   se vuelve a preguntarle a ANAC (`fetchAnac` desde el servidor, el navegador en las
   pantallas). Si ANAC falla 4 veces seguidas, el workflow se apaga solo y avisa;
+- **la ficha de MADHEL sale de la copia mensual** (2.40.1): `madhel.yml` deja la respuesta
+  entera de cada aeródromo en el VPS (`~/Vector/datos/madhel-fichas.json`, **no en el repo**,
+  que es público: trae teléfonos de aeródromos privados) y `lib/madhel-descargado.ts` la usa
+  mientras tenga menos de 40 días. La misma corrida pone al día, en `madhel.tsv`, si cada
+  aeródromo es público o privado, si es controlado y su estado (venían del 2026-08-04);
 - **el AIP manda sobre MADHEL** en la ficha (`componerFicha`), campo por campo: está validado
   contra el PDF (invariante 12) y MADHEL mismo dice que vale el AIP;
 - desde el servidor se presenta como `Vector` (`USER_AGENT_VECTOR`), **nunca imitando un

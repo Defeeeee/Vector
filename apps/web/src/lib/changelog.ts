@@ -941,6 +941,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "2.40.1",
+    fecha: "2026-11-03",
+    motivo: "La ficha del aeródromo sale de la copia mensual de MADHEL en el servidor: ya no queda vacía cuando el navegador no llega a ANAC. Y si cada aeródromo es público o privado, al día. Arreglo, sin anuncio.",
+  },
+  {
     version: "2.39.4",
     fecha: "2026-11-03",
     motivo: "Los filtros de Aeropuertos completan pistas y combustible con las fichas de MADHEL que baja un workflow mensual. Menos \"sin dato\", sin anuncio aparte.",

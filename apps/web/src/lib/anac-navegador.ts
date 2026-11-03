@@ -176,17 +176,17 @@ async function designador(icao: string, signal?: AbortSignal): Promise<string> {
  * navegador no le pregunta los NOTAM a ANAC: la descarga es la fuente principal. Se
  * recuerda 5 minutos.
  */
-let estadoDescarga: { alDia: boolean; hasta: number } | null = null;
+let estadoDescarga: { notams: boolean; madhel: boolean; hasta: number } | null = null;
 
-async function descargaAlDia(signal?: AbortSignal): Promise<boolean> {
-  if (estadoDescarga && Date.now() < estadoDescarga.hasta) return estadoDescarga.alDia;
+async function descargasAlDia(signal?: AbortSignal): Promise<{ notams: boolean; madhel: boolean }> {
+  if (estadoDescarga && Date.now() < estadoDescarga.hasta) return estadoDescarga;
   try {
     const res = await fetch("/api/notams/estado", { signal });
-    const alDia = res.ok ? Boolean((await res.json())?.alDia) : false;
-    estadoDescarga = { alDia, hasta: Date.now() + 5 * 60000 };
-    return alDia;
+    const e = res.ok ? await res.json() : null;
+    estadoDescarga = { notams: Boolean(e?.alDia), madhel: Boolean(e?.madhelAlDia), hasta: Date.now() + 5 * 60000 };
+    return estadoDescarga;
   } catch {
-    return false;
+    return { notams: false, madhel: false };
   }
 }
 
@@ -198,10 +198,11 @@ async function descargaAlDia(signal?: AbortSignal): Promise<boolean> {
 export async function fichaDesdeElNavegador(icao: string, indicador?: string, signal?: AbortSignal): Promise<FichaAnac> {
   const ind = indicador || (await designador(icao, signal));
   const sinPreguntar: Crudo = { valor: null, capturadoEn: null };
+  // Lo que el servidor tiene descargado y al día, no se le pregunta a ANAC: lo pone el servidor.
+  const alDia = await descargasAlDia(signal);
   const [madhel, notams] = await Promise.all([
-    obtener("madhel", ind, VIGENCIA_MADHEL_MIN),
-    // Con la descarga del país al día, los NOTAM los pone el servidor.
-    descargaAlDia(signal).then((alDia) => (alDia ? sinPreguntar : obtener("notams", ind, VIGENCIA_NOTAM_MIN))),
+    alDia.madhel ? sinPreguntar : obtener("madhel", ind, VIGENCIA_MADHEL_MIN),
+    alDia.notams ? sinPreguntar : obtener("notams", ind, VIGENCIA_NOTAM_MIN),
   ]);
 
   try {

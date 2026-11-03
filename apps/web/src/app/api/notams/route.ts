@@ -4,6 +4,7 @@ import { datosAip } from "@/lib/aip";
 import { fetchAnac } from "@/lib/anac";
 import { leerMadhel, leerNotams, type FichaAnac } from "@/lib/ficha-anac";
 import { USER_AGENT_VECTOR, deIndicador, notamsCrudos, notamsDelPais } from "@/lib/notams-descargados";
+import { fichaMadhel } from "@/lib/madhel-descargado";
 
 /** El tope del cuerpo del POST: una ficha de MADHEL y sus NOTAM pesan unos KB. */
 const MAX_CUERPO = 512 * 1024;
@@ -43,8 +44,10 @@ export async function GET(req: NextRequest) {
 
   // MADHEL y los NOTAM a la vez: con ANAC caído, cada uno espera su tope (`fetchAnac`), y
   // uno detrás del otro eran el doble.
+  // La ficha de MADHEL, de la copia mensual si la tiene (`lib/madhel-descargado.ts`).
+  const guardada = fichaMadhel(indicator);
   const [madhel, notams] = await Promise.all([
-    fetchAnac(`https://datos.anac.gob.ar/madhel/api/v2/airports/${indicator}/`, {
+    guardada ?? fetchAnac(`https://datos.anac.gob.ar/madhel/api/v2/airports/${indicator}/`, {
       method: "GET",
       headers: { "User-Agent": USER_AGENT_VECTOR },
       next: { revalidate: 3600 }, // Cache MADHEL details for 1 hour
@@ -82,16 +85,18 @@ export async function POST(req: NextRequest) {
   const cuerpo = await req.json().catch(() => null);
   const icao = icaoValido(cuerpo?.icao);
   if (!icao) return NextResponse.json({ error: "Código ICAO inválido" }, { status: 400 });
+  // La ficha de MADHEL de la copia mensual gana si está al día; si no, la que trajo el navegador.
+  const madhel = fichaMadhel(anacIndicator(icao)) ?? cuerpo.madhel ?? null;
   // Los NOTAM de la descarga ganan si están al día: son de ANAC, del país entero.
   const pais = notamsDelPais();
   if (pais) {
     return NextResponse.json(
-      componer(icao, cuerpo.madhel ?? null, deIndicador(pais.items, anacIndicator(icao)), {
+      componer(icao, madhel, deIndicador(pais.items, anacIndicator(icao)), {
         notamsFuente: "descarga",
         notamsActualizacion: pais.actualizacion,
         notamsCapturadosEn: pais.verificado,
       }),
     );
   }
-  return NextResponse.json(componer(icao, cuerpo.madhel ?? null, cuerpo.notams ?? null, { notamsFuente: cuerpo.notams ? "navegador" : null }));
+  return NextResponse.json(componer(icao, madhel, cuerpo.notams ?? null, { notamsFuente: cuerpo.notams ? "navegador" : null }));
 }
