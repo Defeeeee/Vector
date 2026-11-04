@@ -20,8 +20,16 @@ import {
   prepararPanelCad,
 } from "@/actions/cad-vector";
 import {
+  anomaliasConElCad,
   armarPanelCad,
+  diferenciasConElCad,
   estaEnVector,
+  firmaDeRevision,
+  paraLeerEnDetalle,
+  type AnomaliaCad,
+  type BorradorCad,
+  type DiferenciaCad,
+  type RevisionGuardada,
   filaParaTraer,
   yaEstaEnElCad,
   type AutoridadCad,
@@ -69,6 +77,73 @@ const PAGINA_DE_VUELOS = {
   solicitudFoliadoId: "null",
 };
 
+/**
+ * Lo que ya se revisó en detalle de cada vuelo, en este navegador: así cada vuelo se le pide a
+ * ANAC una sola vez, y otra sólo si cambió o pasó un mes (`paraLeerEnDetalle`). Si no hay
+ * almacenamiento, se revisa como la primera vez, con el mismo tope.
+ */
+const CLAVE_REVISIONES = "vector-cad-revisiones";
+function leerRevisiones(): Record<string, RevisionGuardada> {
+  try {
+    const v = JSON.parse(localStorage.getItem(CLAVE_REVISIONES) ?? "{}");
+    return v && typeof v === "object" ? (v as Record<string, RevisionGuardada>) : {};
+  } catch {
+    return {};
+  }
+}
+function guardarRevisiones(r: Record<string, RevisionGuardada>) {
+  try {
+    localStorage.setItem(CLAVE_REVISIONES, JSON.stringify(r));
+  } catch {
+    /* sin almacenamiento, la próxima conexión vuelve a revisar */
+  }
+}
+
+/**
+ * En cada conexión (Federico, 2026-11-04): los vuelos marcados como pasados contra lo que dice
+ * el CAD. Lo de la lista (horarios, matrícula, lugares, tiempo) se compara siempre, sin pedir
+ * nada más; el detalle (aterrizajes, día y noche, finalidad, cargo, tipo) se pide de a dos y
+ * sólo para los que hace falta.
+ */
+async function revisarContraElCad(
+  t: TransporteCad,
+  marcados: (BorradorCad & { cadId: number })[],
+  enElCad: VueloEnElCad[],
+  finalidades: ItemCad[]
+): Promise<AnomaliaCad[]> {
+  const guardadas = leerRevisiones();
+  const ahora = new Date();
+  const ids = paraLeerEnDetalle(marcados, enElCad, guardadas, ahora);
+  const detalles = new Map<number, Record<string, unknown>>();
+  let siguiente = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(2, ids.length) }, async () => {
+      while (siguiente < ids.length) {
+        const id = ids[siguiente++];
+        const d = await leerDelCad<Record<string, unknown>>(t, "Get", { id: String(id) });
+        const detalle = d.ok ? ((d.datos as { data?: Record<string, unknown> })?.data ?? d.datos) : null;
+        if (detalle && typeof detalle === "object") detalles.set(id, detalle);
+      }
+    })
+  );
+  const anteriores = new Map<number, DiferenciaCad[]>(Object.entries(guardadas).map(([k, v]) => [Number(k), v.diferencias ?? []]));
+  const anomalias = anomaliasConElCad(marcados, enElCad, detalles, anteriores, finalidades);
+
+  // Se recuerda lo leído hoy; lo que ya no está marcado se olvida.
+  const porId = new Map(enElCad.map((v) => [Number(v.vueloTripulanteID), v]));
+  const nuevas: Record<string, RevisionGuardada> = {};
+  for (const b of marcados) {
+    const k = String(b.cadId);
+    const detalle = detalles.get(b.cadId);
+    if (detalle) {
+      const fila = porId.get(b.cadId) as unknown as Record<string, unknown>;
+      nuevas[k] = { firma: firmaDeRevision(b, porId.get(b.cadId)), cuando: ahora.toISOString(), diferencias: diferenciasConElCad(b, fila, detalle, finalidades) };
+    } else if (guardadas[k]) nuevas[k] = guardadas[k];
+  }
+  guardarRevisiones(nuevas);
+  return anomalias;
+}
+
 export function fuenteEnlace(t: TransporteCad): FuenteCad {
   // Las listas del CAD no cambian mientras la pantalla está abierta: se leen una vez.
   let listas: ListasCad | null = null;
@@ -103,7 +178,8 @@ export function fuenteEnlace(t: TransporteCad): FuenteCad {
       const vector = await datosDeVectorParaElCad();
       if (!vector) return { ok: false, error: "No pudimos leer tus vuelos de Vector. Probá de nuevo." };
       const datos = armarPanelCad(vector, [], l.datos, v.datos, memoria);
-      return { ok: true, datos: { ...datos, devueltos: c.desmarcados ?? 0 } };
+      const anomalias = await revisarContraElCad(t, vector.marcados, v.datos, l.datos.finalidades);
+      return { ok: true, datos: { ...datos, devueltos: c.desmarcados ?? 0, anomalias } };
     },
 
     async cargar(item) {

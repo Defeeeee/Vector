@@ -1062,6 +1062,11 @@ export interface DatosPanelCad {
   sinTraer: number;
   /** Cuántos marcados como pasados ya no estaban en el CAD y volvieron a la lista. */
   devueltos: number;
+  /**
+   * Los vuelos que están en los dos lados y no coinciden (`anomaliasConElCad`). Sólo con la
+   * extensión o el marcador, que leen el CAD desde el navegador; ausente, no se revisó.
+   */
+  anomalias?: AnomaliaCad[];
 }
 
 /**
@@ -1136,4 +1141,221 @@ export function leidoDelCad(leidoIso: string | null | undefined, ahora: Date): {
         ? `ayer a las ${hora}`
         : `el ${new Intl.DateTimeFormat("es-AR", { timeZone: zona, day: "2-digit", month: "2-digit" }).format(leido)} a las ${hora}`;
   return { cuando, viejo: ahora.getTime() - leido.getTime() > DIAS_PARA_ACTUALIZAR_CAD * 864e5 };
+}
+
+/* ------------------------------------------------ Vector contra el CAD --- */
+
+/**
+ * Lo que puede no coincidir entre un vuelo de Vector y el mismo vuelo en el CAD (Federico,
+ * 2026-11-04: "en cada conexión con el CAD, que se revisen los datos contra Vector").
+ */
+export type CampoRevisado =
+  | "salida"
+  | "llegada"
+  | "matricula"
+  | "origen"
+  | "destino"
+  | "horas"
+  | "aterrizajes"
+  | "diaNoche"
+  | "finalidad"
+  | "cargo"
+  | "tipo";
+
+export interface DiferenciaCad {
+  campo: CampoRevisado;
+  /** Cómo se lee en la pantalla: "Salida", "Aterrizajes"… */
+  nombre: string;
+  enVector: string;
+  enElCad: string;
+}
+
+export interface AnomaliaCad {
+  vectorId: string;
+  cadId: number;
+  fecha: string;
+  ruta: string;
+  diferencias: DiferenciaCad[];
+}
+
+/** Los campos que se leen sólo del detalle (`Get?id=`), no de la lista. */
+export const CAMPOS_DEL_DETALLE: CampoRevisado[] = ["aterrizajes", "diaNoche", "finalidad", "cargo", "tipo"];
+
+const NOMBRE_CAMPO: Record<CampoRevisado, string> = {
+  salida: "Salida",
+  llegada: "Llegada",
+  matricula: "Matrícula",
+  origen: "Salió de",
+  destino: "Llegó a",
+  horas: "Tiempo de vuelo",
+  aterrizajes: "Aterrizajes",
+  diaNoche: "Día y noche",
+  finalidad: "Finalidad",
+  cargo: "Cargo",
+  tipo: "Tipo de vuelo",
+};
+
+const NOMBRE_CARGO: Record<number, string> = { 1: "piloto", 2: "copiloto", 3: "instructor", 6: "en instrucción" };
+const NOMBRE_TIPO: Record<number, string> = { 1: "local", 2: "travesía", 3: "simulador", 4: "planeador" };
+
+/** "2026-10-17T18:00" → "17/10 18:00 UTC". */
+function salidaParaLeer(iso: string): string {
+  return `${fechaCortaCad(iso)} UTC`;
+}
+const horasParaLeer = (h: number) => `${h.toFixed(1).replace(".", ",")} h`;
+
+/**
+ * Las diferencias entre un vuelo de Vector (`b`, armado como para el CAD) y el mismo vuelo en
+ * el CAD: `fila` es la de `GetPagedList` y `detalle`, si se leyó, el de `Get?id=`.
+ *
+ * **Sólo se marca lo que se pudo leer de los dos lados** (invariante 2): un campo que el CAD no
+ * trajo, o que no se entiende, no es una diferencia. Por eso la forma de la respuesta del CAD
+ * no se adivina: se aceptan los mismos nombres que en "Traer a Vector" (`vueloDesdeCad`).
+ */
+export function diferenciasConElCad(
+  b: BorradorCad,
+  fila: Record<string, unknown>,
+  detalle: Record<string, unknown> | null,
+  finalidades: ItemCad[]
+): DiferenciaCad[] {
+  const d = { ...fila, ...(detalle ?? {}) };
+  const difs: DiferenciaCad[] = [];
+  const agregar = (campo: CampoRevisado, enVector: string, enElCad: string) =>
+    difs.push({ campo, nombre: NOMBRE_CAMPO[campo], enVector, enElCad });
+  const simulador = b.tipoVueloID === TIPO_VUELO_CAD.simulador;
+
+  // Horarios, al minuto y en UTC (así guarda el CAD).
+  const salida = salidaUtc(d.fechaHoraSalida) ?? salidaUtc(d.fechaSalida);
+  const llegada = salidaUtc(d.fechaHoraLlegada) ?? salidaUtc(d.fechaLlegada);
+  const sv = isoAlMinuto(b.fechaHoraSalida);
+  const lv = isoAlMinuto(b.fechaHoraLlegada);
+  if (salida && sv && salida !== sv) agregar("salida", salidaParaLeer(sv), salidaParaLeer(salida));
+  if (llegada && lv && llegada !== lv) agregar("llegada", salidaParaLeer(lv), salidaParaLeer(llegada));
+
+  if (!simulador) {
+    const matricula = matriculaCad(String(campo(d, "matriculaAvion", "matricula") ?? ""));
+    if (matricula && b.matricula && matricula !== matriculaCad(b.matricula)) agregar("matricula", b.matricula, matricula);
+    // Un lugar coincide si el código del CAD es alguno de los del aeródromo de Vector (OACI o ANAC).
+    for (const pre of ["origen", "destino"] as const) {
+      const codigo = codigoDeLugarCad(campo(d, `${pre}Desc`, `${pre}Personalizado`));
+      const lugar = b[pre];
+      if (codigo && lugar.codigo && !lugar.candidatos.map((c) => c.toUpperCase()).includes(codigo.toUpperCase()))
+        agregar(pre, lugar.codigo, codigo);
+    }
+  }
+
+  // El tiempo: el total de la lista ("1.2 hs") o día más noche del detalle.
+  const total = (() => {
+    const t = campo(d, "tiempoTotal", "horasTotales");
+    if (t !== undefined) {
+      const v = Number(String(t).replace(",", ".").replace(/\s*hs?$/i, ""));
+      if (Number.isFinite(v) && v > 0) return unDecimal(v);
+    }
+    if (!simulador && campo(d, "horasDia") !== undefined && campo(d, "horasNoche") !== undefined)
+      return unDecimal(n(d.horasDia) + n(d.horasNoche));
+    return null;
+  })();
+  if (total !== null && b.horas > 0 && total !== unDecimal(b.horas)) agregar("horas", horasParaLeer(b.horas), horasParaLeer(total));
+
+  if (!detalle) return difs;
+
+  // Lo que sólo trae el detalle.
+  const aterrizajes = campo(detalle, "aterrizajes");
+  if (!simulador && aterrizajes !== undefined && Number.isFinite(Number(aterrizajes)) && Number(aterrizajes) !== b.aterrizajes)
+    agregar("aterrizajes", String(b.aterrizajes), String(Number(aterrizajes)));
+
+  if (!simulador && campo(detalle, "horasDia") !== undefined && campo(detalle, "horasNoche") !== undefined) {
+    const dia = unDecimal(n(detalle.horasDia));
+    const noche = unDecimal(n(detalle.horasNoche));
+    if (dia !== unDecimal(b.horasDia) || noche !== unDecimal(b.horasNoche))
+      agregar("diaNoche", `día ${horasParaLeer(b.horasDia)} · noche ${horasParaLeer(b.horasNoche)}`, `día ${horasParaLeer(dia)} · noche ${horasParaLeer(noche)}`);
+  }
+
+  const finalidadId = campo(detalle, "finalidadID", "finalidadId");
+  const finalidad = String(
+    (finalidadId !== undefined ? finalidades.find((i) => String(i.key) === String(finalidadId))?.value : undefined) ??
+      campo(detalle, "finalidadDesc", "finalidad") ??
+      ""
+  ).trim();
+  if (finalidad && b.finalidad && normalizarCad(finalidad) !== normalizarCad(b.finalidad)) agregar("finalidad", b.finalidad, finalidad);
+
+  const cargo = Number(campo(detalle, "cargoID", "cargoId"));
+  if (NOMBRE_CARGO[cargo] && cargo !== b.cargoID) agregar("cargo", NOMBRE_CARGO[b.cargoID] ?? String(b.cargoID), NOMBRE_CARGO[cargo]);
+
+  const tipo = Number(campo(detalle, "tipoVueloID", "tipoVueloId"));
+  if (NOMBRE_TIPO[tipo] && tipo !== b.tipoVueloID) agregar("tipo", NOMBRE_TIPO[b.tipoVueloID] ?? String(b.tipoVueloID), NOMBRE_TIPO[tipo]);
+
+  return difs;
+}
+
+/**
+ * Los vuelos marcados como pasados que en el CAD dicen otra cosa. `detalles` tiene los que se
+ * leyeron en esta conexión; `anteriores`, lo que se encontró en el detalle la última vez que se
+ * leyó, para los que no se volvieron a leer.
+ */
+export function anomaliasConElCad(
+  marcados: (BorradorCad & { cadId: number })[],
+  enElCad: VueloEnElCad[],
+  detalles: Map<number, Record<string, unknown>>,
+  anteriores: Map<number, DiferenciaCad[]>,
+  finalidades: ItemCad[]
+): AnomaliaCad[] {
+  const porId = new Map(enElCad.map((v) => [Number(v.vueloTripulanteID), v as unknown as Record<string, unknown>]));
+  const anomalias: AnomaliaCad[] = [];
+  for (const b of marcados) {
+    const fila = porId.get(b.cadId);
+    if (!fila) continue; // borrado del CAD: lo resuelve `borradosDelCad`
+    const detalle = detalles.get(b.cadId) ?? null;
+    let difs = diferenciasConElCad(b, fila, detalle, finalidades);
+    if (!detalle) difs = [...difs, ...(anteriores.get(b.cadId) ?? []).filter((x) => CAMPOS_DEL_DETALLE.includes(x.campo))];
+    if (difs.length) anomalias.push({ vectorId: b.vectorId, cadId: b.cadId, fecha: b.fecha, ruta: b.ruta, diferencias: difs });
+  }
+  return anomalias;
+}
+
+/**
+ * Cuáles marcados leer en detalle en esta conexión: los que nunca se revisaron, los que
+ * cambiaron (en Vector o en la lista del CAD) y los revisados hace más de `DIAS_REVISION`,
+ * del más nuevo al más viejo y como mucho `tope`. Así cada vuelo se le pide a ANAC una vez, y
+ * otra vez sólo si algo cambió (`lib/anac-vigencia.ts`: se le pregunta lo menos posible).
+ */
+export const TOPE_DETALLES_POR_CONEXION = 12;
+export const DIAS_REVISION = 30;
+
+export interface RevisionGuardada {
+  firma: string;
+  /** ISO. */
+  cuando: string;
+  diferencias: DiferenciaCad[];
+}
+
+/** Lo que identifica el estado de un vuelo de los dos lados: si cambia, se vuelve a leer. */
+export function firmaDeRevision(b: BorradorCad, fila: VueloEnElCad | undefined): string {
+  const f = (fila ?? {}) as unknown as Record<string, unknown>;
+  return JSON.stringify([
+    b.fechaHoraSalida, b.fechaHoraLlegada, b.matricula, b.origen.codigo, b.destino.codigo, b.horas, b.aterrizajes,
+    b.horasDia, b.horasNoche, b.finalidad, b.cargoID, b.tipoVueloID,
+    f.fechaSalida, f.fechaLlegada, f.matricula, f.origenDesc, f.destinoDesc, f.tiempoTotal,
+  ]);
+}
+
+export function paraLeerEnDetalle(
+  marcados: (BorradorCad & { cadId: number })[],
+  enElCad: VueloEnElCad[],
+  guardadas: Record<string, RevisionGuardada>,
+  ahora: Date,
+  tope = TOPE_DETALLES_POR_CONEXION
+): number[] {
+  const porId = new Map(enElCad.map((v) => [Number(v.vueloTripulanteID), v]));
+  return marcados
+    .filter((b) => porId.has(b.cadId))
+    .filter((b) => {
+      const g = guardadas[String(b.cadId)];
+      if (!g) return true;
+      if (g.firma !== firmaDeRevision(b, porId.get(b.cadId))) return true;
+      return ahora.getTime() - Date.parse(g.cuando) > DIAS_REVISION * 864e5;
+    })
+    .sort((a, b) => b.fechaHoraSalida.localeCompare(a.fechaHoraSalida))
+    .slice(0, tope)
+    .map((b) => b.cadId);
 }

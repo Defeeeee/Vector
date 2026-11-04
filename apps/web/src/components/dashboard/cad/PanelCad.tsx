@@ -14,6 +14,7 @@ import {
   faltaSimulador,
   recordarAutoridades,
   simuladorSugerido,
+  type AnomaliaCad,
   type AutoridadCad,
   type FilaCad,
   type FilaTraida,
@@ -211,6 +212,8 @@ export default function PanelCad({ fuente = fuenteServidor }: { fuente?: FuenteC
         ))}
       </div>
 
+      {datos.anomalias && datos.anomalias.length > 0 && <NoCoinciden anomalias={datos.anomalias} />}
+
       {modo === "traer" ? (
         <Traer fuente={fuente} alTraer={() => void recontar()} alLeer={(n) => setDatos((d) => (d ? { ...d, sinTraer: n } : d))} />
       ) : filas.length === 0 ? (
@@ -399,6 +402,60 @@ export default function PanelCad({ fuente = fuenteServidor }: { fuente?: FuenteC
 }
 
 /* ----------------------------------------------------------- las piezas --- */
+
+/**
+ * Los vuelos que están en Vector y en el CAD pero no dicen lo mismo (2026-11-04): qué dice cada
+ * lado, y corregir el de Vector. Si el que está mal es el del CAD, se corrige allá: Vector no
+ * edita vuelos del CAD (sólo lee y crea, `src/cad/enlace-comun.ts`).
+ */
+function NoCoinciden({ anomalias }: { anomalias: AnomaliaCad[] }) {
+  const [abierto, setAbierto] = useState(anomalias.length <= 3);
+  return (
+    <section className="rounded-3xl border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-5 py-4 space-y-3">
+      <button type="button" onClick={() => setAbierto((v) => !v)} aria-expanded={abierto} className="w-full flex items-start gap-3 text-left">
+        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+        <span className="flex-1">
+          <span className="block text-sm font-bold text-amber-950 dark:text-amber-100">
+            {anomalias.length === 1 ? "1 vuelo no coincide con el CAD" : `${anomalias.length} vuelos no coinciden con el CAD`}
+          </span>
+          <span className="block text-xs text-amber-900/80 dark:text-amber-200/80 mt-0.5">
+            Lo que declarás en el CAD tiene que coincidir con tu libro. Corregí el lado que esté mal: el de Vector desde acá, el del CAD
+            en el CAD.
+          </span>
+        </span>
+        <ChevronDown className={`w-4 h-4 shrink-0 mt-1 text-amber-700 dark:text-amber-300 transition-transform ${abierto ? "rotate-180" : ""}`} aria-hidden="true" />
+      </button>
+      {abierto && (
+        <ul className="space-y-2">
+          {anomalias.map((a) => (
+            <li key={a.cadId} className="rounded-2xl bg-white/80 dark:bg-black/30 px-4 py-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+                  <span className="data">{a.fecha}</span> · {a.ruta}
+                </p>
+                <Link href={`/dashboard/history?editar=${encodeURIComponent(a.vectorId)}`} className={enlace}>
+                  Corregir en Vector
+                </Link>
+              </div>
+              <div className="mt-2 grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 text-xs">
+                <span aria-hidden="true" />
+                <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Vector</span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">CAD</span>
+                {a.diferencias.map((d) => (
+                  <div key={d.campo} className="contents">
+                    <span className="text-zinc-500 dark:text-zinc-400">{d.nombre}</span>
+                    <span className="data text-zinc-900 dark:text-white">{d.enVector}</span>
+                    <span className="data text-amber-800 dark:text-amber-300 font-semibold">{d.enElCad}</span>
+                  </div>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 function Aviso({ tono, children }: { tono: "ok" | "error"; children: React.ReactNode }) {
   return (

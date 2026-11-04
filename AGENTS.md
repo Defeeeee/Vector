@@ -437,6 +437,15 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     teléfono, que se haga desde la compu (`navegadorParaCad`, `SegunNavegador`; Federico, 2026-10-30). Se instala
     descomprimida: **no se publica en la Chrome Web Store** (Federico, 2026-11-01). El marcador en Safari
     anda contra el CAD real (Federico, 2026-11-01).
+  - **En cada conexión, Vector revisa los vuelos que están en los dos lados** (3.6.0, Federico,
+    2026-11-04; `diferenciasConElCad`, `anomaliasConElCad`, `paraLeerEnDetalle` en `lib/cad.ts`, y
+    `revisarContraElCad` en `fuente-cad.ts`): horarios, matrícula, lugares y tiempo contra la lista
+    que ya se lee, sin pedir nada más; aterrizajes, día y noche, finalidad, cargo y tipo contra el
+    detalle (`Get?id=`), que se pide **una vez por vuelo** (de a dos, como mucho 12 por conexión) y
+    otra sólo si el vuelo cambió de algún lado o pasaron 30 días: lo revisado se recuerda en el
+    `localStorage` (`vector-cad-revisiones`). Lo que el CAD no trae no es una diferencia
+    (invariante 2). El panel muestra "N vuelos no coinciden con el CAD" con lo que dice cada lado y
+    "Corregir en Vector"; lo del CAD se corrige allá (Vector no edita en el CAD).
   - **"Desde Vector" está apagado** (2026-10-29, `CAD_DESDE_VECTOR` del backend, apagado por defecto):
     ANAC bloqueó cada IP desde la que entró el backend, la última con un solo login. Lo que sigue
     describe cómo era.

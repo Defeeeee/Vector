@@ -20,6 +20,15 @@
       "port": 7599
     },
     {
+      "name": "cad-falso",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "node \"$(git rev-parse --show-toplevel)/apps/web/marketing/recursos/cad-falso.mjs\""
+      ],
+      "port": 7601
+    },
+    {
       "name": "vector-dev",
       "runtimeExecutable": "sh",
       "runtimeArgs": [

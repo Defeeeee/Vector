@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.6.0",
+    fecha: "2026-11-04",
+    titulo: "Tu libro y tu CAD, siempre iguales",
+    novedades: [
+      {
+        icono: "libro",
+        titulo: "Vector revisa tu CAD cada vez que se conecta",
+        texto: "Cuando abrís \"Pasar al CAD\", Vector compara cada vuelo que está en los dos lados: horarios, avión, aeródromos, tiempo, aterrizajes, día y noche, finalidad y cargo. Si algo no coincide, te muestra qué dice cada uno para que corrijas el que esté mal.",
+        href: "/dashboard/history/cad",
+        cta: "Abrir Pasar al CAD",
+      },
+    ],
+  },
+  {
     version: "3.5.0",
     fecha: "2026-11-04",
     titulo: "Todo Vector, a medida del teléfono",

@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.6.0 — Tu libro y tu CAD, siempre iguales
+
+_4 de noviembre de 2026_
+
+- **Vector revisa tu CAD cada vez que se conecta** — Cuando abrís "Pasar al CAD", Vector compara cada vuelo que está en los dos lados: horarios, avión, aeródromos, tiempo, aterrizajes, día y noche, finalidad y cargo. Si algo no coincide, te muestra qué dice cada uno para que corrijas el que esté mal.
+
 ## v3.5.0 — Todo Vector, a medida del teléfono
 
 _4 de noviembre de 2026_
