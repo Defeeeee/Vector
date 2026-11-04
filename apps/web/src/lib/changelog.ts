@@ -1065,6 +1065,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.5.1",
+    fecha: "2026-11-04",
+    motivo: "Registrar vuelo del alumno piloto con el diseño del teléfono de la 3.4.0 (chips del avión, \"Ahora\", aterrizajes con − y +, Guardar abajo). Las novedades no se le muestran al alumno, y para el resto no cambia nada.",
+  },
+  {
     version: "3.4.1",
     fecha: "2026-11-03",
     motivo: "En la app instalada el título de arriba va centrado entre el borde y lo de abajo (Federico): un ajuste de aire de la 3.4.0, no algo nuevo para anunciar.",

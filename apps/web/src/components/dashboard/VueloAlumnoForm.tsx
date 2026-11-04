@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Minus, Plus } from "lucide-react";
 import type { Aircraft } from "@/types";
 import type { FlightPrefill } from "@/lib/prefill";
 import { addAircraft, logFlight } from "@/actions/flight";
@@ -27,6 +28,11 @@ import { useAvisos } from "@/components/dashboard/Avisos";
  *
  * Los horarios se escriben en hora local y se guardan en UTC, como en el formulario
  * completo (`lib/horarios.ts`).
+ *
+ * En el teléfono (3.5.1), como el de los pilotos: el avión con chips, "Ahora" en cada hora,
+ * los aterrizajes con − y +, y el tiempo con Guardar en una barra fija abajo. Es un `<form>`
+ * con el mismo id que el otro (`form-registrar-vuelo`), así el "Guardar" del encabezado de la
+ * app (`EncabezadoRegistrar`) también lo envía.
  */
 
 const CODIGO = /^[A-Z0-9]{3,4}$/;
@@ -100,6 +106,18 @@ export default function VueloAlumnoForm({
 
   const horas = salida && llegada ? calculateFlightDuration(salida, llegada) : 0;
 
+  // La barra de abajo va en un portal: la página entra con `transform` (ver FlightLogForm).
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+  // En el teléfono se guarda desde la barra de abajo: el error tiene que quedar a la vista.
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [error]);
+  // "Ahora": la hora del teléfono, en hora local como el resto del formulario. Se calcula al
+  // tocar, no al dibujar (invariante 1).
+  const ahora = () => aLocal(new Date().toISOString().slice(11, 16));
+
   function agregarAvion() {
     setError(null);
     const m = matricula.trim().toUpperCase();
@@ -168,20 +186,71 @@ export default function VueloAlumnoForm({
   }
 
   return (
-    <div className="max-w-xl space-y-6 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <label className="space-y-2 sm:col-span-2">
+    <form
+      id="form-registrar-vuelo"
+      onSubmit={(e) => {
+        e.preventDefault();
+        guardar();
+      }}
+      className="max-w-xl space-y-6 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8 max-lg:bg-transparent! max-lg:dark:bg-transparent! max-lg:border-0 max-lg:shadow-none! max-lg:p-0 max-lg:space-y-[18px]"
+    >
+      {/* En el teléfono, el avión primero y con chips, como en el formulario de los pilotos. */}
+      {aviones.length > 0 && !agregando && (
+        <section className="lg:hidden flex flex-col gap-2">
+          <p className="eyebrow">Avión</p>
+          <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {aviones.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                aria-pressed={a.id === avionId}
+                onClick={() => setAvionId(a.id)}
+                className={`shrink-0 h-11 px-3.5 rounded-xl data text-sm font-semibold transition-colors ${
+                  a.id === avionId
+                    ? "border-2 border-aviation-blue bg-blue-50 dark:bg-aviation-blue/15 text-blue-950 dark:text-white"
+                    : "border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] text-zinc-700 dark:text-zinc-300"
+                }`}
+              >
+                {a.registration}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setAgregando(true)}
+              aria-label="Agregar avión"
+              className="shrink-0 h-11 w-11 rounded-xl border border-dashed border-zinc-300 dark:border-white/20 flex items-center justify-center text-zinc-500"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      )}
+
+      <div className="grid grid-cols-2 gap-4 max-lg:gap-2">
+        <label className="space-y-2 col-span-2">
           <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-1">Fecha</span>
-          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={`${campo} [color-scheme:light] dark:[color-scheme:dark]`} />
+          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={`${campo} [color-scheme:light] dark:[color-scheme:dark] max-lg:bg-white max-lg:dark:bg-[#111111]`} />
         </label>
-        <label className="space-y-2">
-          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-1">Salida (hora local)</span>
-          <input type="time" value={salida} onChange={(e) => setSalida(e.target.value)} className={`${campo} [color-scheme:light] dark:[color-scheme:dark]`} />
-        </label>
-        <label className="space-y-2">
-          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-1">Llegada (hora local)</span>
-          <input type="time" value={llegada} onChange={(e) => setLlegada(e.target.value)} className={`${campo} [color-scheme:light] dark:[color-scheme:dark]`} />
-        </label>
+        {([["Salida", salida, setSalida], ["Llegada", llegada, setLlegada]] as const).map(([et, valor, poner]) => (
+          <div key={et} className="space-y-2 max-lg:space-y-1 max-lg:rounded-[14px] max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:bg-white max-lg:dark:bg-[#111111] max-lg:px-3 max-lg:py-2.5">
+            <label className="block space-y-2 max-lg:space-y-0">
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-1 max-lg:ml-0 max-lg:text-[11px] max-lg:font-bold">{et} (hora local)</span>
+              <input
+                type="time"
+                value={valor}
+                onChange={(e) => poner(e.target.value)}
+                className={`${campo} [color-scheme:light] dark:[color-scheme:dark] max-lg:border-0 max-lg:p-0 max-lg:rounded-none max-lg:font-mono max-lg:text-2xl`}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => poner(ahora())}
+              className="lg:hidden mt-1 h-8 px-3 rounded-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 text-xs font-bold active:scale-95 transition-transform"
+            >
+              Ahora
+            </button>
+          </div>
+        ))}
       </div>
 
       {/* Lo que vio ADS-B ese día con ese avión (2.30.0). Este formulario va en hora local. */}
@@ -196,12 +265,12 @@ export default function VueloAlumnoForm({
         }}
       />
 
-      <div className="rounded-2xl bg-zinc-50 dark:bg-white/[0.03] px-5 py-4 flex items-baseline justify-between">
+      <div className="max-lg:hidden rounded-2xl bg-zinc-50 dark:bg-white/[0.03] px-5 py-4 flex items-baseline justify-between">
         <span className="text-sm text-zinc-500 dark:text-zinc-400">Tiempo de vuelo</span>
         <span className="data text-2xl font-bold text-zinc-900 dark:text-white">{horas > 0 ? `${horas.toFixed(1).replace(".", ",")} h` : "—"}</span>
       </div>
 
-      <div className="space-y-2">
+      <div className={`space-y-2 ${!agregando && aviones.length > 0 ? "max-lg:hidden" : ""}`}>
         <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-1">Avión</span>
         {!agregando && aviones.length > 0 ? (
           <div className="flex gap-2">
@@ -251,21 +320,66 @@ export default function VueloAlumnoForm({
         )}
       </div>
 
-      <label className="block space-y-2 max-w-[10rem]">
+      <label className="max-lg:hidden block space-y-2 max-w-[10rem]">
         <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-1">Aterrizajes</span>
         <input type="number" min={0} value={aterrizajes} onChange={(e) => setAterrizajes(e.target.value)} className={campo} />
       </label>
+      {/* En el teléfono, una fila con − y +: casi siempre se cambia de a uno. */}
+      <div className="lg:hidden flex items-center gap-3 rounded-[14px] border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] pl-3.5 pr-3 py-1.5">
+        <span className="flex-1 text-[15px] font-bold text-zinc-900 dark:text-white">Aterrizajes</span>
+        {([[-1, "Un aterrizaje menos", Minus], [1, "Un aterrizaje más", Plus]] as const).map(([paso, etiqueta, Icono], i) => (
+          <span key={paso} className="contents">
+            {i === 1 && (
+              <span className="data w-8 text-center text-lg font-bold text-zinc-900 dark:text-white">{Math.max(0, parseInt(aterrizajes, 10) || 0)}</span>
+            )}
+            <button
+              type="button"
+              aria-label={etiqueta}
+              onClick={() => setAterrizajes(String(Math.max(0, (parseInt(aterrizajes, 10) || 0) + paso)))}
+              className="w-11 h-10 rounded-[10px] border border-zinc-200 dark:border-white/10 flex items-center justify-center text-zinc-700 dark:text-zinc-300 active:scale-95 transition-transform"
+            >
+              <Icono className="w-4 h-4" strokeWidth={2.5} />
+            </button>
+          </span>
+        ))}
+      </div>
 
-      {error && <p role="alert" className="text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p ref={errorRef} role="alert" className="text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
 
       <button
-        type="button"
-        onClick={guardar}
+        type="submit"
         disabled={pendiente}
-        className="w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm py-5 rounded-2xl disabled:opacity-50 flex items-center justify-center"
+        className="max-lg:hidden w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm py-5 rounded-2xl disabled:opacity-50 flex items-center justify-center"
       >
         {pendiente ? <Loader2 className="w-5 h-5 animate-spin" /> : "Guardar vuelo"}
       </button>
-    </div>
+
+      {/* En el teléfono: el tiempo y Guardar, fijos abajo, en lugar de la barra de secciones. */}
+      {montado &&
+        createPortal(
+          <div
+            data-sin-barra-movil
+            className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-white/95 dark:bg-black/90 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] flex items-center gap-3"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">Tiempo de vuelo</p>
+              <p className="data text-2xl font-semibold text-zinc-900 dark:text-white leading-tight">
+                {horas > 0 ? horas.toFixed(1).replace(".", ",") : "—"}
+                <span className="text-sm text-zinc-500 dark:text-zinc-400"> h</span>
+              </p>
+            </div>
+            <button
+              type="submit"
+              form="form-registrar-vuelo"
+              disabled={pendiente}
+              className="h-12 px-6 rounded-full bg-aviation-blue text-white font-bold text-[15px] flex items-center gap-2 shadow-lg shadow-aviation-blue/30 active:scale-95 transition-transform disabled:opacity-50"
+            >
+              {pendiente && <Loader2 className="w-5 h-5 animate-spin" />}
+              {pendiente ? "Guardando…" : "Guardar"}
+            </button>
+          </div>,
+          document.body,
+        )}
+    </form>
   );
 }

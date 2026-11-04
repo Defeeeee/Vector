@@ -55,7 +55,7 @@ export default async function LogFlightPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-8 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 w-full pb-20">
-      <EncabezadoRegistrar importar={!alumno} guardar={!alumno && aircraft.length > 0} />
+      <EncabezadoRegistrar importar={!alumno} guardar={alumno || aircraft.length > 0} />
       <div className="max-lg:hidden flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8">
         <div className="space-y-2 md:space-y-4">
           <div className="flex items-center space-x-3 md:space-x-4">
