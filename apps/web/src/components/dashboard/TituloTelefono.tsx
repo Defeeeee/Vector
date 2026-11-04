@@ -22,7 +22,7 @@ export default function TituloTelefono({ fecha, nombre, children }: { fecha: str
       <div className="hidden app:block min-w-0" data-titulo-inicio={enElInicio ? "" : undefined}>
         {enElInicio && <p className="eyebrow truncate">{fecha}</p>}
         <h1 className="text-[32px] font-display font-extrabold tracking-[-0.8px] leading-[42px] text-zinc-900 dark:text-white truncate mt-0.5">
-          {enElInicio ? `Hola, ${nombre}` : seccion!.label}
+          {enElInicio ? `Hola, ${nombre}` : seccion!.clave === "preparar" ? "Preparar" : seccion!.label}
         </h1>
       </div>
     </>

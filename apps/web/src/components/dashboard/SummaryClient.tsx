@@ -278,7 +278,39 @@ export default function SummaryClient({
               }
             />
 
-            <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+            {/* En el teléfono (3.5.0), cada fila con sus casilleros en una grilla de 2×2: la tabla
+                de cinco columnas no entra en 390 px y su desplazamiento de costado no se notaba. */}
+            <div className="md:hidden space-y-4">
+              {matrix.rows.map((row) => (
+                <div key={row.label}>
+                  <div className="flex items-baseline justify-between mb-2">
+                    <span className="text-sm font-bold text-zinc-900 dark:text-white">{row.label}</span>
+                    <span className="data text-xs text-zinc-500 dark:text-zinc-400">{row.total.toFixed(1)} hs</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {row.cells.map((v, i) => (
+                      <div
+                        key={i}
+                        className={`rounded-xl px-3 py-2.5 border ${
+                          v > 0
+                            ? "bg-aviation-blue border-aviation-blue text-white"
+                            : "bg-zinc-50 dark:bg-white/[0.03] border-zinc-200 dark:border-white/10"
+                        }`}
+                      >
+                        <span className={`font-mono block text-[10px] font-bold uppercase tracking-wider ${v > 0 ? "text-white/70" : "text-zinc-400 dark:text-zinc-500"}`}>
+                          {matrix.columns[i]}
+                        </span>
+                        <span className={`data block text-lg font-bold leading-tight ${v > 0 ? "text-white" : "text-zinc-400 dark:text-zinc-600"}`}>
+                          {v.toFixed(1)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="max-md:hidden overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
               <table className="w-full min-w-[520px] border-separate border-spacing-1.5">
                 <thead>
                   <tr>

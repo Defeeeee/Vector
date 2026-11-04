@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.5.0",
+    fecha: "2026-11-04",
+    titulo: "Todo Vector, a medida del teléfono",
+    novedades: [
+      {
+        icono: "avion",
+        titulo: "El resto de las pantallas, también",
+        texto: "Resumen, Auditoría, Balance, Preparar vuelo, Pilotos y el Hangar con el diseño nuevo del teléfono: títulos más chicos, tarjetas más livianas y menos scroll. El desglose ANAC del Resumen ahora entra entero, y la Auditoría muestra sus tres contadores en una fila.",
+        href: "/dashboard/summary",
+        cta: "Ver el Resumen",
+      },
+    ],
+  },
+  {
     version: "3.4.0",
     fecha: "2026-11-03",
     titulo: "Vector, cómodo en el teléfono",

@@ -80,7 +80,8 @@ export default function AuditClient({
 
   return (
     <div className="space-y-6 md:space-y-8">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* En el teléfono (3.5.0), los tres en una fila: apilados ocupaban una pantalla entera. */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <StatCard label="Críticas" value={summary.critical} tone="critical" icon={ShieldAlert} active={tab === "critical"} onClick={() => setTab("critical")} />
         <StatCard label="Advertencias" value={summary.warning} tone="warning" icon={AlertTriangle} active={tab === "warning"} onClick={() => setTab("warning")} />
         <StatCard label="Suprimidas" value={summary.suppressed} tone="muted" icon={EyeOff} active={tab === "suppressed"} onClick={() => setTab("suppressed")} />
@@ -187,19 +188,19 @@ function StatCard({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`text-left bg-white dark:bg-white/[0.02] p-6 rounded-[2rem] border shadow-cal dark:shadow-none transition-all ${
+      className={`text-left bg-white dark:bg-white/[0.02] p-3 sm:p-6 rounded-[2rem] border shadow-cal dark:shadow-none transition-all ${
         active
           ? "border-zinc-900 dark:border-white"
           : "border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20"
       }`}
     >
-      <div className="flex items-center gap-3">
-        <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center ${badgeClasses}`}>
+      <div className="flex max-sm:flex-col max-sm:items-start items-center gap-2 sm:gap-3">
+        <span className={`w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full flex items-center justify-center ${badgeClasses}`}>
           <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
         </span>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{label}</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 truncate max-w-full">{label}</p>
       </div>
-      <p className={`mt-3 text-4xl font-bold data leading-none ${valueClasses}`}>{value}</p>
+      <p className={`mt-2 sm:mt-3 text-3xl sm:text-4xl font-bold data leading-none ${valueClasses}`}>{value}</p>
     </button>
   );
 }

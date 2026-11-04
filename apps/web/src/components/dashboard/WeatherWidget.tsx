@@ -247,7 +247,8 @@ export default function WeatherWidget({ defaultAirport }: WeatherWidgetProps) {
             
             {/* Category Banner — sky mood swatch reflects real METAR category */}
             <div className={`border rounded-2xl p-4 md:p-5 flex items-center gap-4 ${currentCat.bg} transition-all duration-500`}>
-              <div className={`relative w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden bg-gradient-to-b ${currentCat.sky} flex items-center justify-center flex-shrink-0 shadow-inner`}>
+              {/* En el teléfono sin el ícono: con él, la descripción quedaba en cinco renglones (3.5.0). */}
+              <div className={`max-sm:hidden relative w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden bg-gradient-to-b ${currentCat.sky} flex items-center justify-center flex-shrink-0 shadow-inner`}>
                 <currentCat.Icon className="w-7 h-7 md:w-8 md:h-8 text-white drop-shadow" strokeWidth={1.75} />
                 <span className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${currentCat.dot} animate-pulse`} />
               </div>
@@ -257,28 +258,28 @@ export default function WeatherWidget({ defaultAirport }: WeatherWidgetProps) {
                 </p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed mt-1.5 max-w-[260px]">{currentCat.desc}</p>
               </div>
-              <span className={`text-3xl font-black font-display tracking-tight flex-shrink-0 ${currentCat.text}`}>
+              <span className={`text-2xl sm:text-3xl font-black font-display tracking-tight flex-shrink-0 ${currentCat.text}`}>
                 {data.category}
               </span>
             </div>
 
             {/* Weather values */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 rounded-2xl p-4 flex items-center space-x-4">
-                <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-white/5 flex items-center justify-center text-zinc-500 dark:text-zinc-400">
+              <div className="bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 rounded-2xl p-4 flex items-center sm:space-x-4">
+                <div className="max-sm:hidden w-9 h-9 rounded-xl bg-zinc-100 dark:bg-white/5 flex items-center justify-center text-zinc-500 dark:text-zinc-400">
                   <Wind className="w-4.5 h-4.5 animate-pulse" />
                 </div>
                 <div>
                   <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 leading-none">Viento</p>
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-white mt-1.5 leading-none">
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-white mt-1.5 leading-none whitespace-nowrap">
                     {data.windSpeed !== null && data.windSpeed > 0
                       ? `${data.windDir !== null ? `${data.windDir}°` : "VRB"} / ${data.windSpeed} KT`
                       : "Calma"}
                   </p>
                 </div>
               </div>
-              <div className="bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 rounded-2xl p-4 flex items-center space-x-4">
-                <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-white/5 flex items-center justify-center text-zinc-500 dark:text-zinc-400">
+              <div className="bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 rounded-2xl p-4 flex items-center sm:space-x-4">
+                <div className="max-sm:hidden w-9 h-9 rounded-xl bg-zinc-100 dark:bg-white/5 flex items-center justify-center text-zinc-500 dark:text-zinc-400">
                   <Thermometer className="w-4.5 h-4.5" />
                 </div>
                 <div>

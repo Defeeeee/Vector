@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.5.0 — Todo Vector, a medida del teléfono
+
+_4 de noviembre de 2026_
+
+- **El resto de las pantallas, también** — Resumen, Auditoría, Balance, Preparar vuelo, Pilotos y el Hangar con el diseño nuevo del teléfono: títulos más chicos, tarjetas más livianas y menos scroll. El desglose ANAC del Resumen ahora entra entero, y la Auditoría muestra sus tres contadores en una fila.
+
 ## v3.4.0 — Vector, cómodo en el teléfono
 
 _3 de noviembre de 2026_

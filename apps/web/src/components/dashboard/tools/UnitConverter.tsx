@@ -66,7 +66,7 @@ export default function UnitConverter() {
 
           <NumberField label="Valor" value={value} onChange={setValue} />
 
-          <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-3">
             <div>
               <span className="block font-mono text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-1.5">
                 De

@@ -138,6 +138,11 @@ Actividad.
   abajo (`data-sin-barra-movil`) o el encabezado (`data-sin-encabezado-movil`): Registrar vuelo y
   el Mapa en vuelo. Lo que tenga que quedar `fixed` dentro de una página va en un portal sobre
   `body`: la página entra con `animate-in`, un `transform`.
+  **Las demás pantallas** (3.5.0) no tienen diseño propio en el teléfono: las alcanzan reglas de
+  `globals.css` que sólo valen debajo de `lg` y adentro de `main` (tarjetas de 32–40 px a 20 px y
+  sin sombra, sin borde en la app, 20 px entre bloques) y `PageHeader` (28 px, sin el rótulo de
+  arriba; `esLaSeccion` lo esconde en la app cuando repite el encabezado). Una pantalla nueva las
+  toma sola; si algo se rompe en 390 px (una tabla, una grilla), se arregla en esa pantalla.
 - **Registrar vuelo es una sola página** (`/dashboard/log-flight`). Hubo un modal
   interceptado (`@modal/(.)log-flight`) que se llevó cinco commits de arreglos en un
   mes; se sacó en la 2.18.0. No volver a interceptar esa ruta.

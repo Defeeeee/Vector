@@ -7,6 +7,8 @@ const dia = (n) => new Date(hoy.getTime() - n * 86400000).toISOString().slice(0,
 // `ALTA=4` arranca con el alta en el paso de las horas, sin vuelos ni libro; `LICENCIA` cambia
 // la licencia (por ejemplo, "ALUMNO" para el alumno piloto).
 const SIN_VUELOS = process.env.ALTA === "4";
+// La cuenta de prueba para entrar por /login (sólo existe acá; el backend real no la conoce).
+export const CUENTA_DE_PRUEBA = { email: "lucia@vector.test", clave: "piloto-de-prueba" };
 const perfil = { id: "u1", first_name: "Lucía", last_name: "Ferrari", license_type: process.env.LICENCIA || "PPA", tracking_mode: "packs", whatsapp_phone: "5491100000000", licencia_numero: "12345678", fecha_ppa: null };
 const aviones = [
   { id: "a1", user_id: "u1", registration: "LV-ABC", icao: "C152", type: "Cessna 152", type_acft: "MONT-T", is_simulator: false,
@@ -54,6 +56,9 @@ const rutasFijas = {
   "/api/onboarding/estado": () => ({ licencia: true, cma: true, aeronave: true, libro: libros.length > 0, vuelos: !SIN_VUELOS, whatsapp: true, arroba: true }),
   "/api/audit/summary": { critical: 0, warning: 0, suppressed: 0, open_total: 0 },
   "/api/social/resumen": { handle: "lucia.vuela", solicitudes: 0, actividad_nueva: 0, avatar_url: null },
+  // Buscar pilotos espera listas (sin esto la pantalla rompía contra el falso, no contra el real).
+  "/api/social/siguiendo": [],
+  "/api/social/seguidores": [],
 };
 // Una sesión de simulador y un vuelo desde un LAD, para "Pasar al CAD" (2.33.0).
 vuelos.push(
@@ -216,6 +221,16 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
   let crudo = "";
   for await (const parte of req) crudo += parte;
   const json = crudo ? JSON.parse(crudo) : {};
+  // El login de la pantalla de ingreso: con la cuenta de prueba devuelve un JWT sin firmar que
+  // vence en un día (el proxy de Next no verifica la firma) y sin refresh_token.
+  if (ruta === "/api/login" && req.method === "POST") {
+    const ok = json.email?.trim().toLowerCase() === CUENTA_DE_PRUEBA.email && json.password === CUENTA_DE_PRUEBA.clave;
+    const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+    res.writeHead(ok ? 200 : 401, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(ok
+      ? { access_token: `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ sub: "u1", email: CUENTA_DE_PRUEBA.email, exp: Math.floor(Date.now() / 1000) + 86400 })}.prueba` }
+      : { detail: "Usuario o contraseña inválidos." }));
+  }
   if (ruta.startsWith("/api/adsb/")) {
     res.writeHead(200, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(adsb(ruta, req.url)));

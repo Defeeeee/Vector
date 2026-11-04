@@ -363,3 +363,28 @@
 [data-sin-encabezado-movil] .leaflet-top {
   top: env(safe-area-inset-top);
 }
+
+/*
+  Las pantallas del teléfono que no tienen diseño propio (3.5.0): las tarjetas grandes del
+  escritorio (32–40 px de radio, sombra) se ven como las del rediseño de la 3.4.0, de 20 px y
+  planas; en la app instalada, además, sin borde sobre el fondo gris. Y entre los bloques de una
+  página, 20 px en vez de 32–48. Es CSS fuera de las capas de Tailwind a propósito: son ~140
+  tarjetas en decenas de componentes, y esto las alcanza a todas sin tocar el escritorio.
+  Sólo adentro de `main`: lo que va en un portal (el Mapa, los diálogos) tiene su propio diseño.
+*/
+@media (width < 64rem) {
+  main :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-3xl) {
+    border-radius: 20px;
+  }
+  main .shadow-cal {
+    box-shadow: none;
+  }
+  main > div > :is(.space-y-8, .space-y-10, .space-y-12) > :not(:last-child) {
+    margin-block-end: 1.25rem;
+  }
+}
+@media (display-mode: standalone) and (width < 64rem) {
+  main :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-3xl).border:not(.border-dashed) {
+    border-color: transparent;
+  }
+}

@@ -145,7 +145,7 @@ export default function BalanceClient({
     <div className="space-y-8 md:space-y-12">
       {/* Mode Switcher Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <PageHeader eyebrow="Gestión financiera" title="Balance">
+        <PageHeader eyebrow="Gestión financiera" title="Balance" esLaSeccion>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 pt-1">
             Administrá tus consumos de vuelo, saldos y packs de horas
           </p>
