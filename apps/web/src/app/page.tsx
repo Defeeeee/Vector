@@ -28,6 +28,7 @@ import Aparecer from "@/components/publico/Aparecer";
 import JsonLd from "@/components/publico/JsonLd";
 import NavPublica from "@/components/publico/NavPublica";
 import PiePublico from "@/components/publico/PiePublico";
+import VideoHero from "@/components/publico/VideoHero";
 import RedirigirAuth from "@/components/publico/RedirigirAuth";
 import { GUIAS, OG_BASE, SITIO_URL, urlAbsoluta } from "@/lib/sitio";
 
@@ -226,18 +227,11 @@ export default function LandingPage() {
 
         <NavPublica oscura />
 
-        {/* Hero: la carta VFR de Baires de noche, con la ruta SADF → SADM ---------- */}
+        {/* Hero: el piloto y el despegue, en video (los clips 4 y 6 que eligió Federico) ---- */}
         <section className="relative isolate pt-36 pb-20 md:pt-48 md:pb-28 lg:min-h-[820px] lg:flex lg:items-center">
-          <picture>
-            <source media="(max-width: 767px)" srcSet="/landing/carta-noche-vertical.webp" />
-            <img
-              src="/landing/carta-noche.webp"
-              alt=""
-              fetchPriority="high"
-              className="absolute inset-0 -z-10 h-full w-full object-cover opacity-30 md:opacity-45 md:left-auto md:w-[80%] md:[mask-image:linear-gradient(to_right,transparent,black_35%)]"
-            />
-          </picture>
-          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-noche via-noche/75 to-noche/55 md:via-noche/40 md:to-noche/20" />
+          <VideoHero className="absolute inset-0 -z-10 h-full w-full object-cover opacity-60" />
+          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-noche via-noche/55 to-noche/40 md:bg-gradient-to-r md:from-noche md:via-noche/70 md:to-noche/10" />
+          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-40 -z-10 bg-gradient-to-t from-noche to-transparent" />
           <div className="container-wide w-full">
             <div className="max-w-3xl space-y-8">
               <p className="font-mono text-xs uppercase tracking-[0.14em] text-aviation-cyan">Bitácora de vuelo · Argentina</p>

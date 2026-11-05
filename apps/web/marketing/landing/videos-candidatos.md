@@ -1,4 +1,12 @@
-# Videos de stock para el hero — candidatos (para revisar, no están puestos)
+# Videos de stock para el hero
+
+**Elegidos por Federico (2026-11-05): el 4 y el 6**, encadenados en un loop de 17 s en
+`public/landing/hero.mp4` (1280 px) y `hero-movil.mp4` (vertical, 540 px), con su poster. El piloto
+poniéndose los auriculares (6739601, Joshua Malic) funde al despegue desde la pista de pasto
+(17118515, Casey Whalen). Se arman con ffmpeg: recorte 0–8,5 s y 0,2–9,7 s, fundido de 1 s, color
+un poco más frío y apagado, sin audio. Cuando lleguen los videos propios, los reemplazan.
+
+## Candidatos (búsqueda original)
 
 Buscados el 2026-11-05 en Pexels. **Licencia de Pexels:** uso comercial gratis, sin atribución
 obligatoria. No se puede vender el clip tal cual ni dar a entender que las personas que aparecen
