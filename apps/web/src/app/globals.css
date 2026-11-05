@@ -426,17 +426,28 @@
    aparecen recién entonces. `.rail` es el panel, `.rail-rotulo` cada nombre. Con
    `:focus-visible` y no `:focus-within`: el foco que deja un click la dejaba abierta después de
    navegar, hasta tocar la página. */
+/* Asimétrico: al abrir, primero se ensancha la barra y después aparecen los nombres; al cerrar,
+   primero se apagan los nombres (80 ms) y recién después se angosta. Con los dos a la vez, al
+   cerrarse se veían los textos y el logotipo cortados por el borde. */
+.rail {
+  width: 5rem;
+  transition: width 0.18s ease-out 0.08s, box-shadow 0.18s ease-out 0.08s;
+}
+.rail:hover,
+.rail:has(:focus-visible) {
+  width: 15rem;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+  transition-delay: 0s;
+}
 .rail-rotulo {
   opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
   white-space: nowrap;
+  transition: opacity 0.08s linear;
 }
 .rail:hover .rail-rotulo,
 .rail:has(:focus-visible) .rail-rotulo {
   opacity: 1;
-  transform: none;
-  transition-delay: 0.06s;
+  transition: opacity 0.15s ease 0.12s;
 }
 @media (prefers-reduced-motion: reduce) {
   .rail, .rail-rotulo { transition: none !important; }

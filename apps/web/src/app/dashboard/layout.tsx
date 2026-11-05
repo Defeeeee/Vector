@@ -141,7 +141,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         empuja) y muestra los nombres, y al lado del isotipo la palabra "vector".
       */}
       <aside className="hidden lg:block w-20 h-screen sticky top-0 z-40 shrink-0">
-        <div className="rail absolute inset-y-0 left-0 w-20 hover:w-60 has-[:focus-visible]:w-60 overflow-hidden bg-cabina border-r border-cabina-borde flex flex-col px-4 py-6 transition-[width,box-shadow] duration-200 ease-out hover:shadow-2xl hover:shadow-black/50 has-[:focus-visible]:shadow-2xl has-[:focus-visible]:shadow-black/50">
+        <div className="rail absolute inset-y-0 left-0 overflow-hidden bg-cabina border-r border-cabina-borde flex flex-col px-4 py-6">
           <Link href="/dashboard" aria-label="Vector, inicio" className="flex items-center gap-3 h-11 pl-[9px] mb-8 shrink-0 hover:opacity-80 transition-opacity">
             <Isotipo sobreOscuro className="w-[30px] h-[30px] shrink-0" />
             <Logotipo className="rail-rotulo h-[22px] w-auto shrink-0 text-white" />
