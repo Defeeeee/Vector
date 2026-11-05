@@ -136,7 +136,12 @@ Actividad.
   grande ("Hola, …" con la fecha en el inicio, el nombre de la sección en el resto,
   `TituloTelefono`), el + arriba y una barra de pestañas de borde a borde. Las medidas de la app son
   las del diseño (58 px arriba o la muesca, 8 px al contenido, 12 entre tarjetas): no a ojo. El
-  tema y "Cerrar sesión" del teléfono están en el Hangar. Una pantalla puede esconder la barra de
+  "Cerrar sesión" del teléfono está en el Hangar. **Desde la 3.11.0 Vector es sólo oscuro**
+  (`forcedTheme`): la escala `zinc` de Tailwind está redefinida en `.dark` con la paleta de la marca
+  (`globals.css`), así que una pantalla nueva escribe sus `dark:` como siempre y toma el gris azulado
+  sola; las superficies van en `bg-carbon` y el fondo en `bg-noche`. En el escritorio la barra
+  lateral es azul noche (`cabina`) y se abre con los nombres al pasar el mouse o con
+  `:focus-visible`, y el inicio es `InicioEscritorio` (sin bento). Una pantalla puede esconder la barra de
   abajo (`data-sin-barra-movil`) o el encabezado (`data-sin-encabezado-movil`): Registrar vuelo y
   el Mapa en vuelo. Lo que tenga que quedar `fixed` dentro de una página va en un portal sobre
   `body`: la página entra con `animate-in`, un `transform`.
