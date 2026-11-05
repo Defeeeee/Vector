@@ -78,6 +78,18 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.7.0",
+    fecha: "2026-11-05",
+    titulo: "Siempre al día, sin tocar nada",
+    novedades: [
+      {
+        icono: "reloj",
+        titulo: "La app se actualiza sola",
+        texto: "Al volver a abrir Vector, y cada cinco minutos mientras la usás, se traen tus datos de nuevo. Si hay una versión nueva, se toma sola al reabrir (en Registrar vuelo y otras pantallas donde escribís, te sigue preguntando). Y en la app instalada podés tirar hacia abajo para actualizar.",
+      },
+    ],
+  },
+  {
     version: "3.6.0",
     fecha: "2026-11-04",
     titulo: "Tu libro y tu CAD, siempre iguales",

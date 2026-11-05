@@ -6,6 +6,7 @@ import OnboardingOverlay from "@/components/dashboard/OnboardingOverlay";
 import BuscadorGlobal from "@/components/dashboard/BuscadorGlobal";
 import { RailThemeToggle } from "@/components/dashboard/RailThemeToggle";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
+import ActualizarDatos from "@/components/dashboard/ActualizarDatos";
 import TituloTelefono from "@/components/dashboard/TituloTelefono";
 import { apiFetch } from "@/lib/api";
 import { leerResumenSocial } from "@/lib/resumen-social";
@@ -287,6 +288,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {vinoPorQr && <AnotarOrigenQr />}
       {/* El CAD al día, en segundo plano: sólo con la cuenta de ANAC conectada y cada 12 h. */}
       <SincronizarCad />
+      {/* Los datos al día: al volver a la app, cada 5 minutos y tirando hacia abajo (3.7.0). */}
+      <ActualizarDatos servido={Date.now()} />
     </div>
     </AvisosProvider>
   );

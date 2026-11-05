@@ -138,6 +138,12 @@ Actividad.
   abajo (`data-sin-barra-movil`) o el encabezado (`data-sin-encabezado-movil`): Registrar vuelo y
   el Mapa en vuelo. Lo que tenga que quedar `fixed` dentro de una página va en un portal sobre
   `body`: la página entra con `animate-in`, un `transform`.
+  **Los datos se actualizan solos** (3.7.0, `ActualizarDatos` en el layout): `router.refresh()` al
+  volver a la app tras un minuto o más (`VOLVER_TRAS_MS`), cada 5 minutos a la vista y al volver la
+  red; y en la app instalada, **tirar hacia abajo para actualizar** (no sobre el mapa ni en un
+  campo; `data-sin-tirar` para excluir otra cosa). El círculo se va cuando cambia `servido`, la hora
+  en que el server dibujó el layout. Una versión nueva de la app **se toma sola al reabrir**, salvo
+  en las pantallas donde se escribe (`actualizarSinPreguntar`, `lib/pwa.ts`): ahí sigue el cartel.
   **Las demás pantallas** (3.5.0) no tienen diseño propio en el teléfono: las alcanzan reglas de
   `globals.css` que sólo valen debajo de `lg` y adentro de `main` (tarjetas de 32–40 px a 20 px y
   sin sombra, sin borde en la app, 20 px entre bloques) y `PageHeader` (28 px, sin el rótulo de

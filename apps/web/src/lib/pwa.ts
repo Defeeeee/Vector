@@ -335,3 +335,32 @@ export function estrategiaPara(pedido: Pedido, origen: string): Estrategia {
 
   return "ignorar";
 }
+
+/* ------------------------------------------------ actualizarse sola (3.7.0) --- */
+
+/**
+ * Cuánto tiene que haber estado en segundo plano la app para que, al volver, se pidan los datos
+ * de nuevo y se busque una versión nueva. Menos que esto es cambiar de app un momento.
+ */
+export const VOLVER_TRAS_MS = 60_000;
+/** Cada cuánto se vuelven a pedir los datos mientras la app está a la vista. */
+export const REFRESCO_PERIODICO_MS = 5 * 60_000;
+
+/**
+ * Las pantallas donde el piloto escribe: ahí una versión nueva **no** se toma sola al reabrir
+ * (recargar tiraría lo escrito), se pregunta como siempre. En el resto, sí (Federico,
+ * 2026-11-05: "que la PWA se actualice sola al reabrir").
+ */
+const DONDE_SE_ESCRIBE = [
+  /^\/dashboard\/log-flight(\/|$)/,
+  /^\/dashboard\/plan-de-vuelo\/[^/]+/,
+  /^\/dashboard\/settings(\/|$)/,
+  /^\/dashboard\/pilotos\/publicar(\/|$)/,
+  /^\/dashboard\/history\/cad(\/|$)/,
+];
+
+export function actualizarSinPreguntar(pathname: string, search = ""): boolean {
+  // Un vuelo abierto en edición en la Bitácora (`?editar=`) también es escribir.
+  if (/[?&]editar=/.test(search)) return false;
+  return !DONDE_SE_ESCRIBE.some((r) => r.test(pathname));
+}

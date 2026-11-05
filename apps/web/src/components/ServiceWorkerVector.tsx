@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { MENSAJES } from "@/lib/pwa";
+import { MENSAJES, VOLVER_TRAS_MS, actualizarSinPreguntar } from "@/lib/pwa";
 
 /**
  * Registra el service worker, ofrece la actualización y expone la vía de escape.
@@ -67,6 +67,7 @@ export default function ServiceWorkerVector() {
     if (process.env.NODE_ENV !== "production") return;
 
     let cancelado = false;
+    let quitar = () => {};
 
     (async () => {
       try {
@@ -81,10 +82,37 @@ export default function ServiceWorkerVector() {
           updateViaCache: "none",
         });
 
-        const mirar = () => {
-          if (cancelado) return;
-          if (registro.waiting) setEsperando(registro.waiting);
+        /*
+          **Al volver a la app, una versión nueva se toma sola** (3.7.0, Federico): si estuvo un
+          minuto o más en segundo plano, se busca una versión nueva y, si aparece en los próximos
+          30 s y la pantalla no es de las que se escriben (`actualizarSinPreguntar`), se activa y
+          se recarga sin preguntar: al volver nadie está a mitad de una frase. En el resto de los
+          casos sigue el cartel, por lo que se explica abajo.
+        */
+        let alVolverHasta = 0;
+        const activar = (sw: ServiceWorker) => {
+          navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload(), { once: true });
+          sw.postMessage({ tipo: MENSAJES.activarAhora });
         };
+        const mirar = () => {
+          if (cancelado || !registro.waiting) return;
+          if (Date.now() < alVolverHasta && actualizarSinPreguntar(location.pathname, location.search)) activar(registro.waiting);
+          else setEsperando(registro.waiting);
+        };
+        let ocultoDesde: number | null = null;
+        const visibilidad = () => {
+          if (document.visibilityState === "hidden") {
+            ocultoDesde = Date.now();
+            return;
+          }
+          if (ocultoDesde !== null && Date.now() - ocultoDesde >= VOLVER_TRAS_MS) {
+            alVolverHasta = Date.now() + 30_000;
+            void registro.update().catch(() => undefined).then(mirar);
+          }
+          ocultoDesde = null;
+        };
+        document.addEventListener("visibilitychange", visibilidad);
+        quitar = () => document.removeEventListener("visibilitychange", visibilidad);
 
         mirar();
         registro.addEventListener("updatefound", () => {
@@ -105,13 +133,14 @@ export default function ServiceWorkerVector() {
 
     return () => {
       cancelado = true;
+      quitar();
     };
   }, []);
 
   if (!esperando) return null;
 
   /*
-    La versión nueva **no se activa sola**.
+    Mientras la app se usa, la versión nueva **no se activa sola** (al reabrir, sí: ver `mirar`).
 
     Activarla debajo de una pestaña abierta le cambia el precache abajo de los pies:
     el próximo pedazo de la app que se cargue perezosamente —el mapa, los gráficos—

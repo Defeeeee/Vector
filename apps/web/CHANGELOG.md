@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.7.0 — Siempre al día, sin tocar nada
+
+_5 de noviembre de 2026_
+
+- **La app se actualiza sola** — Al volver a abrir Vector, y cada cinco minutos mientras la usás, se traen tus datos de nuevo. Si hay una versión nueva, se toma sola al reabrir (en Registrar vuelo y otras pantallas donde escribís, te sigue preguntando). Y en la app instalada podés tirar hacia abajo para actualizar.
+
 ## v3.6.0 — Tu libro y tu CAD, siempre iguales
 
 _4 de noviembre de 2026_

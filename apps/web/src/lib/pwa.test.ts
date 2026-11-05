@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   PRECACHE,
+  actualizarSinPreguntar,
   capturaVigente,
   claveDeLoServido,
   estrategiaPara,
@@ -294,5 +295,21 @@ describe("claveDeLoServido", () => {
     // Una clave vacía se confundiría con "no hay marca" en el lado que lee.
     expect(claveDeLoServido("/")).toBeTruthy();
     expect(claveDeLoServido("/")).not.toBe("/");
+  });
+});
+
+describe("actualizarSinPreguntar", () => {
+  it("se actualiza sola en las pantallas donde sólo se mira", () => {
+    for (const p of ["/dashboard", "/dashboard/history", "/dashboard/summary", "/dashboard/mapa", "/dashboard/plan-de-vuelo", "/"])
+      expect(actualizarSinPreguntar(p)).toBe(true);
+  });
+
+  it("pregunta donde se escribe", () => {
+    for (const p of ["/dashboard/log-flight", "/dashboard/log-flight/import", "/dashboard/plan-de-vuelo/abc", "/dashboard/settings", "/dashboard/pilotos/publicar", "/dashboard/history/cad"])
+      expect(actualizarSinPreguntar(p)).toBe(false);
+  });
+
+  it("un vuelo abierto en edición también cuenta", () => {
+    expect(actualizarSinPreguntar("/dashboard/history", "?editar=v1")).toBe(false);
   });
 });
