@@ -348,7 +348,7 @@ export default async function Dashboard() {
           queda={quedaEscritorio}
           fajas={disponible("flights") ? fajas : []}
           chequeo={chequeo}
-          hrefPreparar={preparar ? hrefDeSeccion(preparar) : "/dashboard/planificador"}
+          hrefPreparar={preparar ? hrefDeSeccion(preparar) : "/dashboard/mapa/planilla"}
         />
       </div>
 

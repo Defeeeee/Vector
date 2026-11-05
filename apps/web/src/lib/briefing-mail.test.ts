@@ -15,7 +15,7 @@ const datos = (over: Partial<Parameters<typeof armarMensaje>[0]> = {}) => ({
   ruta: "SADM SAAJ",
   matricula: "LV-ABC",
   puntos: [punto(), punto({ icao: "SAAJ", label: "Junín" })],
-  urlPlanificador: "https://vector.example/dashboard/planificador?ruta=SADM-SAAJ",
+  urlPlanificador: "https://vector.example/dashboard/mapa/planilla?ruta=SADM-SAAJ",
   armadoA: "19 de agosto a las 18:00",
   ...over,
 });
@@ -113,7 +113,7 @@ describe("armarMensaje", () => {
     const m = armarMensaje(datos());
     for (const cuerpo of [m.texto, m.html]) {
       expect(cuerpo).toContain("19 de agosto a las 18:00");
-      expect(cuerpo).toContain("https://vector.example/dashboard/planificador?ruta=SADM-SAAJ");
+      expect(cuerpo).toContain("https://vector.example/dashboard/mapa/planilla?ruta=SADM-SAAJ");
     }
     expect(m.texto).toContain("el clima cambia");
   });

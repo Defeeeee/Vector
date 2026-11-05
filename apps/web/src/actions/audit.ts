@@ -20,7 +20,7 @@ export async function suppressFinding(findingId: string, reason?: string) {
     return { error: error.detail || "No se pudo silenciar el hallazgo" };
   }
 
-  revalidatePath("/dashboard/audit");
+  revalidatePath("/dashboard/history/auditoria");
   revalidatePath("/dashboard");
   return { success: true };
 }
@@ -36,7 +36,7 @@ export async function unsuppressFinding(findingId: string) {
     return { error: error.detail || "No se pudo reactivar el hallazgo" };
   }
 
-  revalidatePath("/dashboard/audit");
+  revalidatePath("/dashboard/history/auditoria");
   revalidatePath("/dashboard");
   return { success: true };
 }
@@ -56,7 +56,7 @@ export async function recalculateAudit() {
     return { error: error.detail || "No se pudo recalcular la auditoría" };
   }
 
-  revalidatePath("/dashboard/audit");
+  revalidatePath("/dashboard/history/auditoria");
   revalidatePath("/dashboard");
   return { success: true };
 }

@@ -22,7 +22,7 @@
  * testearlo en `environment: "node"`, igual que `changelog.ts`.
  */
 
-export type ClaveSeccion = "inicio" | "bitacora" | "balance" | "preparar" | "pilotos";
+export type ClaveSeccion = "inicio" | "bitacora" | "preparar" | "pilotos";
 
 export interface Pestana {
   href: string;
@@ -40,11 +40,18 @@ export interface Seccion {
 }
 
 /** Lleva el contador de hallazgos abiertos, en la barra y en su pestaña. */
-export const AUDITORIA_HREF = "/dashboard/audit";
+/** La auditoría ya no es pestaña (3.12.0): cuelga de Vuelos y se abre desde su aviso. */
+export const AUDITORIA_HREF = "/dashboard/history/auditoria";
 
-/** Lleva el contador de solicitudes y actividad nueva, en la barra y en su pestaña. */
 export const ACTIVIDAD_HREF = "/dashboard/pilotos/actividad";
 
+/*
+  La simplificación de la 3.12.0 (Federico, 2026-11-05), con el uso medido en la base: de 5
+  secciones y 15 pestañas a 4 y 9. Calendario se fue con los vuelos programados (nadie los usó);
+  Auditoría cuelga de Vuelos; Balance pasó a la Bitácora como Gastos (el "¿cuánto me queda?" ya
+  está en el inicio); el Planificador se abre desde el Mapa; Clima vive en la ficha de cada
+  aeródromo; y Buscar pilotos, arriba de la Red. Las URLs viejas redirigen (`next.config.js`).
+*/
 export const SECCIONES: Seccion[] = [
   {
     clave: "inicio",
@@ -57,47 +64,33 @@ export const SECCIONES: Seccion[] = [
     pestanas: [
       { href: "/dashboard/history", label: "Vuelos" },
       { href: "/dashboard/summary", label: "Resumen" },
-      // Muestra lo programado y lo ya volado: es la bitácora vista por fecha.
-      { href: "/dashboard/calendario", label: "Calendario" },
-      { href: AUDITORIA_HREF, label: "Auditoría" },
+      { href: "/dashboard/balance", label: "Gastos" },
     ],
-  },
-  {
-    clave: "balance",
-    label: "Balance",
-    pestanas: [{ href: "/dashboard/balance", label: "Balance" }],
   },
   {
     clave: "preparar",
     label: "Preparar vuelo",
     pestanas: [
-      { href: "/dashboard/planificador", label: "Planificador" },
-      // El Mapa (3.0.0): planificar sobre el mapa y volar con el GPS del teléfono. Segundo,
-      // no primero: el ícono de Preparar vuelo sigue abriendo el Planificador de siempre.
+      // El Mapa es la pantalla de planificar: la ruta, los espacios aéreos, con quién se habla,
+      // y desde ahí la planilla del Planificador y el plan de vuelo.
       { href: "/dashboard/mapa", label: "Mapa" },
-      // Los planes de vuelo guardados para EANA (2026-10-19). Al lado del planificador,
-      // que es de donde sale la mayoría.
       { href: "/dashboard/plan-de-vuelo", label: "Plan de vuelo" },
-      { href: "/dashboard/airports", label: "Aeropuertos" },
-      { href: "/dashboard/clima", label: "Clima" },
+      { href: "/dashboard/airports", label: "Aeródromos" },
       { href: "/dashboard/tools", label: "Herramientas" },
     ],
   },
-  // La red social. Al final por lo mismo que todo lo que se agregó a esta barra: no
-  // mueve de lugar los íconos que la gente ya tiene en la mano. El perfil de cada uno
-  // vive fuera del dashboard, en `/u/[handle]`, porque se abre sin cuenta.
+  // La red social. El perfil de cada uno vive fuera del dashboard, en `/u/[handle]`, porque se
+  // abre sin cuenta.
   {
     clave: "pilotos",
     label: "Pilotos",
     pestanas: [
       { href: "/dashboard/pilotos", label: "Red" },
-      { href: "/dashboard/pilotos/buscar", label: "Buscar" },
       { href: ACTIVIDAD_HREF, label: "Actividad" },
     ],
   },
 ];
 
-/** Adónde lleva el ícono de la sección: su primera pestaña. */
 export function hrefDeSeccion(seccion: Seccion): string {
   return seccion.pestanas[0].href;
 }

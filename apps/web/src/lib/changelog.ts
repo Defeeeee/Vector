@@ -696,7 +696,7 @@ export const CHANGELOG: VersionPublicada[] = [
         titulo: "Tu plan de vuelo para EANA, desde el planificador",
         texto:
           "Armá la ruta y Vector completa el formulario de EANA: ruta, velocidad, nivel, tiempo y autonomía. Marcá el equipo del avión, firmá con el dedo y mandá el PDF a la oficina ARO/AIS, con el mail y el teléfono a mano.",
-        href: "/dashboard/planificador",
+        href: "/dashboard/mapa/planilla",
         cta: "Ir al planificador",
       },
       {
@@ -926,7 +926,7 @@ export const CHANGELOG: VersionPublicada[] = [
         titulo: "La app abre en la plataforma aunque no haya señal",
         texto:
           "Instalala desde el navegador del celular y las pantallas que ya visitaste con conexión siguen abriendo sin ella, con un cartel que dice de cuándo es la foto que estás viendo. El planificador resuelve aeródromos, radioayudas y fixes con un catálogo que viaja adentro de la app: la ruta que armás sin señal da los mismos números que con señal.",
-        href: "/dashboard/planificador",
+        href: "/dashboard/mapa/planilla",
         cta: "Abrir el planificador",
       },
       {
@@ -984,7 +984,7 @@ export const CHANGELOG: VersionPublicada[] = [
         titulo: "Meté un punto en el medio sin borrar nada",
         texto:
           "Entre cada par de puntos ahora hay un \"Punto acá\": el punto nuevo entra ahí y no al final. Antes, para agregar una escala en el medio había que borrar todo lo que venía después y volver a escribirlo.",
-        href: "/dashboard/planificador",
+        href: "/dashboard/mapa/planilla",
         cta: "Armar una ruta",
       },
       {
@@ -1005,7 +1005,7 @@ export const CHANGELOG: VersionPublicada[] = [
         titulo: "\"Ir por aerovía\", abajo de cada punto",
         texto:
           "Debajo de cada punto de la ruta aparece un botón que te ofrece las aerovías que pasan por ahí y hasta dónde llega cada una. Elegís las dos cosas de una lista: no hay que saberse ninguna de memoria ni tener la carta al lado. La aerovía queda como una franja entre los dos puntos, y si cambiás el destino se recalcula sola en vez de dejarte once campos sueltos para borrar a mano.",
-        href: "/dashboard/planificador",
+        href: "/dashboard/mapa/planilla",
         cta: "Probar una aerovía",
       },
       {
@@ -1026,7 +1026,7 @@ export const CHANGELOG: VersionPublicada[] = [
         titulo: "Los 1018 puntos significativos del AIP",
         texto:
           "Escribí DORVO, AKNOS o cualquiera de los cinco letras que canta el control y entra en la ruta como un punto más, con su tramo, su rumbo y su tiempo. Te muestra a qué aerovías pertenece y de qué edición del AIP salió — se enmienda cada 28 días.",
-        href: "/dashboard/planificador",
+        href: "/dashboard/mapa/planilla",
         cta: "Planificar con un fix",
       },
     ],
@@ -1062,7 +1062,7 @@ export const CHANGELOG: VersionPublicada[] = [
         titulo: "Puntos por radial y distancia",
         texto:
           "Escribí BAR/045/25 y el planificador lo toma como punto: 25 NM en el radial 045 del VOR de Bariloche. Usa la variación con la que está alineada la estación, que no es la de hoy ni la del aeródromo, y te dice qué frecuencia sintonizar.",
-        href: "/dashboard/planificador",
+        href: "/dashboard/mapa/planilla",
         cta: "Probar un radial",
       },
       {
@@ -1070,7 +1070,7 @@ export const CHANGELOG: VersionPublicada[] = [
         titulo: "Tus propios puntos visuales",
         texto:
           "El pueblo, el cruce de rutas, la laguna: si tenés la coordenada, escribila como S34.68/W58.64 y entra en la ruta como un punto más, con su tramo, su rumbo y su tiempo.",
-        href: "/dashboard/planificador",
+        href: "/dashboard/mapa/planilla",
         cta: "Planificar un vuelo",
       },
       {
@@ -1091,7 +1091,7 @@ export const CHANGELOG: VersionPublicada[] = [
         titulo: "Planificador de vuelo",
         texto:
           "Cargá la ruta y te arma la planilla de navegación mientras escribís: rumbos, tiempos y combustible por tramo, con el viento del METAR de salida y la variación magnética de tu aeródromo. Se imprime y se comparte con el link.",
-        href: "/dashboard/planificador",
+        href: "/dashboard/mapa/planilla",
         cta: "Planificar un vuelo",
       },
       {
@@ -1107,7 +1107,7 @@ export const CHANGELOG: VersionPublicada[] = [
         titulo: "Briefing y planificación en la misma pantalla",
         texto:
           "El planificador ahora trae también el METAR, el TAF y los NOTAM de cada punto, el viento cruzado sobre la pista y la densidad de altitud. Y podés tomar el viento del modelo en altura en vez del de superficie, que a 10.000 ft puede cambiar el tiempo de un tramo diez minutos.",
-        href: "/dashboard/planificador",
+        href: "/dashboard/mapa/planilla",
         cta: "Ver el briefing",
       },
       {

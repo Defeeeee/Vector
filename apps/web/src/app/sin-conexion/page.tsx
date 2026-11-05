@@ -61,7 +61,7 @@ export default function SinConexionPage() {
       <p className="eyebrow mb-4">Lo que podés intentar</p>
       <ul className="space-y-3 mb-10">
         {[
-          { icono: Compass, texto: "Planificador de navegación", href: "/dashboard/planificador" },
+          { icono: Compass, texto: "Planificador de navegación", href: "/dashboard/mapa/planilla" },
           { icono: MapPin, texto: "Directorio de aeródromos", href: "/dashboard/airports" },
           { icono: Calculator, texto: "Calculadoras de cabina", href: "/dashboard/tools" },
         ].map(({ icono: Icono, texto, href }) => (

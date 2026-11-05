@@ -14,7 +14,7 @@ describe("el buscador de la app", () => {
   it("sin tildes ni mayúsculas", () => {
     expect(sinTildes("Bitácora ÁÉ")).toBe("bitacora ae");
     expect(buscarPantallas("bitacora").length).toBeGreaterThan(0);
-    expect(buscarPantallas("AUDITORÍA")[0].href).toBe("/dashboard/audit");
+    expect(buscarPantallas("AUDITORÍA")[0].href).toBe("/dashboard/history/auditoria");
   });
 
   it("con menos de dos letras no busca", () => {

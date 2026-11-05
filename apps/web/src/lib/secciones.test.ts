@@ -111,7 +111,7 @@ describe("las secciones", () => {
       "/dashboard",
       "/dashboard/history",
       "/dashboard/balance",
-      "/dashboard/planificador",
+      "/dashboard/mapa/planilla",
       "/dashboard/pilotos",
     ]);
   });
@@ -127,7 +127,7 @@ describe("seccionDe", () => {
   it("agrupa el resumen, el calendario y la auditoría con la bitácora", () => {
     expect(seccionDe("/dashboard/summary")?.clave).toBe("bitacora");
     expect(seccionDe("/dashboard/calendario")?.clave).toBe("bitacora");
-    expect(seccionDe("/dashboard/audit")?.clave).toBe("bitacora");
+    expect(seccionDe("/dashboard/history/auditoria")?.clave).toBe("bitacora");
   });
 
   it("agrupa aeropuertos, clima y herramientas con el planificador", () => {

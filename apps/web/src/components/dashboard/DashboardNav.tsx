@@ -1,6 +1,6 @@
 "use client";
 
-import { Compass, History, LayoutDashboard, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Compass, History, LayoutDashboard, Users, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -16,7 +16,6 @@ import { SECCIONES, hrefDeSeccion, seccionDe, type ClaveSeccion } from "@/lib/se
 const ICONOS: Record<ClaveSeccion, LucideIcon> = {
   inicio: LayoutDashboard,
   bitacora: History,
-  balance: Wallet,
   preparar: Compass,
   pilotos: Users,
 };
@@ -93,7 +92,7 @@ export default function DashboardNav({
   return (
     <nav
       aria-label="Secciones"
-      className="w-full h-[60px] app:h-auto bg-white/95 dark:bg-zinc-900/95 app:dark:bg-black/90 backdrop-blur-xl p-1 app:px-1.5 app:pt-1.5 app:pb-[calc(env(safe-area-inset-bottom)+0.25rem)] rounded-full app:rounded-none grid grid-cols-5 shadow-cal dark:shadow-none app:shadow-none border border-zinc-200 dark:border-white/10 app:border-x-0 app:border-b-0 pointer-events-auto"
+      className="w-full h-[60px] app:h-auto bg-white/95 dark:bg-zinc-900/95 app:dark:bg-black/90 backdrop-blur-xl p-1 app:px-1.5 app:pt-1.5 app:pb-[calc(env(safe-area-inset-bottom)+0.25rem)] rounded-full app:rounded-none grid grid-cols-4 shadow-cal dark:shadow-none app:shadow-none border border-zinc-200 dark:border-white/10 app:border-x-0 app:border-b-0 pointer-events-auto"
     >
       {SECCIONES.map((seccion) => {
         const Icon = ICONOS[seccion.clave];

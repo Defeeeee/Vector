@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
       ruta: codigos.join(" "),
       matricula: p.registration ?? undefined,
       puntos,
-      urlPlanificador: `${APP_URL}/dashboard/planificador?ruta=${encodeURIComponent(rutaAUrl(codigos))}`,
+      urlPlanificador: `${APP_URL}/dashboard/mapa/planilla?ruta=${encodeURIComponent(rutaAUrl(codigos))}`,
       armadoA,
       appUrl: APP_URL,
     });
