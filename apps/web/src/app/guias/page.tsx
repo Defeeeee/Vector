@@ -52,7 +52,7 @@ export default function IndiceGuias() {
             <Link
               key={g.slug}
               href={`/guias/${g.slug}`}
-              className="group rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-7 hover:border-zinc-300 dark:hover:border-white/20 transition-colors flex flex-col"
+              className="group rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-7 hover:border-zinc-300 dark:hover:border-white/20 transition-colors flex flex-col"
             >
               <BookOpen className="w-5 h-5 text-aviation-blue dark:text-aviation-cyan" />
               <h2 className="mt-4 text-xl font-display font-bold text-zinc-900 dark:text-white tracking-tight group-hover:underline underline-offset-2">

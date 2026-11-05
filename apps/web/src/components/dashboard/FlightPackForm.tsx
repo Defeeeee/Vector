@@ -27,7 +27,7 @@ export default function FlightPackForm({ aircraft }: FlightPackFormProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-white/[0.02] p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none hover:shadow-lg dark:hover:bg-white/[0.04] transition-all space-y-6 md:space-y-8">
+    <div className="bg-white dark:bg-carbon p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none hover:shadow-lg dark:hover:bg-white/[0.04] transition-all space-y-6 md:space-y-8">
       <div className="flex items-center space-x-3">
         <div className="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
           <Plus className="w-4 h-4 text-white dark:text-zinc-900" />
@@ -76,7 +76,7 @@ export default function FlightPackForm({ aircraft }: FlightPackFormProps) {
             <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-1">Aeronaves válidas</label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
               {aircraft.map(ac => (
-                <label key={ac.id} className="flex items-center space-x-3 bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/5 p-4 rounded-xl cursor-pointer hover:bg-zinc-100 dark:hover:bg-white/[0.05] transition-all">
+                <label key={ac.id} className="flex items-center space-x-3 bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/5 p-4 rounded-xl cursor-pointer hover:bg-zinc-100 dark:hover:bg-white/[0.05] transition-all">
                   <input 
                     type="checkbox" 
                     name="aircraft_ids" 

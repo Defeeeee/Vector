@@ -79,7 +79,7 @@ export default function ProfileForm({ profile, cmaExpiry }: ProfileFormProps) {
   return (
     <form action={handleSubmit} className="space-y-8">
       {/* Pilot ID card — live preview of the profile being edited below */}
-      <div className="relative overflow-hidden rounded-[2rem] bg-zinc-900 dark:bg-[#0a0a0a] border border-zinc-800 dark:border-white/10 p-6 md:p-8">
+      <div className="relative overflow-hidden rounded-[2rem] bg-zinc-900 dark:bg-noche border border-zinc-800 dark:border-white/10 p-6 md:p-8">
         <div className="absolute top-0 right-0 w-64 h-64 bg-aviation-blue/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
         <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '20px 20px' }} />
         <div className="relative z-10 flex items-center gap-4 md:gap-5">
@@ -103,15 +103,15 @@ export default function ProfileForm({ profile, cmaExpiry }: ProfileFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <EditField label="Nombre">
-          <input name="first_name" defaultValue={profile?.first_name || ""} placeholder="Nombre del piloto" required className="w-full bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
+          <input name="first_name" defaultValue={profile?.first_name || ""} placeholder="Nombre del piloto" required className="w-full bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
         </EditField>
 
         <EditField label="Apellido">
-          <input name="last_name" defaultValue={profile?.last_name || ""} placeholder="Apellido del piloto" required className="w-full bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
+          <input name="last_name" defaultValue={profile?.last_name || ""} placeholder="Apellido del piloto" required className="w-full bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
         </EditField>
 
         <EditField label="Licencia (ANAC)">
-          <input name="license_type" list="opciones-licencia" value={licencia} onChange={(e) => setLicencia(e.target.value.toUpperCase())} placeholder="ALUMNO, PPA, PCA, TLA..." className="w-full bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all uppercase placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
+          <input name="license_type" list="opciones-licencia" value={licencia} onChange={(e) => setLicencia(e.target.value.toUpperCase())} placeholder="ALUMNO, PPA, PCA, TLA..." className="w-full bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all uppercase placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
           <datalist id="opciones-licencia">
             {OPCIONES_LICENCIA.map((o) => (
               <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
@@ -126,7 +126,7 @@ export default function ProfileForm({ profile, cmaExpiry }: ProfileFormProps) {
               type="date"
               required
               defaultValue={profile?.fecha_ppa?.slice(0, 10) || ""}
-              className="w-full bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all [color-scheme:light] dark:[color-scheme:dark]"
+              className="w-full bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all [color-scheme:light] dark:[color-scheme:dark]"
             />
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-2 leading-relaxed">
               Los vuelos de antes quedan como de alumno: no cuentan para la PCA ni van al libro de vuelo.
@@ -139,11 +139,11 @@ export default function ProfileForm({ profile, cmaExpiry }: ProfileFormProps) {
             queda en blanco para completar a mano. */}
         {!alumno && <>
         <EditField label="Nº de licencia">
-          <input name="licencia_numero" defaultValue={profile?.licencia_numero || ""} placeholder="Opcional" maxLength={30} className="w-full bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
+          <input name="licencia_numero" defaultValue={profile?.licencia_numero || ""} placeholder="Opcional" maxLength={30} className="w-full bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
         </EditField>
 
         <EditField label="Legajo (ANAC)">
-          <input name="legajo" defaultValue={profile?.legajo || ""} placeholder="Opcional" maxLength={30} className="w-full bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
+          <input name="legajo" defaultValue={profile?.legajo || ""} placeholder="Opcional" maxLength={30} className="w-full bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
           <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-2 leading-relaxed">
             Los dos van en el encabezado del libro de vuelo en PDF.
           </p>
@@ -156,7 +156,7 @@ export default function ProfileForm({ profile, cmaExpiry }: ProfileFormProps) {
             the document expiry alerts. Naming both uses is the cheapest half of
             fixing that. */}
         <EditField label="WhatsApp">
-          <input name="whatsapp_phone" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} inputMode="tel" autoComplete="tel" placeholder="Ej: 11 2345 6789" className="w-full bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
+          <input name="whatsapp_phone" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} inputMode="tel" autoComplete="tel" placeholder="Ej: 11 2345 6789" className="w-full bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl p-4 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600" />
           {/* Cómo va a quedar guardado, mientras se escribe: el copiloto sólo reconoce
               la forma 549 + área + número, y el 2026-09-24 un piloto la escribió sin el
               549 y no entendía por qué no le contestaba. */}
@@ -171,7 +171,7 @@ export default function ProfileForm({ profile, cmaExpiry }: ProfileFormProps) {
           </p>
         </EditField>
 
-        <div className="md:col-span-2 p-6 bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-[1.5rem] space-y-4">
+        <div className="md:col-span-2 p-6 bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[1.5rem] space-y-4">
           <div className="flex justify-between items-center">
             <div>
               <h4 className="text-sm font-semibold text-zinc-900 dark:text-white">Token de acceso API (iOS Shortcuts)</h4>
@@ -184,7 +184,7 @@ export default function ProfileForm({ profile, cmaExpiry }: ProfileFormProps) {
               readOnly 
               type="text" 
               value={profile?.api_key || "No disponible. Guarda tu perfil primero."} 
-              className="flex-1 bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-xs font-mono font-bold text-zinc-600 dark:text-zinc-300 outline-none select-all shadow-sm" 
+              className="flex-1 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-xs font-mono font-bold text-zinc-600 dark:text-zinc-300 outline-none select-all shadow-sm" 
             />
             <div className="flex gap-2">
               <button

@@ -210,7 +210,7 @@ export default function BriefingRuta({ puntos }: { puntos: Punto[] }) {
     bien: { Icono: CheckCircle2, clase: "border-emerald-500/25 bg-emerald-500/[0.07]", color: "text-emerald-600 dark:text-emerald-500" },
     atencion: { Icono: AlertTriangle, clase: "border-amber-500/25 bg-amber-500/[0.07]", color: "text-amber-600 dark:text-amber-500" },
     peligro: { Icono: CircleAlert, clase: "border-red-500/25 bg-red-500/[0.07]", color: "text-red-600 dark:text-red-500" },
-    sinDatos: { Icono: HelpCircle, clase: "border-zinc-300/40 dark:border-white/10 bg-zinc-100/60 dark:bg-white/[0.03]", color: "text-zinc-500 dark:text-zinc-400" },
+    sinDatos: { Icono: HelpCircle, clase: "border-zinc-300/40 dark:border-white/10 bg-zinc-100/60 dark:bg-carbon", color: "text-zinc-500 dark:text-zinc-400" },
   }[veredicto.tono];
 
   return (
@@ -309,7 +309,7 @@ function TarjetaEstacion({ punto, datos }: { punto: Punto; datos: DatosEstacion 
       : null;
 
   return (
-    <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] px-4 py-3">
+    <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-4 py-3">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="font-bold text-zinc-900 dark:text-white">{punto.codigo}</span>
         <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{punto.label}</span>

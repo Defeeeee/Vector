@@ -42,7 +42,7 @@ const combustibles = (texto: string) =>
   [/100\s*LL/i.test(texto) && "100LL", /JET\s*A[\s-]*1/i.test(texto) && "JET A-1"].filter(Boolean).join(" · ");
 
 const CAMPO =
-  "h-10 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:border-aviation-blue transition-colors";
+  "h-10 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-3 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:border-aviation-blue transition-colors";
 
 function Selector<T extends string>({
   etiqueta,
@@ -238,7 +238,7 @@ export default function FiltroAerodromos({
     : [];
 
   return (
-    <section className="rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4 md:p-6 space-y-4 shadow-cal dark:shadow-none">
+    <section className="rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-4 md:p-6 space-y-4 shadow-cal dark:shadow-none">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-base font-display font-bold text-zinc-900 dark:text-white tracking-tight">Buscar aeródromos</h2>
@@ -265,7 +265,7 @@ export default function FiltroAerodromos({
             maxLength={240}
             placeholder="Con 100LL y pista de asfalto, a menos de 100 NM de San Fernando"
             aria-label="Qué aeródromos buscás"
-            className="w-full h-11 bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200 dark:border-white/10 rounded-2xl pl-11 pr-3 text-sm font-medium text-zinc-900 dark:text-white outline-none focus:border-aviation-blue transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+            className="w-full h-11 bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl pl-11 pr-3 text-sm font-medium text-zinc-900 dark:text-white outline-none focus:border-aviation-blue transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
           />
         </div>
         <button

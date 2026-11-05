@@ -250,7 +250,7 @@ export default function ComposerPublicacion({
     return (
       <>
         {inputArchivos}
-        <div className="flex items-center gap-3 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-3 pr-4">
+        <div className="flex items-center gap-3 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-3 pr-4">
           <AvatarPiloto nombre={autor.nombre} avatarUrl={autor.avatarUrl} />
           <button
             type="button"
@@ -287,7 +287,7 @@ export default function ComposerPublicacion({
           e.preventDefault();
           void publicar();
         }}
-        className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-4 md:p-6"
+        className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-4 md:p-6"
       >
         <div className="flex items-start gap-3">
           <AvatarPiloto nombre={autor.nombre} avatarUrl={autor.avatarUrl} />

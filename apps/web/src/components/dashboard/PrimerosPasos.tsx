@@ -30,7 +30,7 @@ export default function PrimerosPasos({ estado, alumno = false }: { estado: Esta
   const hechos = pasos.filter((p) => p.hecho).length;
 
   return (
-    <div className="bg-white dark:bg-white/[0.02] rounded-[2rem] border border-dashed border-zinc-200 dark:border-white/10 p-6 md:p-8 space-y-5">
+    <div className="bg-white dark:bg-carbon rounded-[2rem] border border-dashed border-zinc-200 dark:border-white/10 p-6 md:p-8 space-y-5">
       <div className="flex items-baseline justify-between gap-4">
         <h3 className="text-base font-bold font-display text-zinc-900 dark:text-white">Primeros pasos</h3>
         <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">

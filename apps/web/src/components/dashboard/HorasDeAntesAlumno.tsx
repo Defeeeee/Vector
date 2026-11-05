@@ -30,7 +30,7 @@ export default function HorasDeAntesAlumno({ logbooks }: { logbooks: Logbook[] }
   };
 
   return (
-    <div className="rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-5 md:p-6 space-y-5">
+    <div className="rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-5 md:p-6 space-y-5">
       <p className="text-[13px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
         Lo que volaste antes de usar Vector. Se suma a tus vuelos en el camino a la PPA, cada parte en su requisito.
       </p>

@@ -59,7 +59,7 @@ export default async function LogFlightPage({ searchParams }: PageProps) {
       <div className="max-lg:hidden flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8">
         <div className="space-y-2 md:space-y-4">
           <div className="flex items-center space-x-3 md:space-x-4">
-            <Link href="/dashboard" className="p-2 md:p-3 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-full transition-colors group bg-white dark:bg-[#111111] shadow-sm border border-zinc-200 dark:border-white/10 md:border-transparent md:bg-transparent md:shadow-none">
+            <Link href="/dashboard" className="p-2 md:p-3 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-full transition-colors group bg-white dark:bg-carbon shadow-sm border border-zinc-200 dark:border-white/10 md:border-transparent md:bg-transparent md:shadow-none">
               <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white" />
             </Link>
             <h2 className="text-4xl md:text-6xl font-display font-bold tracking-tighter text-zinc-900 dark:text-white leading-none">Registrar</h2>

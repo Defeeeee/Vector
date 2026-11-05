@@ -60,7 +60,7 @@ export default function RecentFlights({
         </Link>
       </div>
 
-      <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none divide-y divide-zinc-100 dark:divide-white/5 overflow-hidden">
+      <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none divide-y divide-zinc-100 dark:divide-white/5 overflow-hidden">
         {recent.map((f) => {
           const [origin, dest] = splitRoute(f.route, "???");
           const ac = f.aircraft_id ? byId.get(f.aircraft_id) : undefined;

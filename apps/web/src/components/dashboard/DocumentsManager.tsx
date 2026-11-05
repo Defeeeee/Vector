@@ -161,7 +161,7 @@ export default function DocumentsManager({
 
       <div className="space-y-3">
         {documents.length === 0 && !adding && (
-          <div className="bg-white dark:bg-white/[0.02] p-6 md:p-10 rounded-[2rem] text-center border border-dashed border-zinc-200 dark:border-white/10">
+          <div className="bg-white dark:bg-carbon p-6 md:p-10 rounded-[2rem] text-center border border-dashed border-zinc-200 dark:border-white/10">
             <p className="text-zinc-500 dark:text-zinc-400 font-medium text-sm">
               No hay documentos cargados. Agregá el CMA, la licencia o cualquier cosa que venza.
             </p>
@@ -192,7 +192,7 @@ export default function DocumentsManager({
             // only works once there's room for both halves.
             <div
               key={doc.id}
-              className="bg-white dark:bg-white/[0.02] rounded-[2rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
+              className="bg-white dark:bg-carbon rounded-[2rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
             >
               <div className="flex-1 min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -289,7 +289,7 @@ export default function DocumentsManager({
                   key={quick.name}
                   type="button"
                   onClick={() => openQuickAdd(quick.kind)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap bg-white dark:bg-white/[0.03] text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap bg-white dark:bg-carbon text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20 hover:text-zinc-900 dark:hover:text-white transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5 shrink-0 text-zinc-400 dark:text-zinc-500" />
                   {quick.label}
@@ -379,7 +379,7 @@ function DocumentForm({
         e.preventDefault();
         submit(new FormData(e.currentTarget));
       }}
-      className="bg-white dark:bg-white/[0.02] rounded-[2rem] border border-zinc-900/20 dark:border-white/20 shadow-cal dark:shadow-none p-5 md:p-6 space-y-5"
+      className="bg-white dark:bg-carbon rounded-[2rem] border border-zinc-900/20 dark:border-white/20 shadow-cal dark:shadow-none p-5 md:p-6 space-y-5"
     >
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-bold text-zinc-900 dark:text-white">

@@ -6,7 +6,7 @@ import { Eye, EyeOff, KeyRound, Loader2, LockKeyhole, LogOut, RefreshCw } from "
 import { conectarCad, desconectarCad, sincronizarCad } from "@/actions/cad-vector";
 
 const campo =
-  "w-full bg-white dark:bg-white/[0.03] border border-zinc-200 dark:border-white/10 rounded-2xl py-3 px-4 outline-none focus:border-zinc-900 dark:focus:border-white/50 text-zinc-900 dark:text-white font-semibold placeholder:text-zinc-400 dark:placeholder:text-zinc-600 placeholder:font-medium";
+  "w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl py-3 px-4 outline-none focus:border-zinc-900 dark:focus:border-white/50 text-zinc-900 dark:text-white font-semibold placeholder:text-zinc-400 dark:placeholder:text-zinc-600 placeholder:font-medium";
 
 /**
  * Conectar la cuenta de ANAC para pasar los vuelos desde Vector (`/cad/conexion` del backend).

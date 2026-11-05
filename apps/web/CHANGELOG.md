@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.11.0 — Vector, de noche
+
+_5 de noviembre de 2026_
+
+- **Un inicio nuevo en la compu** — Arriba, si podés volar hoy y tus horas totales, sobre la carta de Baires. Debajo, el camino a tu licencia, lo que te queda de pack o de saldo (y hasta cuándo te alcanza al ritmo de este mes), tus últimos vuelos y una lista de chequeo con lo que vence.
+- **Sólo oscuro, y más descansado a la vista** — Vector pasa a ser oscuro siempre, con más contraste entre el fondo, las tarjetas y el texto. La barra de la izquierda, en azul noche, se abre con los nombres al pasar el mouse.
+
 ## v3.10.0 — Vector, con marca nueva
 
 _5 de noviembre de 2026_

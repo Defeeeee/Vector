@@ -122,7 +122,7 @@ function PasosMarcador({ nav }: { nav: "extension" | "marcador" }) {
 /** En el teléfono no hay extensiones ni barra de favoritos: el CAD se pasa desde la compu. */
 function EnLaCompu({ corregir }: { corregir: boolean }) {
   return (
-    <div className="flex items-start gap-3 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-5 md:p-6">
+    <div className="flex items-start gap-3 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-5 md:p-6">
       <span className="grid place-items-center w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-white shrink-0">
         <Laptop className="w-5 h-5 text-white dark:text-zinc-900" aria-hidden="true" />
       </span>
@@ -152,7 +152,7 @@ function PasosCad({ inicial, corregir }: { inicial: NavegadorCad; corregir: bool
   );
 }
 
-const LISTA = "divide-y divide-zinc-100 dark:divide-white/5 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] overflow-hidden";
+const LISTA = "divide-y divide-zinc-100 dark:divide-white/5 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon overflow-hidden";
 
 /**
  * "Pasar al CAD": los pasos para cargar los vuelos de Vector en el CAD de ANAC desde el
@@ -240,7 +240,7 @@ export default async function PasarAlCadPage() {
 
       {conectado ? (
         <>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] px-5 py-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-5 py-4">
             <span className="relative grid place-items-center w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-white shrink-0">
               <ShieldCheck className="w-5 h-5 text-white dark:text-zinc-900" aria-hidden="true" />
               <span className="absolute -right-0.5 -bottom-0.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-zinc-950 bg-emerald-500" />
@@ -269,7 +269,7 @@ export default async function PasarAlCadPage() {
       ) : conexion?.disponible ? (
         <section className="space-y-4">
           <h2 className="text-[15px] font-bold text-zinc-900 dark:text-white">¿Cómo querés pasarlos?</h2>
-          <div className="rounded-3xl border-2 border-zinc-900 dark:border-white/80 bg-white dark:bg-white/[0.02] p-5 md:p-6 space-y-5">
+          <div className="rounded-3xl border-2 border-zinc-900 dark:border-white/80 bg-white dark:bg-carbon p-5 md:p-6 space-y-5">
             <div className="flex items-start gap-3">
               <span className="grid place-items-center w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-white shrink-0">
                 <Smartphone className="w-5 h-5 text-white dark:text-zinc-900" aria-hidden="true" />

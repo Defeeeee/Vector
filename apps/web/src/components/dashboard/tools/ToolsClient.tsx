@@ -58,7 +58,7 @@ export default function ToolsClient() {
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap border transition-colors ${
                   isActive
                     ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-transparent"
-                    : "bg-white dark:bg-white/[0.03] text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-white/10 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-300 dark:hover:border-white/20"
+                    : "bg-white dark:bg-carbon text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-white/10 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-300 dark:hover:border-white/20"
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" strokeWidth={2} />
@@ -69,7 +69,7 @@ export default function ToolsClient() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-white/[0.02] rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none p-6 md:p-10">
+      <div className="bg-white dark:bg-carbon rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none p-6 md:p-10">
         <div className="mb-6 md:mb-8">
           <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">
             {tool.label}

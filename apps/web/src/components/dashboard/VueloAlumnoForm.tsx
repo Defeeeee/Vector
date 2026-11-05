@@ -192,7 +192,7 @@ export default function VueloAlumnoForm({
         e.preventDefault();
         guardar();
       }}
-      className="max-w-xl space-y-6 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8 max-lg:bg-transparent! max-lg:dark:bg-transparent! max-lg:border-0 max-lg:shadow-none! max-lg:p-0 max-lg:space-y-[18px]"
+      className="max-w-xl space-y-6 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-8 max-lg:bg-transparent! max-lg:dark:bg-transparent! max-lg:border-0 max-lg:shadow-none! max-lg:p-0 max-lg:space-y-[18px]"
     >
       {/* En el teléfono, el avión primero y con chips, como en el formulario de los pilotos. */}
       {aviones.length > 0 && !agregando && (
@@ -208,7 +208,7 @@ export default function VueloAlumnoForm({
                 className={`shrink-0 h-11 px-3.5 rounded-xl data text-sm font-semibold transition-colors ${
                   a.id === avionId
                     ? "border-2 border-aviation-blue bg-blue-50 dark:bg-aviation-blue/15 text-blue-950 dark:text-white"
-                    : "border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] text-zinc-700 dark:text-zinc-300"
+                    : "border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon text-zinc-700 dark:text-zinc-300"
                 }`}
               >
                 {a.registration}
@@ -229,10 +229,10 @@ export default function VueloAlumnoForm({
       <div className="grid grid-cols-2 gap-4 max-lg:gap-2">
         <label className="space-y-2 col-span-2">
           <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-1">Fecha</span>
-          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={`${campo} [color-scheme:light] dark:[color-scheme:dark] max-lg:bg-white max-lg:dark:bg-[#111111]`} />
+          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={`${campo} [color-scheme:light] dark:[color-scheme:dark] max-lg:bg-white max-lg:dark:bg-carbon`} />
         </label>
         {([["Salida", salida, setSalida], ["Llegada", llegada, setLlegada]] as const).map(([et, valor, poner]) => (
-          <div key={et} className="space-y-2 max-lg:space-y-1 max-lg:rounded-[14px] max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:bg-white max-lg:dark:bg-[#111111] max-lg:px-3 max-lg:py-2.5">
+          <div key={et} className="space-y-2 max-lg:space-y-1 max-lg:rounded-[14px] max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:bg-white max-lg:dark:bg-carbon max-lg:px-3 max-lg:py-2.5">
             <label className="block space-y-2 max-lg:space-y-0">
               <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-1 max-lg:ml-0 max-lg:text-[11px] max-lg:font-bold">{et} (hora local)</span>
               <input
@@ -265,7 +265,7 @@ export default function VueloAlumnoForm({
         }}
       />
 
-      <div className="max-lg:hidden rounded-2xl bg-zinc-50 dark:bg-white/[0.03] px-5 py-4 flex items-baseline justify-between">
+      <div className="max-lg:hidden rounded-2xl bg-zinc-50 dark:bg-carbon px-5 py-4 flex items-baseline justify-between">
         <span className="text-sm text-zinc-500 dark:text-zinc-400">Tiempo de vuelo</span>
         <span className="data text-2xl font-bold text-zinc-900 dark:text-white">{horas > 0 ? `${horas.toFixed(1).replace(".", ",")} h` : "—"}</span>
       </div>
@@ -325,7 +325,7 @@ export default function VueloAlumnoForm({
         <input type="number" min={0} value={aterrizajes} onChange={(e) => setAterrizajes(e.target.value)} className={campo} />
       </label>
       {/* En el teléfono, una fila con − y +: casi siempre se cambia de a uno. */}
-      <div className="lg:hidden flex items-center gap-3 rounded-[14px] border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] pl-3.5 pr-3 py-1.5">
+      <div className="lg:hidden flex items-center gap-3 rounded-[14px] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon pl-3.5 pr-3 py-1.5">
         <span className="flex-1 text-[15px] font-bold text-zinc-900 dark:text-white">Aterrizajes</span>
         {([[-1, "Un aterrizaje menos", Minus], [1, "Un aterrizaje más", Plus]] as const).map(([paso, etiqueta, Icono], i) => (
           <span key={paso} className="contents">

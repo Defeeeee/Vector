@@ -5,7 +5,6 @@ import { Lock, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { updatePassword, setSession } from "@/actions/auth";
 import { useState, useEffect, useTransition, Suspense } from "react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Isotipo } from "@/components/Marca";
 
 function UpdatePasswordForm() {
@@ -75,7 +74,6 @@ function UpdatePasswordForm() {
 
       {/* Minimal Top Bar */}
       <div className="absolute top-6 left-0 w-full px-6 flex justify-end items-center z-20">
-        <ThemeToggle />
       </div>
 
       <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto px-4 md:px-6 py-12 md:py-20 relative z-10">
@@ -119,7 +117,7 @@ function UpdatePasswordForm() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="w-full p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-zinc-200 dark:border-white/10 shadow-2xl dark:shadow-none bg-white dark:bg-[#0a0a0a] space-y-10 transition-all"
+              className="w-full p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-zinc-200 dark:border-white/10 shadow-2xl dark:shadow-none bg-white dark:bg-noche space-y-10 transition-all"
             >
               <form action={handleSubmit} className="space-y-6">
                 {error && (

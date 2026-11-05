@@ -51,7 +51,7 @@ export default function ResumenRapido({
             <Link
               key={m.etiqueta}
               href={m.href}
-              className="rounded-[20px] bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 app:border-transparent app:dark:border-transparent p-3.5 flex flex-col gap-1.5 active:scale-[0.98] transition-transform"
+              className="rounded-[20px] bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 app:border-transparent app:dark:border-transparent p-3.5 flex flex-col gap-1.5 active:scale-[0.98] transition-transform"
             >
               <span className="eyebrow">{m.etiqueta}</span>
               <span className="data text-[26px] leading-tight font-semibold text-zinc-900 dark:text-white">
@@ -71,7 +71,7 @@ export default function ResumenRapido({
       {totalHoras && (
         <Link
           href="/dashboard/summary"
-          className="rounded-[20px] bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 app:border-transparent app:dark:border-transparent px-4 py-3.5 flex items-baseline gap-2"
+          className="rounded-[20px] bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 app:border-transparent app:dark:border-transparent px-4 py-3.5 flex items-baseline gap-2"
         >
           <span className="eyebrow flex-1">Horas totales</span>
           <span className="data text-[28px] leading-none font-semibold text-zinc-900 dark:text-white">{totalHoras}</span>
@@ -79,7 +79,7 @@ export default function ResumenRapido({
         </Link>
       )}
       {ultimos.length > 0 && (
-        <div className="rounded-[20px] bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 app:border-transparent app:dark:border-transparent px-4 py-1.5 divide-y divide-zinc-100 dark:divide-white/5">
+        <div className="rounded-[20px] bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 app:border-transparent app:dark:border-transparent px-4 py-1.5 divide-y divide-zinc-100 dark:divide-white/5">
           {ultimos.map((v) => (
             <Link key={v.id} href={`/dashboard/history?ver=${v.id}`} className="flex items-center gap-3 py-2.5 app:py-[11px]">
               <span className="data text-xs text-zinc-500 dark:text-zinc-400 w-11 shrink-0">{v.fecha}</span>

@@ -89,7 +89,7 @@ export default function MeteoDelVuelo({
         después de la llegada. Es una ayuda: el briefing sigue siendo tuyo.
       </p>
       {datos.aerodromos.map((a) => (
-        <div key={`${a.rol}-${a.codigo}`} className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4 space-y-3">
+        <div key={`${a.rol}-${a.codigo}`} className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-4 space-y-3">
           <p className="flex items-baseline justify-between gap-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               {a.rol} · <span className="data text-zinc-900 dark:text-white text-xs">{a.codigo}</span>

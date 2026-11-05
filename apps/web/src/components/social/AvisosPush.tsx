@@ -140,7 +140,7 @@ export default function AvisosPush({ clave, compacto = false }: { clave: string 
       className={`flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-[2rem] border p-5 ${
         compacto
           ? "border-aviation-blue/20 dark:border-aviation-cyan/20 bg-aviation-blue/[0.05] dark:bg-aviation-cyan/[0.05]"
-          : "border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02]"
+          : "border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon"
       }`}
     >
       <div className="flex items-start gap-3 flex-1 min-w-0">

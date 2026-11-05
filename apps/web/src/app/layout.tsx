@@ -80,10 +80,8 @@ export const metadata: Metadata = {
  * borde en los teléfonos con muesca, en vez de dejar dos franjas.
  */
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
+  // Desde la 3.11.0 Vector es sólo oscuro: la noche de la marca.
+  themeColor: "#0b0d10",
   viewportFit: "cover",
 };
 
@@ -104,9 +102,9 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(bodyFace.variable, displayFace.variable, monoFace.variable)}
     >
-      <body className="min-h-screen bg-white dark:bg-black text-charcoal dark:text-white antialiased overflow-x-hidden font-sans">
+      <body className="min-h-screen bg-noche text-white antialiased overflow-x-hidden font-sans">
         <NextTopLoader
-          color="#18181b"
+          color="#38bdf8"
           initialPosition={0.08}
           crawlSpeed={200}
           height={3}
@@ -114,11 +112,12 @@ export default function RootLayout({
           showSpinner={false}
           easing="ease"
           speed={200}
-          shadow="0 0 10px #18181b,0 0 5px #18181b"
+          shadow="0 0 10px #38bdf8,0 0 5px #38bdf8"
         />
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
+          forcedTheme="dark"
           enableSystem={false}
           disableTransitionOnChange
         >

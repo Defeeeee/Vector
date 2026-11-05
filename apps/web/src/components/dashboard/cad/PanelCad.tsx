@@ -497,7 +497,7 @@ function Plegable({ titulo, n, detalle, children }: { titulo: string; n: number;
 }
 
 const TONOS = {
-  elegido: "border-aviation-blue/30 dark:border-aviation-cyan/30 bg-white dark:bg-white/[0.03]",
+  elegido: "border-aviation-blue/30 dark:border-aviation-cyan/30 bg-white dark:bg-carbon",
   revisar: "border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/[0.07]",
   ok: "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-500/[0.07]",
   error: "border-red-200 dark:border-red-500/30 bg-red-50/70 dark:bg-red-500/[0.07]",

@@ -37,7 +37,7 @@ import {
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8 ${className}`}
+      className={`rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-8 ${className}`}
     >
       {children}
     </div>
@@ -294,7 +294,7 @@ export default function SummaryClient({
                         className={`rounded-xl px-3 py-2.5 border ${
                           v > 0
                             ? "bg-aviation-blue border-aviation-blue text-white"
-                            : "bg-zinc-50 dark:bg-white/[0.03] border-zinc-200 dark:border-white/10"
+                            : "bg-zinc-50 dark:bg-carbon border-zinc-200 dark:border-white/10"
                         }`}
                       >
                         <span className={`font-mono block text-[10px] font-bold uppercase tracking-wider ${v > 0 ? "text-white/70" : "text-zinc-400 dark:text-zinc-500"}`}>
@@ -342,7 +342,7 @@ export default function SummaryClient({
                             className={`rounded-xl px-3 py-2.5 border ${
                               v > 0
                                 ? "bg-aviation-blue border-aviation-blue text-white"
-                                : "bg-zinc-50 dark:bg-white/[0.03] border-zinc-200 dark:border-white/10"
+                                : "bg-zinc-50 dark:bg-carbon border-zinc-200 dark:border-white/10"
                             }`}
                           >
                             <span
@@ -524,7 +524,7 @@ export default function SummaryClient({
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.4, delay: i * 0.08 }}
-                      className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 space-y-3"
+                      className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 space-y-3"
                     >
                       <div className="flex items-center gap-2">
                         <span className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-white/10 flex items-center justify-center text-zinc-900 dark:text-white">

@@ -27,13 +27,12 @@ export function LogoutButton({ isMobile = false, variant = "default" }: { isMobi
       <button
         disabled={isPending}
         onClick={handleLogout}
-        title="Cerrar sesión"
-        className="group relative flex items-center justify-center w-12 h-12 rounded-2xl transition-colors text-zinc-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+        className="group flex items-center gap-3 w-full h-12 rounded-2xl px-3.5 transition-colors text-zinc-400 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-aviation-cyan"
       >
-        {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" strokeWidth={2} />}
-        <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 whitespace-nowrap rounded-lg bg-zinc-900 text-white text-xs font-semibold px-3 py-1.5 opacity-0 scale-95 origin-left group-hover:opacity-100 group-hover:scale-100 transition-all z-50 shadow-xl border border-white/10">
-          Cerrar sesión
+        <span className="w-5 flex justify-center shrink-0">
+          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" strokeWidth={2} />}
         </span>
+        <span className="rail-rotulo text-sm font-semibold">Cerrar sesión</span>
       </button>
     );
   }

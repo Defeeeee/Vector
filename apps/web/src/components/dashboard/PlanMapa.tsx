@@ -12,7 +12,7 @@ import type { PuntoMapa } from "./PlanMapaInner";
 const PlanMapaInner = dynamic(() => import("./PlanMapaInner"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[300px] md:h-[420px] rounded-2xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] flex items-center justify-center">
+    <div className="w-full h-[300px] md:h-[420px] rounded-2xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-carbon flex items-center justify-center">
       <p className="text-sm text-zinc-400 flex items-center gap-2">
         <Loader2 className="w-4 h-4 animate-spin" /> Cargando mapa…
       </p>

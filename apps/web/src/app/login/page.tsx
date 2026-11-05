@@ -7,7 +7,6 @@ import GoogleButton from "@/components/GoogleButton";
 import { useState, useTransition, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import OlvidarAlSalir from "@/components/OlvidarAlSalir";
 import { Isotipo } from "@/components/Marca";
 
@@ -75,10 +74,9 @@ function LoginContent() {
       {/* Minimal Top Bar — constrained to the form half so it does not float
           over the context panel on wide screens. */}
       <div className="absolute top-6 left-0 w-full lg:w-1/2 px-6 flex justify-between items-center z-20">
-        <Link href="/" className="p-3 bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-full shadow-md hover:bg-zinc-50 dark:hover:bg-white/5 transition-all group">
+        <Link href="/" className="p-3 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-full shadow-md hover:bg-zinc-50 dark:hover:bg-white/5 transition-all group">
             <ChevronLeft className="w-5 h-5 text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white" />
         </Link>
-        <ThemeToggle />
       </div>
 
       {/* Context panel — right half, desktop only. A centered card on an empty
@@ -87,7 +85,7 @@ function LoginContent() {
           Deliberately carries no personal numbers: it renders before anyone is
           authenticated, so anything that looked like logbook data would be a
           lie dressed as a dashboard. */}
-      <div className="hidden lg:flex lg:w-1/2 order-2 bg-zinc-100 dark:bg-[#0a0a0a] border-l border-zinc-200 dark:border-white/5 items-center justify-center p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 order-2 bg-zinc-100 dark:bg-noche border-l border-zinc-200 dark:border-white/5 items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full border border-zinc-200 dark:border-white/5 opacity-40 -mr-64 -mt-64 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full border border-zinc-200 dark:border-white/5 opacity-40 -ml-32 -mb-32 pointer-events-none" />
 
@@ -95,7 +93,7 @@ function LoginContent() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15 }}
-          className="relative z-10 w-full max-w-md bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-[2rem] p-10 shadow-xl dark:shadow-none space-y-8"
+          className="relative z-10 w-full max-w-md bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] p-10 shadow-xl dark:shadow-none space-y-8"
         >
           <p className="eyebrow">Bienvenido de vuelta</p>
 
@@ -130,7 +128,7 @@ function LoginContent() {
                 className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-zinc-900/40 backdrop-blur-sm"
             >
                 <motion.div 
-                className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-[2.5rem] p-10 max-w-sm w-full text-center space-y-8 shadow-2xl"
+                className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2.5rem] p-10 max-w-sm w-full text-center space-y-8 shadow-2xl"
                 >
                 <div className="w-16 h-16 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-500 rounded-full flex items-center justify-center mx-auto">
                     <Lock className="w-8 h-8" />
@@ -176,7 +174,7 @@ function LoginContent() {
                the card sheds its border and shadow — a white card floating on a
                white half just draws a box around nothing. Below lg it keeps
                them, because there it *is* the only structure on the page. */
-            className="w-full max-w-md p-8 md:p-10 lg:p-0 rounded-[2.5rem] md:rounded-[3rem] lg:rounded-none border border-zinc-200 dark:border-white/10 lg:border-0 shadow-2xl dark:shadow-none lg:shadow-none bg-white dark:bg-[#0a0a0a] lg:bg-transparent dark:lg:bg-transparent space-y-10 transition-all"
+            className="w-full max-w-md p-8 md:p-10 lg:p-0 rounded-[2.5rem] md:rounded-[3rem] lg:rounded-none border border-zinc-200 dark:border-white/10 lg:border-0 shadow-2xl dark:shadow-none lg:shadow-none bg-white dark:bg-noche lg:bg-transparent dark:lg:bg-transparent space-y-10 transition-all"
         >
             <form action={handleSubmit} className="space-y-6">
                 {error && (

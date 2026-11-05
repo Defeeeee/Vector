@@ -188,7 +188,7 @@ function StatCard({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`text-left bg-white dark:bg-white/[0.02] p-3 sm:p-6 rounded-[2rem] border shadow-cal dark:shadow-none transition-all ${
+      className={`text-left bg-white dark:bg-carbon p-3 sm:p-6 rounded-[2rem] border shadow-cal dark:shadow-none transition-all ${
         active
           ? "border-zinc-900 dark:border-white"
           : "border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20"
@@ -213,7 +213,7 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
       className={`px-4 py-2 rounded-2xl text-xs font-bold border transition-colors ${
         active
           ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-transparent"
-          : "bg-white dark:bg-white/[0.03] text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-white/10 hover:text-zinc-900 dark:hover:text-white"
+          : "bg-white dark:bg-carbon text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-white/10 hover:text-zinc-900 dark:hover:text-white"
       }`}
     >
       {children}
@@ -240,7 +240,7 @@ function FindingCard({
 
   return (
     <div
-      className={`bg-white dark:bg-white/[0.02] rounded-[2rem] border shadow-cal dark:shadow-none p-5 md:p-6 transition-all ${
+      className={`bg-white dark:bg-carbon rounded-[2rem] border shadow-cal dark:shadow-none p-5 md:p-6 transition-all ${
         finding.suppressed
           ? "border-zinc-200 dark:border-white/10 opacity-60"
           : critical
@@ -324,7 +324,7 @@ function EmptyState({ clean, tab, hasFindings }: { clean: boolean; tab: Tab; has
 
   if (clean && !hasFindings) {
     return (
-      <div className="bg-white dark:bg-white/[0.02] rounded-[2rem] border border-emerald-200 dark:border-emerald-500/20 shadow-cal dark:shadow-none p-10 text-center">
+      <div className="bg-white dark:bg-carbon rounded-[2rem] border border-emerald-200 dark:border-emerald-500/20 shadow-cal dark:shadow-none p-10 text-center">
         <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
           <CheckCircle2 className="w-6 h-6" />
         </div>
@@ -344,7 +344,7 @@ function EmptyState({ clean, tab, hasFindings }: { clean: boolean; tab: Tab; has
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white dark:bg-white/[0.02] rounded-[2rem] border border-dashed border-zinc-200 dark:border-white/10 p-10 text-center">
+    <div className="bg-white dark:bg-carbon rounded-[2rem] border border-dashed border-zinc-200 dark:border-white/10 p-10 text-center">
       <h3 className="text-base font-bold text-zinc-900 dark:text-white">{title}</h3>
       <p className="mt-1.5 text-sm font-medium text-zinc-500 dark:text-zinc-400">{children}</p>
     </div>

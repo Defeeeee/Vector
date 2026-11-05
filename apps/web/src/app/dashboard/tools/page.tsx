@@ -16,7 +16,7 @@ export default function ToolsPage() {
           cuenta. Desde acá se llega a ella. */}
       <Link
         href="/guias/examen-ppa"
-        className="flex items-center gap-4 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-5 hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors max-w-2xl"
+        className="flex items-center gap-4 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-5 hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors max-w-2xl"
       >
         <span className="w-11 h-11 rounded-2xl bg-aviation-blue/10 text-aviation-blue dark:text-aviation-cyan flex items-center justify-center shrink-0">
           <GraduationCap className="w-5 h-5" />

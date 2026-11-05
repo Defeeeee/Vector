@@ -14,7 +14,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 /**
@@ -23,10 +22,9 @@ import { useEffect, useState } from "react";
  */
 
 function usePaleta() {
-  const { theme } = useTheme();
   const [montado, setMontado] = useState(false);
   useEffect(() => setMontado(true), []);
-  const oscuro = montado && theme === "dark";
+  const oscuro = montado; // sólo oscuro desde la 3.11.0
   return {
     texto: oscuro ? "#a1a1aa" : "#71717a",
     principal: oscuro ? "#38bdf8" : "#2563eb",

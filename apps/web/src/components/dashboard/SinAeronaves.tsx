@@ -22,7 +22,7 @@ import AircraftForm from "./AircraftForm";
 export default function SinAeronaves() {
   return (
     <div className="space-y-8">
-      <div className="bg-white dark:bg-white/[0.02] rounded-[2rem] border border-dashed border-zinc-200 dark:border-white/10 p-10 text-center">
+      <div className="bg-white dark:bg-carbon rounded-[2rem] border border-dashed border-zinc-200 dark:border-white/10 p-10 text-center">
         <div className="w-12 h-12 mx-auto rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center">
           <Plane className="w-6 h-6" strokeWidth={1.5} />
         </div>

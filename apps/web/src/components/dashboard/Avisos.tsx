@@ -93,7 +93,7 @@ export function AvisosProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={reducido ? { opacity: 0 } : { opacity: 0, x: 24, scale: 0.98 }}
               transition={{ duration: 0.2 }}
-              className={`pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-xl bg-white/95 dark:bg-[#111111]/95 ${
+              className={`pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-xl bg-white/95 dark:bg-carbon/95 ${
                 aviso.tipo === "exito"
                   ? "border-emerald-500/25"
                   : "border-red-500/25"

@@ -38,7 +38,7 @@ export default function BuscadorPilotos({ tieneHandle }: { tieneHandle: boolean 
   }, [q]);
 
   return (
-    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-5 md:p-8 space-y-4">
+    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-5 md:p-8 space-y-4">
       <label className="relative block">
         <span className="sr-only">Buscar pilotos</span>
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />

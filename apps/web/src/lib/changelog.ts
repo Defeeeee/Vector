@@ -78,6 +78,25 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.11.0",
+    fecha: "2026-11-05",
+    titulo: "Vector, de noche",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Un inicio nuevo en la compu",
+        texto: "Arriba, si podés volar hoy y tus horas totales, sobre la carta de Baires. Debajo, el camino a tu licencia, lo que te queda de pack o de saldo (y hasta cuándo te alcanza al ritmo de este mes), tus últimos vuelos y una lista de chequeo con lo que vence.",
+        href: "/dashboard",
+        cta: "Ver el inicio",
+      },
+      {
+        icono: "avion",
+        titulo: "Sólo oscuro, y más descansado a la vista",
+        texto: "Vector pasa a ser oscuro siempre, con más contraste entre el fondo, las tarjetas y el texto. La barra de la izquierda, en azul noche, se abre con los nombres al pasar el mouse.",
+      },
+    ],
+  },
+  {
     version: "3.10.0",
     fecha: "2026-11-05",
     titulo: "Vector, con marca nueva",

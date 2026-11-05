@@ -191,7 +191,7 @@ export default function WeatherWidget({ defaultAirport }: WeatherWidgetProps) {
 
   return (
     <div className="relative">
-      <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-lg px-8 md:px-10 py-6 md:py-8 shadow-cal dark:shadow-none flex flex-col gap-6 w-full group transition-all duration-500 relative overflow-hidden">
+      <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-lg px-8 md:px-10 py-6 md:py-8 shadow-cal dark:shadow-none flex flex-col gap-6 w-full group transition-all duration-500 relative overflow-hidden">
 
         {/* Sprocket holes — continuous-feed teleprinter paper, punched into the card edge */}
         <SprocketRail side="left" />

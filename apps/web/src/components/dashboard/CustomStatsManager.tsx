@@ -53,7 +53,7 @@ export default function CustomStatsManager({
           {stats.map((s) => (
             <div
               key={s.id}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] px-4 py-3"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-4 py-3"
             >
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{s.name}</p>
@@ -185,7 +185,7 @@ function Formulario({
   return (
     <form
       action={enviar}
-      className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-6 md:p-8 space-y-5"
+      className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-6 md:p-8 space-y-5"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <label className="space-y-1.5">

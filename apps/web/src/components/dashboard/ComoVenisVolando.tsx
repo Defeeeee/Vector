@@ -34,7 +34,7 @@ export default function ComoVenisVolando({
   return (
     <div className="grid sm:grid-cols-2 gap-3 md:gap-4">
       {r.semanas > 0 && (
-        <div className="rounded-[1.75rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-5 md:p-6 flex items-center gap-4">
+        <div className="rounded-[1.75rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-5 md:p-6 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
             <Flame className="w-4 h-4 text-amber-600 dark:text-amber-500" />
           </div>
@@ -57,7 +57,7 @@ export default function ComoVenisVolando({
       )}
 
       {c.meses > 0 && (
-        <div className="rounded-[1.75rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-5 md:p-6 flex items-center gap-4">
+        <div className="rounded-[1.75rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-5 md:p-6 flex items-center gap-4">
           <div
             className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
               mejor ? "bg-emerald-500/10" : "bg-zinc-100 dark:bg-white/10"

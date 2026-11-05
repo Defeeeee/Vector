@@ -255,7 +255,7 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
           className={`border-2 border-dashed rounded-[2rem] p-10 md:p-16 text-center transition-all ${
             dragActive 
               ? "border-zinc-950 bg-zinc-50 dark:border-white dark:bg-white/5" 
-              : "border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20 bg-white dark:bg-[#111111]"
+              : "border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20 bg-white dark:bg-carbon"
           }`}
         >
           <input 
@@ -321,7 +321,7 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
 
       {/* Loading analysis states */}
       {loading && (
-        <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-[2rem] p-10 md:p-16 flex flex-col items-center justify-center space-y-6 text-center shadow-cal dark:shadow-none min-h-[300px]">
+        <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] p-10 md:p-16 flex flex-col items-center justify-center space-y-6 text-center shadow-cal dark:shadow-none min-h-[300px]">
           <RefreshCw className="w-8 h-8 animate-spin text-zinc-400" />
           <div className="space-y-2">
             <h4 className="text-sm font-semibold text-zinc-900 dark:text-white">
@@ -342,7 +342,7 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
         <div className="space-y-6">
           
           {/* Header Action Summary Bar */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-[2rem] p-6 shadow-sm gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] p-6 shadow-sm gap-4">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center shadow-sm">
                 <CheckCircle className="w-6 h-6" />
@@ -393,7 +393,7 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
           </div>
 
           {/* Large review table wrapper */}
-          <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-[2rem] overflow-hidden shadow-cal dark:shadow-none">
+          <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] overflow-hidden shadow-cal dark:shadow-none">
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full border-collapse text-left">
                 <thead>
@@ -435,7 +435,7 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
                             <select
                               value={flight.aircraft_id}
                               onChange={(e) => handleUpdateField(flight.id, "aircraft_id", e.target.value)}
-                              className={`bg-white dark:bg-[#151515] border ${
+                              className={`bg-white dark:bg-zinc-900 border ${
                                 hasUnmatchedAc 
                                   ? "border-amber-500 focus:border-amber-600 focus:dark:border-amber-500/50" 
                                   : "border-zinc-200 dark:border-white/10 focus:border-zinc-400 focus:dark:border-white/30"
@@ -516,7 +516,7 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
                           <select
                             value={flight.purpose}
                             onChange={(e) => handleUpdateField(flight.id, "purpose", e.target.value)}
-                            className="bg-white dark:bg-[#151515] border border-zinc-200 dark:border-white/10 focus:border-zinc-400 focus:dark:border-white/30 rounded-lg px-2 py-1.5 text-xs font-bold outline-none text-zinc-800 dark:text-zinc-200 w-20"
+                            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 focus:border-zinc-400 focus:dark:border-white/30 rounded-lg px-2 py-1.5 text-xs font-bold outline-none text-zinc-800 dark:text-zinc-200 w-20"
                           >
                             <option value="VP">VP</option>
                             <option value="ENT">ENT</option>

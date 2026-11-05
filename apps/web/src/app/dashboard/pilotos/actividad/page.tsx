@@ -76,7 +76,7 @@ export default async function ActividadPage() {
         <AvisoNoSePudo texto="No pudimos cargar tus solicitudes." />
       ) : (
         solicitudes.length > 0 && (
-          <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-5 md:p-6">
+          <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-5 md:p-6">
             <div className="flex items-baseline justify-between mb-1">
               <h3 className="text-lg font-display font-bold text-zinc-900 dark:text-white tracking-tight">
                 Quieren seguirte
@@ -102,7 +102,7 @@ export default async function ActividadPage() {
       {eventos === null ? (
         <AvisoNoSePudo texto="No pudimos cargar tu actividad." />
       ) : (
-        <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-5 md:p-6">
+        <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-5 md:p-6">
           <h3 className="text-lg font-display font-bold text-zinc-900 dark:text-white tracking-tight mb-1">
             Lo último
           </h3>

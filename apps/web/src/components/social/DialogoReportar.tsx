@@ -96,7 +96,7 @@ export default function DialogoReportar({
         aria-modal="true"
         aria-labelledby={titulo}
         onSubmit={enviar}
-        className="w-full sm:max-w-md bg-white dark:bg-[#111111] rounded-t-[2rem] sm:rounded-[2rem] border border-zinc-200 dark:border-white/10 p-6 space-y-4 max-h-[92vh] overflow-y-auto"
+        className="w-full sm:max-w-md bg-white dark:bg-carbon rounded-t-[2rem] sm:rounded-[2rem] border border-zinc-200 dark:border-white/10 p-6 space-y-4 max-h-[92vh] overflow-y-auto"
       >
         <div className="flex items-start justify-between gap-3">
           <div>

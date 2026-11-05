@@ -4,7 +4,6 @@ import DashboardNav, { type AlertasDeSeccion } from "@/components/dashboard/Dash
 import SeccionTabs from "@/components/dashboard/SeccionTabs";
 import OnboardingOverlay from "@/components/dashboard/OnboardingOverlay";
 import BuscadorGlobal from "@/components/dashboard/BuscadorGlobal";
-import { RailThemeToggle } from "@/components/dashboard/RailThemeToggle";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
 import ActualizarDatos from "@/components/dashboard/ActualizarDatos";
 import TituloTelefono from "@/components/dashboard/TituloTelefono";
@@ -22,7 +21,7 @@ import { COOKIE_ALTA, type EstadoAlta } from "@/lib/onboarding";
 import { COOKIE_QR } from "@/lib/pegatinas";
 import AnotarOrigenQr from "@/components/dashboard/AnotarOrigenQr";
 import SincronizarCad from "@/components/dashboard/cad/SincronizarCad";
-import { Isotipo, LogoVector } from "@/components/Marca";
+import { Isotipo, LogoVector, Logotipo } from "@/components/Marca";
 
 /**
  * El perfil, y si se pudo preguntar por él.
@@ -134,44 +133,39 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <AvisosProvider>
     <div className="flex min-h-screen bg-zinc-50 max-lg:app:bg-zinc-100 dark:bg-black max-lg:app:dark:bg-black w-full relative text-zinc-900 dark:text-white antialiased transition-colors duration-300">
       {/* Subtle Background Pattern */}
-      <div className="app:hidden absolute inset-0 pointer-events-none opacity-[0.02] dark:opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+      
 
-      {/* Icon Rail — always dark, independent of app theme */}
-      <aside className="hidden lg:flex flex-col items-center w-20 bg-zinc-950 border-r border-white/5 h-screen sticky top-0 z-30 py-6 shrink-0">
-        <Link href="/dashboard" aria-label="Vector, inicio" className="w-11 h-11 flex items-center justify-center mb-8 shrink-0 hover:opacity-80 transition-opacity">
-          <Isotipo sobreOscuro className="w-8 h-8" />
-        </Link>
-
-        <div className="flex-1 flex flex-col justify-center">
-          <DashboardNav variant="rail" alertas={alertas} />
-        </div>
-
-        <div className="flex flex-col items-center gap-1 mt-auto">
-          <Link
-            href="/dashboard/log-flight"
-            title="Nuevo vuelo"
-            className="group relative flex items-center justify-center w-12 h-12 rounded-2xl bg-aviation-blue text-white hover:bg-aviation-blue-dark transition-colors mb-2"
-          >
-            <Plus className="w-5 h-5" strokeWidth={2.5} />
-            <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 whitespace-nowrap rounded-lg bg-zinc-900 text-white text-xs font-semibold px-3 py-1.5 opacity-0 scale-95 origin-left group-hover:opacity-100 group-hover:scale-100 transition-all z-50 shadow-xl border border-white/10">
-              Nuevo vuelo
-            </span>
+      {/*
+        La barra del escritorio (3.11.0): azul noche, para separarla del contenido. Ocupa 80 px y,
+        al pasar el mouse o al llegar con el teclado (`:focus-visible`, no el foco que deja un click), se abre a 240 por encima del contenido (no lo
+        empuja) y muestra los nombres, y al lado del isotipo la palabra "vector".
+      */}
+      <aside className="hidden lg:block w-20 h-screen sticky top-0 z-40 shrink-0">
+        <div className="rail absolute inset-y-0 left-0 w-20 hover:w-60 has-[:focus-visible]:w-60 overflow-hidden bg-cabina border-r border-cabina-borde flex flex-col px-4 py-6 transition-[width,box-shadow] duration-200 ease-out hover:shadow-2xl hover:shadow-black/50 has-[:focus-visible]:shadow-2xl has-[:focus-visible]:shadow-black/50">
+          <Link href="/dashboard" aria-label="Vector, inicio" className="flex items-center gap-3 h-11 pl-[9px] mb-8 shrink-0 hover:opacity-80 transition-opacity">
+            <Isotipo sobreOscuro className="w-[30px] h-[30px] shrink-0" />
+            <Logotipo className="rail-rotulo h-[22px] w-auto shrink-0 text-white" />
           </Link>
-          <RailThemeToggle />
-          <LogoutButton variant="rail" />
-          {/* El avatar es la puerta al Hangar. Salió del nav —donde competía por
-              un slot con destinos que se usan a diario— y quedó donde la gente
-              ya busca su configuración. */}
-          <Link
-            href="/dashboard/settings"
-            title="Hangar"
-            className="group relative w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-[10px] font-bold text-zinc-300 mt-2 transition-colors"
-          >
-            {avatar}
-            <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 whitespace-nowrap rounded-lg bg-zinc-900 text-white text-xs font-semibold px-3 py-1.5 opacity-0 scale-95 origin-left group-hover:opacity-100 group-hover:scale-100 transition-all z-50 shadow-xl border border-white/10">
-              Hangar
-            </span>
-          </Link>
+
+          <div className="flex-1 flex flex-col justify-center">
+            <DashboardNav variant="rail" alertas={alertas} />
+          </div>
+
+          <div className="flex flex-col gap-1 mt-auto">
+            <Link
+              href="/dashboard/log-flight"
+              className="flex items-center gap-3 h-12 rounded-2xl px-3.5 mb-2 bg-aviation-cyan text-noche hover:bg-sky-300 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <Plus className="w-5 h-5 shrink-0" strokeWidth={2.5} />
+              <span className="rail-rotulo text-sm font-bold">Registrar vuelo</span>
+            </Link>
+            <LogoutButton variant="rail" />
+            {/* El avatar es la puerta al Hangar. */}
+            <Link href="/dashboard/settings" className="group flex items-center gap-3 h-12 rounded-2xl px-2 hover:bg-white/5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-aviation-cyan">
+              <span className="w-8 h-8 shrink-0 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-zinc-300">{avatar}</span>
+              <span className="rail-rotulo text-sm font-semibold text-zinc-300 group-hover:text-white">Hangar</span>
+            </Link>
+          </div>
         </div>
       </aside>
 

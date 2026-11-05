@@ -1,7 +1,4 @@
-import { Activity, ArrowRight, CalendarDays, Clock, CloudFog, Moon, Plane, Plus, Sunrise } from "lucide-react";
-import { Odometer, StatTile } from "@/components/dashboard/Cifras";
 import { cifrasDeCarrera } from "@/lib/horas-carrera";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { apiFetch } from "@/lib/api";
@@ -25,7 +22,6 @@ import { pesos } from "@/lib/costos";
 import { esTravesiaLarga } from "@/lib/travesia-larga";
 import SaldoCard from "@/components/dashboard/SaldoCard";
 import FlightPackWidget from "@/components/dashboard/FlightPackWidget";
-import RecentFlights from "@/components/dashboard/RecentFlights";
 import TuRedInicio from "@/components/social/TuRedInicio";
 import { listPlannedFlights } from "@/actions/planned-flight";
 import { estadoOnboarding } from "@/lib/onboarding";
@@ -33,6 +29,12 @@ import { soloVolados } from "@/lib/simulador";
 import { costosPorVuelo, gastoDelMes } from "@/lib/costos";
 import PendientesDdjj from "@/components/dashboard/cad/PendientesDdjj";
 import { cuantosPendientesDeDdjj, leidoDelCad } from "@/lib/cad";
+import InicioEscritorio, { type FajaVuelo, type ItemChequeo, type Queda } from "@/components/dashboard/InicioEscritorio";
+import { recencyByClass, recencyWindowDays } from "@/lib/recency";
+import { pilotStatus } from "@/lib/pilot-status";
+import { documentStatus } from "@/lib/utils";
+import { alcanceDelPack, horasQueAlcanzaElSaldo } from "@/lib/pack-adelante";
+import { SECCIONES, hrefDeSeccion } from "@/lib/secciones";
 
 /**
  * Los endpoints que necesita esta pantalla, en paralelo.
@@ -223,6 +225,106 @@ export default async function Dashboard() {
     });
   const carrera = cifrasDeCarrera(vuelosDesdeLaPpa(flights as Flight[], alumno ? null : profile?.fecha_ppa), logbooks as Logbook[], todayIso, { alumno });
 
+  /* ----------------------------------------------- el inicio del escritorio (3.11.0) --- */
+  const estado = pilotStatus(
+    documents as PilotDocument[],
+    recencyByClass(flights as Flight[], aircraft as Aircraft[], recencyWindowDays(profile?.license_type)),
+    flights as Flight[],
+    new Date(),
+    documentosDisponibles,
+    { alumno }
+  );
+  const MESES_MAY = MESES.map((m) => m.toUpperCase());
+  const fajas: FajaVuelo[] = [...(bitacora as Flight[])]
+    .sort((a, b) => (b.date + (b.takeoff ?? "")).localeCompare(a.date + (a.takeoff ?? "")))
+    .slice(0, 5)
+    .map((f) => {
+      const avion = (aircraft as Aircraft[]).find((a) => a.id === f.aircraft_id);
+      const sim = Boolean(avion?.is_simulator);
+      const [o, d] = splitRoute(f.route, "");
+      return {
+        id: f.id,
+        tipo: sim ? "SIM" : d && d !== o ? "TRV" : "LOC",
+        fecha: `${f.date.slice(8, 10)} ${MESES_MAY[Number(f.date.slice(5, 7)) - 1] ?? ""}`,
+        ruta: d ? `${o} → ${d}` : o,
+        matricula: avion?.registration ?? "",
+        modelo: avion?.icao || avion?.type || "",
+        horas: horasDeLaFila(f, sim).toFixed(1).replace(".", ","),
+      };
+    });
+  // La lista de chequeo: lo que vence, de lo más cercano a lo más lejano, y lo que pide el CAD.
+  const chequeo: ItemChequeo[] = [];
+  if (disponible("flights")) {
+    chequeo.push({
+      etiqueta: "Experiencia reciente",
+      valor: estado.estado === "sin_recencia" ? "Vencida" : estado.estado === "inactividad_prolongada" ? "Inactivo" : "Al día",
+      tono: estado.estado === "sin_recencia" || estado.estado === "inactividad_prolongada" ? "mal" : "ok",
+    });
+  }
+  if (documentosDisponibles) {
+    (documents as PilotDocument[])
+      .map((d) => ({ d, st: documentStatus(d.expiry_date) }))
+      .filter((x) => x.st.daysRemaining !== null)
+      .sort((a, b) => (a.st.daysRemaining ?? 0) - (b.st.daysRemaining ?? 0))
+      .slice(0, 4)
+      .forEach(({ d, st }) => {
+        const dias = st.daysRemaining ?? 0;
+        chequeo.push({
+          etiqueta: d.name,
+          valor: dias < 0 ? "Vencido" : dias === 0 ? "Hoy" : dias > 90 ? `${Math.round(dias / 30)} m` : `${dias} d`,
+          tono: st.tone === "expired" || st.tone === "critical" ? "mal" : st.tone === "warning" ? "aviso" : "ok",
+        });
+      });
+  }
+  const pendientesDdjj = cuantosPendientesDeDdjj(bitacora as Flight[]);
+  // Sólo para quien usa el CAD desde Vector: a los demás, un "0" sería ruido.
+  if (profile?.cad_leido_at) {
+    chequeo.push({ etiqueta: "CAD · DDJJ pendientes", valor: String(pendientesDdjj), tono: pendientesDdjj > 0 ? "aviso" : "neutro" });
+  }
+  const DIA_MES = (iso: string) => `${Number(iso.slice(8, 10))} ${MESES[Number(iso.slice(5, 7)) - 1] ?? ""}`;
+  const quedaEscritorio: Queda | null =
+    profile?.tracking_mode === "balance"
+      ? saldoConocido
+        ? (() => {
+            const porHora = gastoMes.horas > 0 ? gastoMes.pesos / gastoMes.horas : null;
+            const alcanza = horasQueAlcanzaElSaldo(balance, porHora);
+            return {
+              modo: "saldo" as const,
+              saldo: balance,
+              saldoTexto: `${balance < 0 ? "−" : ""}${pesos(Math.abs(balance))}`,
+              mes: gastoMes.pesos > 0 ? `${pesos(gastoMes.pesos)} · ${gastoMes.vuelos} ${gastoMes.vuelos === 1 ? "vuelo" : "vuelos"} · ${gastoMes.horas.toFixed(1).replace(".", ",")} h` : null,
+              porHora: porHora !== null ? pesos(porHora) : null,
+              alcanzaHoras: alcanza !== null ? alcanza.toFixed(1).replace(".", ",") : null,
+            };
+          })()
+        : null
+      : packsActivos.length
+        ? (() => {
+            const restan = packsActivos.reduce((t, p) => t + p.remaining_hours, 0);
+            const total = packsActivos.reduce((t, p) => t + p.total_hours, 0);
+            const alcance = alcanceDelPack(restan, carrera.ultimos30, todayIso);
+            return {
+              modo: "pack" as const,
+              restan,
+              total,
+              detalle: packsActivos.length === 1 ? packsActivos[0].name : `${packsActivos.length} packs`,
+              alcanza: alcance.fecha ? DIA_MES(alcance.fecha) : null,
+              ritmo: alcance.ritmoMensual,
+              poco: alcance.poco,
+            };
+          })()
+        : null;
+  const licenciaEscritorio =
+    requisitos && disponible("flights")
+      ? {
+          meta: (alumno ? "PPA" : "PCA") as "PPA" | "PCA",
+          seccion: alumno ? "61.520(a)" : "61.620",
+          requisitos: requisitos.filter((r) => r.grupo === "pca"),
+          faltan: faltaHoras ?? 0,
+        }
+      : null;
+  const preparar = SECCIONES.find((x) => x.clave === "preparar");
+
   /*
     En el teléfono el orden es otro (`max-lg:order-*`): primero "¿Puedo volar hoy?", después
     cuánto te queda y te falta, lo que te pide algo, los últimos vuelos y al final el detalle
@@ -236,44 +338,24 @@ export default async function Dashboard() {
       <div className="lg:hidden app:hidden max-lg:order-0 empty:hidden">
         <InstalarVector />
       </div>
-      <section className="max-lg:hidden flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8 pt-4">
-        <div className="space-y-2 md:space-y-3">
-          <p className="eyebrow flex items-center gap-2">
-            <Activity className="w-3.5 h-3.5" />
-            <span>Centro de operaciones</span>
-          </p>
-          <h2 className="text-[32px] md:text-6xl lg:text-7xl font-display font-bold tracking-tighter text-zinc-900 dark:text-white leading-none">
-            {profile?.first_name || "Comandante"}
-          </h2>
-        </div>
-
-        {/* La acción principal de la app, con su nombre. El "+" del rail y de la
-            píldora del teléfono no dicen qué hacen, y un alumno nuevo no tiene por
-            qué adivinarlo. */}
-        <Link
-          href="/dashboard/log-flight"
-          className="hidden lg:inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold shadow-cal-highlight dark:shadow-none hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors self-start md:self-auto"
-        >
-          <Plus className="w-4 h-4" strokeWidth={2.5} />
-          Registrar vuelo
-        </Link>
-      </section>
-
-      {/* Las horas de la carrera, como en el Resumen. Federico pidió el 2026-10-10 que el
-          inicio arranque por acá y que el tracker de la PCA deje de ser lo principal. */}
+      {/* El escritorio (3.11.0): hero, camino a la licencia, cuánto queda, vuelos y chequeo. */}
       <div className="max-lg:hidden">
-        <HorasDeCarrera
-          flights={vuelosDesdeLaPpa(flights as Flight[], alumno ? null : profile?.fecha_ppa)}
-          logbooks={logbooks as Logbook[]}
-          todayIso={todayIso}
-          alumno={alumno}
+        <InicioEscritorio
+          nombre={profile?.first_name || "Comandante"}
+          estado={disponible("flights") || documentosDisponibles ? estado : null}
+          carrera={disponible("flights") ? carrera : null}
+          licencia={licenciaEscritorio}
+          queda={quedaEscritorio}
+          fajas={disponible("flights") ? fajas : []}
+          chequeo={chequeo}
+          hrefPreparar={preparar ? hrefDeSeccion(preparar) : "/dashboard/planificador"}
         />
       </div>
 
       {/* 1. ¿Puedo volar hoy? — las cuatro condiciones de RAAC 61.060(a)(1), y
           debajo lo que vence primero. Va arriba de todo porque es la única pregunta
           de esta pantalla con consecuencias antes de despegar. */}
-      <div className="space-y-3 max-lg:order-1">
+      <div className="space-y-3 max-lg:order-1 lg:hidden">
         <FlightStatusCard
           flights={flights as Flight[]}
           aircraft={aircraft as Aircraft[]}
@@ -342,7 +424,7 @@ export default async function Dashboard() {
 
       {/* 3. ¿Cuánto me queda? — pesos para quien lleva saldo, horas para quien lleva
           packs. Ninguno de los dos se dibuja si no tiene nada que decir. */}
-      <div className="max-lg:order-5 empty:hidden">
+      <div className="max-lg:order-5 empty:hidden lg:hidden">
       {profile?.tracking_mode === "balance" ? (
         saldoConocido && <SaldoCard saldo={balance} gasto={gastoMes} />
       ) : (
@@ -354,7 +436,7 @@ export default async function Dashboard() {
           saldo, y las horas totales encabezan la pantalla. Recibe el libro entero, no `flights`: las horas de
           instrumento en simulador cuentan para el requisito, y el tracker hace su
           propio corte con `separarSimuladores` para que no cuenten para nada más. */}
-      <div id="tracker" className="max-lg:order-5 empty:hidden scroll-mt-24">
+      <div id="tracker" className="max-lg:order-5 empty:hidden scroll-mt-24 lg:hidden">
       {alumno ? (
         <PPATracker
           requisitos={requisitosPPA(bitacora as Flight[], {
@@ -373,13 +455,6 @@ export default async function Dashboard() {
       ) : null}
       </div>
 
-      {/* Cierra con el libro mismo. Todo lo de arriba es estado; esto es lo último
-          que pasó. Una sesión de simulador es un renglón como cualquier otro y
-          esconderla acá sería esconder algo que el piloto acaba de cargar. */}
-      <div className="max-lg:hidden">
-        <RecentFlights flights={bitacora as Flight[]} aircraft={aircraft as Aircraft[]} costos={costos} limit={3} />
-      </div>
-
       {/* "Tu red": la única tarjeta que no contesta una de las tres preguntas, por
           decisión de Federico. Chica, al final, y por `Suspense`: el feed es un viaje
           más al backend y nunca puede demorar el "¿puedo volar hoy?". */}
@@ -389,42 +464,5 @@ export default async function Dashboard() {
         </Suspense>
       </div>
     </div>
-  );
-}
-
-/**
- * Las horas totales y la fila de cifras, arriba de todo y con la misma forma que en el
- * Resumen (`components/dashboard/Cifras.tsx`). Las cuentas están en `lib/horas-carrera.ts`.
- *
- * Una cuenta nueva no tiene nada que contar todavía, y de eso ya se ocupa
- * `PrimerosPasos`: un cero grande acá sería ruido.
- */
-function HorasDeCarrera({ flights, logbooks, todayIso, alumno }: { flights: Flight[]; logbooks: Logbook[]; todayIso: string; alumno: boolean }) {
-  const c = cifrasDeCarrera(flights, logbooks, todayIso, { alumno });
-  if (c.total === 0) return null;
-  const h = (n: number) => n.toFixed(1);
-  return (
-    <section className="space-y-4">
-      <div className="flex items-end justify-between gap-4">
-        <div className="space-y-3">
-          <p className="eyebrow">Horas de vuelo · carrera total</p>
-          <Odometer value={c.total} />
-        </div>
-        <Link href="/dashboard/summary" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white mb-2">
-          Ver resumen <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <StatTile icon={<CalendarDays className="w-3.5 h-3.5" />} label="30 días" value={h(c.ultimos30)} caption="Horas en el último mes" />
-        <StatTile icon={<Clock className="w-3.5 h-3.5" />} label="PIC" value={h(c.pic)} caption="Al mando" />
-        <StatTile icon={<Moon className="w-3.5 h-3.5" />} label="Noche" value={h(c.noche)} caption="Vuelo nocturno" />
-        <StatTile icon={<CloudFog className="w-3.5 h-3.5" />} label="IMC" value={h(c.imc)} caption="En instrumentos" />
-        <StatTile icon={<Sunrise className="w-3.5 h-3.5" />} label="Ater." value={String(c.aterrizajes)} caption="Aterrizajes totales" />
-        <StatTile icon={<Plane className="w-3.5 h-3.5" />} label="Vuelos" value={String(c.vuelos)} caption="Entradas de log" />
-      </div>
-      <Link href="/dashboard/summary" className="sm:hidden inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
-        Ver resumen <ArrowRight className="w-3.5 h-3.5" />
-      </Link>
-    </section>
   );
 }

@@ -213,7 +213,7 @@ export default function OnboardingOverlay({ profile, estado }: OnboardingOverlay
         <motion.div
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
-          className="relative w-full max-w-xl my-auto bg-white dark:bg-[#0a0a0a] border border-zinc-200 dark:border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-cal dark:shadow-none space-y-8"
+          className="relative w-full max-w-xl my-auto bg-white dark:bg-noche border border-zinc-200 dark:border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-cal dark:shadow-none space-y-8"
         >
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="w-14 h-14 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl flex items-center justify-center shadow-lg">

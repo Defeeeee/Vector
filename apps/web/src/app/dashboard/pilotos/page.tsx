@@ -119,7 +119,7 @@ export default async function PaginaRed() {
           <Suspense fallback={null}>
             <PilotosSugeridos tieneHandle />
           </Suspense>
-          <section className="flex flex-col sm:flex-row sm:items-center gap-4 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-5 md:p-6">
+          <section className="flex flex-col sm:flex-row sm:items-center gap-4 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-5 md:p-6">
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <div className="w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center shrink-0">
                 <Users className="w-4 h-4" />

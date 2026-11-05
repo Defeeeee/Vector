@@ -13,7 +13,7 @@ import { haceCuanto, numero, type PegatinaAdmin } from "@/lib/admin";
  */
 export const metadata: Metadata = { title: "Pegatinas · Vector", robots: { index: false, follow: false } };
 
-const tarjeta = "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8";
+const tarjeta = "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-8";
 
 export default async function PegatinasAdmin() {
   const res = await apiFetch("/admin/qr", { cache: "no-store" });

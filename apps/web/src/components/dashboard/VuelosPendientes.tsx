@@ -27,7 +27,7 @@ import type { Aircraft, PlannedFlight } from "@/types";
  */
 
 const CARD =
-  "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none";
+  "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none";
 
 interface Props {
   planned: PlannedFlight[];

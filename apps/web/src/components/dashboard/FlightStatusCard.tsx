@@ -66,7 +66,7 @@ export default function FlightStatusCard({
         El teléfono (3.4.0): la tarjeta grande, como primera respuesta del inicio. En el navegador,
         blanca con el tilde verde; instalada (`app:`), entera en verde.
       */}
-      <section className="lg:hidden rounded-[20px] border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] app:bg-emerald-900 app:dark:bg-emerald-950 app:border-transparent app:dark:border-transparent app:rounded-[22px] p-4 app:p-[18px] flex flex-col gap-2.5 app:gap-2">
+      <section className="lg:hidden rounded-[20px] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon app:bg-emerald-900 app:dark:bg-emerald-950 app:border-transparent app:dark:border-transparent app:rounded-[22px] p-4 app:p-[18px] flex flex-col gap-2.5 app:gap-2">
         <div className="flex items-center gap-2.5">
           <span className="app:hidden w-[34px] h-[34px] rounded-full bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-[18px] h-[18px] text-emerald-700 dark:text-emerald-400" />

@@ -115,7 +115,7 @@ export default function PerfilPublicoForm({
   return (
     <form
       onSubmit={guardar}
-      className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8 space-y-6"
+      className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-8 space-y-6"
     >
       {perfil ? (
         <div className="flex flex-wrap items-center gap-2">

@@ -5,7 +5,6 @@ import { Mail, Loader2, Compass, ChevronLeft } from "lucide-react";
 import { recoverPassword } from "@/actions/auth";
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function RecoverPage() {
   const [isPending, startTransition] = useTransition();
@@ -62,10 +61,9 @@ export default function RecoverPage() {
 
       {/* Minimal Top Bar */}
       <div className="absolute top-6 left-0 w-full px-6 flex justify-between items-center z-20">
-        <Link href="/login" className="p-3 bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-full shadow-md hover:bg-zinc-50 dark:hover:bg-white/5 transition-all group">
+        <Link href="/login" className="p-3 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-full shadow-md hover:bg-zinc-50 dark:hover:bg-white/5 transition-all group">
             <ChevronLeft className="w-5 h-5 text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white" />
         </Link>
-        <ThemeToggle />
       </div>
 
       <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto px-4 md:px-6 py-12 md:py-20 relative z-10">
@@ -88,7 +86,7 @@ export default function RecoverPage() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="w-full p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-zinc-200 dark:border-white/10 shadow-2xl dark:shadow-none bg-white dark:bg-[#0a0a0a] space-y-10 transition-all"
+          className="w-full p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-zinc-200 dark:border-white/10 shadow-2xl dark:shadow-none bg-white dark:bg-noche space-y-10 transition-all"
         >
           <form action={handleSubmit} className="space-y-6">
             {error && (

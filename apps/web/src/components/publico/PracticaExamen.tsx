@@ -93,7 +93,7 @@ export default function PracticaExamen() {
     guardar(h);
   };
 
-  const caja = "rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.03]";
+  const caja = "rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon";
   const chip = (activo: boolean) =>
     `px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
       activo
@@ -178,7 +178,7 @@ export default function PracticaExamen() {
           <div className="space-y-3">
             <p className="text-sm font-bold text-zinc-900 dark:text-white">Las que fallaste</p>
             {mal.map(({ pregunta: p, elegida }) => (
-              <div key={p.id} className="rounded-2xl bg-zinc-50 dark:bg-white/[0.03] p-4 space-y-1.5 text-sm">
+              <div key={p.id} className="rounded-2xl bg-zinc-50 dark:bg-carbon p-4 space-y-1.5 text-sm">
                 <p className="font-semibold text-zinc-900 dark:text-white">{p.pregunta}</p>
                 <Figura p={p} chica />
                 <p className="text-red-600 dark:text-red-400">Elegiste: {p.opciones[elegida]}</p>

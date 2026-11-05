@@ -88,7 +88,7 @@ export default function EditorRuta({ ruta, salida, destino, nodos, cache, estado
   const borde = estado === "error" || estado === "falta" ? "border-red-300 dark:border-red-500/40" : "border-zinc-200 dark:border-white/10";
 
   return (
-    <div className={`rounded-2xl border ${borde} bg-white dark:bg-white/[0.02] px-3.5 pt-2 pb-3 space-y-3`}>
+    <div className={`rounded-2xl border ${borde} bg-white dark:bg-carbon px-3.5 pt-2 pb-3 space-y-3`}>
       <div className="flex items-center justify-between gap-2">
         <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
           <span className="data font-bold text-zinc-400 dark:text-zinc-500 mr-1">15</span>Ruta
@@ -133,7 +133,7 @@ export default function EditorRuta({ ruta, salida, destino, nodos, cache, estado
                     className={`group inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 ${
                       d.nodo.estado === "sin-ubicar"
                         ? "border-dashed border-amber-300 dark:border-amber-500/40 bg-amber-50/60 dark:bg-amber-500/[0.06]"
-                        : "border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.03]"
+                        : "border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon"
                     }`}
                   >
                     <span className="flex flex-col items-start">

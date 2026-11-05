@@ -1374,7 +1374,7 @@ function Sintonizar({ puntos }: { puntos: PuntoRuta[] }) {
   if (estaciones.size === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-zinc-100 dark:border-white/5 bg-zinc-50 dark:bg-white/[0.03] px-4 py-3">
+    <div className="rounded-2xl border border-zinc-100 dark:border-white/5 bg-zinc-50 dark:bg-carbon px-4 py-3">
       <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
         Sintonizar
       </p>
@@ -1427,7 +1427,7 @@ function Total({
   tono?: "neutral" | "bad";
 }) {
   return (
-    <div className="bg-zinc-50 dark:bg-white/[0.03] rounded-2xl p-4 border border-zinc-100 dark:border-white/5">
+    <div className="bg-zinc-50 dark:bg-carbon rounded-2xl p-4 border border-zinc-100 dark:border-white/5">
       <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{label}</p>
       <p
         className={`mt-1 text-2xl font-bold data leading-none ${

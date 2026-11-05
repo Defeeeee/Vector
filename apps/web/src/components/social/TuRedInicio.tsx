@@ -24,7 +24,7 @@ export default async function TuRedInicio() {
     return (
       <Link
         href="/dashboard/pilotos"
-        className="group flex items-center gap-4 rounded-[2rem] border border-dashed border-zinc-300 dark:border-white/15 bg-white dark:bg-white/[0.02] p-5 hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors"
+        className="group flex items-center gap-4 rounded-[2rem] border border-dashed border-zinc-300 dark:border-white/15 bg-white dark:bg-carbon p-5 hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors"
       >
         <div className="w-11 h-11 rounded-2xl bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white flex items-center justify-center shrink-0">
           <Users className="w-5 h-5" />
@@ -45,7 +45,7 @@ export default async function TuRedInicio() {
   const novedades = resumen.solicitudes_pendientes + resumen.actividad_nueva;
 
   return (
-    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-5 md:p-6">
+    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-5 md:p-6">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-lg font-display font-bold text-zinc-900 dark:text-white tracking-tight">Tu red</h3>
         <Link

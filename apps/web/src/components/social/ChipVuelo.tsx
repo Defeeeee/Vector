@@ -31,7 +31,7 @@ export default function ChipVuelo({ vuelo }: { vuelo: VueloChip }) {
     <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/10">
       {(puntos.length > 0 || recorrido) && <MapaCuandoSeVe puntos={puntos} recorrido={recorrido} ruta={vuelo.ruta ?? ""} />}
       {(vuelo.ruta || datos.length > 0) && (
-      <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-zinc-50 dark:bg-white/[0.03] min-w-0">
+      <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-zinc-50 dark:bg-carbon min-w-0">
         <Plane className="w-4 h-4 shrink-0 text-aviation-blue dark:text-aviation-cyan" aria-hidden="true" />
         <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[13px] min-w-0">
           {vuelo.ruta && <span className="font-mono font-bold text-zinc-900 dark:text-white">{vuelo.ruta}</span>}

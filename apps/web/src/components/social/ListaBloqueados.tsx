@@ -35,7 +35,7 @@ export default function ListaBloqueados({ bloqueados }: { bloqueados: PilotoResu
   };
 
   return (
-    <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-5 md:p-6">
+    <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-5 md:p-6">
       <h4 className="text-sm font-bold text-zinc-900 dark:text-white">Bloqueados</h4>
       <p className="text-[13px] text-zinc-500 dark:text-zinc-400">
         No ven tu perfil ni lo que publicás, y vos no ves lo suyo. No saben que los bloqueaste.

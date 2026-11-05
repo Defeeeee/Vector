@@ -26,7 +26,7 @@ export function Odometer({ value }: { value: number }) {
 
 export function StatTile({ icon, label, value, caption }: { icon: ReactNode; label: string; value: string; caption: string }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] px-4 py-4 md:px-5 md:py-5">
+    <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-4 py-4 md:px-5 md:py-5">
       <div className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
         {icon}
         <span className="font-mono text-[10px] font-bold uppercase tracking-wider">{label}</span>

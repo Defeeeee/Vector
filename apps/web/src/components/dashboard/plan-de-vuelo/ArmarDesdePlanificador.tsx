@@ -97,7 +97,7 @@ export default function ArmarDesdePlanificador(props: Props) {
   return (
     <section
       data-imprimir="no"
-      className="rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4"
+      className="rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4"
     >
       <span className="w-11 h-11 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center shrink-0">
         <FileText className="w-5 h-5 text-white dark:text-zinc-900" />

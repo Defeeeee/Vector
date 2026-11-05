@@ -86,7 +86,7 @@ export default function GuiaShell({
             {children}
           </div>
 
-          <aside className="mt-14 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] p-7 md:p-8">
+          <aside className="mt-14 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-carbon p-7 md:p-8">
             <p className="text-xl font-display font-bold text-zinc-900 dark:text-white tracking-tight">
               Llevá tu libro de vuelo en Vector
             </p>

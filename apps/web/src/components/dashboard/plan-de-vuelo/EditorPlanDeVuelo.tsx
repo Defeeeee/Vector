@@ -146,7 +146,7 @@ function Campo({
     // un mismo renglón quedan parejas aunque una tenga una sugerencia y la otra no.
     <div
       className={`flex flex-col rounded-2xl border px-3.5 pt-2 pb-1 transition-colors ${borde} ${
-        delAvion ? "bg-violet-50/60 dark:bg-violet-500/[0.06]" : "bg-white dark:bg-white/[0.02]"
+        delAvion ? "bg-violet-50/60 dark:bg-violet-500/[0.06]" : "bg-white dark:bg-carbon"
       } ${className}`}
     >
       <Contenedor className="block min-w-0">
@@ -647,7 +647,7 @@ export default function EditorPlanDeVuelo({
         </p>
       )}
 
-      <div className="rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-5 md:p-6 space-y-4">
+      <div className="rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-5 md:p-6 space-y-4">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <p className="flex items-center gap-2 text-2xl md:text-3xl font-display font-bold text-zinc-900 dark:text-white">
             <span className="data">{r.plan.c13ad || "????"}</span>
@@ -906,7 +906,7 @@ export default function EditorPlanDeVuelo({
                 <input value={f.personas} onChange={(ev) => cambiar({ personas: ev.target.value })} placeholder="2 o TBN" maxLength={3} className={`${INPUT} uppercase`} />
               </Campo>
             </div>
-            <div className="space-y-3 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4">
+            <div className="space-y-3 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-4">
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Lo que no se marca sale tachado en el formulario, como pide la AIP.</p>
               <div className="flex flex-wrap gap-x-5 gap-y-2">
                 <span className="data text-xs font-bold text-zinc-400 w-8">R/</span>
@@ -971,7 +971,7 @@ export default function EditorPlanDeVuelo({
           </Seccion>
 
           <Seccion titulo="Revisión">
-            <p className="data text-[11px] leading-relaxed break-all rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-100 dark:border-white/5 p-3 text-zinc-700 dark:text-zinc-300">
+            <p className="data text-[11px] leading-relaxed break-all rounded-2xl bg-white dark:bg-carbon border border-zinc-100 dark:border-white/5 p-3 text-zinc-700 dark:text-zinc-300">
               {mensajeFpl(r.plan)}
             </p>
             {(r.errores.length > 0 || r.avisos.length > 0 || !firma) && (
@@ -1062,7 +1062,7 @@ export default function EditorPlanDeVuelo({
               </p>
             )}
             {envioAroActivo && (
-              <div className="space-y-2.5 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4">
+              <div className="space-y-2.5 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-4">
                 <p className="text-sm font-semibold text-zinc-900 dark:text-white">Mandarlo por mail desde Vector</p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
                   Con el PDF firmado adjunto y la matrícula en el asunto, como pide la AIC A 19/2026. Te llega una copia, y

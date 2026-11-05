@@ -40,8 +40,10 @@ export default function DashboardNav({
   const activa = seccionDe(pathname)?.clave;
 
   if (variant === "rail") {
+    // La barra del escritorio (3.11.0): el ícono queda en su lugar y el nombre aparece al abrirse
+    // la barra (`.rail` en el layout, `.rail-rotulo` en globals.css).
     return (
-      <nav className="flex flex-col items-center gap-1">
+      <nav aria-label="Secciones" className="flex flex-col gap-1">
         {SECCIONES.map((seccion) => {
           const active = seccion.clave === activa;
           const Icon = ICONOS[seccion.clave];
@@ -53,30 +55,22 @@ export default function DashboardNav({
               key={seccion.clave}
               href={hrefDeSeccion(seccion)}
               aria-current={active ? "page" : undefined}
-              className="group relative flex items-center justify-center w-12 h-12"
+              className="group relative flex items-center gap-3 h-12 rounded-2xl px-3.5 outline-none focus-visible:ring-2 focus-visible:ring-aviation-cyan"
             >
               {active && (
                 <motion.div
                   layoutId="rail-nav-active"
-                  className="absolute inset-0 rounded-2xl bg-white/10"
+                  className="absolute inset-0 rounded-2xl bg-cabina-activa"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                 />
               )}
-
-              <span className="relative z-10">
-                <Icon
-                  className={`w-5 h-5 transition-colors ${
-                    active ? "text-aviation-cyan" : "text-zinc-500 group-hover:text-white"
-                  }`}
-                  strokeWidth={2}
-                />
-                {flagged && <Dot ring="ring-zinc-950" />}
+              <span className="relative z-10 shrink-0">
+                <Icon className={`w-5 h-5 transition-colors ${active ? "text-aviation-cyan" : "text-zinc-400 group-hover:text-white"}`} strokeWidth={2} />
+                {flagged && <Dot ring="ring-cabina" />}
               </span>
-
-              {/* The rail is icon-only, so the tooltip carries the label. */}
-              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 whitespace-nowrap rounded-lg bg-zinc-900 text-white text-xs font-semibold px-3 py-1.5 opacity-0 scale-95 origin-left group-hover:opacity-100 group-hover:scale-100 transition-all z-50 shadow-xl border border-white/10">
+              <span className={`rail-rotulo relative z-10 text-sm font-semibold ${active ? "text-white" : "text-zinc-300 group-hover:text-white"}`}>
                 {seccion.label}
-                {flagged && <span className="ml-1.5 text-red-400">{alerta.texto}</span>}
+                {flagged && <span className="ml-1.5 text-xs font-medium text-red-400">{alerta.texto}</span>}
               </span>
             </Link>
           );

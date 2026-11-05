@@ -493,7 +493,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
 
       {/* La tarjeta: `overflow-hidden` recorta sus esquinas redondeadas. Hasta la 3.0.0
           también se dibujaba sin tarjeta, adentro del modal que cerraba la sesión en vivo. */}
-      <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-3xl md:rounded-[2.5rem] shadow-cal dark:shadow-none overflow-hidden flex flex-col transition-colors max-lg:bg-transparent! max-lg:dark:bg-transparent! max-lg:border-0 max-lg:shadow-none! max-lg:rounded-none max-lg:overflow-visible">
+      <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-3xl md:rounded-[2.5rem] shadow-cal dark:shadow-none overflow-hidden flex flex-col transition-colors max-lg:bg-transparent! max-lg:dark:bg-transparent! max-lg:border-0 max-lg:shadow-none! max-lg:rounded-none max-lg:overflow-visible">
           <div className="max-lg:hidden p-6 md:p-8 border-b border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 flex items-center justify-between">
             <div className="space-y-1">
               <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">
@@ -501,7 +501,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
               </h3>
               <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Bitácora electrónica</p>
             </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-white dark:bg-[#111111] rounded-xl md:rounded-2xl flex items-center justify-center shadow-sm border border-zinc-200 dark:border-white/10 transition-colors">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-white dark:bg-carbon rounded-xl md:rounded-2xl flex items-center justify-center shadow-sm border border-zinc-200 dark:border-white/10 transition-colors">
               <Compass className="w-5 h-5 md:w-6 md:h-6 text-zinc-900 dark:text-white" />
             </div>
           </div>
@@ -539,7 +539,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
                         className={`shrink-0 h-11 px-3.5 rounded-xl data text-sm font-semibold transition-colors ${
                           elegido
                             ? "border-2 border-aviation-blue bg-blue-50 dark:bg-aviation-blue/15 text-blue-950 dark:text-white"
-                            : "border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] text-zinc-700 dark:text-zinc-300"
+                            : "border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon text-zinc-700 dark:text-zinc-300"
                         }`}
                       >
                         {ac.registration}
@@ -547,7 +547,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
                     );
                   })}
                   </div>
-                  <label className="relative shrink-0 h-11 px-3.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] flex items-center text-sm font-bold text-zinc-700 dark:text-zinc-300">
+                  <label className="relative shrink-0 h-11 px-3.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon flex items-center text-sm font-bold text-zinc-700 dark:text-zinc-300">
                     {fechaCorta}
                     <input
                       type="date"
@@ -942,7 +942,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
               type="button"
               onClick={() => setBreakdownOpen(true)}
               aria-expanded={breakdownOpen}
-              className="w-full flex items-center gap-4 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3.5 text-left hover:border-zinc-300 dark:hover:border-white/20 transition-colors"
+              className="w-full flex items-center gap-4 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-4 py-3.5 text-left hover:border-zinc-300 dark:hover:border-white/20 transition-colors"
             >
               <SlidersHorizontal className="w-4 h-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
               <span className="flex-1 min-w-0">
@@ -1040,7 +1040,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
           />
 
           <div
-            className={`absolute right-0 top-0 h-full w-full sm:max-w-md bg-white dark:bg-[#0a0a0a] border-l border-zinc-200 dark:border-white/10 shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
+            className={`absolute right-0 top-0 h-full w-full sm:max-w-md bg-white dark:bg-noche border-l border-zinc-200 dark:border-white/10 shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
               breakdownOpen ? "translate-x-0" : "translate-x-full"
             }`}
           >
@@ -1194,14 +1194,14 @@ const MESES_CHIP = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep
 
 /** En el teléfono, cada hora va en su tarjeta, con el número grande (3.4.0). */
 const TARJETA_HORA =
-  "max-lg:bg-white max-lg:dark:bg-[#111111] max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:rounded-[14px] max-lg:px-3 max-lg:py-2.5 max-lg:space-y-1 max-lg:[&>label]:font-sans max-lg:[&>label]:normal-case max-lg:[&>label]:tracking-normal max-lg:[&>label]:text-[11px] max-lg:[&>label]:font-bold max-lg:[&>label]:text-zinc-500";
+  "max-lg:bg-white max-lg:dark:bg-carbon max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:rounded-[14px] max-lg:px-3 max-lg:py-2.5 max-lg:space-y-1 max-lg:[&>label]:font-sans max-lg:[&>label]:normal-case max-lg:[&>label]:tracking-normal max-lg:[&>label]:text-[11px] max-lg:[&>label]:font-bold max-lg:[&>label]:text-zinc-500";
 /** Los campos de abajo (finalidad, observaciones, CAD), en el teléfono: la misma tarjeta, sin el subrayado. */
-const TARJETA_CAMPO = `${"max-lg:bg-white max-lg:dark:bg-[#111111] max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:rounded-[14px] max-lg:px-3 max-lg:py-2.5 max-lg:space-y-0.5 max-lg:[&>label]:font-sans max-lg:[&>label]:normal-case max-lg:[&>label]:tracking-normal max-lg:[&>label]:text-[11px] max-lg:[&>label]:font-bold max-lg:[&>label]:text-zinc-500"} max-lg:[&_input]:border-0 max-lg:[&_textarea]:border-0 max-lg:[&_button]:border-0 max-lg:[&_input]:py-1 max-lg:[&_textarea]:py-1 max-lg:[&_button]:py-1 max-lg:[&_input]:text-[15px] max-lg:[&_textarea]:text-[15px] max-lg:[&_button]:text-[15px]`;
+const TARJETA_CAMPO = `${"max-lg:bg-white max-lg:dark:bg-carbon max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:rounded-[14px] max-lg:px-3 max-lg:py-2.5 max-lg:space-y-0.5 max-lg:[&>label]:font-sans max-lg:[&>label]:normal-case max-lg:[&>label]:tracking-normal max-lg:[&>label]:text-[11px] max-lg:[&>label]:font-bold max-lg:[&>label]:text-zinc-500"} max-lg:[&_input]:border-0 max-lg:[&_textarea]:border-0 max-lg:[&_button]:border-0 max-lg:[&_input]:py-1 max-lg:[&_textarea]:py-1 max-lg:[&_button]:py-1 max-lg:[&_input]:text-[15px] max-lg:[&_textarea]:text-[15px] max-lg:[&_button]:text-[15px]`;
 const HORA_GRANDE = "max-lg:border-0 max-lg:py-0 max-lg:font-mono max-lg:text-2xl";
 
 /** "Aterrizajes" como una fila: el nombre a la izquierda y el −/+ a la derecha. */
 const FILA_ATERRIZAJES =
-  "max-lg:flex max-lg:items-center max-lg:gap-3 max-lg:space-y-0 max-lg:bg-white max-lg:dark:bg-[#111111] max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:rounded-[14px] max-lg:pl-3.5 max-lg:pr-3 max-lg:py-1.5 max-lg:[&>label]:flex-1 max-lg:[&>label]:font-sans max-lg:[&>label]:normal-case max-lg:[&>label]:tracking-normal max-lg:[&>label]:text-[15px] max-lg:[&>label]:font-bold max-lg:[&>label]:text-zinc-900 max-lg:dark:[&>label]:text-white max-lg:[&>div]:w-40";
+  "max-lg:flex max-lg:items-center max-lg:gap-3 max-lg:space-y-0 max-lg:bg-white max-lg:dark:bg-carbon max-lg:border max-lg:border-zinc-200 max-lg:dark:border-white/10 max-lg:rounded-[14px] max-lg:pl-3.5 max-lg:pr-3 max-lg:py-1.5 max-lg:[&>label]:flex-1 max-lg:[&>label]:font-sans max-lg:[&>label]:normal-case max-lg:[&>label]:tracking-normal max-lg:[&>label]:text-[15px] max-lg:[&>label]:font-bold max-lg:[&>label]:text-zinc-900 max-lg:dark:[&>label]:text-white max-lg:[&>div]:w-40";
 
 /** "Ahora" debajo de una hora: la hora UTC del teléfono en ese momento (lo que se guarda es UTC). */
 function BotonAhora({ onClick }: { onClick: () => void }) {

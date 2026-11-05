@@ -176,7 +176,7 @@ export default function Kneeboard() {
                 className={`rounded-2xl p-4 border transition-colors ${
                   running
                     ? "bg-aviation-blue/5 dark:bg-aviation-cyan/10 border-aviation-blue/30 dark:border-aviation-cyan/30"
-                    : "bg-zinc-50 dark:bg-white/[0.03] border-zinc-100 dark:border-white/5"
+                    : "bg-zinc-50 dark:bg-carbon border-zinc-100 dark:border-white/5"
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ export default function Kneeboard() {
           }}
           placeholder={"Autorizaciones, ATIS, frecuencias...\n\nSADM ATIS INFO B\nQNH 1013 · PISTA 05\nTWR 118.5 · APP 124.7"}
           rows={16}
-          className="w-full bg-zinc-50 dark:bg-white/[0.03] border border-zinc-100 dark:border-white/5 rounded-2xl p-4 text-sm font-medium leading-relaxed text-zinc-900 dark:text-white outline-none focus:border-zinc-300 dark:focus:border-white/20 transition-colors resize-y placeholder:text-zinc-300 dark:placeholder:text-zinc-700 custom-scrollbar"
+          className="w-full bg-zinc-50 dark:bg-carbon border border-zinc-100 dark:border-white/5 rounded-2xl p-4 text-sm font-medium leading-relaxed text-zinc-900 dark:text-white outline-none focus:border-zinc-300 dark:focus:border-white/20 transition-colors resize-y placeholder:text-zinc-300 dark:placeholder:text-zinc-700 custom-scrollbar"
         />
 
         <div className="flex items-center justify-between">

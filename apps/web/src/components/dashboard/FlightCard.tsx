@@ -188,7 +188,7 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
 
   if (isEditing) {
     return (
-      <motion.div ref={raiz} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="scroll-mt-24 p-6 md:p-10 space-y-8 md:space-y-10 bg-zinc-50 dark:bg-white/[0.03]">
+      <motion.div ref={raiz} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="scroll-mt-24 p-6 md:p-10 space-y-8 md:space-y-10 bg-zinc-50 dark:bg-carbon">
         <div className="flex items-center justify-between">
           <h3 className="text-xl md:text-2xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Editar registro</h3>
           <button onClick={() => setIsEditing(false)} className="p-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors shadow-sm"><X className="w-4 h-4 text-zinc-500 dark:text-zinc-400" /></button>
@@ -304,7 +304,7 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
           if (corrimiento.get() < 0) { cerrarDeslizado(); return; }
           setIsOpen(!isOpen);
         }}
-        className="relative bg-white dark:bg-[#050505] grid grid-cols-[40px_1fr_auto] md:grid-cols-[80px_130px_1fr_100px_104px] items-center gap-3 md:gap-4 px-4 md:px-6 py-3.5 md:py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-[#0c0c0c] transition-colors"
+        className="relative bg-white dark:bg-carbon grid grid-cols-[40px_1fr_auto] md:grid-cols-[80px_130px_1fr_100px_104px] items-center gap-3 md:gap-4 px-4 md:px-6 py-3.5 md:py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
       >
         {/* Date: en el teléfono, el día grande y el de la semana abajo */}
         <div className="leading-tight">
@@ -387,7 +387,7 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
       <AnimatePresence>
         {isOpen && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
-            <div className="px-4 md:px-6 pb-6 pt-1 space-y-5 bg-zinc-50/60 dark:bg-white/[0.02]">
+            <div className="px-4 md:px-6 pb-6 pt-1 space-y-5 bg-zinc-50/60 dark:bg-carbon">
               <div className="flex items-center gap-2 md:hidden pb-1">
                 <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1"><Edit2 className="w-3 h-3" /> Editar</button>
                 {!enSimulador && (
@@ -483,7 +483,7 @@ function MiniEdit({ name, label, val }: { name: string, label: string, val: any 
   return (
     <div className="space-y-1">
       <label className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 block">{label}</label>
-      <input type="number" step="0.1" name={name} defaultValue={val || ""} className="w-full bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-xl px-2 py-2 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:border-zinc-400 dark:focus:border-white/30 transition-colors shadow-sm" />
+      <input type="number" step="0.1" name={name} defaultValue={val || ""} className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-xl px-2 py-2 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:border-zinc-400 dark:focus:border-white/30 transition-colors shadow-sm" />
     </div>
   );
 }

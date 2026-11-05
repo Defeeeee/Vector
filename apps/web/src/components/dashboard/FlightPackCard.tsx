@@ -42,7 +42,7 @@ export default function FlightPackCard({ pack, aircraft }: FlightPackCardProps) 
 
   return (
     <div className={`transition-all duration-500 ${isEditing ? 'py-4' : 'py-0'}`}>
-      <div className={`bg-white dark:bg-white/[0.02] border transition-all duration-500 overflow-hidden ${isEditing ? 'rounded-3xl md:rounded-[2.5rem] border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none bg-zinc-50 dark:bg-transparent p-6 md:p-10' : 'rounded-none border-transparent border-b-zinc-200 dark:border-b-white/10 hover:bg-zinc-50 dark:hover:bg-white/[0.04] p-4 md:p-8'}`}>
+      <div className={`bg-white dark:bg-carbon border transition-all duration-500 overflow-hidden ${isEditing ? 'rounded-3xl md:rounded-[2.5rem] border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none bg-zinc-50 dark:bg-transparent p-6 md:p-10' : 'rounded-none border-transparent border-b-zinc-200 dark:border-b-white/10 hover:bg-zinc-50 dark:hover:bg-white/[0.04] p-4 md:p-8'}`}>
         {!isEditing ? (
           <div className="flex items-center justify-between group">
             <div className="flex items-center space-x-4 md:space-x-8">
@@ -96,15 +96,15 @@ export default function FlightPackCard({ pack, aircraft }: FlightPackCardProps) 
               <input type="hidden" name="id" value={pack.id} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <EditField label="Nombre del pack">
-                  <input name="name" defaultValue={pack.name} required className="w-full bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-xl md:rounded-2xl py-3 md:py-4 px-4 md:px-5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all" />
+                  <input name="name" defaultValue={pack.name} required className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-xl md:rounded-2xl py-3 md:py-4 px-4 md:px-5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all" />
                 </EditField>
                 
                 <EditField label="Horas totales">
-                  <input name="total_hours" type="number" step="0.1" defaultValue={pack.total_hours} required className="w-full bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-xl md:rounded-2xl py-3 md:py-4 px-4 md:px-5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all" />
+                  <input name="total_hours" type="number" step="0.1" defaultValue={pack.total_hours} required className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-xl md:rounded-2xl py-3 md:py-4 px-4 md:px-5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all" />
                 </EditField>
 
                 <EditField label="Fecha de inicio">
-                  <input name="start_date" type="date" defaultValue={pack.start_date.split('T')[0]} required className="w-full bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-xl md:rounded-2xl py-3 md:py-4 px-4 md:px-5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all [color-scheme:light] dark:[color-scheme:dark]" />
+                  <input name="start_date" type="date" defaultValue={pack.start_date.split('T')[0]} required className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-xl md:rounded-2xl py-3 md:py-4 px-4 md:px-5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all [color-scheme:light] dark:[color-scheme:dark]" />
                 </EditField>
 
                 <EditField label="Estado">
@@ -112,7 +112,7 @@ export default function FlightPackCard({ pack, aircraft }: FlightPackCardProps) 
                     <select 
                       name="is_active" 
                       defaultValue={pack.is_active ? "true" : "false"}
-                      className="w-full bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-xl md:rounded-2xl py-3 md:py-4 px-4 md:px-5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all appearance-none"
+                      className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-xl md:rounded-2xl py-3 md:py-4 px-4 md:px-5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all appearance-none"
                     >
                       <option value="true" className="dark:bg-zinc-900">Activo</option>
                       <option value="false" className="dark:bg-zinc-900">Inactivo</option>

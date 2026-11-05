@@ -9,6 +9,30 @@
 */
 @custom-variant app (@media (display-mode: standalone) and (width < 64rem));
 
+/*
+  Sólo oscuro (3.11.0, Federico, 2026-11-05): la escala de grises de Tailwind, redefinida con la
+  paleta de la marca. Así cada `dark:text-zinc-400` o `dark:bg-zinc-900` de la app toma un gris
+  azulado con más contraste sin tocar las clases: el negro puro pasa a la noche (#0B0D10) y el
+  blanco del texto a uno que no encandila (#E8EDF2). El 500 sube para que el texto terciario pase
+  4,5:1 sobre la noche. Va fuera de las capas para ganarle a los valores de `@theme`.
+*/
+.dark {
+  --color-black: #0b0d10;
+  --color-white: #e8edf2;
+  --color-zinc-50: #f2f5f8;
+  --color-zinc-100: #e4e9ee;
+  --color-zinc-200: #d0d7df;
+  --color-zinc-300: #bcc6d0;
+  --color-zinc-400: #a6b1bd;
+  --color-zinc-500: #8e9aa8;
+  --color-zinc-600: #6f7b88;
+  --color-zinc-700: #3a424e;
+  --color-zinc-800: #262c35;
+  --color-zinc-900: #181c22;
+  --color-zinc-950: #101317;
+  --color-eyebrow-dark: #8e9aa8;
+}
+
 @theme {
   --color-background: #ffffff;
   --color-foreground: #242424;
@@ -45,6 +69,10 @@
   --color-noche: #0b0d10;
   --color-carbon: #16191e;
   --color-niebla: #9aa7b4;
+  /* La barra lateral del escritorio (3.11.0): azul noche, para que se distinga del contenido. */
+  --color-cabina: #0f1b2d;
+  --color-cabina-borde: #1c2b42;
+  --color-cabina-activa: #1a3352;
 
   /* Section labels and icon tiles used to be painted with the brand accent,
      which meant every screen had a dozen blue elements competing with the one
@@ -392,4 +420,24 @@
   main :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-3xl).border:not(.border-dashed) {
     border-color: transparent;
   }
+}
+
+/* La barra lateral se abre al pasar el mouse o al llegar con el teclado (3.11.0): los rótulos
+   aparecen recién entonces. `.rail` es el panel, `.rail-rotulo` cada nombre. Con
+   `:focus-visible` y no `:focus-within`: el foco que deja un click la dejaba abierta después de
+   navegar, hasta tocar la página. */
+.rail-rotulo {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+.rail:hover .rail-rotulo,
+.rail:has(:focus-visible) .rail-rotulo {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.06s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail, .rail-rotulo { transition: none !important; }
 }

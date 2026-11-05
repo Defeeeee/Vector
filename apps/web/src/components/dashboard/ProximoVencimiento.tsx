@@ -42,7 +42,7 @@ export default function ProximoVencimiento({ documents }: { documents: PilotDocu
   return (
     <Link
       href="/dashboard/settings"
-      className={`${next.status.tone === "ok" ? "max-lg:hidden " : ""}group flex items-center gap-3 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] px-4 py-3 hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors`}
+      className={`${next.status.tone === "ok" ? "max-lg:hidden " : ""}group flex items-center gap-3 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-4 py-3 hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors`}
     >
       <CalendarClock className="w-5 h-5 shrink-0 text-zinc-400 dark:text-zinc-500" />
       <p className="flex-1 min-w-0 text-sm text-zinc-600 dark:text-zinc-300 truncate">

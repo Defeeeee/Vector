@@ -93,7 +93,7 @@ export default function ActivityHeatmap({ data }: { data: HeatmapData }) {
   return (
     <div
       ref={cardRef}
-      className="relative p-8 bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-[2.5rem] shadow-cal dark:shadow-none"
+      className="relative p-8 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2.5rem] shadow-cal dark:shadow-none"
     >
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
         <div className="flex flex-col space-y-1">

@@ -92,7 +92,7 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
               onChange={(e) => setFiltro("texto", e.target.value)}
               placeholder="Ruta, matrícula, nota"
               aria-label="Buscar vuelos"
-              className="w-full bg-white dark:bg-white/[0.03] border border-zinc-200 dark:border-white/10 app:bg-zinc-200 app:dark:bg-white/10 app:border-transparent app:shadow-none rounded-xl md:rounded-2xl h-11 app:h-10 md:h-auto md:py-5 pl-10 md:pl-14 pr-4 md:pr-6 text-[15px] md:text-sm outline-none focus:border-aviation-blue dark:focus:border-aviation-cyan transition-all font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-sm"
+              className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 app:bg-zinc-200 app:dark:bg-white/10 app:border-transparent app:shadow-none rounded-xl md:rounded-2xl h-11 app:h-10 md:h-auto md:py-5 pl-10 md:pl-14 pr-4 md:pr-6 text-[15px] md:text-sm outline-none focus:border-aviation-blue dark:focus:border-aviation-cyan transition-all font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-sm"
             />
           </div>
           <button
@@ -103,7 +103,7 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
             className={`shrink-0 w-11 md:w-auto flex items-center justify-center md:px-4 rounded-xl md:rounded-2xl border transition-colors ${
               abierto || filtrado
                 ? "border-aviation-blue dark:border-aviation-cyan text-aviation-blue dark:text-aviation-cyan bg-aviation-blue/5"
-                : "border-zinc-200 dark:border-white/10 text-zinc-400 dark:text-zinc-500 bg-white dark:bg-white/[0.03]"
+                : "border-zinc-200 dark:border-white/10 text-zinc-400 dark:text-zinc-500 bg-white dark:bg-carbon"
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
@@ -111,7 +111,7 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
         </div>
 
         {abierto && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02]">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon">
             <Campo label="Desde">
               <input type="date" value={filtros.desde ?? ""} onChange={(e) => setFiltro("desde", e.target.value)} className={INPUT} />
             </Campo>
@@ -190,9 +190,9 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
                 </div>
 
                 {/* Ledger table */}
-                <div className="bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 app:border-transparent app:dark:bg-[#111111] rounded-[20px] app:rounded-[18px] md:rounded-[2rem] shadow-sm app:shadow-none dark:shadow-none overflow-hidden">
+                <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 app:border-transparent app:dark:bg-carbon rounded-[20px] app:rounded-[18px] md:rounded-[2rem] shadow-sm app:shadow-none dark:shadow-none overflow-hidden">
                   {/* Column labels (desktop only) */}
-                  <div className="hidden md:grid grid-cols-[80px_130px_1fr_100px_104px] gap-4 px-6 py-2.5 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/60 dark:bg-white/[0.02] text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
+                  <div className="hidden md:grid grid-cols-[80px_130px_1fr_100px_104px] gap-4 px-6 py-2.5 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/60 dark:bg-carbon text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
                     <span>Fecha</span>
                     <span>Ruta</span>
                     <span>Aeronave</span>
@@ -234,7 +234,7 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="p-10 md:p-20 bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 border-dashed rounded-[2rem] md:rounded-[3rem] text-center space-y-6 shadow-sm dark:shadow-none"
+          className="p-10 md:p-20 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 border-dashed rounded-[2rem] md:rounded-[3rem] text-center space-y-6 shadow-sm dark:shadow-none"
         >
           <div className="w-16 h-16 bg-zinc-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto border border-zinc-100 dark:border-white/10">
             <Plane className="w-6 h-6 text-zinc-400 dark:text-zinc-500" />

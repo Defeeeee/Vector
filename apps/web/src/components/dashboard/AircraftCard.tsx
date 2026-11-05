@@ -50,7 +50,7 @@ export default function AircraftCard({ aircraft }: AircraftCardProps) {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="col-span-full bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-[2rem] p-6 md:p-8 space-y-8"
+        className="col-span-full bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] p-6 md:p-8 space-y-8"
       >
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Editar aeronave</h3>
@@ -63,15 +63,15 @@ export default function AircraftCard({ aircraft }: AircraftCardProps) {
           <input type="hidden" name="id" value={aircraft.id} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <EditField label="Matrícula">
-              <input name="registration" defaultValue={aircraft.registration} required className="w-full bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all uppercase" />
+              <input name="registration" defaultValue={aircraft.registration} required className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all uppercase" />
             </EditField>
 
             <EditField label="Tipo OACI">
-              <input name="icao" defaultValue={aircraft.icao} required className="w-full bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all uppercase" />
+              <input name="icao" defaultValue={aircraft.icao} required className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all uppercase" />
             </EditField>
 
             <EditField label="Marca y modelo">
-              <input name="type" defaultValue={aircraft.type} required className="w-full bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all uppercase" />
+              <input name="type" defaultValue={aircraft.type} required className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all uppercase" />
             </EditField>
 
             <EditField label="Categoría (ANAC)">
@@ -79,7 +79,7 @@ export default function AircraftCard({ aircraft }: AircraftCardProps) {
                 <select
                   name="type_acft"
                   defaultValue={aircraft.type_acft}
-                  className="w-full bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all uppercase appearance-none"
+                  className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all uppercase appearance-none"
                 >
                   <option value="MONT-T" className="dark:bg-zinc-900">MONT-T (Monomotor Terrestre)</option>
                   <option value="MULT-T" className="dark:bg-zinc-900">MULT-T (Multimotor Terrestre)</option>
@@ -93,7 +93,7 @@ export default function AircraftCard({ aircraft }: AircraftCardProps) {
             <CampoPotencia
               valor={aircraft.potencia_hp}
               claseLabel="text-xs font-medium text-zinc-500 dark:text-zinc-400 group-focus-within:text-zinc-900 dark:group-focus-within:text-white transition-colors"
-              claseInput="w-full bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all"
+              claseInput="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all"
             />
           </div>
 
@@ -108,7 +108,7 @@ export default function AircraftCard({ aircraft }: AircraftCardProps) {
               <CamposPerformance
                 aeronave={aircraft}
                 claseLabel="text-[11px] font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 ml-1"
-                claseInput="w-full bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all"
+                claseInput="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all"
               />
             </div>
           </div>
@@ -129,7 +129,7 @@ export default function AircraftCard({ aircraft }: AircraftCardProps) {
   }
 
   return (
-    <div className="relative bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-2xl p-5 hover:border-zinc-300 dark:hover:border-white/20 hover:shadow-md dark:hover:bg-white/[0.04] transition-all group flex flex-col gap-4">
+    <div className="relative bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl p-5 hover:border-zinc-300 dark:hover:border-white/20 hover:shadow-md dark:hover:bg-white/[0.04] transition-all group flex flex-col gap-4">
       <div className="flex items-start justify-between">
         {/* Otro ícono, no un cartelito al costado: en una grilla de tarjetas es lo
             primero que se ve, y confundir el simulador con el avión al cargar un vuelo

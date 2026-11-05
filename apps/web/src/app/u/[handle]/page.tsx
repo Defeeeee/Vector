@@ -184,7 +184,7 @@ export default async function PerfilPublicoPagina({ params, searchParams }: Para
           {/* Para quien llegó por el link ------------------------------------------ */}
           {!conSesion && !comoAnonimo && <RecordarInvitacion handle={piloto.handle} />}
           {!conSesion && (
-            <section className="rounded-[2rem] bg-zinc-900 dark:bg-[#111111] border border-zinc-900 dark:border-white/10 p-6 md:p-8 flex flex-col sm:flex-row sm:items-center gap-4">
+            <section className="rounded-[2rem] bg-zinc-900 dark:bg-carbon border border-zinc-900 dark:border-white/10 p-6 md:p-8 flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex-1">
                 <p className="font-display font-bold text-xl text-white">¿Sos piloto?</p>
                 <p className="text-sm text-white/60 mt-1">

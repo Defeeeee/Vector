@@ -17,10 +17,10 @@ export default function CalculadoraCentesimal() {
   const fila = resto === null || resto === 0 ? null : CUADRO_CENTESIMAL.find((f) => resto >= f.desde && resto <= f.hasta);
 
   const campo =
-    "w-full rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 data text-lg font-bold text-zinc-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark]";
+    "w-full rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-4 py-3 data text-lg font-bold text-zinc-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark]";
 
   return (
-    <div className="not-prose rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] p-6 md:p-7">
+    <div className="not-prose rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-carbon p-6 md:p-7">
       <div className="grid grid-cols-2 gap-4">
         <label className="block">
           <span className="eyebrow">Hora de salida</span>

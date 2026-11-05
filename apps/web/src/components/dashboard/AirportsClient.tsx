@@ -99,7 +99,7 @@ const CATEGORY_TONE: Record<string, string> = {
 
 function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] px-4 py-3.5">
+    <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-4 py-3.5">
       <div className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
         {icon}
         <span className="font-mono text-[10px] font-bold uppercase tracking-wider">{label}</span>
@@ -266,14 +266,14 @@ export default function AirportsClient({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscá por ICAO, ciudad o nombre — SADM, Morón…"
-          className="w-full bg-white dark:bg-white/[0.03] border border-zinc-200 dark:border-white/10 rounded-2xl py-4 pl-14 pr-12 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:border-aviation-blue transition-colors placeholder:font-normal placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-cal dark:shadow-none"
+          className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl py-4 pl-14 pr-12 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:border-aviation-blue transition-colors placeholder:font-normal placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-cal dark:shadow-none"
         />
         {searching && (
           <Loader2 className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-zinc-400" />
         )}
 
         {results.length > 0 && (
-          <ul className="absolute z-20 mt-2 w-full max-h-80 overflow-y-auto rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] shadow-xl divide-y divide-zinc-100 dark:divide-white/5">
+          <ul className="absolute z-20 mt-2 w-full max-h-80 overflow-y-auto rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-xl divide-y divide-zinc-100 dark:divide-white/5">
             {results.map((a) => (
               <li key={a.icao}>
                 <button
@@ -391,7 +391,7 @@ export default function AirportsClient({
             cuándo rige, y enlaza el documento para que se pueda contrastar.
           */}
           {(madhelFull || selected.madhel) && (
-            <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8 space-y-6">
+            <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-8 space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-100 dark:border-white/10 pb-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -442,7 +442,7 @@ export default function AirportsClient({
                       {madhelFull.runways.map((rwy, idx) => (
                         <div
                           key={idx}
-                          className="p-3 rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white"
+                          className="p-3 rounded-xl bg-zinc-50 dark:bg-carbon border border-zinc-200/60 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white"
                         >
                           {rwy}
                         </div>
@@ -462,7 +462,7 @@ export default function AirportsClient({
                       {madhelFull.radio.map((rad, idx) => (
                         <div
                           key={idx}
-                          className="p-3 rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white flex items-center justify-between"
+                          className="p-3 rounded-xl bg-zinc-50 dark:bg-carbon border border-zinc-200/60 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white flex items-center justify-between"
                         >
                           <span>{rad}</span>
                         </div>
@@ -479,7 +479,7 @@ export default function AirportsClient({
                         <Fuel className="w-3.5 h-3.5 text-aviation-blue" />
                         Combustible Disponible
                       </p>
-                      <div className="p-3 rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white">
+                      <div className="p-3 rounded-xl bg-zinc-50 dark:bg-carbon border border-zinc-200/60 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white">
                         {madhelFull.fuel}
                       </div>
                     </div>
@@ -495,7 +495,7 @@ export default function AirportsClient({
                         {madhelFull.telephone.map((tel, idx) => (
                           <div
                             key={idx}
-                            className="p-2.5 rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/10 text-xs font-semibold text-zinc-800 dark:text-zinc-200"
+                            className="p-2.5 rounded-xl bg-zinc-50 dark:bg-carbon border border-zinc-200/60 dark:border-white/10 text-xs font-semibold text-zinc-800 dark:text-zinc-200"
                           >
                             {tel}
                           </div>
@@ -569,7 +569,7 @@ export default function AirportsClient({
                         href={carta.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex items-baseline gap-2 p-3 rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/10 hover:border-aviation-blue/40 transition-colors"
+                        className="group flex items-baseline gap-2 p-3 rounded-xl bg-zinc-50 dark:bg-carbon border border-zinc-200/60 dark:border-white/10 hover:border-aviation-blue/40 transition-colors"
                       >
                         <span className="data text-[10px] font-bold text-aviation-blue shrink-0">
                           AD 2.{carta.letra}
@@ -612,7 +612,7 @@ export default function AirportsClient({
                           href={href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex items-baseline gap-2 p-3 rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/10 hover:border-aviation-blue/40 transition-colors"
+                          className="group flex items-baseline gap-2 p-3 rounded-xl bg-zinc-50 dark:bg-carbon border border-zinc-200/60 dark:border-white/10 hover:border-aviation-blue/40 transition-colors"
                         >
                           <span className="data text-[10px] font-bold text-aviation-blue shrink-0 uppercase">
                             {carta.categoria}
@@ -660,7 +660,7 @@ export default function AirportsClient({
 
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Meteorología */}
-            <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-7 space-y-4">
+            <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-7 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="eyebrow">Meteorología</p>
@@ -731,7 +731,7 @@ export default function AirportsClient({
             </div>
 
             {/* NOTAMs en vivo */}
-            <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-7 space-y-4">
+            <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-7 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="eyebrow flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
@@ -788,7 +788,7 @@ export default function AirportsClient({
                   {notams.map((item, idx) => (
                     <div
                       key={item.code + idx}
-                      className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/70 dark:border-white/10 space-y-1.5"
+                      className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-carbon border border-zinc-200/70 dark:border-white/10 space-y-1.5"
                     >
                       <div className="flex items-center justify-between text-xs font-mono">
                         <span className="font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
@@ -812,7 +812,7 @@ export default function AirportsClient({
             </div>
 
             {/* Tu historial — esto es lo que FlightDeck no puede mostrar. */}
-            <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-7 space-y-4">
+            <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-7 space-y-4">
               <div>
                 <p className="eyebrow">Tu historial acá</p>
                 <h3 className="text-lg font-display font-bold text-zinc-900 dark:text-white tracking-tight mt-1">

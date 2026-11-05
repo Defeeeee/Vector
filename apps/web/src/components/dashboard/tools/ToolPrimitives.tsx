@@ -102,7 +102,7 @@ export function ResultTile({
   }[tone];
 
   return (
-    <div className="bg-zinc-50 dark:bg-white/[0.03] rounded-2xl p-4 border border-zinc-100 dark:border-white/5">
+    <div className="bg-zinc-50 dark:bg-carbon rounded-2xl p-4 border border-zinc-100 dark:border-white/5">
       <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{label}</p>
       <p className={`mt-1 font-bold data leading-none ${large ? "text-3xl md:text-4xl" : "text-2xl"} ${toneClasses}`}>
         {value}

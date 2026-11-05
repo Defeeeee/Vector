@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Download, Loader2, Printer } from "lucide-react";
 import { crearPegatinas } from "@/actions/pegatinas";
 
-const tarjeta = "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8";
+const tarjeta = "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-8";
 const boton = "inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full";
 
 /**

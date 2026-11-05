@@ -6,7 +6,6 @@ import { register } from "@/actions/auth";
 import GoogleButton from "@/components/GoogleButton";
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { registroCompleto } from "@/lib/pixel-meta";
 import { Isotipo } from "@/components/Marca";
 
@@ -47,7 +46,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <Link href="/" className="bg-white dark:bg-white/[0.02] text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 font-semibold text-sm py-5 px-12 rounded-[2rem] shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.04] active:scale-95">
+        <Link href="/" className="bg-white dark:bg-carbon text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 font-semibold text-sm py-5 px-12 rounded-[2rem] shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.04] active:scale-95">
           Volver al inicio
         </Link>
       </div>
@@ -62,10 +61,9 @@ export default function RegisterPage() {
 
       {/* Minimal Top Bar */}
       <div className="absolute top-6 left-0 w-full px-6 flex justify-between items-center z-20">
-        <Link href="/" className="p-3 bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-full shadow-md hover:bg-zinc-50 dark:hover:bg-white/5 transition-all group">
+        <Link href="/" className="p-3 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-full shadow-md hover:bg-zinc-50 dark:hover:bg-white/5 transition-all group">
             <ChevronLeft className="w-5 h-5 text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white" />
         </Link>
-        <ThemeToggle />
       </div>
 
       {/* Content Area */}
@@ -89,7 +87,7 @@ export default function RegisterPage() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="w-full p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-zinc-200 dark:border-white/10 shadow-2xl dark:shadow-none bg-white dark:bg-[#0a0a0a] space-y-10 transition-all"
+            className="w-full p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-zinc-200 dark:border-white/10 shadow-2xl dark:shadow-none bg-white dark:bg-noche space-y-10 transition-all"
         >
             <form action={handleSubmit} className="space-y-6">
                 {error && (

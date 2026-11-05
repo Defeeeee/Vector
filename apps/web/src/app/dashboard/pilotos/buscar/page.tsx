@@ -44,7 +44,7 @@ export default async function BuscarPilotosPage() {
       <PageHeader eyebrow="La red de pilotos de Vector" title="Buscar" />
 
       {handle ? (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-5 md:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-5 md:p-6">
           <Link href={rutaPerfilApp(handle)} className="group flex items-center gap-3 flex-1 min-w-0">
             <AvatarPiloto nombre={perfil?.nombre_visible ?? handle} avatarUrl={resumen.avatar_url} />
             <div className="min-w-0">
@@ -102,7 +102,7 @@ export default async function BuscarPilotosPage() {
 
 function Lista({ titulo, vacio, children }: { titulo: string; vacio: string; children: React.ReactNode[] }) {
   return (
-    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-5 md:p-6">
+    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-5 md:p-6">
       <div className="flex items-baseline justify-between mb-2">
         <h3 className="text-lg font-display font-bold text-zinc-900 dark:text-white tracking-tight">{titulo}</h3>
         <span className="data text-sm font-bold text-zinc-400 dark:text-zinc-500">{children.length}</span>

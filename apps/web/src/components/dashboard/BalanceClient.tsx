@@ -161,7 +161,7 @@ export default function BalanceClient({
             {trackingMode === "packs" && (
               <motion.div
                 layoutId="nav-pill-bg"
-                className="absolute inset-0 bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-xl shadow-sm"
+                className="absolute inset-0 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-xl shadow-sm"
                 transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
               />
             )}
@@ -178,7 +178,7 @@ export default function BalanceClient({
             {trackingMode === "balance" && (
               <motion.div
                 layoutId="nav-pill-bg"
-                className="absolute inset-0 bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-xl shadow-sm"
+                className="absolute inset-0 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-xl shadow-sm"
                 transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
               />
             )}
@@ -219,7 +219,7 @@ export default function BalanceClient({
                     return (
                       <div 
                         key={pack.id} 
-                        className="bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-3xl p-6 md:p-8 hover:shadow-md dark:hover:bg-white/[0.04] transition-all flex flex-col justify-between space-y-6"
+                        className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-3xl p-6 md:p-8 hover:shadow-md dark:hover:bg-white/[0.04] transition-all flex flex-col justify-between space-y-6"
                       >
                         <div className="flex justify-between items-start">
                           <div>
@@ -335,7 +335,7 @@ export default function BalanceClient({
                     );
                   })
                 ) : (
-                  <div className="bg-white dark:bg-white/[0.02] p-10 rounded-[2rem] text-center border border-dashed border-zinc-200 dark:border-white/10">
+                  <div className="bg-white dark:bg-carbon p-10 rounded-[2rem] text-center border border-dashed border-zinc-200 dark:border-white/10">
                     <p className="text-zinc-500 dark:text-zinc-400 font-medium text-sm">No hay packs de horas registrados aún.</p>
                   </div>
                 )}
@@ -345,7 +345,7 @@ export default function BalanceClient({
             <section className="space-y-8">
               
               {/* Account Balance Card */}
-              <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-cal dark:shadow-none flex flex-col md:flex-row items-start md:items-center justify-between gap-6 transition-all">
+              <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-cal dark:shadow-none flex flex-col md:flex-row items-start md:items-center justify-between gap-6 transition-all">
                 <div className="flex items-center space-x-6">
                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-[1.25rem] bg-aviation-blue/10 border border-zinc-200 dark:border-white/10 flex items-center justify-center text-aviation-blue-dark dark:text-aviation-cyan shadow-sm flex-shrink-0">
                     <Wallet className="w-7 h-7" strokeWidth={1.5} />
@@ -390,7 +390,7 @@ export default function BalanceClient({
 
                 <div className="max-w-lg mx-auto md:mx-0">
                   <ReceiptEdge />
-                  <div className="bg-white dark:bg-[#111111] shadow-cal dark:shadow-none">
+                  <div className="bg-white dark:bg-carbon shadow-cal dark:shadow-none">
                     <div className="px-6 md:px-8 pt-6 pb-4 text-center border-b border-dashed border-zinc-300 dark:border-white/15">
                       <p className="font-mono text-[11px] tracking-[0.3em] text-zinc-400 dark:text-zinc-500">VECTOR AVIATION</p>
                       <p className="font-mono text-[10px] text-zinc-400 dark:text-zinc-600 mt-1">Comprobante de movimientos</p>
@@ -464,7 +464,7 @@ export default function BalanceClient({
             <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Costos aeronaves</h3>
           </div>
 
-          <div className="bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-[2rem] p-6 space-y-4 shadow-sm">
+          <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] p-6 space-y-4 shadow-sm">
             {aircraft.length > 0 ? (
               aircraft.map((ac) => {
                 const isEditing = editingAircraftId === ac.id;
@@ -596,7 +596,7 @@ export default function BalanceClient({
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-[2rem] w-full max-w-md p-6 md:p-8 shadow-2xl relative z-10 space-y-6"
+              className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] w-full max-w-md p-6 md:p-8 shadow-2xl relative z-10 space-y-6"
             >
               <div className="flex justify-between items-center border-b border-zinc-100 dark:border-white/5 pb-4">
                 <h4 className="text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">
@@ -650,7 +650,7 @@ export default function BalanceClient({
                       required
                       value={topUpAmount}
                       onChange={(e) => setTopUpAmount(e.target.value)}
-                      className="bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-xl pl-8 pr-4 py-3 text-sm font-bold text-zinc-900 dark:text-white w-full outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all"
+                      className="bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-xl pl-8 pr-4 py-3 text-sm font-bold text-zinc-900 dark:text-white w-full outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all"
                     />
                   </div>
                 </div>
@@ -662,7 +662,7 @@ export default function BalanceClient({
                     placeholder={topUpType === "deposit" ? "Ej. Transferencia Banco" : "Ej. Ajuste manual de saldo"}
                     value={topUpDesc}
                     onChange={(e) => setTopUpDesc(e.target.value)}
-                    className="bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-zinc-900 dark:text-white w-full outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all"
+                    className="bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-zinc-900 dark:text-white w-full outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all"
                   />
                 </div>
 
@@ -699,7 +699,7 @@ export default function BalanceClient({
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-[2rem] w-full max-w-md p-6 md:p-8 shadow-2xl relative z-10 space-y-6"
+              className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] w-full max-w-md p-6 md:p-8 shadow-2xl relative z-10 space-y-6"
             >
               <div className="flex justify-between items-center border-b border-zinc-100 dark:border-white/5 pb-4">
                 <h4 className="text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">
@@ -727,7 +727,7 @@ export default function BalanceClient({
                       required
                       value={overrideAmount}
                       onChange={(e) => setOverrideAmount(e.target.value)}
-                      className="bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-xl pl-8 pr-4 py-3 text-sm font-bold text-zinc-900 dark:text-white w-full outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all"
+                      className="bg-zinc-50 dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-xl pl-8 pr-4 py-3 text-sm font-bold text-zinc-900 dark:text-white w-full outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 focus:border-zinc-900 dark:focus:border-white/50 transition-all"
                     />
                   </div>
                   <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 mt-2">
@@ -762,7 +762,7 @@ function ReceiptEdge({ flip = false }: { flip?: boolean }) {
     <svg
       viewBox="0 0 240 10"
       preserveAspectRatio="none"
-      className={`w-full h-2.5 text-white dark:text-[#111111] ${flip ? "rotate-180" : ""}`}
+      className={`w-full h-2.5 text-white dark:text-carbon ${flip ? "rotate-180" : ""}`}
     >
       <polygon
         points={teeth.map((i) => `${i * 10},10 ${i * 10 + 5},0 ${i * 10 + 10},10`).join(" ")}

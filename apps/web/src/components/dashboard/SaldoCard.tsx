@@ -25,7 +25,7 @@ export default function SaldoCard({ saldo, gasto }: { saldo: number; gasto: Gast
   return (
     <Link
       href="/dashboard/balance"
-      className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8 hover:shadow-lg dark:hover:bg-white/[0.04] transition-all"
+      className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-8 hover:shadow-lg dark:hover:bg-white/[0.04] transition-all"
     >
       <div className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shrink-0">
         <Wallet className="w-4 h-4 text-white dark:text-zinc-900" />

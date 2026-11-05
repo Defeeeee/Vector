@@ -9,7 +9,7 @@ import { recorridoDelVuelo, type RecorridoDelVuelo as Datos } from "@/actions/re
 /** Leaflet toca `window` al importarse: entra por `dynamic`, como los otros mapas. */
 const RecorridoMapaInner = dynamic(() => import("./RecorridoMapaInner"), {
   ssr: false,
-  loading: () => <div className="w-full h-[280px] md:h-[360px] rounded-2xl bg-zinc-100 dark:bg-white/[0.03]" />,
+  loading: () => <div className="w-full h-[280px] md:h-[360px] rounded-2xl bg-zinc-100 dark:bg-carbon" />,
 });
 
 const num = (n: number, d = 0) => n.toFixed(d).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -79,7 +79,7 @@ export default function RecorridoDelVuelo({ flightId }: { flightId: string }) {
           ["Altura máx.", r.altitud_max != null ? `${num(r.altitud_max)} ft` : "—"],
           ["Vel. máx.", r.velocidad_max != null ? `${r.velocidad_max} kt` : "—"],
         ].map(([t, v]) => (
-          <div key={t} className="rounded-xl bg-white dark:bg-white/[0.03] border border-zinc-200 dark:border-white/10 px-3 py-2">
+          <div key={t} className="rounded-xl bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 px-3 py-2">
             <dt className="text-[11px] font-semibold text-zinc-500">{t}</dt>
             <dd className="data text-sm font-bold text-zinc-900 dark:text-white mt-0.5">{v}</dd>
           </div>

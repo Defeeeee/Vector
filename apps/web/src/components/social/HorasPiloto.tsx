@@ -17,7 +17,7 @@ export default function HorasPiloto({ horas }: { horas: HorasPublicas }) {
   ];
 
   return (
-    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8 space-y-6">
+    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-8 space-y-6">
       <div>
         <p className="eyebrow">Horas de vuelo</p>
         <p className="flex items-end gap-1 mt-2">
@@ -83,7 +83,7 @@ export default function HorasPiloto({ horas }: { horas: HorasPublicas }) {
 /** Lo que se ve en lugar de las horas —y de las publicaciones— de un perfil privado. */
 export function PerfilPrivado({ mensaje, titulo = "Perfil privado" }: { mensaje: string; titulo?: string }) {
   return (
-    <section className="rounded-[2rem] border border-dashed border-zinc-300 dark:border-white/15 bg-white dark:bg-white/[0.02] p-8 text-center space-y-2">
+    <section className="rounded-[2rem] border border-dashed border-zinc-300 dark:border-white/15 bg-white dark:bg-carbon p-8 text-center space-y-2">
       <Lock className="w-6 h-6 mx-auto text-zinc-400" />
       <p className="font-display font-bold text-lg text-zinc-900 dark:text-white">{titulo}</p>
       <p className="text-sm text-zinc-500 dark:text-zinc-400">{mensaje}</p>

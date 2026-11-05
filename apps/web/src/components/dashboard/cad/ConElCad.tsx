@@ -60,7 +60,7 @@ export default function ConElCad({ activo, children }: { activo: boolean; childr
   return (
     <>
       {vieja && <ExtensionVieja instalada={vieja} />}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] px-5 py-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-5 py-4">
         <span className="relative grid place-items-center w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-white shrink-0">
           <Link2 className="w-5 h-5 text-white dark:text-zinc-900" aria-hidden="true" />
           <span

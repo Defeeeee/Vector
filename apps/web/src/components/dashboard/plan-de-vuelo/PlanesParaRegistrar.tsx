@@ -7,7 +7,7 @@ import { candidatoARegistrar, horariosDelPlan, hrefRegistrarDesdePlan, preguntar
 import { leerPlan, listarPlanes } from "@/lib/plan-de-vuelo-servidor";
 
 const CARD =
-  "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none";
+  "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none";
 
 /**
  * "¿Ya volaste?" — el plan de vuelo presentado cuya llegada estimada ya pasó.

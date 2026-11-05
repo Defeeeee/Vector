@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useTheme } from "next-themes";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { PuntoMapa } from "@/components/dashboard/PlanMapaInner";
@@ -25,8 +24,8 @@ import type { RecorridoPublicado } from "@/types";
  */
 export default function MiniMapaRutaInner({ puntos, recorrido }: { puntos: PuntoMapa[]; recorrido?: RecorridoPublicado | null }) {
   const contenedorRef = useRef<HTMLDivElement>(null);
-  const { resolvedTheme } = useTheme();
-  const oscuro = resolvedTheme === "dark";
+  // Sólo oscuro desde la 3.11.0: `resolvedTheme` puede traer un "light" guardado de antes.
+  const oscuro = true;
   // El array cambia de identidad con cada render de la lista; lo que importa es dónde
   // están los puntos.
   const clave = puntos.map((p) => `${p.lat},${p.lon}`).join("|") + (recorrido ? `|r${recorrido.p.length},${recorrido.p[0]}` : "");

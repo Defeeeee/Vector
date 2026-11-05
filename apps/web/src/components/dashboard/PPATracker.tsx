@@ -12,7 +12,7 @@ export default function PPATracker({ requisitos }: { requisitos: Requisito[] }) 
   const faltan = horasQueFaltanPPA(requisitos);
   const fmt = (r: Requisito, v: number) => (r.esHoras ? v.toFixed(1) : String(Math.round(v)));
   return (
-    <section className="rounded-[1.75rem] border p-5 md:p-6 bg-zinc-900 dark:bg-[#111111] border-zinc-900 dark:border-white/10 shadow-xl text-white">
+    <section className="rounded-[1.75rem] border p-5 md:p-6 bg-zinc-900 dark:bg-carbon border-zinc-900 dark:border-white/10 shadow-xl text-white">
       <div className="flex items-end justify-between gap-6">
         <div>
           <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-white/50">Camino a la PPA</p>

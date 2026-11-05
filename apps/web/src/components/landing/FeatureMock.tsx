@@ -14,7 +14,7 @@ import { ArrowRight, Check, MessageCircle, Mic, PartyPopper, Plane } from "lucid
 
 function BrowserFrame({ url, children }: { url: string; children: React.ReactNode }) {
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-[#111111]">
+    <div className="h-full flex flex-col bg-white dark:bg-carbon">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-200 dark:border-white/10 shrink-0">
         <span className="w-2.5 h-2.5 rounded-full bg-zinc-200 dark:bg-white/15" />
         <span className="w-2.5 h-2.5 rounded-full bg-zinc-200 dark:bg-white/15" />
@@ -215,7 +215,7 @@ function WeatherMock() {
  */
 function HoyMock() {
   return (
-    <div className="h-full flex flex-col gap-3 bg-white dark:bg-[#111111] p-5 md:p-6">
+    <div className="h-full flex flex-col gap-3 bg-white dark:bg-carbon p-5 md:p-6">
       <div className="flex items-center justify-between">
         <span className="eyebrow">Hoy</span>
         <span className="data text-[10px] text-zinc-400 dark:text-zinc-600">Inicio</span>
@@ -238,7 +238,7 @@ function HoyMock() {
             <div className="h-full w-[74%] rounded-full bg-aviation-cyan" />
           </div>
         </div>
-        <div className="rounded-2xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-100 dark:border-white/10 p-4">
+        <div className="rounded-2xl bg-zinc-50 dark:bg-carbon border border-zinc-100 dark:border-white/10 p-4">
           <p className="font-mono text-[8px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">En el pack</p>
           <p className="data text-2xl font-bold text-zinc-900 dark:text-white leading-tight mt-1">6.5 h</p>
           <p className="text-[10px] text-zinc-500 dark:text-zinc-400">te quedan de 10</p>

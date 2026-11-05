@@ -13,7 +13,7 @@ import { normalizarCodigo } from "@/lib/pegatinas";
  */
 export const metadata: Metadata = { title: "Pegatina · Vector", robots: { index: false, follow: false } };
 
-const tarjeta = "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8";
+const tarjeta = "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-8";
 
 export default async function PegatinaAdmin({ params }: { params: Promise<{ codigo: string }> }) {
   const codigo = normalizarCodigo((await params).codigo);

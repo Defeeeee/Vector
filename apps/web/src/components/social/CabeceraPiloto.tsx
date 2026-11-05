@@ -19,7 +19,7 @@ export default function CabeceraPiloto({
   nota?: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8">
+    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-8">
       <div className="flex flex-col sm:flex-row sm:items-start gap-5">
         <AvatarPiloto nombre={piloto.nombre_visible} avatarUrl={piloto.avatar_url} tamano="lg" />
         <div className="flex-1 min-w-0 space-y-2">

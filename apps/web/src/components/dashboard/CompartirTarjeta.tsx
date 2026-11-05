@@ -76,7 +76,7 @@ export default function CompartirTarjeta() {
 
       {abierto && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-6">
-          <div className="w-full sm:max-w-lg bg-white dark:bg-[#111111] rounded-t-[2.5rem] sm:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 p-6 md:p-8 space-y-5 max-h-[92vh] overflow-y-auto">
+          <div className="w-full sm:max-w-lg bg-white dark:bg-carbon rounded-t-[2.5rem] sm:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 p-6 md:p-8 space-y-5 max-h-[92vh] overflow-y-auto">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="eyebrow">Tu carrera, en una imagen</p>

@@ -48,7 +48,7 @@ export default function PrecioHoraChart({ serie }: { serie: PrecioMensual[] }) {
   };
 
   return (
-    <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 md:p-8 space-y-5">
+    <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-6 md:p-8 space-y-5">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-white/10 flex items-center justify-center shrink-0">
           <TrendingUp className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />

@@ -91,7 +91,7 @@ export default function CrearHandleRapido({
   return (
     <form
       onSubmit={crear}
-      className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-5 md:p-7 space-y-5"
+      className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-5 md:p-7 space-y-5"
     >
       <div className="flex items-start gap-4">
         <div className="w-11 h-11 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center shrink-0">

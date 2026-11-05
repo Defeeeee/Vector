@@ -67,7 +67,7 @@ export default function ListaPlanes({
               type="button"
               disabled={pendiente}
               onClick={() => nuevo(a)}
-              className="group text-left rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-5 hover:border-zinc-400 dark:hover:border-white/30 transition-colors disabled:opacity-60"
+              className="group text-left rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-5 hover:border-zinc-400 dark:hover:border-white/30 transition-colors disabled:opacity-60"
             >
               <span className="flex items-center justify-between">
                 <span className="data text-lg font-bold text-zinc-900 dark:text-white">{a.registration}</span>
@@ -127,7 +127,7 @@ export default function ListaPlanes({
         ) : visibles.length === 0 ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Todavía no armaste ninguno.</p>
         ) : (
-          <ul className="divide-y divide-zinc-100 dark:divide-white/5 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] overflow-hidden">
+          <ul className="divide-y divide-zinc-100 dark:divide-white/5 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon overflow-hidden">
             {visibles.map((f) => (
               <li key={f.id} className="flex items-center gap-3 px-4 md:px-5 py-4">
                 <Link href={`/dashboard/plan-de-vuelo/${f.id}`} className="flex-1 min-w-0 group">

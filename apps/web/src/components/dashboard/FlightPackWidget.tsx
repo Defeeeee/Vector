@@ -31,7 +31,7 @@ export default function FlightPackWidget({ packs }: FlightPackWidgetProps) {
               key={pack.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative flex bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 shadow-cal hover:shadow-lg dark:hover:bg-white/[0.04] transition-all rounded-3xl md:rounded-[2.5rem] overflow-hidden group"
+              className="relative flex bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 shadow-cal hover:shadow-lg dark:hover:bg-white/[0.04] transition-all rounded-3xl md:rounded-[2.5rem] overflow-hidden group"
             >
               {/* Main stub — like the body of a boarding pass */}
               <div className="flex-1 p-6 md:p-8 space-y-5 min-w-0">
@@ -63,7 +63,7 @@ export default function FlightPackWidget({ packs }: FlightPackWidgetProps) {
               </div>
 
               {/* Ticket stub — perforated tear line + percentage */}
-              <div className="w-28 shrink-0 flex flex-col items-center justify-center gap-1.5 p-4 bg-zinc-50/70 dark:bg-white/[0.03] border-l border-dashed border-zinc-300 dark:border-white/15">
+              <div className="w-28 shrink-0 flex flex-col items-center justify-center gap-1.5 p-4 bg-zinc-50/70 dark:bg-carbon border-l border-dashed border-zinc-300 dark:border-white/15">
                 <p className={`text-2xl font-display font-bold tracking-tighter ${isDebt ? 'text-red-600 animate-pulse' : isLow ? 'text-red-600 dark:text-red-500' : 'text-zinc-900 dark:text-white'}`}>
                   {isDebt ? '—' : `${Math.round(percentage)}%`}
                 </p>

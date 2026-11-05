@@ -93,7 +93,7 @@ export default function PCATracker({ flights, logbooks = [], aircraft = [], toda
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-3xl md:rounded-[2.5rem] shadow-cal dark:shadow-none overflow-hidden flex flex-col lg:flex-row transition-all">
+      <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-3xl md:rounded-[2.5rem] shadow-cal dark:shadow-none overflow-hidden flex flex-col lg:flex-row transition-all">
         
         {/* Main Gauge / Total Experience */}
         <div className="lg:w-2/5 p-8 md:p-10 bg-zinc-50 dark:bg-black/20 border-b lg:border-b-0 lg:border-r border-zinc-200 dark:border-white/10 flex flex-col items-center justify-center text-center space-y-6">
@@ -148,7 +148,7 @@ export default function PCATracker({ flights, logbooks = [], aircraft = [], toda
                 >
                   {ICONOS[req.clave]}
                   {isComplete && (
-                    <span className="absolute -bottom-1 -right-1 w-5 h-5 md:w-6 md:h-6 rounded-full bg-green-500 text-white flex items-center justify-center border-2 border-white dark:border-[#111111]">
+                    <span className="absolute -bottom-1 -right-1 w-5 h-5 md:w-6 md:h-6 rounded-full bg-green-500 text-white flex items-center justify-center border-2 border-white dark:border-carbon">
                       <CheckCircle2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
                     </span>
                   )}
@@ -192,7 +192,7 @@ export default function PCATracker({ flights, logbooks = [], aircraft = [], toda
         horas de travesía, o sea con el medidor grande casi lleno y el dial chiquito
         decidiendo qué vuelo conviene hacer.
       */}
-      <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-3xl md:rounded-[2.5rem] shadow-cal dark:shadow-none p-6 md:p-8 space-y-4">
+      <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-3xl md:rounded-[2.5rem] shadow-cal dark:shadow-none p-6 md:p-8 space-y-4">
         {freno ? (
           <>
             <div className="flex items-start gap-3">

@@ -12,7 +12,6 @@ import {
   CartesianGrid,
   ReferenceLine
 } from "recharts";
-import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import type { HorasDelMes, PuntoAcumulado } from "@/lib/tendencia";
 
@@ -32,12 +31,11 @@ interface GraficosDeHorasProps {
 }
 
 export default function GraficosDeHoras({ monthlyData, cumulativeData }: GraficosDeHorasProps) {
-  const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
-  const isDark = mounted && theme === "dark";
+  const isDark = mounted; // sólo oscuro desde la 3.11.0
   const textColor = isDark ? "#a1a1aa" : "#71717a";
   const barColor = isDark ? "#38bdf8" : "#2563eb";
   const tooltipBg = isDark ? "#0a0a0a" : "#ffffff";
@@ -69,8 +67,8 @@ export default function GraficosDeHoras({ monthlyData, cumulativeData }: Grafico
   if (!mounted) {
     return (
       <div className={grilla}>
-        <div className="p-8 bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-[2.5rem] h-[420px]" />
-        {conCurva && <div className="p-8 bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-[2.5rem] h-[420px]" />}
+        <div className="p-8 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2.5rem] h-[420px]" />
+        {conCurva && <div className="p-8 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2.5rem] h-[420px]" />}
       </div>
     );
   }
@@ -78,7 +76,7 @@ export default function GraficosDeHoras({ monthlyData, cumulativeData }: Grafico
   return (
     <div className={grilla}>
       {/* Bar Chart: Flight Hours by Month */}
-      <div className="p-8 bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 rounded-[2.5rem] flex flex-col space-y-8 h-[420px] shadow-cal hover:shadow-lg dark:hover:bg-white/[0.04] transition-all group">
+      <div className="p-8 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2.5rem] flex flex-col space-y-8 h-[420px] shadow-cal hover:shadow-lg dark:hover:bg-white/[0.04] transition-all group">
         <div className="flex flex-col space-y-1">
           <h3 className="text-2xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Horas por mes</h3>
           <p className="eyebrow">Los últimos seis meses</p>
@@ -123,7 +121,7 @@ export default function GraficosDeHoras({ monthlyData, cumulativeData }: Grafico
 
       {/* Cumulative Hours Area Chart */}
       {conCurva && (
-        <div className="p-8 bg-zinc-900 dark:bg-[#111111] border border-zinc-800 dark:border-white/10 rounded-[2.5rem] flex flex-col space-y-8 h-[420px] shadow-2xl hover:shadow-lg transition-all group relative overflow-hidden">
+        <div className="p-8 bg-zinc-900 dark:bg-carbon border border-zinc-800 dark:border-white/10 rounded-[2.5rem] flex flex-col space-y-8 h-[420px] shadow-2xl hover:shadow-lg transition-all group relative overflow-hidden">
           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-aviation-blue/10 rounded-full blur-3xl -mr-40 -mt-40 pointer-events-none transition-transform group-hover:scale-110" />
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 relative z-10">
             <div className="flex flex-col space-y-1">

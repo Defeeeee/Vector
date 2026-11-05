@@ -21,7 +21,7 @@ export default async function PilotosSugeridos({ tieneHandle }: { tieneHandle: b
   if (sugeridos.length === 0) return null;
 
   return (
-    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-5 md:p-6">
+    <section className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none p-5 md:p-6">
       <h3 className="text-lg font-display font-bold text-zinc-900 dark:text-white tracking-tight">
         Pilotos para seguir
       </h3>

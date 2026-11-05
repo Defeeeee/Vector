@@ -62,7 +62,7 @@ export default function LogbooksManager({ logbooks }: { logbooks: Logbook[] }) {
         </p>
       )}
 
-      <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none divide-y divide-zinc-100 dark:divide-white/5 overflow-hidden">
+      <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon shadow-cal dark:shadow-none divide-y divide-zinc-100 dark:divide-white/5 overflow-hidden">
         {logbooks.length === 0 && (
           <p className="px-6 py-8 text-sm text-zinc-500 dark:text-zinc-400 text-center">
             Todavía no tenés libros. Creá uno para empezar.
@@ -207,7 +207,7 @@ function LogbookForm({
     <div className="fixed inset-0 z-[120] flex items-end md:items-center justify-center p-0 md:p-6">
       <div className="absolute inset-0 bg-zinc-900/50 dark:bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative z-10 w-full md:max-w-lg max-h-[92dvh] bg-white dark:bg-[#0a0a0a] border border-zinc-200 dark:border-white/10 rounded-t-[2rem] md:rounded-[2rem] flex flex-col overflow-hidden">
+      <div className="relative z-10 w-full md:max-w-lg max-h-[92dvh] bg-white dark:bg-noche border border-zinc-200 dark:border-white/10 rounded-t-[2rem] md:rounded-[2rem] flex flex-col overflow-hidden">
         <div className="flex items-center gap-3 px-6 pt-6 pb-4 shrink-0">
           <button
             type="button"

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { LogoVector } from "@/components/Marca";
 
 /**
@@ -17,8 +16,9 @@ const LINKS = [
   { nombre: "Guías", href: "/guias" },
 ];
 
-/** `oscura`: la landing va siempre de noche (3.10.0), así que no ofrece el cambio de tema. */
-export default function NavPublica({ oscura = false }: { oscura?: boolean }) {
+/** Desde la 3.11.0 todo Vector es oscuro: no hay cambio de tema. `oscura` queda por compatibilidad. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function NavPublica({ oscura = true }: { oscura?: boolean }) {
   const [abierto, setAbierto] = useState(false);
 
   return (
@@ -39,11 +39,6 @@ export default function NavPublica({ oscura = false }: { oscura?: boolean }) {
             </Link>
           ))}
           <div className="h-4 w-px bg-zinc-200 dark:bg-white/10" />
-          {!oscura && (
-            <div className="w-40 scale-90 origin-right">
-              <ThemeToggle />
-            </div>
-          )}
           <Link href="/login" className="text-sm font-medium text-zinc-900 dark:text-white hover:opacity-70 transition-opacity">
             Ingresar
           </Link>
@@ -68,18 +63,13 @@ export default function NavPublica({ oscura = false }: { oscura?: boolean }) {
       </div>
 
       {abierto && (
-        <div className="lg:hidden mt-2 mx-4 bg-white dark:bg-[#111111] border border-zinc-200 dark:border-white/10 rounded-2xl p-6 flex flex-col space-y-4 shadow-cal dark:shadow-none animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="lg:hidden mt-2 mx-4 bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl p-6 flex flex-col space-y-4 shadow-cal dark:shadow-none animate-in fade-in slide-in-from-top-2 duration-200">
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} className="text-sm font-medium text-zinc-900 dark:text-white" onClick={() => setAbierto(false)}>
               {l.nombre}
             </Link>
           ))}
           <hr className="border-zinc-100 dark:border-white/10" />
-          {!oscura && (
-            <div className="w-full">
-              <ThemeToggle />
-            </div>
-          )}
           <Link href="/login" className="text-sm font-medium text-zinc-900 dark:text-white mt-2">
             Ingresar
           </Link>

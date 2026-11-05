@@ -85,7 +85,7 @@ export default function AlternativasCerca({
           return (
             <div
               key={punto.codigo}
-              className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] px-4 py-3"
+              className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-4 py-3"
             >
               <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mb-2">
                 Desde {punto.codigo}

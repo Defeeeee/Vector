@@ -13,7 +13,6 @@ import HorasDeAntesAlumno from "@/components/dashboard/HorasDeAntesAlumno";
 import { esAlumno } from "@/lib/licencias";
 import WhatsAppMissingNotice from "@/components/dashboard/WhatsAppMissingNotice";
 import PageHeader from "@/components/dashboard/PageHeader";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
 
 import { redirect } from "next/navigation";
@@ -79,12 +78,6 @@ export default async function SettingsPage() {
     <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <PageHeader eyebrow="Perfil, vencimientos, aeronaves y packs de horas" title="Configuración" />
 
-      {/* En el teléfono el tema y "Cerrar sesión" viven acá desde la 3.4.0: el encabezado quedó
-          con el logo, el buscador y la cuenta. En el escritorio siguen en el rail. */}
-      <div className="lg:hidden flex items-center gap-3">
-        <span className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 flex-1">Tema</span>
-        <ThemeToggle />
-      </div>
 
       {/* Logbooks — above aircraft and packs because a flight has to land in a
           book before anything else about it matters. */}
@@ -119,7 +112,7 @@ export default async function SettingsPage() {
           <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Perfil del piloto</h3>
         </div>
 
-        <div className="bg-white dark:bg-white/[0.02] p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none hover:shadow-lg dark:hover:bg-white/[0.04] transition-all">
+        <div className="bg-white dark:bg-carbon p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none hover:shadow-lg dark:hover:bg-white/[0.04] transition-all">
           <ProfileForm profile={profile} cmaExpiry={cma?.expiry_date} />
         </div>
       </section>
@@ -192,7 +185,7 @@ export default async function SettingsPage() {
                 <AircraftCard key={ac.id} aircraft={ac} />
               ))
             ) : (
-              <div className="col-span-full bg-white dark:bg-white/[0.02] p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] text-center border border-dashed border-zinc-200 dark:border-white/10 shadow-sm dark:shadow-none hover:shadow-md dark:hover:bg-white/[0.04] transition-all">
+              <div className="col-span-full bg-white dark:bg-carbon p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] text-center border border-dashed border-zinc-200 dark:border-white/10 shadow-sm dark:shadow-none hover:shadow-md dark:hover:bg-white/[0.04] transition-all">
                 <p className="text-zinc-500 dark:text-zinc-400 font-medium text-sm">No hay aeronaves registradas aún.</p>
               </div>
             )}
@@ -221,7 +214,7 @@ export default async function SettingsPage() {
                 <FlightPackCard key={pack.id} pack={pack} aircraft={aircraft} />
               ))
             ) : (
-              <div className="bg-white dark:bg-white/[0.02] p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] text-center border border-dashed border-zinc-200 dark:border-white/10 shadow-sm dark:shadow-none hover:shadow-md dark:hover:bg-white/[0.04] transition-all">
+              <div className="bg-white dark:bg-carbon p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] text-center border border-dashed border-zinc-200 dark:border-white/10 shadow-sm dark:shadow-none hover:shadow-md dark:hover:bg-white/[0.04] transition-all">
                 <p className="text-zinc-500 dark:text-zinc-400 font-medium text-sm">No hay packs de horas registrados aún.</p>
               </div>
             )}
@@ -263,7 +256,7 @@ export default async function SettingsPage() {
             <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Tus datos</h3>
           </div>
 
-          <div className="bg-white dark:bg-white/[0.02] p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-sm dark:shadow-none space-y-4">
+          <div className="bg-white dark:bg-carbon p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-sm dark:shadow-none space-y-4">
             <p className="text-zinc-500 dark:text-zinc-400 font-medium text-sm leading-relaxed">
               Descargá todo lo que Vector guarda tuyo en un solo archivo: perfil,
               aeronaves, libros, vuelos, documentos, packs y transacciones. Es tuyo

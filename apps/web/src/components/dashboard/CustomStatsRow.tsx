@@ -35,7 +35,7 @@ export default function CustomStatsRow({
           return (
             <div
               key={stat.id}
-              className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4 space-y-2"
+              className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-4 space-y-2"
             >
               <div className="flex items-start justify-between gap-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 leading-tight">
