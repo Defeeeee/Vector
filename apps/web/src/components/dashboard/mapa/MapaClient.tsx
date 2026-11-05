@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Loader2, MapPin, Navigation, Radio, Square, Undo2 } from "lucide-react";
+import { AlertTriangle, Layers, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Loader2, MapPin, Navigation, Radio, Square, Undo2 } from "lucide-react";
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { EspacioAereo } from "@/lib/espacios-aereos";
 import { aMagnetico } from "@/lib/navegacion";
@@ -25,6 +25,8 @@ import {
   variacionDeRuta,
 } from "@/lib/mapa-ruta";
 import type { CapasMapa, Posicion } from "./MapaLeaflet";
+import MenuCapas from "./MenuCapas";
+import { alternarCapa, CAPAS_POR_DEFECTO, CLAVE_CAPAS, leerCapas, OPACIDAD_CARTA_POR_DEFECTO, type IdCapa } from "@/lib/capas-mapa";
 import BriefingRuta from "../BriefingRuta";
 
 /**
@@ -262,6 +264,34 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
     setPlegada(false);
   };
 
+  /* --------------------------------------------------------------- capas --- */
+  const [menuCapas, setMenuCapas] = useState(false);
+  const [visibles, setVisibles] = useState<IdCapa[]>(CAPAS_POR_DEFECTO);
+  const [opacidadCarta, setOpacidadCarta] = useState(OPACIDAD_CARTA_POR_DEFECTO);
+  useEffect(() => {
+    let guardado: string | null = null;
+    try {
+      guardado = localStorage.getItem(CLAVE_CAPAS);
+    } catch {}
+    const g = leerCapas(guardado);
+    setVisibles(g.visibles);
+    setOpacidadCarta(g.opacidad);
+  }, []);
+  const guardarCapas = (v: IdCapa[], o: number) => {
+    try {
+      localStorage.setItem(CLAVE_CAPAS, JSON.stringify({ visibles: v, opacidad: o }));
+    } catch {}
+  };
+  const alternar = (id: IdCapa) => {
+    const v = alternarCapa(visibles, id);
+    setVisibles(v);
+    guardarCapas(v, opacidadCarta);
+  };
+  const cambiarOpacidad = (o: number) => {
+    setOpacidadCarta(o);
+    guardarCapas(visibles, o);
+  };
+
   /* ------------------------------------------------------------- tarjeta --- */
   const [plegada, setPlegada] = useState(false);
   const [briefing, setBriefing] = useState(false);
@@ -320,6 +350,15 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
             <Navigation className="w-3.5 h-3.5" /> Volar
           </button>
         )}
+        <button
+          onClick={() => setMenuCapas((v) => !v)}
+          aria-label="Capas del mapa"
+          aria-expanded={menuCapas}
+          title="Capas del mapa"
+          className={`w-8 h-8 rounded-full flex items-center justify-center ${menuCapas ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900" : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10"}`}
+        >
+          <Layers className="w-4 h-4" />
+        </button>
         <button
           onClick={() => setPlegada((v) => !v)}
           aria-label={plegada ? "Abrir la tarjeta" : "Plegar la tarjeta"}
@@ -607,7 +646,8 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
 
   return createPortal(
     <div
-      data-sin-barra-movil={volando ? "" : undefined}
+      // El menú de capas es una hoja desde abajo: la barra de secciones le taparía el final.
+      data-sin-barra-movil={volando || menuCapas ? "" : undefined}
       data-sin-encabezado-movil={volando ? "" : undefined}
       className={`fixed inset-x-0 bottom-0 ${volando ? "top-0" : "top-14 app:top-[calc(max(58px,calc(env(safe-area-inset-top)+0.75rem))+3.25rem)]"} lg:top-0 lg:left-20 z-[35]`}
     >
@@ -623,8 +663,11 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
         agregando={agregando && !volando}
         onPuntoLibre={agregarCoordenada}
         margenIzquierdo={escritorio ? ANCHO_TARJETA : 0}
+        visibles={visibles}
+        opacidadCarta={opacidadCarta}
       />
       {tarjeta}
+      {menuCapas && <MenuCapas visibles={visibles} onAlternar={alternar} opacidad={opacidadCarta} onOpacidad={cambiarOpacidad} onCerrar={() => setMenuCapas(false)} />}
     </div>,
     document.body
   );

@@ -1,6 +1,6 @@
 {
   "name": "FlightLog-FrontEnd",
-  "version": "3.8.0",
+  "version": "3.9.0",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -29,6 +29,7 @@
     "build:mails-auth": "node scripts/build-mails-auth.mjs",
     "subir:mails-auth": "node scripts/subir-mails-auth.mjs",
     "build:raac": "node scripts/build-raac.mjs",
+    "build:cartas": "node scripts/build-cartas.mjs",
     "build:lad": "node scripts/build-lad.mjs",
     "build:madhel": "node scripts/build-madhel-fichas.mjs",
     "build:espacios": "node scripts/build-espacios.mjs",

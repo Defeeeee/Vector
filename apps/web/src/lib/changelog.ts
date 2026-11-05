@@ -78,6 +78,25 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.9.0",
+    fecha: "2026-11-05",
+    titulo: "Las cartas del AIP, en el Mapa",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Las cartas de navegación, encima del mapa",
+        texto: "Prendé la carta en ruta inferior o superior (ENR 6) o las VFR por debajo de las TMA Baires y Córdoba: es la carta del AIP tal cual, ubicada en su lugar, con tu ruta y tu posición encima. Podés bajarle la opacidad para ver el mapa de abajo.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+      {
+        icono: "avion",
+        titulo: "Elegí qué ver",
+        texto: "El menú de capas del Mapa ordena todo por grupo: cartas, espacios aéreos (TMA, CTR, ATZ, FIR), VFR (corredores y sectores) y puntos. Lo que elegís se recuerda.",
+      },
+    ],
+  },
+  {
     version: "3.8.0",
     fecha: "2026-11-05",
     titulo: "La RAAC 91 en el copiloto",

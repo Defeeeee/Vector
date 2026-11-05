@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { TILES_OPCIONES, TILES_URL } from "@/lib/mapa-tiles";
+import { CAPAS_CARTAS, urlTeselaCarta } from "@/lib/cartas-aip";
+import type { IdCapa } from "@/lib/capas-mapa";
 import type { EspacioAereo, Frecuencias } from "@/lib/espacios-aereos";
 import type { Fir, Vfr } from "@/lib/firs";
 import type { PuntoMapa } from "@/lib/mapa-ruta";
@@ -37,6 +39,11 @@ const ESTILO: Record<EspacioAereo["tipo"], L.PathOptions> = {
   CTR: { color: "#c026d3", weight: 1.5, dashArray: "6 4", fillColor: "#c026d3", fillOpacity: 0.06 },
   ATZ: { color: "#db2777", weight: 1.5, dashArray: "3 3", fillColor: "#db2777", fillOpacity: 0.08 },
 };
+
+/** El orden en que se apilan, de abajo hacia arriba: lo que se toca queda arriba. */
+const ORDEN_CAPAS: IdCapa[] = ["firs", "tma", "ctr", "atz", "sectores-vfr", "corredores", "aerodromos", "radioayudas"];
+
+type Grupos = Record<Exclude<IdCapa, `carta-${string}`>, L.LayerGroup> & { ruta: L.LayerGroup; avion: L.LayerGroup };
 
 const escapar = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
@@ -73,12 +80,17 @@ interface Props {
   /** Con "Agregar puntos" prendido, un toque en el mapa suma esa coordenada a la ruta. */
   agregando?: boolean;
   onPuntoLibre?: (lat: number, lon: number) => void;
+  /** Lo que el piloto eligió ver (`lib/capas-mapa.ts`). */
+  visibles: IdCapa[];
+  /** Cuánto se ve la carta del AIP encima del mapa base, de 0,2 a 1. */
+  opacidadCarta: number;
 }
 
-export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, volando, onAgregar, onArrastre, margenIzquierdo, agregando = false, onPuntoLibre }: Props) {
+export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, volando, onAgregar, onArrastre, margenIzquierdo, agregando = false, onPuntoLibre, visibles, opacidadCarta }: Props) {
   const contenedor = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
-  const capasRef = useRef<{ ruta: L.LayerGroup; avion: L.LayerGroup; espacios: L.LayerGroup; firs: L.LayerGroup; aerodromos: L.LayerGroup; radioayudas: L.LayerGroup } | null>(null);
+  const capasRef = useRef<Grupos | null>(null);
+  const cartasRef = useRef<Partial<Record<IdCapa, L.TileLayer>>>({});
   const callbacks = useRef({ onAgregar, onArrastre, onPuntoLibre, agregando });
   callbacks.current = { onAgregar, onArrastre, onPuntoLibre, agregando };
   const ultimoEncuadre = useRef("");
@@ -99,16 +111,32 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
     L.control.attribution({ prefix: false, position: "bottomright" }).addTo(m);
     L.tileLayer(TILES_URL, TILES_OPCIONES).addTo(m);
 
-    const firs = L.layerGroup().addTo(m);
-    const espacios = L.layerGroup().addTo(m);
-    const aerodromos = L.layerGroup().addTo(m);
-    const radioayudas = L.layerGroup().addTo(m);
-    const ruta = L.layerGroup().addTo(m);
-    const avion = L.layerGroup().addTo(m);
-    L.control
-      .layers(undefined, { "Espacios aéreos": espacios, "FIR y sectores": firs, "Aeródromos": aerodromos, "Radioayudas": radioayudas }, { position: "topright", collapsed: true })
-      .addTo(m);
-    capasRef.current = { ruta, avion, espacios, firs, aerodromos, radioayudas };
+    const grupo = () => L.layerGroup();
+    capasRef.current = {
+      firs: grupo(),
+      tma: grupo(),
+      ctr: grupo(),
+      atz: grupo(),
+      "sectores-vfr": grupo(),
+      corredores: grupo(),
+      aerodromos: grupo(),
+      radioayudas: grupo(),
+      ruta: grupo().addTo(m),
+      avion: grupo().addTo(m),
+    };
+    // Las cartas del AIP (3.9.0, `lib/cartas-aip.ts`): la carta tal cual, georreferenciada, en el
+    // panel de teselas, debajo de todo lo que dibuja Vector.
+    for (const c of CAPAS_CARTAS) {
+      cartasRef.current[`carta-${c.id}` as IdCapa] = L.tileLayer(urlTeselaCarta(c.id), {
+        minNativeZoom: c.zoomMinimo,
+        maxNativeZoom: c.zoomNativo,
+        maxZoom: 19,
+        bounds: L.latLngBounds(c.limites),
+        // Fuera de la carta no hay tesela: transparente en vez del ícono de imagen rota.
+        errorTileUrl: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        attribution: "Cartas: AIP Argentina (ANAC)",
+      });
+    }
 
     m.on("dragstart", () => callbacks.current.onArrastre());
     // Un toque en el mapa (no en un aeródromo ni una radioayuda, que suman su código).
@@ -132,9 +160,7 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
   useEffect(() => {
     const c = capasRef.current;
     if (!c || !capas) return;
-    c.espacios.clearLayers();
-    c.firs.clearLayers();
-    c.aerodromos.clearLayers();
+    for (const id of ORDEN_CAPAS) c[id as keyof Grupos].clearLayers();
 
     // Las FIR: sólo los tramos del AIP (sin los rodeos por afuera del país), y la línea entre
     // los sectores de su centro. En gris, debajo de todo: son el fondo, no el dato.
@@ -153,7 +179,6 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
           .addTo(c.firs);
       }
     }
-    c.radioayudas.clearLayers();
 
     // Las TMA primero, para que las CTR y ATZ queden arriba y se puedan tocar.
     const orden = { TMA: 0, CTR: 1, ATZ: 2 } as const;
@@ -168,24 +193,24 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
           }`,
           { sticky: true, direction: "top" }
         )
-        .addTo(c.espacios);
+        .addTo(c[e.tipo === "TMA" ? "tma" : e.tipo === "CTR" ? "ctr" : "atz"]);
     }
 
     // Los sectores y corredores VFR (ENR 3.3), en verde: clase G, como en la carta ENR 6.10. Después de las TMA, para que queden arriba y se puedan tocar.
     for (const s of capas.vfr?.sectores ?? []) {
       L.polygon(s.poligono, { color: "#047857", weight: 2, dashArray: "6 4", fillColor: "#10b981", fillOpacity: 0.18 })
         .bindTooltip(`<b>${escapar(s.nombre)}</b><br>Clase G · GND / ${s.techoFt} ft${s.informacion ? `<br>Información: ${escapar(s.informacion)}` : ""}`, { sticky: true })
-        .addTo(c.espacios);
+        .addTo(c["sectores-vfr"]);
     }
     for (const co of capas.vfr?.corredores ?? []) {
       const tooltip = `<b>Corredor VFR Nº ${escapar(co.numero)}</b><br>${escapar(co.nombre)}<br>Clase G · 2.500 m y 1.000 ft máx. en CTR; 5.000 m y 2.000 ft fuera`;
       // La franja con su ancho (ENR 3.3) y el eje punteado encima.
       if (co.banda?.length) {
-        L.polygon(co.banda, { color: "#047857", weight: 1.5, opacity: 0.9, fillColor: "#10b981", fillOpacity: 0.32 }).bindTooltip(tooltip, { sticky: true }).addTo(c.espacios);
+        L.polygon(co.banda, { color: "#047857", weight: 1.5, opacity: 0.9, fillColor: "#10b981", fillOpacity: 0.32 }).bindTooltip(tooltip, { sticky: true }).addTo(c.corredores);
       }
       L.polyline(co.eje.map((p) => [p.lat, p.lon] as L.LatLngTuple), { color: "#065f46", weight: 1.5, opacity: 0.9, dashArray: "6 5" })
         .bindTooltip(tooltip, { sticky: true })
-        .addTo(c.espacios);
+        .addTo(c.corredores);
     }
 
     for (const [icao, local, nombre, lat, lon, tamano] of capas.aerodromos) {
@@ -213,6 +238,28 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
         .addTo(c.radioayudas);
     }
   }, [capas]);
+
+  // Lo que el piloto eligió ver. Se sacan y se vuelven a poner en `ORDEN_CAPAS`: Leaflet apila
+  // por orden de llegada, y una ATZ prendida después de la TMA tiene que quedar arriba para tocarla.
+  const claveVisibles = [...visibles].sort().join(",");
+  useEffect(() => {
+    const m = mapa.current;
+    const c = capasRef.current;
+    if (!m || !c) return;
+    for (const id of ORDEN_CAPAS) c[id as keyof Grupos].remove();
+    for (const id of ORDEN_CAPAS) if (visibles.includes(id)) c[id as keyof Grupos].addTo(m);
+    c.ruta.remove().addTo(m);
+    c.avion.remove().addTo(m);
+    for (const [id, capa] of Object.entries(cartasRef.current)) {
+      if (visibles.includes(id as IdCapa)) {
+        if (!m.hasLayer(capa)) capa.addTo(m);
+      } else capa.remove();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `claveVisibles` resume `visibles`
+  }, [claveVisibles]);
+  useEffect(() => {
+    for (const capa of Object.values(cartasRef.current)) capa.setOpacity(opacidadCarta);
+  }, [opacidadCarta]);
 
   // La ruta.
   useEffect(() => {

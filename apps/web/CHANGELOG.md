@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.9.0 — Las cartas del AIP, en el Mapa
+
+_5 de noviembre de 2026_
+
+- **Las cartas de navegación, encima del mapa** — Prendé la carta en ruta inferior o superior (ENR 6) o las VFR por debajo de las TMA Baires y Córdoba: es la carta del AIP tal cual, ubicada en su lugar, con tu ruta y tu posición encima. Podés bajarle la opacidad para ver el mapa de abajo.
+- **Elegí qué ver** — El menú de capas del Mapa ordena todo por grupo: cartas, espacios aéreos (TMA, CTR, ATZ, FIR), VFR (corredores y sectores) y puntos. Lo que elegís se recuerda.
+
 ## v3.8.0 — La RAAC 91 en el copiloto
 
 _5 de noviembre de 2026_
