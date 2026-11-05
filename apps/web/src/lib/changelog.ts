@@ -78,6 +78,18 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.10.0",
+    fecha: "2026-11-05",
+    titulo: "Vector, con marca nueva",
+    novedades: [
+      {
+        icono: "avion",
+        titulo: "Una marca nueva",
+        texto: "La flecha de rumbo, la misma que te muestra en el Mapa, plegada en blanco y cian. Cambia el ícono de la app y el logo: si la tenés instalada, el ícono nuevo aparece cuando el teléfono lo actualiza.",
+      },
+    ],
+  },
+  {
     version: "3.9.0",
     fecha: "2026-11-05",
     titulo: "Las cartas del AIP, en el Mapa",

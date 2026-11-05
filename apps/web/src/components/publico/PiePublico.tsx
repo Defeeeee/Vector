@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Compass } from "lucide-react";
 import { GUIAS } from "@/lib/sitio";
+import { LogoVector } from "@/components/Marca";
 
 /**
  * El pie de las páginas públicas. Cada destino existe: un pie lleno de links muertos es
@@ -14,10 +14,7 @@ export default function PiePublico() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-10">
           <div className="col-span-2 space-y-4">
             <div className="flex items-center space-x-2.5 text-zinc-900 dark:text-white">
-              <div className="w-8 h-8 bg-zinc-900 dark:bg-white rounded-lg flex items-center justify-center shadow-lg">
-                <Compass className="w-5 h-5 text-white dark:text-zinc-900" />
-              </div>
-              <span className="font-display font-bold text-xl tracking-tight">Vector</span>
+              <LogoVector className="h-7 w-auto" />
             </div>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-xs">
               La bitácora de vuelo digital para pilotos argentinos: el desglose de la hoja, tus

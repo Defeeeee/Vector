@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Genera los PNG de la PWA desde `src/app/icon.svg`.
+ * Genera los PNG de la PWA desde las piezas de la marca (`public/marca/`, 3.10.0).
  *
  *   npm run build:iconos
  *
@@ -27,8 +27,14 @@
  *
  * ## Y por qué el de Apple lleva fondo opaco
  *
- * iOS **no soporta transparencia** en el `apple-touch-icon`: la rellena de negro. Como
- * nuestro SVG ya trae su propio fondo azul, alcanza con rasterizarlo sin canal alfa.
+ * iOS **no soporta transparencia** en el `apple-touch-icon`: la rellena de negro. Va el ícono
+ * cuadrado (a sangre, iOS le pone sus esquinas) aplanado contra la noche.
+ *
+ * ## Desde la 3.10.0
+ *
+ * La marca es la flecha de rumbo plegada en dos tonos sobre la noche (manual de marca en
+ * `marketing/marca/`). Cada salida tiene su pieza dibujada: el maskable ya trae la flecha dentro
+ * de la zona segura, así que no hace falta recomponerla acá.
  */
 
 import fs from "node:fs";
@@ -37,62 +43,27 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const FUENTE = path.join(RAIZ, "src", "app", "icon.svg");
+const MARCA = path.join(RAIZ, "public", "marca");
 const SALIDA = path.join(RAIZ, "public");
+/** La noche de la marca. */
+export const FONDO = "#0B0D10";
 
-/** El azul del propio SVG. Si cambia allá, cambia acá — y el test lo comprueba. */
-const FONDO = "#2563eb";
-
-/**
- * La marca sola, sin el fondo redondeado, para poder recomponerla centrada y chica
- * sobre un lienzo a sangre. Se lee del SVG en vez de repetirse acá.
- */
-function marcaSola(svg) {
-  const trazo = /<path\s+d="([^"]+)"\s+fill="#ffffff"\s*\/>/.exec(svg);
-  if (!trazo) {
-    throw new Error(
-      "No se encontró el <path> blanco en icon.svg. Si se redibujó la marca, hay que " +
-        "actualizar este script: el `maskable` necesita la marca sin el fondo."
-    );
-  }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="${trazo[1]}" fill="#ffffff"/></svg>`;
-}
+const pieza = (nombre) => fs.readFileSync(path.join(MARCA, `${nombre}.svg`));
 
 async function main() {
-  const svg = fs.readFileSync(FUENTE, "utf8");
-  fs.mkdirSync(SALIDA, { recursive: true });
-
   const escribir = async (nombre, buffer) => {
-    const destino = path.join(SALIDA, nombre);
-    fs.writeFileSync(destino, buffer);
+    fs.writeFileSync(path.join(SALIDA, nombre), buffer);
     console.log(`  ${nombre.padEnd(28)} ${(buffer.length / 1024).toFixed(1)} KB`);
   };
-
-  console.log(`Rasterizando ${path.relative(RAIZ, FUENTE)}:`);
-
-  // Los dos tamaños que pide el manifest, tal cual el SVG.
+  console.log(`Rasterizando ${path.relative(RAIZ, MARCA)}:`);
   for (const lado of [192, 512]) {
-    await escribir(`icono-${lado}.png`, await sharp(Buffer.from(svg)).resize(lado, lado).png().toBuffer());
+    await escribir(`icono-${lado}.png`, await sharp(pieza("icono-app"), { density: 300 }).resize(lado, lado).png().toBuffer());
   }
-
-  // El maskable: fondo a sangre y la marca al 60%, dentro de la zona segura.
-  const LADO = 512;
-  const MARCA = Math.round(LADO * 0.6);
-  const marca = await sharp(Buffer.from(marcaSola(svg))).resize(MARCA, MARCA).png().toBuffer();
-  await escribir(
-    "icono-512-maskable.png",
-    await sharp({ create: { width: LADO, height: LADO, channels: 4, background: FONDO } })
-      .composite([{ input: marca, gravity: "center" }])
-      .png()
-      .toBuffer()
-  );
-
-  // iOS rellena de negro lo transparente; el SVG ya trae fondo, así que basta con
-  // aplanar contra el mismo azul para que no quede canal alfa.
-  await escribir(
-    "apple-touch-icon.png",
-    await sharp(Buffer.from(svg)).resize(180, 180).flatten({ background: FONDO }).png().toBuffer()
-  );
+  await escribir("icono-512-maskable.png", await sharp(pieza("icono-app-maskable"), { density: 300 }).resize(512, 512).png().toBuffer());
+  await escribir("apple-touch-icon.png", await sharp(pieza("icono-app-cuadrado"), { density: 300 }).resize(180, 180).flatten({ background: FONDO }).png().toBuffer());
+  // El favicon de Next (`src/app/icon.svg`) es la pieza para tamaños chicos.
+  fs.copyFileSync(path.join(MARCA, "favicon.svg"), path.join(RAIZ, "src", "app", "icon.svg"));
+  console.log("  src/app/icon.svg             (favicon)");
 }
 
 main().catch((err) => {

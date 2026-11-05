@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.10.0 — Vector, con marca nueva
+
+_5 de noviembre de 2026_
+
+- **Una marca nueva** — La flecha de rumbo, la misma que te muestra en el Mapa, plegada en blanco y cian. Cambia el ícono de la app y el logo: si la tenés instalada, el ícono nuevo aparece cuando el teléfono lo actualiza.
+
 ## v3.9.0 — Las cartas del AIP, en el Mapa
 
 _5 de noviembre de 2026_

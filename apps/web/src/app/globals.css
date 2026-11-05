@@ -41,6 +41,11 @@
   --color-aviation-blue-dark: #1d4ed8;
   --color-aviation-cyan: #38bdf8;
 
+  /* La marca (3.10.0, manual en marketing/marca/): la noche, sus superficies y el texto secundario. */
+  --color-noche: #0b0d10;
+  --color-carbon: #16191e;
+  --color-niebla: #9aa7b4;
+
   /* Section labels and icon tiles used to be painted with the brand accent,
      which meant every screen had a dozen blue elements competing with the one
      that mattered. They are neutral now; the accent is spent on a single

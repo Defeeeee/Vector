@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { setSession } from "@/actions/auth";
-import { Loader2, Compass } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Isotipo } from "@/components/Marca";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -71,9 +72,7 @@ export default function AuthCallback() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen w-full bg-[#0a0a0a] text-white">
       <div className="flex flex-col items-center space-y-8">
-        <div className="w-16 h-16 bg-white text-black rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-          <Compass className="w-8 h-8 animate-pulse" strokeWidth={1.5} />
-        </div>
+        <Isotipo sobreOscuro titulo="Vector" className="w-14 h-14 animate-pulse" />
         
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold tracking-tight">

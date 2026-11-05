@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, Mail, Loader2, Compass, ChevronLeft, Plane } from "lucide-react";
+import { Lock, Mail, Loader2, ChevronLeft, Plane } from "lucide-react";
 import { login, setSession } from "@/actions/auth";
 import GoogleButton from "@/components/GoogleButton";
 import { useState, useTransition, useEffect, Suspense } from "react";
@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import OlvidarAlSalir from "@/components/OlvidarAlSalir";
+import { Isotipo } from "@/components/Marca";
 
 function LoginContent() {
   const [isPending, startTransition] = useTransition();
@@ -159,9 +160,7 @@ function LoginContent() {
             transition={{ duration: 0.6 }}
             className="w-full max-w-md flex flex-col items-center lg:items-start space-y-4 mb-8 md:mb-10 text-center lg:text-left"
         >
-            <div className="w-12 h-12 md:w-14 md:h-14 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl flex items-center justify-center shadow-2xl">
-                <Compass className="w-6 h-6 md:w-7 md:h-7" strokeWidth={1.5} />
-            </div>
+            <Isotipo titulo="Vector" className="w-12 h-12 md:w-14 md:h-14" />
             <div className="space-y-1">
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white font-display transition-colors">Bienvenido</h1>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Accedé a tu logbook</p>

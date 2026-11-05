@@ -1,11 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Lock, Loader2, Compass, CheckCircle, AlertCircle } from "lucide-react";
+import { Lock, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { updatePassword, setSession } from "@/actions/auth";
 import { useState, useEffect, useTransition, Suspense } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Isotipo } from "@/components/Marca";
 
 function UpdatePasswordForm() {
   const [isPending, startTransition] = useTransition();
@@ -107,9 +108,7 @@ function UpdatePasswordForm() {
               transition={{ duration: 0.6 }}
               className="flex flex-col items-center space-y-4 mb-8 md:mb-10 text-center"
             >
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl flex items-center justify-center shadow-2xl">
-                <Compass className="w-6 h-6 md:w-7 md:h-7" strokeWidth={1.5} />
-              </div>
+              <Isotipo titulo="Vector" className="w-12 h-12 md:w-14 md:h-14" />
               <div className="space-y-1">
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white font-display transition-colors">Nueva contraseña</h1>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Restablecé tu acceso de piloto</p>

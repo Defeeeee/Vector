@@ -1,13 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Lock, Mail, User, ArrowRight, Loader2, Compass, ChevronLeft } from "lucide-react";
+import { Lock, Mail, User, ArrowRight, Loader2, ChevronLeft } from "lucide-react";
 import { register } from "@/actions/auth";
 import GoogleButton from "@/components/GoogleButton";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { registroCompleto } from "@/lib/pixel-meta";
+import { Isotipo } from "@/components/Marca";
 
 export default function RegisterPage() {
   const [isPending, startTransition] = useTransition();
@@ -76,9 +77,7 @@ export default function RegisterPage() {
             transition={{ duration: 0.6 }}
             className="flex flex-col items-center space-y-4 mb-8 md:mb-10 text-center"
         >
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl flex items-center justify-center shadow-2xl">
-                <Compass className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} />
-            </div>
+            <Isotipo titulo="Vector" className="w-10 h-10 md:w-12 md:h-12" />
             <div className="space-y-1">
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white font-display">Crear cuenta</h1>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Empezá a registrar tus vuelos hoy</p>

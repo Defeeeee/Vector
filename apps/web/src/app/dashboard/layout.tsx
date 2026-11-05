@@ -1,4 +1,4 @@
-import { Compass, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import DashboardNav, { type AlertasDeSeccion } from "@/components/dashboard/DashboardNav";
 import SeccionTabs from "@/components/dashboard/SeccionTabs";
@@ -22,6 +22,7 @@ import { COOKIE_ALTA, type EstadoAlta } from "@/lib/onboarding";
 import { COOKIE_QR } from "@/lib/pegatinas";
 import AnotarOrigenQr from "@/components/dashboard/AnotarOrigenQr";
 import SincronizarCad from "@/components/dashboard/cad/SincronizarCad";
+import { Isotipo, LogoVector } from "@/components/Marca";
 
 /**
  * El perfil, y si se pudo preguntar por él.
@@ -137,8 +138,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       {/* Icon Rail — always dark, independent of app theme */}
       <aside className="hidden lg:flex flex-col items-center w-20 bg-zinc-950 border-r border-white/5 h-screen sticky top-0 z-30 py-6 shrink-0">
-        <Link href="/dashboard" className="w-11 h-11 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-8 shrink-0">
-          <Compass className="w-5 h-5 text-zinc-950" strokeWidth={2} />
+        <Link href="/dashboard" aria-label="Vector, inicio" className="w-11 h-11 flex items-center justify-center mb-8 shrink-0 hover:opacity-80 transition-opacity">
+          <Isotipo sobreOscuro className="w-8 h-8" />
         </Link>
 
         <div className="flex-1 flex flex-col justify-center">
@@ -193,10 +194,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <header className="lg:hidden [body:has([data-sin-encabezado-movil])_&]:hidden fixed top-0 w-full z-40 bg-white dark:bg-black app:bg-zinc-100 app:dark:bg-black app:backdrop-blur-none backdrop-blur-xl border-b border-zinc-200 dark:border-white/10 app:border-b-0 h-14 app:h-[calc(max(58px,calc(env(safe-area-inset-top)_+_0.75rem))_+_3.25rem)] px-4 app:pt-[calc((max(58px,calc(env(safe-area-inset-top)_+_0.75rem))_+_env(safe-area-inset-top)_+_16px)_/_2)] app:pb-0 flex items-center app:items-start justify-between gap-2 transition-colors duration-300">
         <TituloTelefono fecha={todayCapitalized.replace(",", "")} nombre={profile?.first_name || "Comandante"}>
         <Link href="/dashboard" className="flex items-center space-x-3 group app:h-11">
-          <div className="w-8 h-8 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-lg flex items-center justify-center shadow-md">
-            <Compass className="w-4 h-4" strokeWidth={2} />
-          </div>
-          <span className="text-lg font-bold font-display tracking-tight dark:text-white">Vector</span>
+          <LogoVector className="h-6 w-auto" />
         </Link>
         </TituloTelefono>
         <div className="flex items-center gap-2 shrink-0 app:[body:has([data-titulo-inicio])_&]:mt-[13px]">

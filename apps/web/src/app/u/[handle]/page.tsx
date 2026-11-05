@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Compass, Eye } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 import { getSessionToken } from "@/actions/auth";
 import { AvisosProvider } from "@/components/dashboard/Avisos";
 import BotonSeguir from "@/components/social/BotonSeguir";
@@ -14,6 +14,7 @@ import { apiFetch } from "@/lib/api";
 import { conArroba, normalizarHandle, problemaDelHandle, rutaPerfilApp } from "@/lib/handle";
 import { leerPublicaciones } from "@/lib/publicaciones-servidor";
 import type { PilotoPublico } from "@/types";
+import { LogoVector } from "@/components/Marca";
 
 /**
  * El perfil público de un piloto: `/u/<handle>`, el link que se comparte.
@@ -108,10 +109,7 @@ export default async function PerfilPublicoPagina({ params, searchParams }: Para
         <header className="w-full border-b border-zinc-200 dark:border-white/10 bg-white/70 dark:bg-black/40 backdrop-blur-xl">
           <div className="max-w-2xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
             <Link href={conSesion ? "/dashboard" : "/"} className="flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center">
-                <Compass className="w-4 h-4" strokeWidth={2} />
-              </span>
-              <span className="text-lg font-bold font-display tracking-tight">Vector</span>
+              <LogoVector className="h-6 w-auto" />
             </Link>
             <Link
               href={conSesion ? rutaPerfilApp(piloto.handle) : "/login"}

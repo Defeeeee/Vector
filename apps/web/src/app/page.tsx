@@ -60,6 +60,12 @@ export const metadata: Metadata = {
   },
 };
 
+/** La landing va siempre de noche (3.10.0): el botón principal y el secundario. */
+const BOTON_PRINCIPAL =
+  "inline-flex items-center justify-center gap-2 rounded-full bg-aviation-cyan text-noche px-7 py-4 text-sm font-semibold hover:bg-sky-300 transition-colors";
+const BOTON_SECUNDARIO =
+  "inline-flex items-center justify-center gap-2 rounded-full border border-white/20 text-white px-7 py-4 text-sm font-semibold hover:border-white/40 hover:bg-white/[0.04] transition-colors";
+
 const PREGUNTAS_HOY = [
   {
     icono: ShieldCheck,
@@ -149,14 +155,14 @@ const ADEMAS = [
   { icono: CalendarDays, titulo: "Vuelos programados", texto: "Anotá los turnos de la escuela y completalos con un toque cuando aterrizás." },
   { icono: WifiOff, titulo: "Funciona sin señal", texto: "Se instala en el teléfono como una app, y lo esencial abre en el hangar aunque no haya señal." },
   { icono: ScanSearch, titulo: "Auditoría del libro", texto: "Te avisa de vuelos superpuestos o duplicados antes de que lleguen al papel." },
-  { icono: Share2, titulo: "Tarjeta para compartir", texto: "Tus horas en una imagen lista para mandar por WhatsApp o subir a una historia." },
+  { icono: Share2, titulo: "Al CAD, sin copiar a mano", texto: "Pasá tus vuelos al CAD de ANAC desde Vector, con tu sesión: Vector nunca ve tu contraseña y te avisa si algo no coincide." },
   { icono: Download, titulo: "Tus datos son tuyos", texto: "Exportá todo en CSV o JSON cuando quieras, y borrá tu cuenta sin pedirle permiso a nadie." },
 ];
 
 const PREGUNTAS_FRECUENTES = [
   {
     p: "¿Vector reemplaza al CAD de ANAC?",
-    r: "No. Desde el 1 de noviembre de 2025, los pilotos que vuelan bajo la RAAC 91 —escuelas incluidas— declaran su actividad en el Casillero Aeronáutico Digital de ANAC (Res. 470/2025). Vector no carga nada ahí por vos: es tu bitácora de todos los días, con los mismos datos, para llevar el libro al día y tener todo listo cuando declarás.",
+    r: "No. Desde el 1 de noviembre de 2025, los pilotos que vuelan bajo la RAAC 91 —escuelas incluidas— declaran su actividad en el Casillero Aeronáutico Digital de ANAC (Res. 470/2025). Vector es tu bitácora de todos los días, con los mismos datos, y te ayuda a pasar los vuelos: con la extensión o el marcador, tu propio navegador los carga en el CAD con tu sesión. Vector nunca ve tu contraseña de ANAC, y la declaración jurada la hacés vos.",
   },
   {
     p: "¿El PDF sirve para que me firmen los vuelos?",
@@ -208,260 +214,266 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="w-full flex flex-col min-h-screen bg-zinc-50 dark:bg-black overflow-hidden transition-colors duration-300 relative">
-      {/* Si estás acá, no hay sesión: se borra del teléfono lo que era del piloto.
-          Red de seguridad del borrado — ver `olvidar-datos.ts`. */}
-      <OlvidarAlSalir />
-      <RedirigirAuth />
-      <JsonLd datos={datos} />
+    // La landing es de noche siempre (3.10.0, manual de marca en marketing/marca/): `dark` acá
+    // prende las variantes oscuras de todo lo de adentro, también la barra, los mockups y el pie.
+    <div className="dark w-full bg-noche">
+      <div className="w-full flex flex-col min-h-screen bg-noche text-white overflow-hidden relative">
+        {/* Si estás acá, no hay sesión: se borra del teléfono lo que era del piloto.
+            Red de seguridad del borrado — ver `olvidar-datos.ts`. */}
+        <OlvidarAlSalir />
+        <RedirigirAuth />
+        <JsonLd datos={datos} />
 
-      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-aviation-blue/5 dark:bg-aviation-blue/[0.06] rounded-full blur-[140px]" />
-        <div
-          className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05]"
-          style={{ backgroundImage: "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)", backgroundSize: "44px 44px" }}
-        />
-      </div>
+        <NavPublica oscura />
 
-      <NavPublica />
+        {/* Hero: la carta VFR de Baires de noche, con la ruta SADF → SADM ---------- */}
+        <section className="relative isolate pt-36 pb-20 md:pt-48 md:pb-28 lg:min-h-[820px] lg:flex lg:items-center">
+          <picture>
+            <source media="(max-width: 767px)" srcSet="/landing/carta-noche-vertical.webp" />
+            <img
+              src="/landing/carta-noche.webp"
+              alt=""
+              fetchPriority="high"
+              className="absolute inset-0 -z-10 h-full w-full object-cover opacity-30 md:opacity-45 md:left-auto md:w-[80%] md:[mask-image:linear-gradient(to_right,transparent,black_35%)]"
+            />
+          </picture>
+          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-noche via-noche/75 to-noche/55 md:via-noche/40 md:to-noche/20" />
+          <div className="container-wide w-full">
+            <div className="max-w-3xl space-y-8">
+              <p className="font-mono text-xs uppercase tracking-[0.14em] text-aviation-cyan">Bitácora de vuelo · Argentina</p>
+              <h1 className="font-display font-extrabold tracking-[-0.04em] leading-[0.95] text-[clamp(44px,7.2vw,100px)] text-balance">
+                Tu bitácora de vuelo, <span className="text-aviation-cyan">siempre al día.</span>
+              </h1>
+              <p className="text-lg md:text-xl text-niebla max-w-xl leading-relaxed">
+                Cargá un vuelo en segundos y Vector hace el resto: el desglose de la hoja, si podés volar hoy, cuánto
+                te falta para la PCA y cuántas horas te quedan en el pack. Y cuando lo necesitás, imprimís tu libro en
+                PDF para que te lo firmen.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Link href="/register" className={BOTON_PRINCIPAL}>
+                  Crear mi bitácora
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link href="#funciones" className={BOTON_SECUNDARIO}>
+                  Ver qué hace
+                </Link>
+              </div>
+              <ul className="flex flex-wrap gap-x-6 gap-y-2 pt-2 font-mono text-xs text-niebla">
+                <li>Libro en PDF para firmar</li>
+                <li>Funciona sin señal</li>
+                <li>También por WhatsApp</li>
+              </ul>
+            </div>
+          </div>
+        </section>
 
-      {/* Hero ------------------------------------------------------------------- */}
-      <section className="pt-36 md:pt-48 pb-16 md:pb-20 relative z-10 px-4 md:px-0">
-        <div className="container-wide grid lg:grid-cols-2 gap-14 lg:gap-16 items-center">
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-500 dark:text-zinc-400 shadow-sm">
-              <span className="relative flex w-2 h-2">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-aviation-blue animate-blip" />
-              </span>
-              Para alumnos y pilotos en Argentina
-            </span>
+        {/* La frase: qué es Vector y qué no ----------------------------------------- */}
+        <section className="section-padding relative">
+          <div className="container-wide grid lg:grid-cols-[1.25fr_1fr] gap-12 lg:gap-20 items-center">
+            <Aparecer className="space-y-7">
+              <h2 className="font-display font-extrabold tracking-[-0.035em] leading-[1] text-[clamp(36px,5vw,64px)] text-balance">
+                No es una planilla con alas.{" "}
+                <span className="text-aviation-cyan">Está hecha con la RAAC, el AIP y el CAD.</span>
+              </h2>
+              <p className="text-lg text-niebla leading-relaxed max-w-xl">
+                Cada número de Vector sale de la norma o de la fuente oficial, y lo dice: la experiencia reciente de
+                la RAAC 61, los aeródromos y espacios aéreos del AIP validados contra el PDF, y tus vuelos con los
+                mismos datos que declarás en el CAD. Si a Vector le falta un dato, te lo dice: nunca te da por
+                habilitado a ciegas.
+              </p>
+            </Aparecer>
+            <Aparecer demora={0.1}>
+              <div className="rounded-[2.25rem] border border-white/10 bg-carbon p-2 max-w-md mx-auto lg:ml-auto shadow-2xl shadow-black/40">
+                <div className="rounded-[1.9rem] overflow-hidden">
+                  <HoyMock />
+                </div>
+              </div>
+            </Aparecer>
+          </div>
+        </section>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold text-zinc-900 dark:text-white leading-[1.05] tracking-tight">
-              Tu bitácora de vuelo,
-              <br />
-              <span className="text-aviation-blue-dark dark:text-aviation-cyan">siempre al día.</span>
-            </h1>
+        {/* Las tres preguntas ------------------------------------------------------- */}
+        <section id="funciones" className="section-padding scroll-mt-24 border-t border-white/[0.06]">
+          <div className="container-wide">
+            <Aparecer className="max-w-3xl mb-12 md:mb-16 space-y-4">
+              <p className="font-mono text-xs uppercase tracking-[0.14em] text-aviation-cyan">Lo que abrís antes de volar</p>
+              <h2 className="font-display font-extrabold tracking-[-0.035em] leading-[1] text-[clamp(34px,4.6vw,58px)] text-balance">
+                Tres preguntas, <span className="text-aviation-cyan">contestadas antes de salir al hangar.</span>
+              </h2>
+            </Aparecer>
+            <div className="grid md:grid-cols-3 gap-4">
+              {PREGUNTAS_HOY.map((q, i) => {
+                const Icono = q.icono;
+                return (
+                  <Aparecer key={q.titulo} demora={i * 0.08} className="h-full">
+                    <div className="h-full rounded-[2rem] bg-carbon border border-white/[0.07] p-8 flex flex-col gap-5 min-h-[320px] hover:border-white/15 transition-colors">
+                      <Icono className="w-6 h-6 text-aviation-cyan" />
+                      <h3 className="font-display text-3xl font-extrabold tracking-[-0.03em] leading-tight">{q.titulo}</h3>
+                      <p className="text-[15px] text-niebla leading-relaxed flex-1">{q.texto}</p>
+                      <Link href={q.href} className="inline-flex items-center gap-1.5 text-sm font-semibold text-aviation-cyan hover:underline underline-offset-4">
+                        {q.cta}
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </Aparecer>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
-            <p className="text-lg md:text-xl text-zinc-500 dark:text-zinc-400 max-w-xl leading-relaxed">
-              Cargá un vuelo en segundos y Vector hace el resto: el desglose de la hoja, si podés
-              volar hoy, cuánto te falta para la PCA y cuántas horas te quedan en el pack. Y cuando
-              lo necesitás, imprimís tu libro en PDF para que te lo firmen.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2">
-              <Link
-                href="/register"
-                className="w-full sm:w-auto bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-8 py-4 rounded-2xl font-semibold text-sm hover:opacity-90 transition-opacity shadow-cal-highlight dark:shadow-none flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Crear mi bitácora
+        {/* El Mapa: la carta, a sangre ---------------------------------------------- */}
+        <section id="mapa" className="relative isolate scroll-mt-24 py-24 md:py-36 border-y border-white/[0.06]">
+          <img src="/landing/carta-noche.webp" alt="" loading="lazy" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-30" />
+          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-r from-noche via-noche/85 to-noche/30" />
+          <div className="container-wide">
+            <Aparecer className="max-w-2xl space-y-6">
+              <p className="font-mono text-xs uppercase tracking-[0.14em] text-aviation-cyan">El Mapa · Preparar vuelo</p>
+              <h2 className="font-display font-extrabold tracking-[-0.035em] leading-[1] text-[clamp(34px,4.6vw,58px)] text-balance">
+                Tu ruta, sobre la carta. <span className="text-aviation-cyan">Y con quién hablás en cada tramo.</span>
+              </h2>
+              <p className="text-lg text-niebla leading-relaxed">
+                Escribí la ruta o tocá los aeródromos: ves los tramos, los espacios aéreos que cruzás y la frecuencia
+                de cada uno, con los corredores VFR de Baires. Prendé las cartas en ruta o las VFR del AIP debajo. En
+                vuelo, la misma pantalla sigue tu ruta con el GPS del teléfono. Es una ayuda: manda la carta.
+              </p>
+              <Link href="/register" className={BOTON_SECUNDARIO}>
+                Probar el Mapa
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link
-                href="#funciones"
-                className="w-full sm:w-auto bg-white dark:bg-white/[0.03] border border-zinc-200 dark:border-white/10 px-8 py-4 rounded-2xl font-semibold text-sm hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors flex items-center justify-center text-zinc-900 dark:text-white"
-              >
-                Ver qué hace
-              </Link>
-            </div>
-
-            <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2 text-sm text-zinc-500 dark:text-zinc-400">
-              <li>Libro en PDF para firmar</li>
-              <li aria-hidden="true" className="text-zinc-300 dark:text-zinc-700">·</li>
-              <li>Funciona sin señal</li>
-              <li aria-hidden="true" className="text-zinc-300 dark:text-zinc-700">·</li>
-              <li>También por WhatsApp</li>
-            </ul>
+            </Aparecer>
           </div>
+        </section>
 
-          <div className="relative animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <div className="rounded-[2rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none overflow-hidden max-w-md mx-auto lg:ml-auto">
-              <HoyMock />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Las tres preguntas ------------------------------------------------------- */}
-      <section id="funciones" className="section-padding relative z-10 scroll-mt-24">
-        <div className="container-wide">
-          <Aparecer className="max-w-2xl mb-12 md:mb-16">
-            <span className="eyebrow">Lo que abrís antes de volar</span>
-            <h2 className="text-4xl md:text-5xl font-display font-bold text-zinc-900 dark:text-white mt-3 tracking-tight leading-tight">
-              Tres preguntas, contestadas antes de salir al hangar.
-            </h2>
-          </Aparecer>
-          <div className="grid md:grid-cols-3 gap-5">
-            {PREGUNTAS_HOY.map((q, i) => {
-              const Icono = q.icono;
+        {/* Las funciones, una por una ----------------------------------------------- */}
+        <section className="section-padding">
+          <div className="container-wide space-y-24 md:space-y-32">
+            {FUNCIONES.map((f, i) => {
+              const invertido = i % 2 === 1;
+              const Mock = f.Mock;
               return (
-                <Aparecer key={q.titulo} demora={i * 0.08} className="h-full">
-                  <div className="h-full rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-7 flex flex-col">
-                    <div className="w-11 h-11 rounded-2xl bg-zinc-900 dark:bg-white/[0.06] flex items-center justify-center mb-5">
-                      <Icono className="w-5 h-5 text-white" />
+                <Aparecer key={f.id}>
+                  <div id={f.id} className={`scroll-mt-28 grid md:grid-cols-2 gap-10 md:gap-16 items-center ${invertido ? "md:[direction:rtl]" : ""}`}>
+                    <div className={`space-y-5 ${invertido ? "md:[direction:ltr]" : ""}`}>
+                      <p className="font-mono text-xs uppercase tracking-[0.14em] text-aviation-cyan">{f.eyebrow}</p>
+                      <h2 className="font-display font-extrabold tracking-[-0.03em] leading-[1.05] text-3xl md:text-[42px] text-balance">{f.titulo}</h2>
+                      <p className="text-base md:text-lg text-niebla leading-relaxed">{f.texto}</p>
+                      {f.link && (
+                        <Link href={f.link.href} className="inline-flex items-center gap-1.5 text-sm font-semibold text-aviation-cyan hover:underline underline-offset-4">
+                          {f.link.texto}
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      )}
                     </div>
-                    <h3 className="text-xl font-display font-bold text-zinc-900 dark:text-white tracking-tight">{q.titulo}</h3>
-                    <p className="mt-3 text-[15px] text-zinc-500 dark:text-zinc-400 leading-relaxed flex-1">{q.texto}</p>
-                    <Link
-                      href={q.href}
-                      className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-aviation-blue dark:text-aviation-cyan hover:underline underline-offset-2"
-                    >
-                      {q.cta}
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                    <div className={invertido ? "md:[direction:ltr]" : ""}>
+                      <div className="aspect-[4/3] rounded-[2rem] border border-white/10 bg-carbon overflow-hidden shadow-2xl shadow-black/40">
+                        <Mock />
+                      </div>
+                    </div>
                   </div>
                 </Aparecer>
               );
             })}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Las funciones, una por una ----------------------------------------------- */}
-      <section className="section-padding relative z-10 border-t border-zinc-200 dark:border-white/10">
-        <div className="container-wide space-y-20 md:space-y-28">
-          {FUNCIONES.map((f, i) => {
-            const invertido = i % 2 === 1;
-            const Mock = f.Mock;
-            return (
-              <Aparecer key={f.id}>
-                <div id={f.id} className={`scroll-mt-28 grid md:grid-cols-2 gap-10 md:gap-16 items-center ${invertido ? "md:[direction:rtl]" : ""}`}>
-                  <div className={invertido ? "md:[direction:ltr]" : ""}>
-                    <span className="eyebrow">{f.eyebrow}</span>
-                    <h2 className="text-2xl md:text-3xl font-display font-bold text-zinc-900 dark:text-white mt-3 mb-4 tracking-tight leading-snug">
-                      {f.titulo}
-                    </h2>
-                    <p className="text-base md:text-lg text-zinc-500 dark:text-zinc-400 leading-relaxed">{f.texto}</p>
-                    {f.link && (
-                      <Link
-                        href={f.link.href}
-                        className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-aviation-blue dark:text-aviation-cyan hover:underline underline-offset-2"
-                      >
-                        {f.link.texto}
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
-                    )}
-                  </div>
-                  <div className={invertido ? "md:[direction:ltr]" : ""}>
-                    <div className="aspect-[4/3] rounded-[2rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none overflow-hidden">
-                      <Mock />
+        {/* Y además --------------------------------------------------------------- */}
+        <section className="pb-20 md:pb-24">
+          <div className="container-wide">
+            <div className="rounded-[2.5rem] bg-carbon border border-white/[0.07] py-14 px-7 md:px-14">
+              <h2 className="font-display font-extrabold tracking-[-0.03em] leading-[1.05] text-3xl md:text-5xl text-balance max-w-3xl">
+                Y todo lo demás <span className="text-aviation-cyan">que hoy repartís entre planillas y notas.</span>
+              </h2>
+              <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-9">
+                {ADEMAS.map((a) => {
+                  const Icono = a.icono;
+                  return (
+                    <div key={a.titulo} className="flex gap-4">
+                      <Icono className="w-5 h-5 text-aviation-cyan shrink-0 mt-1" />
+                      <div>
+                        <h3 className="text-base font-display font-bold">{a.titulo}</h3>
+                        <p className="text-sm text-niebla mt-1 leading-relaxed">{a.texto}</p>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </Aparecer>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Y además --------------------------------------------------------------- */}
-      <section className="relative z-10">
-        <div className="container-wide">
-          <div className="bg-zinc-900 dark:bg-white/[0.03] dark:border dark:border-white/10 rounded-[2.5rem] py-14 px-7 md:px-14 relative overflow-hidden">
-            <div className="absolute -top-20 -right-20 w-72 h-72 bg-aviation-blue/10 rounded-full blur-[100px]" aria-hidden="true" />
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-white tracking-tight relative z-10">
-              Y todo lo demás que hoy repartís entre planillas y notas.
-            </h2>
-            <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-              {ADEMAS.map((a) => {
-                const Icono = a.icono;
-                return (
-                  <div key={a.titulo} className="flex gap-4">
-                    <Icono className="w-5 h-5 text-aviation-cyan shrink-0 mt-0.5" />
-                    <div>
-                      <h3 className="text-base font-display font-bold text-white">{a.titulo}</h3>
-                      <p className="text-sm text-white/55 mt-1 leading-relaxed">{a.texto}</p>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Guías ------------------------------------------------------------------ */}
-      <section className="section-padding relative z-10">
-        <div className="container-wide">
-          <Aparecer className="max-w-2xl mb-10 md:mb-12">
-            <span className="eyebrow">Guías</span>
-            <h2 className="text-4xl md:text-5xl font-display font-bold text-zinc-900 dark:text-white mt-3 tracking-tight leading-tight">
-              Lo que pide la norma, explicado con las fuentes.
-            </h2>
-            <p className="mt-4 text-lg text-zinc-500 dark:text-zinc-400 leading-relaxed">
-              Escritas contra la RAAC 61 vigente y las resoluciones de ANAC, con cada fuente citada.
-            </p>
-          </Aparecer>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {GUIAS.map((g) => (
-              <Link
-                key={g.slug}
-                href={`/guias/${g.slug}`}
-                className="group rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/[0.02] shadow-cal dark:shadow-none p-6 hover:border-zinc-300 dark:hover:border-white/20 transition-colors"
-              >
-                <BookOpen className="w-5 h-5 text-aviation-blue dark:text-aviation-cyan" />
-                <h3 className="mt-4 text-lg font-display font-bold text-zinc-900 dark:text-white tracking-tight group-hover:underline underline-offset-2">
-                  {g.titulo}
-                </h3>
-                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">{g.descripcion}</p>
-              </Link>
-            ))}
+        {/* Guías ------------------------------------------------------------------ */}
+        <section className="section-padding border-t border-white/[0.06]">
+          <div className="container-wide">
+            <Aparecer className="max-w-3xl mb-10 md:mb-12 space-y-4">
+              <p className="font-mono text-xs uppercase tracking-[0.14em] text-aviation-cyan">Guías</p>
+              <h2 className="font-display font-extrabold tracking-[-0.035em] leading-[1] text-[clamp(34px,4.6vw,58px)] text-balance">
+                Lo que pide la norma, <span className="text-aviation-cyan">explicado con las fuentes.</span>
+              </h2>
+              <p className="text-lg text-niebla leading-relaxed">Escritas contra la RAAC 61 vigente y las resoluciones de ANAC, con cada fuente citada.</p>
+            </Aparecer>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {GUIAS.map((g) => (
+                <Link
+                  key={g.slug}
+                  href={`/guias/${g.slug}`}
+                  className="group rounded-[1.75rem] bg-carbon border border-white/[0.07] p-6 hover:border-white/20 transition-colors flex flex-col gap-3"
+                >
+                  <BookOpen className="w-5 h-5 text-aviation-cyan" />
+                  <h3 className="text-lg font-display font-bold tracking-tight group-hover:text-aviation-cyan transition-colors">{g.titulo}</h3>
+                  <p className="text-sm text-niebla leading-relaxed">{g.descripcion}</p>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Preguntas frecuentes --------------------------------------------------- */}
-      <section id="preguntas" className="section-padding relative z-10 border-t border-zinc-200 dark:border-white/10 scroll-mt-24">
-        <div className="container-wide grid lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-16">
-          <div>
-            <span className="eyebrow">Preguntas frecuentes</span>
-            <h2 className="text-4xl md:text-5xl font-display font-bold text-zinc-900 dark:text-white mt-3 tracking-tight leading-tight">
-              Lo que nos preguntan los pilotos.
-            </h2>
+        {/* Preguntas frecuentes --------------------------------------------------- */}
+        <section id="preguntas" className="section-padding border-t border-white/[0.06] scroll-mt-24">
+          <div className="container-wide grid lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-16">
+            <div className="space-y-4">
+              <p className="font-mono text-xs uppercase tracking-[0.14em] text-aviation-cyan">Preguntas frecuentes</p>
+              <h2 className="font-display font-extrabold tracking-[-0.035em] leading-[1] text-[clamp(34px,4.6vw,58px)] text-balance">
+                Lo que nos preguntan <span className="text-aviation-cyan">los pilotos.</span>
+              </h2>
+            </div>
+            <div className="divide-y divide-white/10 border-y border-white/10">
+              {PREGUNTAS_FRECUENTES.map((f) => (
+                <details key={f.p} className="group py-6">
+                  <summary className="flex items-center justify-between gap-4 cursor-pointer list-none text-base md:text-lg font-semibold [&::-webkit-details-marker]:hidden">
+                    {f.p}
+                    <ChevronDown className="w-5 h-5 shrink-0 text-niebla transition-transform group-open:rotate-180" />
+                  </summary>
+                  <p className="mt-3 text-[15px] text-niebla leading-relaxed">{f.r}</p>
+                </details>
+              ))}
+            </div>
           </div>
-          <div className="divide-y divide-zinc-200 dark:divide-white/10 border-y border-zinc-200 dark:border-white/10">
-            {PREGUNTAS_FRECUENTES.map((f) => (
-              <details key={f.p} className="group py-5">
-                <summary className="flex items-center justify-between gap-4 cursor-pointer list-none text-base md:text-lg font-semibold text-zinc-900 dark:text-white [&::-webkit-details-marker]:hidden">
-                  {f.p}
-                  <ChevronDown className="w-5 h-5 shrink-0 text-zinc-400 transition-transform group-open:rotate-180" />
-                </summary>
-                <p className="mt-3 text-[15px] text-zinc-500 dark:text-zinc-400 leading-relaxed">{f.r}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA -------------------------------------------------------------------- */}
-      <section className="section-padding relative z-10 pb-28 md:pb-36">
-        <div className="container-wide">
-          <div className="rounded-[2.5rem] p-8 md:p-24 text-center relative overflow-hidden border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111111] shadow-cal dark:shadow-none">
-            <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-aviation-blue/10 rounded-full blur-[100px] pointer-events-none" aria-hidden="true" />
-            <h2 className="text-4xl md:text-6xl font-display font-bold text-zinc-900 dark:text-white tracking-tight relative z-10">
-              ¿Listo para despegar?
+        {/* Cierre: la carta otra vez ------------------------------------------------ */}
+        <section className="relative isolate py-28 md:py-40 text-center border-t border-white/[0.06]">
+          <img src="/landing/carta-noche.webp" alt="" loading="lazy" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-25" />
+          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-b from-noche via-noche/70 to-noche" />
+          <div className="container-wide space-y-6">
+            <h2 className="font-display font-extrabold tracking-[-0.04em] leading-[0.95] text-[clamp(44px,7vw,96px)]">
+              ¿Listo para <span className="text-aviation-cyan">despegar?</span>
             </h2>
-            <p className="text-zinc-500 dark:text-zinc-400 text-base md:text-xl max-w-xl mx-auto mt-5 relative z-10">
-              Creá tu cuenta y cargá tu primer vuelo hoy.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 relative z-10">
-              <Link
-                href="/register"
-                className="w-full sm:w-auto bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-10 py-4 rounded-2xl font-semibold text-sm shadow-cal-highlight dark:shadow-none hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
+            <p className="text-niebla text-lg md:text-xl max-w-xl mx-auto">Creá tu cuenta y cargá tu primer vuelo hoy.</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+              <Link href="/register" className={BOTON_PRINCIPAL}>
                 Crear mi bitácora
+                <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link
-                href="/login"
-                className="w-full sm:w-auto text-zinc-900 dark:text-white px-10 py-4 rounded-2xl font-semibold text-sm hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors border border-zinc-200 dark:border-white/15"
-              >
+              <Link href="/login" className={BOTON_SECUNDARIO}>
                 Ingresar
               </Link>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <PiePublico />
+        <PiePublico />
+      </div>
     </div>
   );
 }

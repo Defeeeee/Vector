@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowUpRight, Compass, Menu, X } from "lucide-react";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LogoVector } from "@/components/Marca";
 
 /**
  * La barra de las páginas públicas: la landing y las guías. Los links a secciones van
@@ -16,17 +17,15 @@ const LINKS = [
   { nombre: "Guías", href: "/guias" },
 ];
 
-export default function NavPublica() {
+/** `oscura`: la landing va siempre de noche (3.10.0), así que no ofrece el cambio de tema. */
+export default function NavPublica({ oscura = false }: { oscura?: boolean }) {
   const [abierto, setAbierto] = useState(false);
 
   return (
     <nav className="fixed top-4 md:top-6 w-full z-50 px-4" aria-label="Principal">
-      <div className="container-wide flex items-center justify-between h-16 px-4 md:px-6 rounded-2xl bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none transition-colors">
+      <div className="container-wide flex items-center justify-between h-16 px-4 md:px-6 rounded-2xl bg-white/80 dark:bg-noche/70 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none transition-colors">
         <Link href="/" className="flex items-center space-x-2.5 text-zinc-900 dark:text-white group" aria-label="Vector, inicio">
-          <div className="w-9 h-9 bg-zinc-900 dark:bg-white rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-            <Compass className="w-5 h-5 text-white dark:text-zinc-900" />
-          </div>
-          <span className="font-display font-bold text-lg tracking-tight">Vector</span>
+          <LogoVector className="h-7 w-auto group-hover:opacity-80 transition-opacity" />
         </Link>
 
         <div className="hidden lg:flex items-center space-x-7">
@@ -40,15 +39,17 @@ export default function NavPublica() {
             </Link>
           ))}
           <div className="h-4 w-px bg-zinc-200 dark:bg-white/10" />
-          <div className="w-40 scale-90 origin-right">
-            <ThemeToggle />
-          </div>
+          {!oscura && (
+            <div className="w-40 scale-90 origin-right">
+              <ThemeToggle />
+            </div>
+          )}
           <Link href="/login" className="text-sm font-medium text-zinc-900 dark:text-white hover:opacity-70 transition-opacity">
             Ingresar
           </Link>
           <Link
             href="/register"
-            className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity shadow-cal-highlight dark:shadow-none flex items-center gap-1.5"
+            className="bg-zinc-900 dark:bg-aviation-cyan text-white dark:text-noche text-sm font-semibold px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-cal-highlight dark:shadow-none flex items-center gap-1.5"
           >
             Crear cuenta
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -74,9 +75,11 @@ export default function NavPublica() {
             </Link>
           ))}
           <hr className="border-zinc-100 dark:border-white/10" />
-          <div className="w-full">
-            <ThemeToggle />
-          </div>
+          {!oscura && (
+            <div className="w-full">
+              <ThemeToggle />
+            </div>
+          )}
           <Link href="/login" className="text-sm font-medium text-zinc-900 dark:text-white mt-2">
             Ingresar
           </Link>
