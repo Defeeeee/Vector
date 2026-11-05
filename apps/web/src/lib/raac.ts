@@ -4,7 +4,8 @@
  * `consultar_raac`) conteste **sólo con eso** y citando la sección (invariante 6).
  *
  * El texto está en `src/data/raac/raac-<parte>.json`, partido por sección por
- * `scripts/build-raac.mjs`, tal como lo publica ANAC. Hoy: la Parte 61, VI edición.
+ * `scripts/build-raac.mjs`, tal como lo publica ANAC. Hoy: la Parte 61 (VI edición con la
+ * Enmienda I) y la Parte 91 (IV edición), las dos de mayo de 2026, con sus apéndices ("91 Apéndice D").
  *
  * La búsqueda es simple a propósito: palabras sin tildes, comparadas por su raíz (las primeras
  * cinco letras, para que "aterrizaje" encuentre "aterrizajes" y "médico" a "médica"), unos
@@ -70,6 +71,11 @@ const SINONIMOS: Record<string, string[]> = {
   pca: ["comercial"],
   hvi: ["instrumentos"],
   ingles: ["ingles", "idioma"],
+  // RAAC 91.
+  nafta: ["combustible"],
+  reserva: ["reserva", "combustible"],
+  techo: ["nubes", "techo"],
+  vmc: ["vmc", "visual"],
 };
 
 const raiz = (palabra: string) => palabra.slice(0, Math.min(palabra.length, 5));
@@ -109,8 +115,8 @@ const B = 0.75;
 
 export function buscarEnRaac(consulta: string, partes: ParteRaac[], { max = 4, caracteres = 3500 } = {}): ResultadoRaac[] {
   const secciones = partes.flatMap((p) => p.secciones);
-  // "61.060" o "61.060(b)": directo a la sección.
-  const pedidas = [...consulta.matchAll(/\b(\d{2,3}\.\d{3,4})\b/g)].map((m) => m[1]);
+  // "61.060", "61.060(b)" o "91.3": directo a la sección (la 91 tiene secciones de una cifra).
+  const pedidas = [...consulta.matchAll(/\b(\d{2,3}\.\d{1,4})\b/g)].map((m) => m[1]);
   const directas = secciones.filter((s) => pedidas.includes(s.seccion));
   // "¿Qué es…?": primero las definiciones de la Parte (61.001), recortadas a lo que se pregunta.
   if (/\b(que es|que son|que significa|definicion|define)\b/.test(sinTildes(consulta))) {
@@ -133,8 +139,11 @@ export function buscarEnRaac(consulta: string, partes: ParteRaac[], { max = 4, c
       const idf = Math.log(1 + (secciones.length - d + 0.5) / (d + 0.5));
       p += (idf * tf * (K1 + 1)) / (tf + K1 * (1 - B + (B * n.texto.length) / largoMedio));
     }
-    // Una sección que nombra varias de las palabras le gana a una que repite una sola.
-    return p * (1 + distintos / Math.max(ts.length, 1));
+    // Una sección que nombra varias de las palabras le gana a una que repite una sola, y más si
+    // las nombra en el título: con la 91 al lado, "¿cuánto dura el CMA?" se iba a las que
+    // repiten "convalidación" en vez de a "Validez del certificado médico" (61.065).
+    const enTitulo = ts.filter((t) => n.titulo.includes(t)).length;
+    return p * (1 + distintos / Math.max(ts.length, 1)) * (1 + enTitulo / Math.max(ts.length, 1));
   };
 
   const porPuntaje = ts.length

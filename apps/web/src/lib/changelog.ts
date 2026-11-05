@@ -78,6 +78,18 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.8.0",
+    fecha: "2026-11-05",
+    titulo: "La RAAC 91 en el copiloto",
+    novedades: [
+      {
+        icono: "conversacion",
+        titulo: "Preguntale también por las reglas de vuelo",
+        texto: "El copiloto ahora tiene la RAAC 91 (IV edición, mayo 2026): mínimos VFR, combustible de reserva, alturas mínimas, documentos a bordo, plan de vuelo, luces y equipamiento. Y la RAAC 61 con su Enmienda I de mayo. Contesta sólo con el texto de la norma y te cita la sección; si no está, te lo dice.",
+      },
+    ],
+  },
+  {
     version: "3.7.0",
     fecha: "2026-11-05",
     titulo: "Siempre al día, sin tocar nada",

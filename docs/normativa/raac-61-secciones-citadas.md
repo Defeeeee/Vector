@@ -2,6 +2,8 @@
 
 
 > Extraídas de **RAAC Parte 61, Edición VI (enero 2026)**, el PDF que publica ANAC.
+> **Desde el 13/05/2026 rige la Enmienda I (Res. ANAC 292/2026)**: de lo citado acá cambian
+> 61.520 y 61.620, sin tocar los números que usa el código. Ver la sección del final.
 >
 > Están versionadas acá porque `src/lib/recency.ts` y `src/lib/pilot-status.ts`
 > implementan estos números, y hasta ahora sólo vivían en la carpeta de descargas
@@ -502,3 +504,36 @@ so de instrucción reconocida un CIAC Tipo III, que deben incluir por lo menos:
   (i) Veinte (20) horas de instrucción en doble mando;
 […]
 ```
+
+
+---
+
+## Enmienda I de la VI edición (Res. ANAC 292/2026, 13 de mayo de 2026)
+
+Verificada el 2026-11-05 contra el PDF de la planilla "RAAC Vigentes" de argentina.gob.ar
+(`docs.anac.gob.ar`, "RAAC PARTE 61.pdf", Edición VI, Enmienda I; sha256 `2cfea1cb…99fa34`).
+De las secciones de este archivo cambian dos, y **ningún número de horas que usa el código**
+(`ppa-progress.ts`, `pca-progress.ts`): 40/35, 20, 10, 5, 150 NM, 5 de simulador y 3 nocturnas
+para la PPA; 200/150 para la PCA. El resto (61.060, 61.065, 61.120, 61.135, 61.140 y
+61.400–61.420) quedó igual.
+
+```
+61.520 (a)(1) Un total de cuarenta (40) horas de instrucción y de vuelo solo si realizó el
+curso en un CIAC, o treinta y cinco (35) horas de instrucción y de vuelo si completó
+íntegramente un curso de instrucción reconocido en un CIAC Tipo III, que deben incluir por lo
+menos: [(i) a (v) sin cambios]
+
+61.520 (a)(2)(v) Con excepción de lo indicado en el párrafo (iv), se reconocerán hasta
+veinticinco (25) horas de vuelo si es poseedor de una licencia de piloto de aeronave deportiva
+liviana. Nota: Para que se reconozca los créditos indicados en el sub-párrafo (v) el CIAC
+deberá presentar un informe de riesgo que evalúe la equivalencia de las aeronaves LSA con los
+aviones convencionales en términos de seguridad operacional.
+
+61.620 (a)(1) Un total de por lo menos doscientas (200) horas de vuelo como piloto en avión. En
+el caso de que el aspirante haya acumulado dichas horas en un curso de instrucción integrado
+aprobado/reconocido el total requerido es de ciento cincuenta (150) horas de vuelo. [...]
+```
+
+Antes decía "si completó el curso en un CIAC Tipo II o III" (61.520) y "un curso de instrucción
+aprobada/reconocida" (61.620). La enmienda también agrega la licencia de **piloto de aeronave
+deportiva liviana** (61.020(j), 61.305(c)(10)) y su capítulo 61.1600–61.1670.

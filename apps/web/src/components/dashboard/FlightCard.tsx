@@ -304,7 +304,7 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
           if (corrimiento.get() < 0) { cerrarDeslizado(); return; }
           setIsOpen(!isOpen);
         }}
-        className="relative bg-white dark:bg-[#050505] grid grid-cols-[40px_1fr_auto] md:grid-cols-[80px_130px_1fr_100px_72px] items-center gap-3 md:gap-4 px-4 md:px-6 py-3.5 md:py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-[#0c0c0c] transition-colors"
+        className="relative bg-white dark:bg-[#050505] grid grid-cols-[40px_1fr_auto] md:grid-cols-[80px_130px_1fr_100px_104px] items-center gap-3 md:gap-4 px-4 md:px-6 py-3.5 md:py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-[#0c0c0c] transition-colors"
       >
         {/* Date: en el teléfono, el día grande y el de la semana abajo */}
         <div className="leading-tight">

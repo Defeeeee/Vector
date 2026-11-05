@@ -4,15 +4,17 @@
  * (`lib/raac.ts`, la herramienta `consultar_raac` de `/api/chat`).
  *
  *   npm run build:raac -- 61 /ruta/a/raac61.pdf
- *   npm run build:raac -- 61            (baja el PDF de FUENTES)
+ *   npm run build:raac -- 61            (baja el PDF de FUENTES: no desde la red de Federico)
  *
  * ## De dónde
  *
- * - **Parte 61, VI edición (enero 2026)**: el anexo de la Res. ANAC 65/2026 en Infoleg (el
- *   servicio oficial de información legislativa). ANAC también la publica en
- *   `docs.anac.gob.ar` (link de la lista de RAAC de argentina.gob.ar), que a veces no contesta.
- * - **Parte 91**: sólo en `docs.anac.gob.ar`. La edición vigente es la de la Res. ANAC
- *   864-E/2017 con sus enmiendas (la última grande, Res. ANAC 957/2025).
+ * - **Parte 61, VI edición con la Enmienda I (13 de mayo de 2026, Res. ANAC 292/2026)**: en
+ *   `docs.anac.gob.ar` (link de la planilla "RAAC Vigentes" de argentina.gob.ar). Hasta el
+ *   2026-11-05 era el anexo de la Res. ANAC 65/2026 en Infoleg, que no trae la enmienda.
+ * - **Parte 91, IV edición (22 de mayo de 2026, Res. ANAC 311/2026)**: sólo en
+ *   `docs.anac.gob.ar` (link de la planilla "RAAC Vigentes" de argentina.gob.ar). Bajada el
+ *   2026-11-05 **desde el navegador**, no con este script: ANAC bloquea las IPs que le piden
+ *   con scripts (AGENTS.md). Pasá el PDF como segundo argumento.
  *
  * ## Cómo se parte
  *
@@ -31,14 +33,14 @@ import { UA_VECTOR } from "./ua-vector.mjs";
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FUENTES = {
   61: {
-    url: "https://servicios.infoleg.gob.ar/infolegInternet/anexos/420000-424999/422623/res65.pdf",
+    url: "https://docs.anac.gob.ar/index.php/s/PtMG8j8sFeRyren/download",
     titulo: "Licencias y habilitaciones para pilotos",
-    edicion: "VI Edición, enero 2026 (Res. ANAC 65/2026)",
+    edicion: "VI Edición, Enmienda I, mayo 2026 (Res. ANAC 292/2026)",
   },
   91: {
     url: "https://docs.anac.gob.ar/index.php/s/FX7dJTFy9fxGCxE/download",
     titulo: "Reglas de vuelo y operación general",
-    edicion: "",
+    edicion: "IV Edición, mayo 2026 (Res. ANAC 311/2026)",
   },
 };
 
@@ -61,6 +63,13 @@ const ENCABEZADO = [
   new RegExp(`^RAAC PARTE ${parte}\\b`, "i"),
   /^ADMINISTRACI[ÓO]N NACIONAL\b/i,
   /^DE AVIACI[ÓO]N CIVIL\b/i,
+  // La 91 lleva la edición en un renglón aparte: "4º Edición 22 mayo 2026", "4º Edición".
+  /^\d+ ?[º°] ?Edici[óo]n\b/i,
+  /^Edici[óo]n( \d{1,2} [a-z]+ \d{4})?$/i,
+  /^\d{1,2} (enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre) \d{4}$/i,
+  // La portada de cada subparte y apéndice.
+  /^REGULACIONES ARGENTINAS DE AVIACI[ÓO]N CIVIL\b/,
+  new RegExp(`^PARTE ${parte}\\b`),
 ];
 const renglones = [];
 paginas.forEach((texto, i) => {
@@ -73,15 +82,41 @@ paginas.forEach((texto, i) => {
 
 // "CAPÍTULO E — LICENCIA DE PILOTO COMERCIAL": cada sección guarda su capítulo, porque los
 // títulos se repiten ("Experiencia de vuelo" está en cada licencia) y el capítulo dice cuál es.
-const CAPITULO = /^CAP[IÍ]TULO ([A-Z]{1,2}) ?[—–-] ?(.+)$/;
-const INICIO = new RegExp(`^(${parte}\\.\\d{3,4}[A-Z]?)(?:\\s+(.*))?$`);
+// La 91 se parte en subpartes ("SUBPARTE B – REGLAS DE VUELO"), y sus secciones van de 91.1
+// a 91.1721: el número puede tener de una a cuatro cifras.
+const CAPITULO = /^(CAP[IÍ]TULO|SUBPARTE) ([A-Z]{1,2}) ?[—–-] ?(.+)$/;
+// "91.153 (d) (3) de esta Parte)…" o "91.903 y 91.153…" son citas que quedaron al principio de
+// un renglón, no secciones (se tragaban el resto de la Parte): el título no empieza con un
+// inciso, un número ni un conector. Sí puede ir en minúscula ("91.103 información sobre
+// vuelos.") o después de una raya ("91.510 – Equipamiento…").
+const CONECTOR = "(?:de|del|y|e|o|u|a|al|en|la|el|los|las|según|segun|para|que|con|por|se|inciso|párrafo)\\b";
+const INICIO = new RegExp(`^(${parte}\\.\\d{1,4}[A-Z]?)(?:\\s+(?:[—–-]\\s*)?((?!\\(|\\d|${CONECTOR}).+))?$`);
+// "APÉNDICE D – MÍNIMOS METEOROLÓGICOS…": cada apéndice es su propio bloque, para que no se
+// sume a la última sección. Se cita como "91 Apéndice D".
+// "APÉNDICE A 1.1 09/08/2022" es un renglón de la lista de páginas, no el apéndice.
+const APENDICE = /^AP[ÉE]NDICE ([A-Z]{1,2})\b\s*[—–.-]?\s*((?!\d).*)$/;
+// En el cuerpo, un apéndice a veces arranca sólo con su título, sin "APÉNDICE C –" (el de la
+// autorización de vuelo solo del alumno en la 61): el título se reconoce por el índice.
+const tituloApendice = new Map();
+for (const r of renglones) {
+  const a = APENDICE.exec(r.texto);
+  if (a && a[2].trim().length > 10) tituloApendice.set(a[2].trim().toUpperCase(), a[1]);
+}
 const bloques = [];
 let capitulo = "";
 for (const r of renglones) {
   const c = CAPITULO.exec(r.texto);
   if (c) {
-    const nombre = c[2].trim().toLowerCase().replace(/^./, (x) => x.toUpperCase());
-    capitulo = `Capítulo ${c[1]}: ${nombre}`;
+    const nombre = c[3].trim().toLowerCase().replace(/^./, (x) => x.toUpperCase());
+    capitulo = `${/^S/.test(c[1]) ? "Subparte" : "Capítulo"} ${c[2]}: ${nombre}`;
+    continue;
+  }
+  const a = APENDICE.exec(r.texto);
+  const soloTitulo = !a && tituloApendice.get(r.texto.toUpperCase());
+  if (a || soloTitulo) {
+    const letra = a ? a[1] : soloTitulo;
+    const titulo = (a ? a[2] : r.texto).trim().toLowerCase().replace(/^./, (x) => x.toUpperCase());
+    bloques.push({ seccion: `${parte} Apéndice ${letra}`, titulo, capitulo: "", pagina: r.pagina, lineas: [] });
     continue;
   }
   const m = INICIO.exec(r.texto);
@@ -107,7 +142,9 @@ for (const b of bloques) {
   const previo = porSeccion.get(b.seccion);
   if (!previo || texto.length > previo.texto.length) porSeccion.set(b.seccion, { seccion: b.seccion, titulo: b.titulo, capitulo: b.capitulo, pagina: b.pagina, texto });
 }
-const secciones = [...porSeccion.values()].filter((s) => s.texto.length > 0).sort((a, b) => a.seccion.localeCompare(b.seccion, "es", { numeric: true }));
+// Las secciones por número y los apéndices al final, por letra.
+const orden = (s) => (s.seccion.includes("Apéndice") ? `~${s.seccion}` : s.seccion);
+const secciones = [...porSeccion.values()].filter((s) => s.texto.length > 0).sort((a, b) => orden(a).localeCompare(orden(b), "es", { numeric: true }));
 
 const salida = path.join(RAIZ, "src", "data", "raac", `raac-${parte}.json`);
 fs.mkdirSync(path.dirname(salida), { recursive: true });

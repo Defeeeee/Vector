@@ -192,7 +192,7 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
                 {/* Ledger table */}
                 <div className="bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 app:border-transparent app:dark:bg-[#111111] rounded-[20px] app:rounded-[18px] md:rounded-[2rem] shadow-sm app:shadow-none dark:shadow-none overflow-hidden">
                   {/* Column labels (desktop only) */}
-                  <div className="hidden md:grid grid-cols-[80px_130px_1fr_100px_72px] gap-4 px-6 py-2.5 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/60 dark:bg-white/[0.02] text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
+                  <div className="hidden md:grid grid-cols-[80px_130px_1fr_100px_104px] gap-4 px-6 py-2.5 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/60 dark:bg-white/[0.02] text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
                     <span>Fecha</span>
                     <span>Ruta</span>
                     <span>Aeronave</span>

@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.8.0 — La RAAC 91 en el copiloto
+
+_5 de noviembre de 2026_
+
+- **Preguntale también por las reglas de vuelo** — El copiloto ahora tiene la RAAC 91 (IV edición, mayo 2026): mínimos VFR, combustible de reserva, alturas mínimas, documentos a bordo, plan de vuelo, luces y equipamiento. Y la RAAC 61 con su Enmienda I de mayo. Contesta sólo con el texto de la norma y te cita la sección; si no está, te lo dice.
+
 ## v3.7.0 — Siempre al día, sin tocar nada
 
 _5 de noviembre de 2026_

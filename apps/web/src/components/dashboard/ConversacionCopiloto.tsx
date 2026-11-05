@@ -26,8 +26,9 @@ export const PREGUNTAS_SUGERIDAS = [
   "¿Cuántas horas totales tengo?",
   "¿Cuál fue mi vuelo más largo?",
   "¿Cuántos vuelos hice este mes?",
-  // Reglamento: contesta con el texto de la RAAC 61 y la sección (`consultar_raac`).
+  // Reglamento: contesta con el texto de la RAAC 61 o 91 y la sección (`consultar_raac`).
   "¿Cuántos aterrizajes necesito para llevar pasajeros?",
+  "¿Cuánto combustible de reserva necesito en un VFR?",
   "¿Cómo está el clima en San Fernando?",
 ];
 

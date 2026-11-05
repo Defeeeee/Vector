@@ -1,5 +1,6 @@
 import { Type } from "@google/genai";
 import raac61 from "@/data/raac/raac-61.json";
+import raac91 from "@/data/raac/raac-91.json";
 import { buscarEnRaac, type ParteRaac } from "@/lib/raac";
 
 /**
@@ -9,25 +10,28 @@ import { buscarEnRaac, type ParteRaac } from "@/lib/raac";
  */
 
 /** Las Partes de la RAAC que el copiloto puede citar (`scripts/build-raac.mjs`). */
-export const RAAC: ParteRaac[] = [raac61 as ParteRaac];
+export const RAAC: ParteRaac[] = [raac61 as ParteRaac, raac91 as ParteRaac];
+
+/** "RAAC 61 (VI Edición, Enmienda I, mayo 2026) y RAAC 91 (IV Edición, mayo 2026)". */
+const EDICIONES = RAAC.map((p) => `RAAC ${p.parte} (${p.edicion.replace(/ \(Res\..*\)$/, "")})`).join(" y ");
 
 export const REGLAS_RAAC = `## PREGUNTAS DE REGLAMENTO (RAAC):
-1. Para cualquier pregunta de reglamentación —licencias, habilitaciones, CMA, experiencia reciente, requisitos de horas, vuelo solo, instructor, edad, idioma, qué dice una sección—, llamá SIEMPRE a 'consultar_raac' antes de contestar. Podés llamarla más de una vez con otras palabras si lo primero no sirve.
-2. Contestá SÓLO con el texto que devuelve, y citá cada dato con su sección exacta (ej: "RAAC 61.140(a)(2)"). Podés explicarlo en criollo, pero sin agregar números, plazos ni condiciones que no estén en ese texto.
+1. Para cualquier pregunta de reglamentación —licencias, habilitaciones, CMA, experiencia reciente, requisitos de horas, vuelo solo, instructor, edad, idioma, reglas de vuelo, mínimos VFR, combustible, plan de vuelo, equipamiento, documentación a bordo, qué dice una sección—, llamá SIEMPRE a 'consultar_raac' antes de contestar. Podés llamarla más de una vez con otras palabras si lo primero no sirve.
+2. Contestá SÓLO con el texto que devuelve, y citá cada dato con su sección exacta (ej: "RAAC 61.140(a)(2)" o "RAAC 91.155(c)"). Podés explicarlo en criollo, pero sin agregar números, plazos ni condiciones que no estén en ese texto.
 3. Si lo que devuelve no contesta la pregunta, decí que no está en los textos de la RAAC que tiene Vector y que lo consulte en la norma o con su instructor. NUNCA contestes reglamento de memoria, aunque creas saberlo.
-4. Hoy Vector tiene la RAAC 61 (licencias y habilitaciones de piloto, VI Edición, enero 2026). Todavía NO tiene la RAAC 91 (reglas de vuelo y operación): si preguntan algo de reglas de vuelo, espacio aéreo, plan de vuelo, mínimos VFR o equipamiento, decilo así.
-5. Cerrá las respuestas de reglamento con: "Fuente: RAAC 61, VI Edición (enero 2026). Ante una duda, manda la norma vigente."`;
+4. Vector tiene la RAAC 61 (licencias y habilitaciones de piloto) y la RAAC 91 (reglas de vuelo y operación general). No tiene otras Partes (la 1 de definiciones, la 135, la 141…): si preguntan por ellas, decilo así. Lo que publica el AIP (espacios aéreos, frecuencias, procedimientos de un aeródromo) no es la RAAC.
+5. Cerrá las respuestas de reglamento con: "Fuente: ${EDICIONES}. Ante una duda, manda la norma vigente."`;
 
 export const DECLARACION_RAAC = {
   name: "consultar_raac",
-  description:
-    "Busca en el texto oficial de la RAAC 61 (licencias y habilitaciones de piloto, VI Edición, enero 2026) las secciones que contestan una pregunta de reglamento, y devuelve su texto tal como lo publica ANAC, con el número de sección. Úsala SIEMPRE ante preguntas de reglamentación; no contestes reglamento sin ella.",
+  description: `Busca en el texto oficial de la ${EDICIONES} las secciones que contestan una pregunta de reglamento, y devuelve su texto tal como lo publica ANAC, con el número de sección. La 61 es licencias y habilitaciones de piloto; la 91, reglas de vuelo y operación general. Úsala SIEMPRE ante preguntas de reglamentación; no contestes reglamento sin ella.`,
   parameters: {
     type: Type.OBJECT,
     properties: {
       consulta: {
         type: Type.STRING,
-        description: "La pregunta o las palabras clave, en castellano (ej: 'experiencia reciente nocturna', 'validez del certificado médico', '61.505').",
+        description:
+          "La pregunta o las palabras clave, en castellano (ej: 'experiencia reciente nocturna', 'validez del certificado médico', 'mínimos VFR de visibilidad', 'combustible de reserva VFR', '61.505', '91.155').",
       },
     },
     required: ["consulta"],
@@ -39,8 +43,8 @@ export function respuestaRaac(consulta: unknown) {
   const secciones = buscarEnRaac(String(consulta ?? ""), RAAC);
   return secciones.length
     ? {
-        fuente: "RAAC 61, VI Edición (enero 2026), texto publicado por ANAC",
+        fuente: `${EDICIONES}, texto publicado por ANAC`,
         secciones: secciones.map((r) => ({ seccion: `RAAC ${r.seccion}`, titulo: r.titulo, capitulo: r.capitulo, texto: r.texto })),
       }
-    : { secciones: [], nota: "No se encontró nada sobre eso en la RAAC 61 que tiene Vector." };
+    : { secciones: [], nota: "No se encontró nada sobre eso en la RAAC 61 ni en la RAAC 91 que tiene Vector." };
 }
