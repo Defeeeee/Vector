@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.17.0 — Quién certifica, de una vez
+
+_10 de noviembre de 2026_
+
+- **La autoridad certificante para varios vuelos** — En la Bitácora, tocá "Elegir", marcá los vuelos (los filtros ayudan) y poneles la autoridad y su nombre de una vez, estén o no en el CAD.
+- **Si cambiaste quién certifica, te avisa** — Los vuelos que ya están en el CAD con otra autoridad aparecen en "Pasar al CAD" como que no coinciden, para que la actualices allá.
+
 ## v3.16.1 — Arreglos después de volar
 
 _10 de noviembre de 2026_

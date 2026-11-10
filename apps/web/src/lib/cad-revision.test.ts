@@ -137,3 +137,42 @@ describe("paraLeerEnDetalle", () => {
     expect(paraLeerEnDetalle([viejo, nuevo], enElCad, {}, ahora, 1)).toEqual([900]);
   });
 });
+
+describe("la autoridad certificante contra el CAD (3.17.0)", () => {
+  const conAutoridad: BorradorCad = { ...b, autoridad: { id: "5", nombre: "JUAN PÉREZ" } };
+  const detalleCad = { ...detalle, autoridadCertificanteID: 5, observaciones: "Juan Perez" };
+
+  it("no marca nada si es la misma (sin mirar mayúsculas ni tildes)", () => {
+    expect(diferenciasConElCad(conAutoridad, fila, detalleCad, finalidades)).toEqual([]);
+  });
+
+  it("salta si en Vector se cambió la persona o el tipo", () => {
+    const otra: BorradorCad = { ...b, autoridad: { id: "6", nombre: "ANA GÓMEZ" } };
+    expect(diferenciasConElCad(otra, fila, detalleCad, finalidades)).toEqual([
+      { campo: "autoridad", nombre: "Autoridad", enVector: "JEFE DE INSTRUCTORES · ANA GÓMEZ", enElCad: "INSTRUCTOR DE VUELO · JUAN PEREZ" },
+    ]);
+  });
+
+  it("sin autoridad en Vector, o sin la del CAD, no es una diferencia", () => {
+    expect(diferenciasConElCad(b, fila, detalleCad, finalidades)).toEqual([]);
+    expect(diferenciasConElCad(conAutoridad, fila, detalle, finalidades)).toEqual([]);
+  });
+
+  it("cambiar la autoridad cambia la firma (se vuelve a leer), y sin autoridad la firma no cambia", () => {
+    const f = fila as unknown as VueloEnElCad;
+    expect(firmaDeRevision(conAutoridad, f)).not.toBe(firmaDeRevision({ ...conAutoridad, autoridad: { id: "5", nombre: "OTRO" } }, f));
+    expect(firmaDeRevision(b, f)).toBe(firmaDeRevision({ ...b, autoridad: null }, f));
+  });
+
+  it("los que cambiaron se leen antes que los vencidos", () => {
+    const ahora = new Date("2026-11-10T12:00:00Z");
+    const viejo = { ...b, vectorId: "a", cadId: 1, fechaHoraSalida: "2026-10-20T10:00:00Z" };
+    const cambiado = { ...conAutoridad, vectorId: "b", cadId: 2, fechaHoraSalida: "2026-01-05T10:00:00Z" };
+    const enElCad = [{ ...fila, vueloTripulanteID: 1 }, { ...fila, vueloTripulanteID: 2 }] as unknown as VueloEnElCad[];
+    const guardadas = {
+      "1": { firma: firmaDeRevision(viejo, enElCad[0]), cuando: "2026-09-01T00:00:00Z", diferencias: [] },
+      "2": { firma: "otra", cuando: "2026-11-09T00:00:00Z", diferencias: [] },
+    };
+    expect(paraLeerEnDetalle([viejo, cambiado], enElCad, guardadas, ahora)).toEqual([2, 1]);
+  });
+});

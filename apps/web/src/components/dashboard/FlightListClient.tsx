@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { Flight, Aircraft } from "@/types";
-import { Search, Plane, Plus, SlidersHorizontal, X } from "lucide-react";
+import { ListChecks, Search, Plane, Plus, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import FlightCard from "@/components/dashboard/FlightCard";
 import { pesos } from "@/lib/costos";
 import { filtrarVuelos, hayFiltros, type FiltrosVuelo } from "@/lib/busqueda-vuelos";
 import { AnimatePresence, motion } from "framer-motion";
+import { BandaAutoridad, FilaElegible } from "@/components/dashboard/AutoridadEnLoteBitacora";
 
 interface FlightListClientProps {
   flights: Flight[];
@@ -30,6 +31,16 @@ const MONTH_NAMES = [
 export default function FlightListClient({ flights, aircraft, costos = new Map(), alumno = false, fechaPpa = null, editar, ver }: FlightListClientProps) {
   const [filtros, setFiltros] = useState<FiltrosVuelo>({});
   const [abierto, setAbierto] = useState(false);
+  // Elegir varios vuelos para ponerles la autoridad certificante de una vez (3.17.0).
+  const [eligiendo, setEligiendo] = useState(false);
+  const [elegidos, setElegidos] = useState<Set<string>>(() => new Set());
+  const alternar = (id: string, v: boolean) =>
+    setElegidos((s) => {
+      const n = new Set(s);
+      if (v) n.add(id);
+      else n.delete(id);
+      return n;
+    });
 
   const aircraftMap = new Map(aircraft.map(a => [a.id, a]));
 
@@ -108,6 +119,24 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
           >
             <SlidersHorizontal className="w-4 h-4" />
           </button>
+          {!alumno && (
+            <button
+              type="button"
+              onClick={() => {
+                setEligiendo((v) => !v);
+                setElegidos(new Set());
+              }}
+              aria-pressed={eligiendo}
+              title="Elegir varios vuelos para ponerles la autoridad certificante"
+              className={`shrink-0 h-11 md:h-auto flex items-center justify-center gap-2 px-3 md:px-4 rounded-xl md:rounded-2xl border text-sm font-semibold transition-colors ${
+                eligiendo
+                  ? "border-aviation-cyan text-aviation-cyan bg-aviation-cyan/10"
+                  : "border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 bg-white dark:bg-carbon"
+              }`}
+            >
+              <ListChecks className="w-4 h-4" /> <span className="max-sm:hidden">Elegir</span>
+            </button>
+          )}
         </div>
 
         {abierto && (
@@ -134,6 +163,20 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
                 ))}
               </select>
             </Campo>
+          </div>
+        )}
+
+        {eligiendo && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-zinc-500 dark:text-zinc-400">
+            <span>Elegí los vuelos y poneles la autoridad abajo. Los filtros ayudan: fechas, avión, propósito.</span>
+            <button type="button" onClick={() => setElegidos(new Set(filteredFlights.map((f) => f.id)))} className="font-semibold text-aviation-cyan">
+              Todos {filtrado ? "los filtrados" : ""} ({filteredFlights.length})
+            </button>
+            {elegidos.size > 0 && (
+              <button type="button" onClick={() => setElegidos(new Set())} className="font-semibold hover:text-white">
+                Ninguno
+              </button>
+            )}
           </div>
         )}
 
@@ -200,7 +243,17 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
                     <span />
                   </div>
                   <div className="divide-y divide-zinc-100 dark:divide-white/5">
-                    {group.flights.map(flight => (
+                    {eligiendo
+                      ? group.flights.map((flight) => (
+                          <FilaElegible
+                            key={flight.id}
+                            flight={flight}
+                            aircraft={flight.aircraft_id ? aircraftMap.get(flight.aircraft_id) : undefined}
+                            elegido={elegidos.has(flight.id)}
+                            alCambiar={(v) => alternar(flight.id, v)}
+                          />
+                        ))
+                      : group.flights.map(flight => (
                       <FlightCard
                         key={flight.id}
                         flight={flight}
@@ -256,6 +309,19 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
             </Link>
           )}
         </motion.div>
+      )}
+      {eligiendo && (
+        <>
+          {/* Lugar para la banda de abajo: que no tape el último vuelo. */}
+          <div className="h-40" aria-hidden="true" />
+          <BandaAutoridad
+            elegidos={flights.filter((f) => elegidos.has(f.id))}
+            alSalir={() => {
+              setEligiendo(false);
+              setElegidos(new Set());
+            }}
+          />
+        </>
       )}
     </div>
   );

@@ -462,6 +462,11 @@ function NoCoinciden({ anomalias }: { anomalias: AnomaliaCad[] }) {
                   </div>
                 ))}
               </div>
+              {a.diferencias.some((d) => d.campo === "autoridad") && (
+                <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">
+                  Si la autoridad de Vector es la correcta, cambiala en el CAD: Vector no edita los vuelos de allá.
+                </p>
+              )}
             </li>
           ))}
         </ul>

@@ -1262,7 +1262,8 @@ export type CampoRevisado =
   | "diaNoche"
   | "finalidad"
   | "cargo"
-  | "tipo";
+  | "tipo"
+  | "autoridad";
 
 export interface DiferenciaCad {
   campo: CampoRevisado;
@@ -1281,7 +1282,7 @@ export interface AnomaliaCad {
 }
 
 /** Los campos que se leen sólo del detalle (`Get?id=`), no de la lista. */
-export const CAMPOS_DEL_DETALLE: CampoRevisado[] = ["aterrizajes", "diaNoche", "finalidad", "cargo", "tipo"];
+export const CAMPOS_DEL_DETALLE: CampoRevisado[] = ["aterrizajes", "diaNoche", "finalidad", "cargo", "tipo", "autoridad"];
 
 const NOMBRE_CAMPO: Record<CampoRevisado, string> = {
   salida: "Salida",
@@ -1295,7 +1296,14 @@ const NOMBRE_CAMPO: Record<CampoRevisado, string> = {
   finalidad: "Finalidad",
   cargo: "Cargo",
   tipo: "Tipo de vuelo",
+  autoridad: "Autoridad",
 };
+
+/** "INSTRUCTOR DE VUELO · JUAN PÉREZ": la autoridad por su nombre en la lista del CAD. */
+function autoridadParaLeer(id: string, nombre: string): string {
+  const tipo = AUTORIDADES_CAD.find((a) => String(a.id) === id)?.nombre ?? `autoridad ${id}`;
+  return nombre ? `${tipo} · ${nombre}` : tipo;
+}
 
 const NOMBRE_CARGO: Record<number, string> = { 1: "piloto", 2: "copiloto", 3: "instructor", 6: "en instrucción" };
 const NOMBRE_TIPO: Record<number, string> = { 1: "local", 2: "travesía", 3: "simulador", 4: "planeador" };
@@ -1387,6 +1395,19 @@ export function diferenciasConElCad(
   const tipo = Number(campo(detalle, "tipoVueloID", "tipoVueloId"));
   if (NOMBRE_TIPO[tipo] && tipo !== b.tipoVueloID) agregar("tipo", NOMBRE_TIPO[b.tipoVueloID] ?? String(b.tipoVueloID), NOMBRE_TIPO[tipo]);
 
+  // La autoridad certificante (3.17.0): si en Vector se cambió quién certifica un vuelo que ya
+  // está en el CAD, tiene que saltar acá para actualizarlo allá (Vector no edita en el CAD). El
+  // nombre va en `observaciones`, como lo carga Vector (`armarVueloParaElCad`). Sólo si Vector
+  // tiene una autoridad cargada y el CAD trae la suya.
+  const autoridadCad = campo(detalle, "autoridadCertificanteID", "autoridadCertificanteId");
+  if (b.autoridad && autoridadCad !== undefined) {
+    const nombreCad = String(campo(detalle, "observaciones") ?? "").trim();
+    const otroTipo = String(autoridadCad) !== b.autoridad.id;
+    const otroNombre = nombreCad !== "" && normalizarCad(nombreCad) !== normalizarCad(b.autoridad.nombre);
+    if (otroTipo || otroNombre)
+      agregar("autoridad", autoridadParaLeer(b.autoridad.id, b.autoridad.nombre), autoridadParaLeer(String(autoridadCad), nombreCad.toUpperCase()));
+  }
+
   return difs;
 }
 
@@ -1438,6 +1459,8 @@ export function firmaDeRevision(b: BorradorCad, fila: VueloEnElCad | undefined):
     b.fechaHoraSalida, b.fechaHoraLlegada, b.matricula, b.origen.codigo, b.destino.codigo, b.horas, b.aterrizajes,
     b.horasDia, b.horasNoche, b.finalidad, b.cargoID, b.tipoVueloID,
     f.fechaSalida, f.fechaLlegada, f.matricula, f.origenDesc, f.destinoDesc, f.tiempoTotal,
+    // Sólo si hay: así los vuelos sin autoridad no se vuelven a leer por este cambio (3.17.0).
+    ...(b.autoridad ? [b.autoridad.id, normalizarCad(b.autoridad.nombre)] : []),
   ]);
 }
 
@@ -1449,15 +1472,18 @@ export function paraLeerEnDetalle(
   tope = TOPE_DETALLES_POR_CONEXION
 ): number[] {
   const porId = new Map(enElCad.map((v) => [Number(v.vueloTripulanteID), v]));
+  // Primero los que cambiaron o nunca se leyeron, después los vencidos: si el piloto cambió la
+  // autoridad de 30 vuelos, esos van antes que un repaso de rutina (3.17.0).
+  const prioridad = (b: BorradorCad & { cadId: number }): number | null => {
+    const g = guardadas[String(b.cadId)];
+    if (!g || g.firma !== firmaDeRevision(b, porId.get(b.cadId))) return 0;
+    return ahora.getTime() - Date.parse(g.cuando) > DIAS_REVISION * 864e5 ? 1 : null;
+  };
   return marcados
     .filter((b) => porId.has(b.cadId))
-    .filter((b) => {
-      const g = guardadas[String(b.cadId)];
-      if (!g) return true;
-      if (g.firma !== firmaDeRevision(b, porId.get(b.cadId))) return true;
-      return ahora.getTime() - Date.parse(g.cuando) > DIAS_REVISION * 864e5;
-    })
-    .sort((a, b) => b.fechaHoraSalida.localeCompare(a.fechaHoraSalida))
+    .map((b) => ({ b, p: prioridad(b) }))
+    .filter((x): x is { b: BorradorCad & { cadId: number }; p: number } => x.p !== null)
+    .sort((x, y) => x.p - y.p || y.b.fechaHoraSalida.localeCompare(x.b.fechaHoraSalida))
     .slice(0, tope)
-    .map((b) => b.cadId);
+    .map((x) => x.b.cadId);
 }

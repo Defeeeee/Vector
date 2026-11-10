@@ -212,7 +212,10 @@ Actividad.
    `src/lib/changelog.ts` sea la misma. Novedades = sólo lo que el piloto ve.
    `CHANGELOG.md` se genera con `npm run build:changelog`. La excepción: un parche que no
    se anuncia (Federico decide) va en `VERSIONES_SIN_NOVEDADES`, con su motivo. Sube sólo
-   el último dígito y la tarjeta sigue mostrando `CHANGELOG[0]`.
+   el último dígito y la tarjeta sigue mostrando `CHANGELOG[0]`. **Desde el 2026-11-10 se sigue
+   [SemVer](https://semver.org)** (Federico): PATCH sólo arreglos; MINOR si la tanda trae algo
+   nuevo que el piloto ve, aunque sea una cosa; MAJOR si rompe algo (sacar una función en uso,
+   subir `VERSION_MINIMA`, cambiar datos o URLs sin redirección).
 8. **Después de escribir, revalidar cada pantalla que muestra ese dato** (`revalidatePath`).
    `apiFetch` cachea los GET 20 s: una pantalla que falte en la lista muestra el dato
    viejo. Y los `catch` de las acciones dejan pasar el `redirect` de Next con
@@ -532,7 +535,12 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     panel propone la última usada para esa finalidad (`autoridadSugerida`, memoria en el
     `localStorage` del CAD) y no carga un vuelo al que le falte alguna de las dos. Con varios
     elegidos, "La misma autoridad para los N elegidos" (3.16.1, `AutoridadEnLote`,
-    `asignarAutoridad`) la pisa en todos y la guarda en cada vuelo de Vector.
+    `asignarAutoridad`) la pisa en todos y la guarda en cada vuelo de Vector. **Desde la Bitácora**
+    (3.17.0, "Elegir", `AutoridadEnLoteBitacora`): se eligen vuelos, con los filtros, estén o no en el
+    CAD. Un vuelo ya pasado con otra autoridad **salta en "Pasar al CAD"** como que no coincide
+    (`diferenciasConElCad`, campo `autoridad`, contra `autoridadCertificanteID` y `observaciones` del
+    detalle; la firma de revisión incluye la autoridad y los que cambiaron se leen primero) hasta que
+    se actualice en el CAD.
   - "Corregir" lleva a `/dashboard/history?editar=<id>`, que abre ese vuelo en edición.
   - **Probado contra el CAD real** (Federico, 2026-10-21): borró un vuelo en el CAD y lo
     volvió a cargar desde el panel. Las listas del CAD son públicas (sin sesión). Los

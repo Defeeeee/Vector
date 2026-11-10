@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.17.0",
+    fecha: "2026-11-10",
+    titulo: "Quién certifica, de una vez",
+    novedades: [
+      {
+        icono: "avion",
+        titulo: "La autoridad certificante para varios vuelos",
+        texto: "En la Bitácora, tocá \"Elegir\", marcá los vuelos (los filtros ayudan) y poneles la autoridad y su nombre de una vez, estén o no en el CAD.",
+        href: "/dashboard/history",
+        cta: "Ir a la Bitácora",
+      },
+      {
+        icono: "campana",
+        titulo: "Si cambiaste quién certifica, te avisa",
+        texto: "Los vuelos que ya están en el CAD con otra autoridad aparecen en \"Pasar al CAD\" como que no coinciden, para que la actualices allá.",
+        href: "/dashboard/history/cad",
+        cta: "Pasar al CAD",
+      },
+    ],
+  },
+  {
     version: "3.16.1",
     fecha: "2026-11-10",
     titulo: "Arreglos después de volar",
