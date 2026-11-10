@@ -502,7 +502,7 @@ export function dependenciasEn(p: Punto, altitudFt: number | null, espacios: Esp
       donde: corredor.nombre,
       distintivo: "Sin control (clase G)",
       mhz: [],
-      nota: `${corredor.tipo === "corredor" ? "Corredor" : "Sector"} VFR de ENR 3.3: hasta ${String(corredor.techoFt).replace(/\B(?=(\d{3})+(?!\d))/g, ".")} ft.${corredor.informacion ? ` Información de vuelo y alerta: ${corredor.informacion}.` : ""}`,
+      nota: `${corredor.tipo === "corredor" ? "Corredor" : "Sector"} VFR de ENR 3.3: hasta ${String(corredor.techoFt).replace(/\B(?=(\d{3})+(?!\d))/g, ".")} ft${corredor.agl ? " sobre el terreno" : ""}.${corredor.informacion ? ` Información de vuelo: ${corredor.informacion}.` : ""}`,
     });
   }
   for (const e of adentro) {

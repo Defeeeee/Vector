@@ -22,6 +22,8 @@ import type { Punto } from "./navegacion";
 export interface CorredorVfr {
   /** "2". */
   numero: string;
+  /** Debajo de qué TMA (3.15.0): los números se repiten entre Baires y Córdoba. Sin zona, Baires. */
+  zona?: "baires" | "cordoba";
   /** "ISLA MARTIN GARCÍA – ESTACIÓN BENAVIDEZ". */
   nombre: string;
   eje: Punto[];
@@ -43,6 +45,38 @@ const DENTRO_CTR = { mediaNm: 1250 / 1852, techoFt: 1000 };
 const FUERA_CTR = { mediaNm: 2500 / 1852, techoFt: 2000 };
 /** El Nº 2 entre Benavídez y el límite de la CTR Aeroparque: 300 m del lado sur. */
 const SUR_DEL_2 = 300 / 1852;
+
+/**
+ * Córdoba (ENR 3.3, TABLA 1): 2.000 m de ancho dentro de la CTR (1.000 m a cada lado), 2.500 m
+ * fuera (1.250 m), desde el suelo hasta 1.500 ft **AGL**. El terreno de Córdoba está entre 1.300 y
+ * 3.500 ft: con la altura del GPS (sobre el nivel del mar) no se sabe si se está por encima, así
+ * que ahí el corredor se mira sólo de costado (invariante 2: no saber no es "afuera").
+ */
+const CORDOBA = { dentro: { mediaNm: 1000 / 1852, techoFt: 1500 }, fuera: { mediaNm: 1250 / 1852, techoFt: 1500 } };
+
+function reglas(c: Pick<CorredorVfr, "zona">) {
+  return c.zona === "cordoba" ? { ...CORDOBA, agl: true } : { dentro: DENTRO_CTR, fuera: FUERA_CTR, agl: false };
+}
+
+/** "Corredor VFR Nº 3", o "Corredor VFR Nº 3 (Córdoba)": los números se repiten. */
+export function etiquetaCorredor(c: Pick<CorredorVfr, "numero" | "zona">): string {
+  return `Corredor VFR Nº ${c.numero}${c.zona === "cordoba" ? " (Córdoba)" : ""}`;
+}
+
+/** Quién da información de vuelo en el corredor. Córdoba (ENR 3.3, 1): el 9 y el 10, la TWR ESC. */
+export function informacionCorredor(c: Pick<CorredorVfr, "numero" | "zona">): string | null {
+  if (c.zona !== "cordoba") return null;
+  return c.numero === "9" || c.numero === "10"
+    ? "TWR Escuela de Aviación Militar (clase D cuando están activas sus zonas restringidas)"
+    : "APP/TWR Córdoba";
+}
+
+/** El ancho y la altura, para mostrarlos (ENR 3.3 de cada zona). */
+export function descripcionCorredor(c: Pick<CorredorVfr, "zona">): string {
+  return c.zona === "cordoba"
+    ? "Clase G · 2.000 m en la CTR y 2.500 m fuera · GND a 1.500 ft AGL · IAS 150 kt"
+    : "Clase G · 2.500 m y 1.000 ft máx. en CTR; 5.000 m y 2.000 ft fuera";
+}
 
 /**
  * "350721S — 0585355W", "341714S – 0590555W", "342113S — 0584111 W". La segunda, de 7 dígitos,
@@ -148,6 +182,43 @@ export function corredoresVfr(texto: string): CorredorVfr[] {
     .filter((c) => c.eje.length >= 2);
 }
 
+/**
+ * Los corredores de Córdoba (3.15.0), de la TABLA-2 de su parte de ENR 3.3
+ * (`src/data/aip/ENR-3.3-CORDOBA.txt`): el número y, en uno o más renglones, cada punto como
+ * "NOMBRE - 310018S-0643158W" (a veces la coordenada sigue en el renglón de abajo), y después el
+ * rumbo y la distancia, que no se usan: el eje sale de las coordenadas.
+ */
+export function corredoresVfrCordoba(texto: string): CorredorVfr[] {
+  const i = texto.search(/Distancias en NM/);
+  const fin = texto.indexOf("Excepción", i);
+  if (i < 0) return [];
+  const tabla = texto
+    .slice(i, fin > 0 ? fin : undefined)
+    .replace(/\n/g, " ")
+    .replace(/(\d{6}S)-\s+(\d{7}W)/g, "$1-$2")
+    .replace(/\s+/g, " ");
+  // Un número de corredor es uno o dos dígitos seguidos de un nombre en mayúsculas (la distancia
+  // del corredor anterior va seguida del número, o del final de la tabla).
+  const cortes = [...tabla.matchAll(/(?:^|\s)(\d{1,2}) (?=(?:AD\.?\s)?[A-ZÁÉÍÓÚÑ]{2})/g)];
+  const out: CorredorVfr[] = [];
+  cortes.forEach((m, k) => {
+    const desde = m.index! + m[0].length;
+    const hasta = k + 1 < cortes.length ? cortes[k + 1].index! : tabla.length;
+    const trozo = tabla.slice(desde, hasta);
+    const puntos = [...trozo.matchAll(/([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ./ ]*?)\s*-\s*(\d{2})(\d{2})(\d{2})S-(\d{3})(\d{2})(\d{2})W/g)];
+    if (puntos.length < 2) return;
+    const nombres = puntos.map((p) => p[1].replace(/^AD\.?\s*/, "").trim());
+    out.push({
+      numero: m[1],
+      zona: "cordoba",
+      nombre: `${nombres[0]} – ${nombres[nombres.length - 1]}`,
+      eje: puntos.map((p) => aPunto([p[0], p[2], p[3], p[4], p[5], p[6], p[7]] as unknown as RegExpExecArray)),
+      puntos: nombres,
+    });
+  });
+  return out;
+}
+
 /** Distancia con signo de un punto a un segmento, en NM: positiva hacia el norte del eje. */
 function aEje(p: Punto, a: Punto, b: Punto): { d: number; norte: boolean } {
   const k = Math.cos((p.lat * Math.PI) / 180) * 60;
@@ -164,6 +235,8 @@ export interface EnVfr {
   tipo: "corredor" | "sector";
   nombre: string;
   techoFt: number;
+  /** El techo es sobre el terreno (Córdoba): no se compara con la altura del GPS. */
+  agl?: boolean;
   informacion: string | null;
 }
 
@@ -177,13 +250,14 @@ export function enVfr(p: Punto, altitudFt: number | null, corredores: CorredorVf
     if (contiene(s.poligono, p) && (altitudFt === null || altitudFt <= s.techoFt)) return { tipo: "sector", nombre: s.nombre, techoFt: s.techoFt, informacion: s.informacion };
   }
   const enCtr = ctrs.some((c) => contiene(c, p));
-  const regla = enCtr ? DENTRO_CTR : FUERA_CTR;
-  if (altitudFt !== null && altitudFt > regla.techoFt) return null;
   for (const c of corredores) {
+    const r = reglas(c);
+    const regla = enCtr ? r.dentro : r.fuera;
+    if (!r.agl && altitudFt !== null && altitudFt > regla.techoFt) continue;
     for (let i = 1; i < c.eje.length; i++) {
       const { d, norte } = aEje(p, c.eje[i - 1], c.eje[i]);
-      const media = c.numero === "2" && enCtr && !norte ? SUR_DEL_2 : regla.mediaNm;
-      if (d <= media) return { tipo: "corredor", nombre: `Corredor VFR Nº ${c.numero}`, techoFt: regla.techoFt, informacion: null };
+      const media = c.zona !== "cordoba" && c.numero === "2" && enCtr && !norte ? SUR_DEL_2 : regla.mediaNm;
+      if (d <= media) return { tipo: "corredor", nombre: etiquetaCorredor(c), techoFt: regla.techoFt, agl: r.agl, informacion: informacionCorredor(c) };
     }
   }
   return null;
@@ -204,7 +278,7 @@ export function codigoVfr(nombre: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toUpperCase()
-    .replace(/^(ESTACION|AERODROMO|ATZ)\s+/, "")
+    .replace(/^(ESTACION|AERODROMO|AD\.?|ATZ)\s+/, "")
     .replace(/[^A-Z0-9]/g, "");
 }
 
@@ -254,8 +328,8 @@ export function bandaDeCorredor(c: CorredorVfr, ctrs: [number, number][][]): [nu
       const y = ay + ((by - ay) * s) / pasos;
       const [lat, lon] = dePlano(x, y);
       const enCtr = ctrs.some((ctr) => contiene(ctr, { lat, lon }));
-      const media = enCtr ? DENTRO_CTR.mediaNm : FUERA_CTR.mediaNm;
-      const sur = c.numero === "2" && enCtr ? SUR_DEL_2 : media;
+      const media = enCtr ? reglas(c).dentro.mediaNm : reglas(c).fuera.mediaNm;
+      const sur = c.zona !== "cordoba" && c.numero === "2" && enCtr ? SUR_DEL_2 : media;
       const [mi, md] = izquierdaEsNorte ? [media, sur] : [sur, media];
       izquierda.push(dePlano(x - uy * mi, y + ux * mi));
       derecha.push(dePlano(x + uy * md, y - ux * md));

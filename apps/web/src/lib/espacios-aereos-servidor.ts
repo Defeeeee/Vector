@@ -5,7 +5,7 @@ import { datosAip } from "./aip";
 import { allRadioayudas } from "./radioayudas";
 import { armarEspacios, filasTma, type EspacioAereo, type EspacioDescartado, type Frecuencias } from "./espacios-aereos";
 import { armarFirs, frecuenciasDeFila, type Fir, type Vfr } from "./firs";
-import { corredoresVfr, sectoresVfr } from "./corredores-vfr";
+import { corredoresVfr, corredoresVfrCordoba, sectoresVfr } from "./corredores-vfr";
 import type { Punto } from "./navegacion";
 
 /**
@@ -94,6 +94,15 @@ export function espaciosAereos(): Todo {
   const { firs, descartadas } = armarFirs(enr21, radioayudas, frontera());
   const archivoVfr = path.join(CARPETA, "ENR-3.3-BAIRES.txt");
   const enr33 = fs.existsSync(archivoVfr) ? fs.readFileSync(archivoVfr, "utf8") : "";
-  memo = { espacios, descartados, firs, firsDescartadas: descartadas, vfr: { corredores: corredoresVfr(enr33), sectores: sectoresVfr(enr33) } };
+  // Los de Córdoba (3.15.0), de su parte de ENR 3.3: sin sectores, sólo corredores.
+  const archivoCordoba = path.join(CARPETA, "ENR-3.3-CORDOBA.txt");
+  const enr33Cordoba = fs.existsSync(archivoCordoba) ? fs.readFileSync(archivoCordoba, "utf8") : "";
+  memo = {
+    espacios,
+    descartados,
+    firs,
+    firsDescartadas: descartadas,
+    vfr: { corredores: [...corredoresVfr(enr33), ...corredoresVfrCordoba(enr33Cordoba)], sectores: sectoresVfr(enr33) },
+  };
   return memo;
 }

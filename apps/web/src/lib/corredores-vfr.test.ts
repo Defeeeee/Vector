@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { canalesDeLlamada, getAirport } from "./airports";
-import { bandaDeCorredor, codigoVfr, corredoresVfr, largoNm, puntosVfr, sectoresVfr } from "./corredores-vfr";
+import { bandaDeCorredor, codigoVfr, corredoresVfr, corredoresVfrCordoba, enVfr, etiquetaCorredor, informacionCorredor, largoNm, puntosVfr, sectoresVfr } from "./corredores-vfr";
 import { distanciaAlBorde } from "./espacios-aereos";
 import { espaciosAereos, torreDe } from "./espacios-aereos-servidor";
 import { dependenciasDeRuta, type RadioDeAerodromo } from "./firs";
@@ -92,5 +92,52 @@ describe("con quién hablás por un corredor", () => {
   it("a 1.500 ft, dentro de la CTR el corredor ya no alcanza: Aeroparque", () => {
     const cambios = dependenciasDeRuta(ruta, 1500, espacios, firs, radios, false, vfr);
     expect(cambios.some((c) => /Aeroparque/i.test(c.dependencia.distintivo))).toBe(true);
+  });
+});
+
+describe("los corredores VFR de Córdoba (ENR 3.3, TABLA-2; 3.15.0)", () => {
+  const texto = fs.readFileSync(path.join(process.cwd(), "src/data/aip/ENR-3.3-CORDOBA.txt"), "utf8");
+  const corredores = corredoresVfrCordoba(texto);
+
+  it("son los once de la tabla, con sus puntos", () => {
+    expect(corredores.map((c) => c.numero)).toEqual(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]);
+    expect(corredores.every((c) => c.zona === "cordoba")).toBe(true);
+    // El 8 tiene tres puntos: Río Segundo, Toledo y Coronel Olmedo.
+    expect(corredores[7].puntos).toEqual(["RÍO SEGUNDO", "TOLEDO", "CORONEL OLMEDO"]);
+    // La coordenada partida en dos renglones ("311709S-" / "0642720W").
+    expect(corredores[0].puntos).toEqual(["LA CUMBRE", "COSQUÍN/Santa María"]);
+  });
+
+  it("las coordenadas son las de la tabla", () => {
+    const [laCumbre] = corredores[0].eje;
+    expect(laCumbre.lat).toBeCloseTo(-(31 + 0 / 60 + 18 / 3600), 6);
+    expect(laCumbre.lon).toBeCloseTo(-(64 + 31 / 60 + 58 / 3600), 6);
+  });
+
+  it("los largos dan las distancias de la tabla (±1 NM), del 1 al 7", () => {
+    const tabla: Record<string, number> = { "1": 17, "2": 14, "3": 10, "4": 31, "5": 22, "6": 16, "7": 13 };
+    for (const c of corredores.filter((x) => tabla[x.numero])) expect(Math.abs(largoNm(c) - tabla[c.numero]), `Nº ${c.numero}`).toBeLessThanOrEqual(1);
+    // Del 8 al 11 el texto extraído trae las distancias corridas (8, 8, 16, 14 contra 15,7 —dos
+    // tramos de ~8—, 16,2, 14,6 y 8,6 medidos): el eje sale de las coordenadas, no de esa columna.
+  });
+
+  it("se nombran con la zona, y dicen quién da información", () => {
+    expect(etiquetaCorredor(corredores[2])).toBe("Corredor VFR Nº 3 (Córdoba)");
+    expect(informacionCorredor(corredores[2])).toBe("APP/TWR Córdoba");
+    expect(informacionCorredor(corredores[8])).toMatch(/Escuela de Aviación Militar/);
+  });
+
+  it("en el eje de uno se está en el corredor, con el techo sobre el terreno", () => {
+    const [a, b] = corredores[2].eje;
+    const medio = { lat: (a.lat + b.lat) / 2, lon: (a.lon + b.lon) / 2 };
+    // A 3.000 ft del GPS igual cuenta: el terreno de Córdoba está alto y el techo es AGL.
+    expect(enVfr(medio, 3000, corredores, [], [])).toMatchObject({ nombre: "Corredor VFR Nº 3 (Córdoba)", agl: true, techoFt: 1500 });
+  });
+
+  it("sus puntos se pueden escribir en la ruta", () => {
+    const pv = puntosVfr(corredores);
+    expect(pv.has("ASCOCHINGA")).toBe(true);
+    expect(pv.has("RIOPRIMERO")).toBe(true);
+    expect(codigoVfr("AD. LA CUMBRE")).toBe("LACUMBRE");
   });
 });

@@ -9,7 +9,7 @@ import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { EspacioAereo } from "@/lib/espacios-aereos";
 import { aMagnetico } from "@/lib/navegacion";
 import { dependenciasDeRuta, dependenciasEn, type Dependencia, type RadioDeAerodromo } from "@/lib/firs";
-import { codigoVfr, corredoresCerca, puntosVfr } from "@/lib/corredores-vfr";
+import { codigoVfr, corredoresCerca, etiquetaCorredor, puntosVfr } from "@/lib/corredores-vfr";
 import {
   consultasDeRuta,
   duracionCorta,
@@ -651,11 +651,14 @@ export default function MapaClient({
               <p className="mt-2 rounded-xl bg-green-500/10 px-3 py-2 text-xs text-green-800 dark:text-green-300">
                 Cruzás la {nombreLindo(sugerencia.ctr)}. Por{" "}
                 {sugerencia.corredores.map((c, i) => (
-                  <span key={c.numero}>
-                    {i > 0 && " o "}el Corredor VFR Nº {c.numero} ({c.puntos.map((n) => nombreLindo(n.replace(/^ESTACI[ÓO]N\s+/i, ""))).join(" – ")})
+                  <span key={`${c.zona ?? "baires"}-${c.numero}`}>
+                    {i > 0 && " o "}el {etiquetaCorredor(c)} ({c.puntos.map((n) => nombreLindo(n.replace(/^ESTACI[ÓO]N\s+/i, ""))).join(" – ")})
                   </span>
                 ))}{" "}
-                es clase G hasta 1.000 ft dentro de la CTR. Ruta por el corredor:{" "}
+                {sugerencia.corredores[0]?.zona === "cordoba"
+                  ? "es clase G, del suelo a 1.500 ft sobre el terreno."
+                  : "es clase G hasta 1.000 ft dentro de la CTR."}{" "}
+                Ruta por el corredor:{" "}
                 <b>{sugerencia.ejemplo}</b>.
               </p>
             )}

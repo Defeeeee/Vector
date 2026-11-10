@@ -9,6 +9,7 @@ import type { IdCapa } from "@/lib/capas-mapa";
 import type { EspacioAereo, Frecuencias } from "@/lib/espacios-aereos";
 import type { Fir, Vfr } from "@/lib/firs";
 import type { PuntoMapa } from "@/lib/mapa-ruta";
+import { descripcionCorredor, etiquetaCorredor, informacionCorredor } from "@/lib/corredores-vfr";
 
 /** Lo que devuelve `/api/mapa`, compacto: arrays en vez de objetos. */
 export interface CapasMapa {
@@ -203,7 +204,8 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
         .addTo(c["sectores-vfr"]);
     }
     for (const co of capas.vfr?.corredores ?? []) {
-      const tooltip = `<b>Corredor VFR Nº ${escapar(co.numero)}</b><br>${escapar(co.nombre)}<br>Clase G · 2.500 m y 1.000 ft máx. en CTR; 5.000 m y 2.000 ft fuera`;
+      const info = informacionCorredor(co);
+      const tooltip = `<b>${escapar(etiquetaCorredor(co))}</b><br>${escapar(co.nombre)}<br>${escapar(descripcionCorredor(co))}${info ? `<br>Información: ${escapar(info)}` : ""}`;
       // La franja con su ancho (ENR 3.3) y el eje punteado encima.
       if (co.banda?.length) {
         L.polygon(co.banda, { color: "#047857", weight: 1.5, opacity: 0.9, fillColor: "#10b981", fillOpacity: 0.32 }).bindTooltip(tooltip, { sticky: true }).addTo(c.corredores);
