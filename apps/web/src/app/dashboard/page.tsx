@@ -2,9 +2,8 @@ import { cifrasDeCarrera } from "@/lib/horas-carrera";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { apiFetch } from "@/lib/api";
-import { Flight, Aircraft, FlightPack, PilotDocument, Logbook, PlannedFlight, Transaction, Profile } from "@/types";
+import { Flight, Aircraft, FlightPack, PilotDocument, Logbook, Transaction, Profile } from "@/types";
 import ChangelogNotice from "@/components/dashboard/ChangelogNotice";
-import VuelosPendientes from "@/components/dashboard/VuelosPendientes";
 import PlanesParaRegistrar from "@/components/dashboard/plan-de-vuelo/PlanesParaRegistrar";
 import PrimerosPasos from "@/components/dashboard/PrimerosPasos";
 import FlightStatusCard from "@/components/dashboard/FlightStatusCard";
@@ -23,7 +22,6 @@ import { esTravesiaLarga } from "@/lib/travesia-larga";
 import SaldoCard from "@/components/dashboard/SaldoCard";
 import FlightPackWidget from "@/components/dashboard/FlightPackWidget";
 import TuRedInicio from "@/components/social/TuRedInicio";
-import { listPlannedFlights } from "@/actions/planned-flight";
 import { estadoOnboarding } from "@/lib/onboarding";
 import { soloVolados } from "@/lib/simulador";
 import { costosPorVuelo, gastoDelMes } from "@/lib/costos";
@@ -50,14 +48,8 @@ import { SECCIONES, hrefDeSeccion } from "@/lib/secciones";
  * los números sobre lo que se voló.
  */
 async function getDashboardData() {
-  const [response, logbooksResponse, planned] = await Promise.all([
-    apiFetch("/dashboard"),
-    apiFetch("/logbooks"),
-    // Aparte y no como extensión de `/dashboard`: ese endpoint ya devuelve la
-    // bitácora entera sin paginar. `listPlannedFlights` degrada a lista vacía sola,
-    // así que un backend sin la migración 009 no rompe esta pantalla.
-    listPlannedFlights(),
-  ]);
+  // Los vuelos programados ya no se piden (3.12.0): nadie los usaba y se sacaron de la app.
+  const [response, logbooksResponse] = await Promise.all([apiFetch("/dashboard"), apiFetch("/logbooks")]);
 
   if (response.status === 401) {
     console.log("Dashboard: 401 Unauthorized. Redirecting to logout...");
@@ -70,7 +62,7 @@ async function getDashboardData() {
     // vacías. Ver `pilotStatus`.
     return {
       flights: [], aircraft: [], profile: null, packs: [],
-      documents: [], logbooks: [] as Logbook[], planned: [] as PlannedFlight[],
+      documents: [], logbooks: [] as Logbook[],
       transactions: [] as Transaction[], balance: 0,
       unavailable: ["profile", "aircraft", "flights", "packs", "transactions", "audit", "documents"],
     };
@@ -84,7 +76,6 @@ async function getDashboardData() {
 
   return {
     logbooks,
-    planned,
     /**
      * Qué secciones del payload no se pudieron leer. El backend las nombra en vez
      * de mandar `[]` a secas: una consulta que falla y una tabla vacía llegaban
@@ -119,7 +110,7 @@ async function getDashboardData() {
  * bloques para alguien que abre la app a ver si puede volar el sábado.
  */
 export default async function Dashboard() {
-  const { flights: bitacora, aircraft, profile, packs, documents, logbooks, planned, unavailable, transactions, balance } =
+  const { flights: bitacora, aircraft, profile, packs, documents, logbooks, unavailable, transactions, balance } =
     await getDashboardData();
 
   /*
@@ -348,7 +339,7 @@ export default async function Dashboard() {
           queda={quedaEscritorio}
           fajas={disponible("flights") ? fajas : []}
           chequeo={chequeo}
-          hrefPreparar={preparar ? hrefDeSeccion(preparar) : "/dashboard/planificador"}
+          hrefPreparar={preparar ? hrefDeSeccion(preparar) : "/dashboard/mapa/planilla"}
         />
       </div>
 
@@ -366,22 +357,11 @@ export default async function Dashboard() {
         {documentosDisponibles && <ProximoVencimiento documents={documents as PilotDocument[]} />}
       </div>
 
-      {/* "¿Volaste esto?" — el vuelo que el piloto programó y cuya fecha ya pasó.
-          Es lo único de la pantalla, además del semáforo, que le pide algo: un vuelo
-          sin registrar es un agujero en el libro. "Hoy" baja resuelto desde el
-          server, como en el resumen y el heatmap. */}
       <div className="max-lg:order-2">
         <ResumenRapido queda={queda} falta={falta} totalHoras={carrera.total > 0 ? carrera.total.toFixed(1).replace(".", ",") : null} ultimos={ultimos} />
       </div>
 
       <div className="contents max-lg:block max-lg:order-3 max-lg:space-y-5">
-      <VuelosPendientes
-        planned={planned as PlannedFlight[]}
-        aircraft={aircraft as Aircraft[]}
-        todayIso={todayIso}
-        tieneVuelos={bitacora.length > 0}
-      />
-
       {/* "¿Ya volaste?" — un plan de vuelo presentado cuya llegada estimada ya pasó
           (Federico, 2026-10-20). Por `Suspense`: lee los planes y nunca demora lo de arriba. */}
       <Suspense fallback={null}>

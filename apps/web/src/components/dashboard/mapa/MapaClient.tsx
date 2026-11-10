@@ -634,10 +634,10 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
 
         {tokens.length > 1 && !volando && (
           <Link
-            href={`/dashboard/planificador?ruta=${encodeURIComponent(tokens.join("-"))}`}
+            href={`/dashboard/mapa/planilla?ruta=${encodeURIComponent(tokens.join("-"))}`}
             className="text-xs font-semibold text-aviation-blue hover:underline"
           >
-            Viento, combustible y planilla en el Planificador →
+            Planilla, combustible y plan de vuelo →
           </Link>
         )}
       </div>

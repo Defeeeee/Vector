@@ -5,7 +5,7 @@ import { buscarGuias, buscarPantallas, copilotoPrimero, sinTildes } from "./busc
 describe("el buscador de la app", () => {
   it("encuentra pestañas por su nombre y por lo que la gente escribe", () => {
     expect(buscarPantallas("vuelos").map((r) => r.href)).toContain("/dashboard/history");
-    expect(buscarPantallas("metar").map((r) => r.href)).toContain("/dashboard/clima");
+    expect(buscarPantallas("metar").map((r) => r.href)).toContain("/dashboard/airports");
     expect(buscarPantallas("ddjj")[0].href).toBe("/dashboard/history/cad");
     expect(buscarPantallas("plan de vuelo")[0].href).toBe("/dashboard/plan-de-vuelo");
     expect(buscarPantallas("CMA")[0].href).toBe("/dashboard/settings");
@@ -14,7 +14,7 @@ describe("el buscador de la app", () => {
   it("sin tildes ni mayúsculas", () => {
     expect(sinTildes("Bitácora ÁÉ")).toBe("bitacora ae");
     expect(buscarPantallas("bitacora").length).toBeGreaterThan(0);
-    expect(buscarPantallas("AUDITORÍA")[0].href).toBe("/dashboard/audit");
+    expect(buscarPantallas("AUDITORÍA")[0].href).toBe("/dashboard/history/auditoria");
   });
 
   it("con menos de dos letras no busca", () => {

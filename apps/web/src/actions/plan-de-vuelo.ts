@@ -151,7 +151,7 @@ export async function guardarPerfilAvion(aircraftId: string, perfil: PerfilAvion
     if (!res.ok) return { error: await detalle(res, "No se pudo guardar el perfil del avión.") };
     revalidatePath("/dashboard/settings");
     revalidatePath(LISTA);
-    revalidatePath("/dashboard/planificador");
+    revalidatePath("/dashboard/mapa/planilla");
     return { ok: true as const };
   } catch (e) {
     if (esErrorDeRedirect(e)) throw e;

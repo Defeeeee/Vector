@@ -5,10 +5,8 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import CompartirTarjeta from "@/components/dashboard/CompartirTarjeta";
 import SummaryClient from "@/components/dashboard/SummaryClient";
 import ComoVenisVolando from "@/components/dashboard/ComoVenisVolando";
-import CustomStatsRow from "@/components/dashboard/CustomStatsRow";
 import GraficosDeHoras from "@/components/dashboard/GraficosDeHorasLazy";
 import ActivityHeatmap from "@/components/dashboard/ActivityHeatmap";
-import { listCustomStats } from "@/actions/custom-stat";
 import { getAirport } from "@/lib/airports";
 import { openingTotals, splitRoute } from "@/lib/summary";
 import { soloVolados } from "@/lib/simulador";
@@ -17,15 +15,11 @@ import { horasAcumuladas, horasPorMes } from "@/lib/tendencia";
 
 /**
  * Los tres pedidos en paralelo. `/logbooks` iba después de `/dashboard` sin depender
- * de él, y cada viaje al backend cuesta lo suyo; las métricas propias se sumaron al
- * mudarse desde el inicio y degradan solas a lista vacía.
+ * de él, y cada viaje al backend cuesta lo suyo; las métricas propias se sacaron en la
+ * 3.12.0 (nadie había armado una).
  */
 async function getSummaryData() {
-  const [response, logbooksResponse, customStats] = await Promise.all([
-    apiFetch("/dashboard"),
-    apiFetch("/logbooks"),
-    listCustomStats(),
-  ]);
+  const [response, logbooksResponse] = await Promise.all([apiFetch("/dashboard"), apiFetch("/logbooks")]);
 
   if (response.status === 401) {
     console.log("SummaryPage: 401 Unauthorized. Redirecting to logout...");
@@ -33,7 +27,7 @@ async function getSummaryData() {
   }
 
   if (!response.ok) {
-    return { flights: [] as Flight[], aircraft: [] as Aircraft[], logbooks: [] as Logbook[], customStats };
+    return { flights: [] as Flight[], aircraft: [] as Aircraft[], logbooks: [] as Logbook[] };
   }
 
   const data = await response.json();
@@ -44,12 +38,11 @@ async function getSummaryData() {
     flights: (data.flights || []) as Flight[],
     aircraft: (data.aircraft || []) as Aircraft[],
     logbooks,
-    customStats,
   };
 }
 
 export default async function SummaryPage() {
-  const { flights: bitacora, aircraft, logbooks, customStats } = await getSummaryData();
+  const { flights: bitacora, aircraft, logbooks } = await getSummaryData();
 
   /*
     Esta pantalla responde "qué volé", y una sesión de simulador no es algo que se
@@ -99,7 +92,6 @@ export default async function SummaryPage() {
           el inicio junto con los gráficos y el heatmap de más abajo. */}
       <ComoVenisVolando flights={flights} todayIso={todayIso} />
 
-      <CustomStatsRow stats={customStats} flights={flights} aircraft={aircraft} />
 
       <SummaryClient
         flights={flights}

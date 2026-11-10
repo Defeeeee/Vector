@@ -608,7 +608,7 @@ export default function PlanificadorClient({ aeronaves, rutaInicial, aeronaveIni
     <div className="space-y-8 md:space-y-10">
       <PageHeader
         eyebrow="Planificación"
-        title="Planificador"
+        title="Planilla de navegación"
         action={
           <button
             type="button"

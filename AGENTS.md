@@ -73,16 +73,23 @@ Las rutas son relativas a `apps/web/`; las de `docs/` y `apps/extension/`, a la 
 
 ### La navegación
 
-Cinco secciones: **Inicio, Bitácora, Balance, Preparar vuelo, Pilotos**. Las pantallas que
-no son sección son pestañas:
+Cuatro secciones desde la 3.12.0: **Inicio, Bitácora, Preparar vuelo, Pilotos**. Las
+pantallas que no son sección son pestañas:
 
-- Bitácora = Vuelos · Resumen · Calendario · Auditoría.
-- Preparar vuelo = Planificador · Mapa · Plan de vuelo · Aeropuertos · Clima · Herramientas.
-  El editor de un plan (`/dashboard/plan-de-vuelo/[id]`) cuelga de Plan de vuelo.
-- Pilotos = Red · Buscar · Actividad. Publicar y el perfil de un piloto
+- Bitácora = Vuelos · Resumen · Gastos (`/dashboard/balance`). La Auditoría
+  (`/dashboard/history/auditoria`) cuelga de Vuelos y avisa arriba de la lista (`AvisoAuditoria`).
+- Preparar vuelo = Mapa · Plan de vuelo · Aeródromos · Herramientas. La planilla de navegación
+  (el viejo Planificador, `/dashboard/mapa/planilla`) cuelga del Mapa, que le pasa la ruta; de ahí
+  sale "Armar el plan de vuelo". El editor de un plan (`/dashboard/plan-de-vuelo/[id]`) cuelga de
+  Plan de vuelo. El METAR y el TAF están en la ficha de Aeródromos.
+- Pilotos = Red · Actividad. Buscar, Publicar y el perfil de un piloto
   (`/dashboard/pilotos/[handle]`) cuelgan de la Red.
 
-Las URLs son las de siempre. **Cinco es el techo**, porque es lo que entra en la píldora
+**Se sacaron en la 3.12.0**, medido en la base (0 uso): el Calendario y los vuelos programados
+(la tabla `planned_flights` y su API siguen en el backend), las métricas propias
+(`custom_stats`, ídem) y la pestaña Clima. Las URLs viejas redirigen (`next.config.js`).
+
+**Cinco es el techo**, porque es lo que entra en la píldora
 del teléfono sin la hoja "Más", y un test lo fija. La pestaña activa es la de `href` más
 específico (`pestanaActiva`): por prefijo, la Red se prendería junto con Buscar o
 Actividad.
@@ -543,9 +550,11 @@ importa es el del backend (`request_max_body_size`, 30 MB).
   red bajó de ~150 ms a ~1 ms, y una consulta REST de ~160 ms a ~75 ms; lo que queda es
   el procesamiento de Supabase, no la distancia. Sólo el backend habla con Supabase (su
   `.env`).
-- **Propuestas de simplificación sin decidir:** congelar lo que hoy no usa nadie
-  (métricas propias, calendario, la UI de múltiples libros) y poner detrás de un permiso
-  por perfil lo que excede al alumno (aerovías, HVI, Jeppesen).
+- **La simplificación de la 3.12.0** (Federico, 2026-11-05) sacó el calendario y las métricas
+  propias. **Falta:** fusionar la planilla adentro del Mapa (prototipo primero), "Armar el plan de
+  vuelo" directo desde la tarjeta de la ruta, guardar borradores de ruta en el Mapa (pedidos de
+  Federico) y el Hangar con un solo libro. Sin decidir: poner detrás de un permiso por perfil lo
+  que excede al alumno (aerovías, HVI, Jeppesen).
 - **La red social deja afuera, a propósito,** editar una publicación, redirigir un @ viejo
   y páginas de escuela o aeródromo. Además:
   - los reportes no tienen pantalla: se leen en la tabla `reportes` y llegan como aviso

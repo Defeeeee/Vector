@@ -43,7 +43,7 @@ export async function marcarEnElCad(items: { vectorId: string; cadId: number; au
 
 /** Las pantallas que muestran un vuelo nuevo (las mismas que al registrar uno a mano). */
 function revalidarVuelosNuevos() {
-  for (const p of ["/dashboard", "/dashboard/history", "/dashboard/history/cad", "/dashboard/summary", "/dashboard/balance", "/dashboard/airports", "/dashboard/audit", "/dashboard/settings", "/dashboard/calendario"])
+  for (const p of ["/dashboard", "/dashboard/history", "/dashboard/history/cad", "/dashboard/summary", "/dashboard/balance", "/dashboard/airports", "/dashboard/history/auditoria", "/dashboard/settings"])
     revalidatePath(p);
 }
 

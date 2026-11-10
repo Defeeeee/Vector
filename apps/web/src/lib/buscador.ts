@@ -30,6 +30,9 @@ const OTRAS: { titulo: string; detalle: string; href: string; palabras: string }
   { titulo: "Pasar al CAD", detalle: "Tus vuelos al CAD de ANAC, y traerlos", href: "/dashboard/history/cad", palabras: "cad anac ddjj declaracion jurada traer marcador" },
   { titulo: "Hangar", detalle: "Tu perfil, licencia, CMA, aviones y libros", href: "/dashboard/settings", palabras: "perfil ajustes configuracion licencia cma avion aviones libros whatsapp firma cuenta" },
   { titulo: "Novedades", detalle: "Lo nuevo en Vector", href: "/dashboard/novedades", palabras: "cambios version changelog" },
+  { titulo: "Auditoría", detalle: "Lo que conviene revisar en tu libro", href: "/dashboard/history/auditoria", palabras: "auditoria errores revisar salud libro" },
+  { titulo: "Planilla de navegación", detalle: "Rumbos, tiempos y combustible de la ruta", href: "/dashboard/mapa/planilla", palabras: "planificador planilla navegacion combustible viento rumbo" },
+  { titulo: "Buscar pilotos", detalle: "Encontrá a alguien por su @ o su nombre", href: "/dashboard/pilotos/buscar", palabras: "buscar pilotos seguir amigos" },
   { titulo: "Publicar en la red", detalle: "Una foto o un vuelo para tu red", href: "/dashboard/pilotos/publicar", palabras: "publicacion foto compartir" },
 ];
 
@@ -38,16 +41,12 @@ const PALABRAS_PESTANA: Record<string, string> = {
   "/dashboard": "inicio puedo volar hoy estado",
   "/dashboard/history": "bitacora vuelos libro historial",
   "/dashboard/summary": "resumen horas estadisticas totales desglose",
-  "/dashboard/calendario": "calendario programados agenda",
-  "/dashboard/audit": "auditoria errores revisar",
-  "/dashboard/balance": "saldo pack paquete horas pagos plata",
-  "/dashboard/planificador": "planificador ruta navegacion combustible viento",
+  "/dashboard/balance": "gastos saldo balance pack paquete horas pagos plata",
+  "/dashboard/mapa": "mapa ruta navegacion espacios aereos volar gps cartas",
   "/dashboard/plan-de-vuelo": "plan de vuelo eana aro fpl demora cancelacion",
-  "/dashboard/airports": "aeropuertos aerodromos pistas frecuencias notam aip",
-  "/dashboard/clima": "clima meteo metar taf tiempo",
+  "/dashboard/airports": "aeropuertos aerodromos pistas frecuencias notam aip clima meteo metar taf tiempo",
   "/dashboard/tools": "herramientas calculadoras conversor piernera examen",
   "/dashboard/pilotos": "red pilotos amigos feed",
-  "/dashboard/pilotos/buscar": "buscar pilotos seguir",
   "/dashboard/pilotos/actividad": "actividad avisos notificaciones",
 };
 

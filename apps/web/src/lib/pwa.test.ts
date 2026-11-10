@@ -79,7 +79,7 @@ describe("paginaCacheable", () => {
     for (const p of [
       "/dashboard",
       "/dashboard/history",
-      "/dashboard/planificador",
+      "/dashboard/mapa/planilla",
       "/dashboard/tools",
       "/dashboard/plan-de-vuelo",
       "/dashboard/plan-de-vuelo/3f2c1a9e-8b7d-4c6e-9a1b-2d3e4f5a6b7c",
@@ -104,7 +104,7 @@ describe("paginaCacheable", () => {
       "/dashboard/log-flight",
       "/dashboard/log-flight/import",
       "/dashboard/settings",
-      "/dashboard/audit",
+      "/dashboard/history/auditoria",
       "/login",
       "/",
     ]) {

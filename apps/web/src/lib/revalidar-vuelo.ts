@@ -18,9 +18,8 @@ export function revalidarLoQueCambiaUnVuelo() {
   revalidatePath("/dashboard/summary");
   revalidatePath("/dashboard/balance");
   revalidatePath("/dashboard/airports");
-  revalidatePath("/dashboard/audit");
+  revalidatePath("/dashboard/history/auditoria");
   revalidatePath("/dashboard/settings");
   // El plan que se acaba de cerrar tiene que desaparecer del calendario sin que
   // el piloto refresque a mano.
-  revalidatePath("/dashboard/calendario");
 }

@@ -10,7 +10,7 @@ import TituloTelefono from "@/components/dashboard/TituloTelefono";
 import { apiFetch } from "@/lib/api";
 import { leerResumenSocial } from "@/lib/resumen-social";
 import { AuditSummary, Profile } from "@/types";
-import { AUDITORIA_HREF, ACTIVIDAD_HREF } from "@/lib/secciones";
+import { ACTIVIDAD_HREF } from "@/lib/secciones";
 import SinConexionBanner from "@/components/dashboard/SinConexionBanner";
 import VistoPorUltimaVez from "@/components/dashboard/VistoPorUltimaVez";
 import { AvisosProvider } from "@/components/dashboard/Avisos";
@@ -115,7 +115,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       texto: `${totalPilotos} ${totalPilotos === 1 ? "novedad" : "novedades"}`,
     },
   };
-  const contadores = { [AUDITORIA_HREF]: auditCount, [ACTIVIDAD_HREF]: totalPilotos };
+  // La Auditoría ya no es pestaña (3.12.0): su número va en la Bitácora (`alertas`) y en el aviso de Vuelos.
+  const contadores = { [ACTIVIDAD_HREF]: totalPilotos };
   const initials = `${profile?.first_name?.charAt(0) || ""}${profile?.last_name?.charAt(0) || ""}`;
   // La foto del @, si subió una; si no, las iniciales de siempre.
   const avatar = social.avatar_url ? (

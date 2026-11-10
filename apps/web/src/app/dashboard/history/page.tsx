@@ -15,6 +15,8 @@ import { leerResumenSocial } from "@/lib/resumen-social";
 import { rutaLegible } from "@/lib/social";
 import { leidoDelCad, pendientesDelCad } from "@/lib/cad";
 import LeidoDelCad from "@/components/dashboard/cad/LeidoDelCad";
+import AvisoAuditoria from "@/components/dashboard/AvisoAuditoria";
+import { Suspense } from "react";
 
 import { redirect } from "next/navigation";
 
@@ -166,6 +168,11 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
         {!esAlumno(profile?.license_type) && flights.some((f) => f.cad_vuelo_id) && <LeidoDelCad leido={leidoDelCad(profile?.cad_leido_at, new Date())} />}
       </PageHeader>
       </div>
+
+      {/* La Auditoría era una pestaña hasta la 3.12.0; ahora avisa acá. Por `Suspense`: no demora la lista. */}
+      <Suspense fallback={null}>
+        <AvisoAuditoria />
+      </Suspense>
 
       {(ofrecerCompartir || hito) && recienCargado && (
         <BannerCompartirVuelo

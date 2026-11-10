@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.12.0 — Menos pantallas, todo a mano
+
+_10 de noviembre de 2026_
+
+- **Cuatro secciones en vez de cinco** — Inicio, Bitácora, Preparar vuelo y Pilotos. Tus gastos están ahora en la Bitácora, al lado de tus vuelos y el resumen, y la auditoría del libro te avisa arriba de la lista de vuelos.
+- **Preparar vuelo arranca en el Mapa** — La planilla de navegación sale de la ruta del Mapa, y de ahí armás el plan de vuelo. El METAR y el TAF de cada aeródromo están en su ficha, en Aeródromos.
+
 ## v3.11.0 — Vector, de noche
 
 _5 de noviembre de 2026_

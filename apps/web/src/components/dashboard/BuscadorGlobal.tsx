@@ -38,7 +38,7 @@ const SUGERIDOS: Item[] = [
   { clave: "s1", grupo: "Pantallas", titulo: "Registrar vuelo", detalle: "Cargar un vuelo nuevo", href: "/dashboard/log-flight" },
   { clave: "s2", grupo: "Pantallas", titulo: "Pasar al CAD", detalle: "Tus vuelos al CAD de ANAC", href: "/dashboard/history/cad" },
   { clave: "s3", grupo: "Pantallas", titulo: "Plan de vuelo", detalle: "Preparar vuelo", href: "/dashboard/plan-de-vuelo" },
-  { clave: "s4", grupo: "Pantallas", titulo: "Clima", detalle: "Preparar vuelo", href: "/dashboard/clima" },
+  { clave: "s4", grupo: "Pantallas", titulo: "Mapa", detalle: "Preparar vuelo", href: "/dashboard/mapa" },
 ];
 
 /** La barra que baja y el diálogo que crece: un resorte corto, sin rebote. */

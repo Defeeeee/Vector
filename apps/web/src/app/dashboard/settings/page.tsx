@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { Aircraft, Profile, FlightPack, PilotDocument, Logbook, Flight, PerfilPublico, PilotoResumen } from "@/types";
-import { Plane, User, Package, CalendarClock, BookOpen, Download, Gauge, AtSign } from "lucide-react";
+import { Plane, User, Package, CalendarClock, BookOpen, Download, AtSign } from "lucide-react";
 import ProfileForm from "@/components/dashboard/ProfileForm";
 import AircraftCard from "@/components/dashboard/AircraftCard";
 import FlightPackCard from "@/components/dashboard/FlightPackCard";
@@ -16,12 +16,9 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
 
 import { redirect } from "next/navigation";
-import CustomStatsManager from "@/components/dashboard/CustomStatsManager";
 import PerfilPublicoForm from "@/components/social/PerfilPublicoForm";
 import AvisosPush from "@/components/social/AvisosPush";
 import ListaBloqueados from "@/components/social/ListaBloqueados";
-import { listCustomStats } from "@/actions/custom-stat";
-import { recencyWindowDays } from "@/lib/recency";
 
 async function getSettingsData() {
   const [profilesRes, aircraftRes, packsRes, documentsRes, logbooksRes, flightsRes, perfilPublicoRes, bloqueadosRes, clavePushRes] =
@@ -69,7 +66,6 @@ async function getSettingsData() {
 }
 
 export default async function SettingsPage() {
-  const customStats = await listCustomStats();
   const { profile, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush } =
     await getSettingsData();
   const cma = documents.find(doc => doc.kind === "cma");
@@ -221,28 +217,6 @@ export default async function SettingsPage() {
           </div>
 
           <FlightPackForm aircraft={aircraft} />
-        </section>
-
-        {/* S1 — las métricas propias. Van en el Hangar, junto a lo demás que el
-            piloto configura una vez y después mira desde el dashboard. */}
-        <section className="space-y-4 md:space-y-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <Gauge className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-zinc-900" />
-            </div>
-            <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Tus métricas</h3>
-          </div>
-
-          <p className="text-zinc-500 dark:text-zinc-400 font-medium text-sm leading-relaxed">
-            Armá los números que querés seguir y aparecen en el Resumen de la Bitácora. Sirven para
-            recencia, habilitaciones por tipo o cualquier hito que te propongas.
-          </p>
-
-          <CustomStatsManager
-            stats={customStats}
-            aircraft={aircraft}
-            recencyWindow={recencyWindowDays(profile?.license_type)}
-          />
         </section>
 
         {/* D1 — la contrapartida del borrado de cuentas. Va al final del Hangar,

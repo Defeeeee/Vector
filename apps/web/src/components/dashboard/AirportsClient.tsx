@@ -72,6 +72,8 @@ export interface AirportHistory {
 
 interface Weather {
   metar: string;
+  /** El TAF crudo, o "No disponible": la pestaña Clima se sacó en la 3.12.0 y su TAF vino acá. */
+  taf?: string;
   category: string;
   temp: number | null;
   windSpeed: number | null;
@@ -718,6 +720,17 @@ export default function AirportsClient({
                       {weather.metar}
                     </p>
                   </div>
+                  {weather.taf && weather.taf !== "No disponible" && (
+                    <details className="group rounded-xl bg-zinc-100 dark:bg-white/[0.06] px-3 py-2.5">
+                      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden font-mono text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center justify-between">
+                        Pronóstico TAF
+                        <span className="transition-transform group-open:rotate-180">▾</span>
+                      </summary>
+                      <p className="data mt-2 text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-300 break-words whitespace-pre-line">
+                        {weather.taf}
+                      </p>
+                    </details>
+                  )}
                   {/* The METAR is informational — see the Términos page. */}
                   <p className="text-[11px] text-zinc-400 dark:text-zinc-500 leading-relaxed">
                     Informativo. No lo uses como única fuente para una decisión operativa.

@@ -96,7 +96,7 @@ export default function ListaPlanes({
             <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">Sin avión cargado</span>
           </button>
           <Link
-            href="/dashboard/planificador"
+            href="/dashboard/mapa/planilla"
             className="rounded-3xl border border-dashed border-zinc-300 dark:border-white/15 p-5 hover:border-zinc-500 transition-colors"
           >
             <span className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">

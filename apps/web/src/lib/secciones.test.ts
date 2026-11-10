@@ -38,6 +38,9 @@ const CUELGAN_DE_UNA_PESTANA: Record<string, string> = {
   "/dashboard/pilotos/[handle]": "tocar un piloto en cualquier lista, publicación o actividad",
   "/dashboard/plan-de-vuelo/[id]": "tocar un plan en la lista de Plan de vuelo, o armarlo desde el planificador",
   "/dashboard/history/cad": "el botón \"Pasar al CAD\" de la Bitácora",
+  "/dashboard/history/auditoria": "el aviso de la Auditoría arriba de los vuelos (era pestaña hasta la 3.12.0)",
+  "/dashboard/mapa/planilla": "\"Planilla de navegación\" en la tarjeta de la ruta del Mapa (era el Planificador hasta la 3.12.0)",
+  "/dashboard/pilotos/buscar": "\"Buscar pilotos\" en la Red y en la tarjeta \"Tu red\" del inicio (era pestaña hasta la 3.12.0)",
 };
 
 /** Las rutas con `page.tsx` bajo `src/app/dashboard`, sin grupos ni slots. */
@@ -57,10 +60,11 @@ function pantallasDelDashboard(): string[] {
 }
 
 describe("las secciones", () => {
-  it("van en el orden de los íconos que ya estaban, y lo nuevo al final", () => {
-    // Inicio, Bitácora, Balance y el Planificador ocupaban los primeros cuatro
-    // lugares. Cambiar este orden mueve íconos que la gente ya tiene en la mano.
-    expect(SECCIONES.map((s) => s.clave)).toEqual(["inicio", "bitacora", "balance", "preparar", "pilotos"]);
+  it("van en el orden de los íconos que ya estaban", () => {
+    // Inicio, Bitácora y Preparar vuelo ocupaban los primeros lugares; Balance se fue
+    // adentro de la Bitácora (Gastos) en la 3.12.0. Cambiar este orden mueve íconos que
+    // la gente ya tiene en la mano.
+    expect(SECCIONES.map((s) => s.clave)).toEqual(["inicio", "bitacora", "preparar", "pilotos"]);
   });
 
   it("no pasan de cinco, lo que entra en la píldora del teléfono", () => {
@@ -110,8 +114,7 @@ describe("las secciones", () => {
     expect(SECCIONES.map(hrefDeSeccion)).toEqual([
       "/dashboard",
       "/dashboard/history",
-      "/dashboard/balance",
-      "/dashboard/planificador",
+      "/dashboard/mapa",
       "/dashboard/pilotos",
     ]);
   });
@@ -124,16 +127,16 @@ describe("seccionDe", () => {
     }
   });
 
-  it("agrupa el resumen, el calendario y la auditoría con la bitácora", () => {
+  it("agrupa el resumen, los gastos y la auditoría con la bitácora", () => {
     expect(seccionDe("/dashboard/summary")?.clave).toBe("bitacora");
-    expect(seccionDe("/dashboard/calendario")?.clave).toBe("bitacora");
-    expect(seccionDe("/dashboard/audit")?.clave).toBe("bitacora");
+    expect(seccionDe("/dashboard/balance")?.clave).toBe("bitacora");
+    expect(seccionDe("/dashboard/history/auditoria")?.clave).toBe("bitacora");
   });
 
-  it("agrupa aeropuertos, clima y herramientas con el planificador", () => {
+  it("agrupa aeródromos, herramientas y la planilla con el Mapa", () => {
     expect(seccionDe("/dashboard/airports")?.clave).toBe("preparar");
-    expect(seccionDe("/dashboard/clima")?.clave).toBe("preparar");
     expect(seccionDe("/dashboard/tools")?.clave).toBe("preparar");
+    expect(seccionDe("/dashboard/mapa/planilla")?.clave).toBe("preparar");
   });
 
   it("no le asigna sección a las pantallas que están fuera de la barra", () => {
@@ -144,13 +147,13 @@ describe("seccionDe", () => {
     expect(seccionDe("/dashboard/airports/SADF")?.clave).toBe("preparar");
   });
 
-  it("distingue Red de Buscar y de Actividad aunque cuelguen de ella", () => {
+  it("distingue la Red de Actividad aunque cuelgue de ella", () => {
     // `/dashboard/pilotos/actividad` empieza con `/dashboard/pilotos/`: por prefijo
     // se iluminarían dos pestañas de Pilotos a la vez.
     const pilotos = SECCIONES.find((s) => s.clave === "pilotos")!;
     expect(seccionDe("/dashboard/pilotos/actividad")?.clave).toBe("pilotos");
     expect(pestanaActiva(pilotos, "/dashboard/pilotos/actividad")?.label).toBe("Actividad");
-    expect(pestanaActiva(pilotos, "/dashboard/pilotos/buscar")?.label).toBe("Buscar");
+    expect(pestanaActiva(pilotos, "/dashboard/pilotos/buscar")?.label).toBe("Red");
     expect(pestanaActiva(pilotos, "/dashboard/pilotos")?.label).toBe("Red");
   });
 

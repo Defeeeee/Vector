@@ -15,7 +15,7 @@
  * ## Por qué está en un solo lugar y no eran ocho copias
  *
  * `e?.digest?.startsWith("NEXT_REDIRECT")` estaba escrito **ocho veces** —cuatro en
- * `actions/flight.ts`, tres en `actions/planned-flight.ts`, una en
+ * `actions/flight.ts`, tres en las acciones, una en
  * `FlightLogForm.tsx`— y ninguna tenía un test. Es la misma lección que dejó
  * `splitRoute`, que en este repo llegó a estar escrita cinco veces con cuatro
  * criterios distintos: una condición que se repite a mano es una condición que se

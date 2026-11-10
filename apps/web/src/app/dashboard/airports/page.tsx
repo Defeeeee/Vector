@@ -109,7 +109,7 @@ export default async function AirportsPage({ searchParams }: { searchParams: Pro
     <div className="space-y-8 md:space-y-10 w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
       <PageHeader
         eyebrow="Ficha, clima, filtros y tu historial en cada aeródromo"
-        title="Aeropuertos"
+        title="Aeródromos"
       />
       <AirportsClient history={history} initialIcao={initialIcao} jeppesenAccess={jeppesenAccess} filtrosIniciales={filtros} />
     </div>

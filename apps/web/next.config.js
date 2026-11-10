@@ -43,6 +43,20 @@ module.exports = {
     `Service-Worker-Allowed` deja explícito el alcance de origen entero, para que el
     día que el archivo se sirva desde otra ruta el alcance no se achique en silencio.
   */
+  /*
+    Las pantallas que se fueron o se mudaron en la simplificación de la 3.12.0: los links
+    viejos (marcadores, mails, novedades) siguen llegando. `permanent: false` por si alguna
+    vuelve. La query se conserva sola (`?ruta=` del Planificador, `?q=` de Buscar).
+  */
+  async redirects() {
+    return [
+      { source: "/dashboard/calendario", destination: "/dashboard/history", permanent: false },
+      { source: "/dashboard/audit", destination: "/dashboard/history/auditoria", permanent: false },
+      { source: "/dashboard/clima", destination: "/dashboard/airports", permanent: false },
+      { source: "/dashboard/planificador", destination: "/dashboard/mapa/planilla", permanent: false },
+    ];
+  },
+
   async headers() {
     return [
       {

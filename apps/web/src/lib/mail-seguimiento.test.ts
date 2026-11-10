@@ -47,7 +47,7 @@ describe("las firmas del seguimiento", () => {
 
 describe("destinoDe", () => {
   it("de Vector guarda la ruta, sin query string", () => {
-    expect(destinoDe(`${APP}/dashboard/planificador?ruta=SADF-SAZS`, APP)).toBe("/dashboard/planificador");
+    expect(destinoDe(`${APP}/dashboard/mapa/planilla?ruta=SADF-SAZS`, APP)).toBe("/dashboard/mapa/planilla");
     expect(destinoDe(APP, APP)).toBe("/");
   });
   it("de afuera guarda sólo el dominio", () => {
@@ -61,7 +61,7 @@ describe("destinoDe", () => {
 describe("conSeguimiento", () => {
   const baja = `${APP}/mail/baja?u=x&t=y`;
   const html = `<!doctype html><html><head><link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet"></head><body>
-<a href="${APP}/dashboard/planificador?ruta=SADF-SAZS&amp;x=1" style="color:red">Planificador</a>
+<a href="${APP}/dashboard/mapa/planilla?ruta=SADF-SAZS&amp;x=1" style="color:red">Planificador</a>
 <a href="mailto:hola@x.com">Escribinos</a>
 <a href="${APP}/mail/baja?u=x&amp;t=y">No recibirlo más</a>
 <img src="${APP}/hotlink-ok/correo/logo.png">
@@ -73,7 +73,7 @@ describe("conSeguimiento", () => {
     const link = m[1].replace(/&amp;/g, "&");
     expect(new URL(link).pathname).toBe("/api/mail/c");
     const { e, u, f } = partes(link);
-    expect(u).toBe(`${APP}/dashboard/planificador?ruta=SADF-SAZS&x=1`);
+    expect(u).toBe(`${APP}/dashboard/mapa/planilla?ruta=SADF-SAZS&x=1`);
     expect(clicValido(e, u, f, S)).toBe(true);
   });
 

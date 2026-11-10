@@ -102,8 +102,7 @@ const PAGINAS_CACHEABLES = [
   "/dashboard/history",
   "/dashboard/summary",
   "/dashboard/balance",
-  "/dashboard/calendario",
-  "/dashboard/planificador",
+  "/dashboard/mapa/planilla",
   // El Mapa (3.0.0): se usa en vuelo, que es justo donde no hay señal.
   "/dashboard/mapa",
   "/dashboard/airports",

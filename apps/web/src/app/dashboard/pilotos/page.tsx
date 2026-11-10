@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Users, UserRound } from "lucide-react";
+import { Search, Users, UserRound } from "lucide-react";
 import PageHeader from "@/components/dashboard/PageHeader";
 import AvisoNoSePudo from "@/components/social/AvisoNoSePudo";
 import CompartirPerfil from "@/components/social/CompartirPerfil";
@@ -62,13 +62,23 @@ export default async function PaginaRed() {
         eyebrow="Lo que publican los pilotos que seguís"
         title="Red"
         action={
-          <Link
-            href={rutaPerfilApp(resumen.handle)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
-          >
-            <UserRound className="w-4 h-4" />
-            Mi perfil
-          </Link>
+          // Buscar era una pestaña hasta la 3.12.0; ahora se llega desde acá y desde "Tu red".
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/dashboard/pilotos/buscar"
+              className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+            >
+              <Search className="w-4 h-4" />
+              Buscar pilotos
+            </Link>
+            <Link
+              href={rutaPerfilApp(resumen.handle)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 dark:border-white/10 px-4 py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+            >
+              <UserRound className="w-4 h-4" />
+              Mi perfil
+            </Link>
+          </div>
         }
       />
 
