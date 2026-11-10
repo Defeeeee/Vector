@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { RefreshCw } from "lucide-react";
 import { LogoVector } from "@/components/Marca";
 import { MENSAJES, VENTANA_ARRANQUE_MS, VOLVER_TRAS_MS, actualizarSinPreguntar, comoActualizar, linkParaActualizar } from "@/lib/pwa";
 
@@ -253,26 +254,39 @@ export default function ServiceWorkerVector() {
   if (!esperando || actualizarSinPreguntar(pathname, typeof location === "undefined" ? "" : location.search)) return null;
 
   /*
-    En una pantalla de escribir no se recarga debajo de lo escrito (se perdería). Una franja avisa
-    que se aplica al salir, que casi siempre es al guardar. Con la estética de la 3.13.0 (Federico:
-    "que el cartel no sea una bento flotante"): no es una tarjeta sino una barra de estado de borde a
-    borde, con el rótulo en mono y el punto cian. En la compu va pegada al borde de abajo, al lado de
-    la barra lateral; en el teléfono, justo arriba de la píldora de secciones.
+    En una pantalla de escribir no se recarga debajo de lo escrito (se perdería): una franja de borde
+    a borde avisa que se aplica al salir, que casi siempre es al guardar, y ofrece aplicarla ya.
+    Con la estética de la 3.13.0 y **invasiva a propósito** (Federico: "que el cartel no sea una bento
+    flotante", "que sea más invasiva y con la fuente de la app"): la banda cian, el color del botón
+    principal, con la tipografía de la app. En la compu, pegada al borde de abajo al lado de la barra
+    lateral; en el teléfono, justo arriba de la píldora de secciones.
   */
   return (
     <div
       role="status"
-      className="fixed inset-x-0 lg:left-20 z-[45] bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] lg:bottom-0 border-y lg:border-b-0 border-white/10 bg-noche/95 backdrop-blur pointer-events-none"
+      className="fixed inset-x-0 lg:left-20 z-[45] bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] lg:bottom-0 bg-aviation-cyan text-noche shadow-[0_-12px_40px_-8px_rgb(0_0_0/0.6)]"
     >
-      <p className="flex items-center justify-center lg:justify-start gap-2.5 h-9 px-4 lg:px-10 font-mono text-[11px] uppercase tracking-[0.14em] text-zinc-400">
-        <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-aviation-cyan animate-blip" />
-        <span className="truncate sm:hidden">
-          Versión nueva <span className="text-zinc-600">·</span> al salir de acá
-        </span>
-        <span className="truncate max-sm:hidden">
-          Versión nueva lista <span className="text-zinc-600">·</span> se aplica al salir de esta pantalla
-        </span>
-      </p>
+      <div className="flex items-center gap-3 lg:gap-5 min-h-14 lg:min-h-16 px-4 lg:px-10 py-2.5">
+        <RefreshCw className="w-5 h-5 shrink-0" aria-hidden="true" />
+        <p className="flex-1 min-w-0 text-[14px] lg:text-[15px] leading-snug">
+          <span className="font-display font-extrabold tracking-[-0.01em]">Hay una versión nueva de Vector.</span>{" "}
+          <span className="font-medium max-sm:hidden">Se aplica cuando guardes o salgas de esta pantalla.</span>
+          <span className="font-medium sm:hidden">Se aplica al guardar.</span>
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload(), { once: true });
+            esperando.postMessage({ tipo: MENSAJES.activarAhora });
+            setTimeout(() => window.location.reload(), 4000);
+          }}
+          title="Recarga la pantalla: lo que no guardaste se pierde"
+          className="shrink-0 rounded-full bg-noche text-white px-4 lg:px-5 py-2 lg:py-2.5 text-[13px] lg:text-sm font-bold hover:bg-carbon transition-colors"
+        >
+          <span className="max-sm:hidden">Actualizar ahora</span>
+          <span className="sm:hidden">Ahora</span>
+        </button>
+      </div>
     </div>
   );
 }

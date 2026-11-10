@@ -92,7 +92,7 @@ export const CHANGELOG: VersionPublicada[] = [
       {
         icono: "reloj",
         titulo: "Siempre en la última versión",
-        texto: "Vector se actualiza solo al abrirlo o al pasar de una pantalla a otra, sin carteles. Si estás cargando algo, espera a que termines.",
+        texto: "Vector se actualiza solo al abrirlo o al pasar de una pantalla a otra. Si estás cargando algo, te avisa y se aplica cuando guardes.",
       },
       {
         icono: "avion",
