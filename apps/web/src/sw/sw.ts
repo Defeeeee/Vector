@@ -19,6 +19,7 @@ import {
   paginaCacheable,
   topeMeteo,
 } from "@/lib/pwa";
+import { esArranque, paginaDeArranque } from "@/lib/arranque";
 import { catalogoDesdeJson, type CatalogoSerializado } from "@/lib/catalogo-json";
 import { destinoDelAviso, leerAviso } from "@/lib/push";
 import { resolverPunto } from "@/lib/resolucion-puntos";
@@ -636,8 +637,40 @@ self.addEventListener("fetch", (evento) => {
     Las páginas de la lista blanca guardan una copia fechada; el resto —alta de vuelos,
     ajustes, auditoría, login— va a la red y cae en la pantalla de sin conexión.
   */
-  if (paginaCacheable(new URL(pedido.url).pathname)) {
-    return evento.respondWith(paginaConRespaldo(evento));
+  const pagina = () => (paginaCacheable(new URL(pedido.url).pathname) ? paginaConRespaldo(evento) : deLaRedOSinConexion(pedido));
+  if (pedido.mode === "navigate" && /^\/dashboard(\/|$)/.test(new URL(pedido.url).pathname)) {
+    return evento.respondWith(arranqueOPagina(pedido, pagina));
   }
-  evento.respondWith(deLaRedOSinConexion(pedido));
+  evento.respondWith(pagina());
 });
+
+/** Cuándo se mostró la pantalla de arranque por última vez (en memoria: corta un bucle). */
+let ultimoArranque: number | null = null;
+
+/**
+ * La pantalla de arranque (3.16.0, `lib/arranque.ts`): en un arranque en frío de la app —sin
+ * ninguna ventana de Vector abierta— se contesta al instante con la marca sobre la noche, que
+ * vuelve a pedir la misma URL. Esa segunda navegación ya tiene ventana y va por el camino de
+ * siempre, y el navegador deja la marca a la vista hasta que la página de verdad se dibuja. Así
+ * no queda en negro mientras el proxy renueva la sesión y el layout lee el backend.
+ */
+async function arranqueOPagina(pedido: Request, pagina: () => Promise<Response>): Promise<Response> {
+  const ventanas = await self.clients.matchAll({ type: "window", includeUncontrolled: true }).catch(() => [1]);
+  const ahora = Date.now();
+  if (
+    esArranque({
+      metodo: pedido.method,
+      modo: pedido.mode,
+      pathname: new URL(pedido.url).pathname,
+      ventanasAbiertas: ventanas.length,
+      ultimoArranqueMs: ultimoArranque,
+      ahoraMs: ahora,
+    })
+  ) {
+    ultimoArranque = ahora;
+    return new Response(paginaDeArranque(), {
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  }
+  return pagina();
+}

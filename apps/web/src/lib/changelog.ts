@@ -78,6 +78,32 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.16.0",
+    fecha: "2026-11-10",
+    titulo: "Volando con el Mapa",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Nariz arriba y tu track",
+        texto: "En vuelo, el mapa puede girar con tu rumbo, con el próximo punto y los instrumentos arriba y la frecuencia abajo. Mientras volás graba tu track: al terminar lo bajás en GPX o vas directo a registrar el vuelo.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+      {
+        icono: "avion",
+        titulo: "La modificación del plan de vuelo (CHG)",
+        texto: "Si cambia la autonomía, las personas a bordo u otro dato, mandá la modificación a la oficina ARO/AIS desde tu plan, con el formulario de la AIP.",
+        href: "/dashboard/plan-de-vuelo",
+        cta: "Ver tus planes",
+      },
+      {
+        icono: "reloj",
+        titulo: "Sin pantalla negra al abrir",
+        texto: "La app instalada ahora arranca con la marca de Vector mientras carga, en vez de quedarse en negro.",
+      },
+    ],
+  },
+  {
     version: "3.15.0",
     fecha: "2026-11-10",
     titulo: "El Mapa, para volar",

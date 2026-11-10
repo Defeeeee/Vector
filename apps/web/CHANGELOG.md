@@ -6,6 +6,14 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.16.0 — Volando con el Mapa
+
+_10 de noviembre de 2026_
+
+- **Nariz arriba y tu track** — En vuelo, el mapa puede girar con tu rumbo, con el próximo punto y los instrumentos arriba y la frecuencia abajo. Mientras volás graba tu track: al terminar lo bajás en GPX o vas directo a registrar el vuelo.
+- **La modificación del plan de vuelo (CHG)** — Si cambia la autonomía, las personas a bordo u otro dato, mandá la modificación a la oficina ARO/AIS desde tu plan, con el formulario de la AIP.
+- **Sin pantalla negra al abrir** — La app instalada ahora arranca con la marca de Vector mientras carga, en vez de quedarse en negro.
+
 ## v3.15.0 — El Mapa, para volar
 
 _10 de noviembre de 2026_

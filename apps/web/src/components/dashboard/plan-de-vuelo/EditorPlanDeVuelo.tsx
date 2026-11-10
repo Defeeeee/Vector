@@ -20,7 +20,9 @@ import {
 import fondoEana from "@/lib/plan-de-vuelo-eana.jpg";
 import fondoDla from "@/lib/plan-de-vuelo-dla.png";
 import fondoCnl from "@/lib/plan-de-vuelo-cnl.png";
-import { cancelarPlan, duplicarPlan, enviarDemora, enviarPlan, guardarDemoras, marcarCancelado, guardarPerfilAvion, guardarPlan, marcarDescargado } from "@/actions/plan-de-vuelo";
+import fondoChg from "@/lib/plan-de-vuelo-chg.png";
+import { CASILLAS_CHG, MAXIMO_CAMBIOS, cambiosMandados, datoDeCasilla, enmienda, nombreDeCambio, revisarCambio, type CambioCasilla } from "@/lib/cambio-plan";
+import { cancelarPlan, duplicarPlan, enviarCambio, enviarDemora, enviarPlan, guardarDemoras, marcarCancelado, guardarPerfilAvion, guardarPlan, marcarDescargado } from "@/actions/plan-de-vuelo";
 import type { EnvioPlan } from "@/lib/plan-de-vuelo-servidor";
 import { borradorParaRecuperar, claveBorrador, leerBorrador } from "@/lib/borrador-plan";
 import {
@@ -376,9 +378,10 @@ export default function EditorPlanDeVuelo({
     setSinSenal(!navigator.onLine);
     window.addEventListener("online", enLinea);
     window.addEventListener("offline", sinLinea);
-    // El código del PDF y los formularios de la demora y la cancelación, ya: así se puede armar sin señal.
+    // El código del PDF y los formularios de la demora, la modificación y la cancelación, ya:
+    // así se puede armar sin señal.
     void import("@/lib/plan-de-vuelo-pdf").catch(() => {});
-    for (const fondo of [fondoDla.src, fondoCnl.src]) fetch(fondo).catch(() => {});
+    for (const fondo of [fondoDla.src, fondoChg.src, fondoCnl.src]) fetch(fondo).catch(() => {});
     return () => {
       window.removeEventListener("online", enLinea);
       window.removeEventListener("offline", sinLinea);
@@ -577,6 +580,70 @@ export default function EditorPlanDeVuelo({
     } catch {
       setCancelacion({ estado: "error", texto: "No se pudo armar la cancelación." });
     }
+  };
+
+  /* ------------------------------------------------- la modificación (CHG) -- */
+
+  // AIP ENR 1.10, punto 6: lo que cambia va en la casilla 22 como "casilla/dato nuevo". Cada
+  // casilla arranca con lo que dice el plan presentado, y el piloto la corrige.
+  const [cambios, setCambios] = useState<CambioCasilla[]>([]);
+  const [cambioEstado, setCambioEstado] = useState<{ estado: "" | "armando" | "mandando" | "listo" | "error"; texto?: string }>({ estado: "" });
+  const planActual = useMemo(() => planVigente(r.plan, demoras), [r.plan, demoras]);
+  const textoEnmienda = enmienda(cambios);
+  const chequeoCambio = revisarCambio(f, demoras, cambiosMandados(envios), ahoraIso);
+  const ocupadoCambio = cambioEstado.estado === "armando" || cambioEstado.estado === "mandando";
+  const sinCambiosReales = cambios.length > 0 && cambios.every((c) => c.dato.trim().toUpperCase() === datoDeCasilla(planActual, c.casilla).toUpperCase());
+
+  const agregarCambio = () => {
+    const libre = CASILLAS_CHG.find((c) => !cambios.some((x) => x.casilla === c.n));
+    if (libre) setCambios((cs) => [...cs, { casilla: libre.n, dato: datoDeCasilla(planActual, libre.n) }]);
+  };
+
+  /** Baja la modificación para presentarla a mano. No se anota: sólo cuentan las mandadas desde Vector. */
+  const bajarCambio = async () => {
+    if (!textoEnmienda) return;
+    setCambioEstado({ estado: "armando" });
+    try {
+      const [{ pdfCambio }, fondo] = await Promise.all([
+        import("@/lib/plan-de-vuelo-pdf"),
+        fetch(fondoChg.src).then((x) => x.arrayBuffer()),
+      ]);
+      const firmaPng = firma ? new Uint8Array(await (await fetch(firma)).arrayBuffer()) : undefined;
+      const bytes = await pdfCambio(
+        {
+          plan: planActual,
+          eobt: planActual.c13hora,
+          c18: planActual.c18,
+          nombre: (piloto.nombre || f.piloto).toUpperCase(),
+          licencia: piloto.licencia ?? "",
+          enmienda: textoEnmienda,
+        },
+        { fondoPng: new Uint8Array(fondo), firmaPng }
+      );
+      bajarArchivo(new File([bytes as BlobPart], nombreDeCambio(planActual), { type: "application/pdf" }));
+      setCambioEstado({ estado: "" });
+    } catch {
+      setCambioEstado({ estado: "error", texto: "No se pudo armar la modificación." });
+    }
+  };
+
+  /** Manda la modificación por mail desde el server, a la misma oficina que el plan. */
+  const mandarCambio = async () => {
+    if (!textoEnmienda || !oficina) return;
+    if (!window.confirm(`¿Mandar la modificación "${textoEnmienda}" a ${oficina.correo} (ARO/AIS ${oficina.nombre})? Te llega una copia.`)) return;
+    setCambioEstado({ estado: "mandando" });
+    await esperarGuardado();
+    const res = await enviarCambio(id, "aro", cambios);
+    if ("error" in res) {
+      setCambioEstado({ estado: "error", texto: res.error });
+      return;
+    }
+    setEnvios((e) => [...e, { modo: "aro", tipo: "chg", a: res.a, at: new Date().toISOString() }]);
+    setCambios([]);
+    setCambioEstado({
+      estado: "listo",
+      texto: `Modificación (${res.enmienda}) mandada a ${res.a}, con copia a ${res.cc.join(", ")}. Llamá para confirmar que la recibieron.`,
+    });
   };
 
   /* ----------------------------------------------- meteo y NOTAM a tu hora -- */
@@ -1221,6 +1288,113 @@ export default function EditorPlanDeVuelo({
               </>
             ) : (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">Con la fecha y la hora de salida cargadas, acá avisás una demora.</p>
+            )}
+          </Seccion>
+
+          <Seccion titulo="Modificación (CHG)">
+            {cancelado ? (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">El plan está cancelado: no se le manda nada más.</p>
+            ) : (
+              <>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  Si cambia la autonomía, las personas a bordo u otro dato importante, avisalo con el formulario de modificación (AIP ENR 1.10,
+                  Apéndice 3) hasta 15 minutos antes de la salida. Hasta {MAXIMO_CAMBIOS} por vuelo. Con la autorización ATC ya dada, el cambio va
+                  por radio a la dependencia.
+                </p>
+                {cambiosMandados(envios) > 0 && (
+                  <p className="text-xs text-zinc-600 dark:text-zinc-300">
+                    Mandaste {cambiosMandados(envios)} de {MAXIMO_CAMBIOS}.
+                  </p>
+                )}
+                {chequeoCambio.error ? (
+                  <p className="text-xs text-red-600 dark:text-red-400">{chequeoCambio.error}</p>
+                ) : (
+                  <>
+                    {cambios.map((c, i) => (
+                      <div key={i} className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                        <select
+                          value={c.casilla}
+                          onChange={(ev) => {
+                            const n = ev.target.value as CambioCasilla["casilla"];
+                            setCambios((cs) => cs.map((x, j) => (j === i ? { casilla: n, dato: datoDeCasilla(planActual, n) } : x)));
+                          }}
+                          className={`${INPUT} sm:w-64`}
+                          aria-label="Casilla que cambia"
+                        >
+                          {CASILLAS_CHG.filter((k) => k.n === c.casilla || !cambios.some((x) => x.casilla === k.n)).map((k) => (
+                            <option key={k.n} value={k.n}>
+                              {k.n} · {k.nombre}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          value={c.dato}
+                          onChange={(ev) => setCambios((cs) => cs.map((x, j) => (j === i ? { ...x, dato: ev.target.value } : x)))}
+                          className={`${INPUT} data flex-1 uppercase`}
+                          aria-label={`Casilla ${c.casilla}, el dato nuevo`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setCambios((cs) => cs.filter((_, j) => j !== i))}
+                          className="self-start px-3 py-2.5 text-xs font-semibold text-zinc-500 hover:text-red-500"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    ))}
+                    {cambios.length < CASILLAS_CHG.length && (
+                      <button
+                        type="button"
+                        onClick={agregarCambio}
+                        className="self-start text-xs font-semibold text-aviation-cyan hover:underline"
+                      >
+                        + {cambios.length ? "Otra casilla" : "Elegir qué cambia"}
+                      </button>
+                    )}
+                    {textoEnmienda && (
+                      <p className="text-xs text-zinc-600 dark:text-zinc-300">
+                        Casilla 22: <span className="data font-bold">{textoEnmienda}</span>
+                        <span className="block text-[11px] text-zinc-500 dark:text-zinc-400">
+                          Cada casilla entera con su dato nuevo, como el campo 22 del Doc 4444 de OACI. Revisala antes de mandarla.
+                        </span>
+                      </p>
+                    )}
+                    {sinCambiosReales && <p className="text-xs text-amber-700 dark:text-amber-400">Es igual a lo que dice el plan: cambiá el dato.</p>}
+                    {chequeoCambio.aviso && cambios.length > 0 && <p className="text-xs text-amber-700 dark:text-amber-400">{chequeoCambio.aviso}</p>}
+                    {cambios.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {envioAroActivo && (
+                          <button
+                            type="button"
+                            disabled={!textoEnmienda || sinCambiosReales || !listo || !oficina || ocupadoCambio}
+                            onClick={mandarCambio}
+                            className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex max-w-full items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold disabled:opacity-40"
+                          >
+                            {cambioEstado.estado === "mandando" ? <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" /> : <Mail className="w-3.5 h-3.5 shrink-0" />}
+                            <span className="truncate">Mandar a {oficina ? oficina.correo : "la oficina"}</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={!textoEnmienda || sinCambiosReales || ocupadoCambio}
+                          onClick={bajarCambio}
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-700 dark:text-zinc-300 disabled:opacity-40"
+                        >
+                          {cambioEstado.estado === "armando" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Bajar modificación
+                        </button>
+                      </div>
+                    )}
+                    {envioAroActivo && cambios.length > 0 && !listo && (
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Para mandarla por mail, el plan tiene que estar completo y firmado.</p>
+                    )}
+                  </>
+                )}
+                {cambioEstado.texto && (
+                  <p className={`text-xs ${cambioEstado.estado === "error" ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>
+                    {cambioEstado.texto}
+                  </p>
+                )}
+              </>
             )}
           </Seccion>
 

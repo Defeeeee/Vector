@@ -89,8 +89,8 @@ export interface PlanResumen {
 
 export interface EnvioPlan {
   modo: "prueba" | "aro";
-  /** El plan o un aviso de demora. Los anotados antes de la demora por mail son del plan. */
-  tipo?: "fpl" | "dla" | "cnl";
+  /** El plan o un mensaje sobre él. Los anotados antes de la demora por mail son del plan. */
+  tipo?: "fpl" | "dla" | "cnl" | "chg";
   a: string;
   resend_id?: string | null;
   at?: string | null;

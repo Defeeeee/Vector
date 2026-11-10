@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import L from "leaflet";
+// Después de Leaflet, que deja `window.L`: el plugin lo extiende (rotar el mapa, "nariz arriba").
+// Fijado en la 0.2.8 (2023): las 0.3–0.5 salieron todas en las dos semanas antes de la 3.16.0.
+import "leaflet-rotate";
 import "leaflet/dist/leaflet.css";
 import { TILES_OPCIONES, TILES_URL } from "@/lib/mapa-tiles";
 import { CAPAS_CARTAS, urlTeselaCarta } from "@/lib/cartas-aip";
@@ -9,6 +12,7 @@ import type { IdCapa } from "@/lib/capas-mapa";
 import type { EspacioAereo, Frecuencias } from "@/lib/espacios-aereos";
 import type { Fir, Vfr } from "@/lib/firs";
 import type { PuntoMapa } from "@/lib/mapa-ruta";
+import type { PuntoTrack } from "@/lib/track-vuelo";
 import { descripcionCorredor, etiquetaCorredor, informacionCorredor } from "@/lib/corredores-vfr";
 
 /** Lo que devuelve `/api/mapa`, compacto: arrays en vez de objetos. */
@@ -31,6 +35,12 @@ export interface Posicion {
   trackT: number | null;
 }
 
+/** Lo que la pantalla de vuelo le pide al mapa: sus propios botones de zoom. */
+export interface ApiMapa {
+  acercar: () => void;
+  alejar: () => void;
+}
+
 /**
  * Los colores de una carta VFR: las TMA en azul y las CTR y ATZ en magenta, punteadas.
  * El relleno es apenas un tinte, para que se lean los aeródromos de abajo.
@@ -44,13 +54,17 @@ const ESTILO: Record<EspacioAereo["tipo"], L.PathOptions> = {
 /** El orden en que se apilan, de abajo hacia arriba: lo que se toca queda arriba. */
 const ORDEN_CAPAS: IdCapa[] = ["firs", "tma", "ctr", "atz", "sectores-vfr", "corredores", "aerodromos", "radioayudas"];
 
-type Grupos = Record<Exclude<IdCapa, `carta-${string}`>, L.LayerGroup> & { ruta: L.LayerGroup; avion: L.LayerGroup };
+type Grupos = Record<Exclude<IdCapa, `carta-${string}`>, L.LayerGroup> & { ruta: L.LayerGroup; estela: L.LayerGroup; avion: L.LayerGroup };
 
 const escapar = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
-/** El avión propio: una flecha que apunta al track del GPS. */
-function iconoAvion(trackT: number | null): L.DivIcon {
-  const rotacion = trackT ?? 0;
+/**
+ * El avión propio: una flecha que apunta al track del GPS. `rumboMapa` es lo que está rotado el
+ * mapa (`getBearing`): los íconos quedan derechos en la pantalla, así que la flecha gira el track
+ * más eso. Con la nariz arriba, el mapa gira −track y la flecha queda apuntando arriba.
+ */
+function iconoAvion(trackT: number | null, rumboMapa: number): L.DivIcon {
+  const rotacion = ((trackT ?? 0) + rumboMapa) % 360;
   const forma =
     trackT === null
       ? `<circle cx="16" cy="16" r="7" fill="#0A84FF" stroke="white" stroke-width="3"/>`
@@ -85,9 +99,41 @@ interface Props {
   visibles: IdCapa[];
   /** Cuánto se ve la carta del AIP encima del mapa base, de 0,2 a 1. */
   opacidadCarta: number;
+  /**
+   * En vuelo: cuánto se rota el mapa (0 = norte arriba; con la nariz arriba, −track), lo que tapan
+   * las bandas de arriba y de abajo (el avión se centra en lo que queda) y si va la nariz arriba
+   * (entonces el avión baja, para ver más de lo que viene).
+   */
+  rumbo?: number;
+  margenes?: { arriba: number; abajo: number };
+  narizArriba?: boolean;
+  /** Lo volado (el track del GPS), como una estela. */
+  estela?: PuntoTrack[] | null;
+  onMapa?: (api: ApiMapa | null) => void;
 }
 
-export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, volando, onAgregar, onArrastre, margenIzquierdo, agregando = false, onPuntoLibre, visibles, opacidadCarta }: Props) {
+const SIN_MARGENES = { arriba: 0, abajo: 0 };
+
+export default function MapaLeaflet({
+  capas,
+  puntos,
+  proximo,
+  posicion,
+  seguir,
+  volando,
+  onAgregar,
+  onArrastre,
+  margenIzquierdo,
+  agregando = false,
+  onPuntoLibre,
+  visibles,
+  opacidadCarta,
+  rumbo = 0,
+  margenes = SIN_MARGENES,
+  narizArriba = false,
+  estela = null,
+  onMapa,
+}: Props) {
   const contenedor = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capasRef = useRef<Grupos | null>(null);
@@ -95,6 +141,8 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
   const callbacks = useRef({ onAgregar, onArrastre, onPuntoLibre, agregando });
   callbacks.current = { onAgregar, onArrastre, onPuntoLibre, agregando };
   const ultimoEncuadre = useRef("");
+  const callbacksMapa = useRef(onMapa);
+  callbacksMapa.current = onMapa;
 
   // El mapa, una sola vez.
   useEffect(() => {
@@ -104,6 +152,12 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
       zoom: 8,
       zoomControl: false,
       attributionControl: false,
+      // `leaflet-rotate`: el mapa se puede rotar (nariz arriba), pero sólo desde el código. Girar
+      // con dos dedos en la cabina rota sin querer.
+      rotate: true,
+      touchRotate: false,
+      shiftKeyRotate: false,
+      rotateControl: false,
       // SVG y no canvas: con canvas, desmontar el mapa con un redibujo pendiente tira
       // "Cannot read properties of undefined (reading 'clearRect')" (pasaba al recargar).
     });
@@ -123,6 +177,7 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
       aerodromos: grupo(),
       radioayudas: grupo(),
       ruta: grupo().addTo(m),
+      estela: grupo().addTo(m),
       avion: grupo().addTo(m),
     };
     // Las cartas del AIP (3.9.0, `lib/cartas-aip.ts`): la carta tal cual, georreferenciada, en el
@@ -145,13 +200,17 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
       if (callbacks.current.agregando) callbacks.current.onPuntoLibre?.(e.latlng.lat, e.latlng.lng);
     });
     mapa.current = m;
+    callbacksMapa.current?.({ acercar: () => m.zoomIn(), alejar: () => m.zoomOut() });
     // Si nace antes de que el layout se asiente, Leaflet mide cero: un invalidate lo arregla.
     const t = setTimeout(() => m.invalidateSize(), 150);
-    const alCambiarTamano = () => m.invalidateSize();
-    window.addEventListener("resize", alCambiarTamano);
+    // El contenedor cambia de tamaño sin que cambie la ventana: al pasar a vuelo pierde el
+    // encabezado y crece. Sin esto Leaflet seguía midiendo lo de antes (y centraba mal el avión).
+    const observador = new ResizeObserver(() => m.invalidateSize());
+    observador.observe(contenedor.current);
     return () => {
       clearTimeout(t);
-      window.removeEventListener("resize", alCambiarTamano);
+      observador.disconnect();
+      callbacksMapa.current?.(null);
       m.remove();
       mapa.current = null;
     };
@@ -251,6 +310,7 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
     for (const id of ORDEN_CAPAS) c[id as keyof Grupos].remove();
     for (const id of ORDEN_CAPAS) if (visibles.includes(id)) c[id as keyof Grupos].addTo(m);
     c.ruta.remove().addTo(m);
+    c.estela.remove().addTo(m);
     c.avion.remove().addTo(m);
     for (const [id, capa] of Object.entries(cartasRef.current)) {
       if (visibles.includes(id as IdCapa)) {
@@ -301,6 +361,34 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
     }
   }, [puntos, proximo, volando, margenIzquierdo]);
 
+  // La rotación: sólo si cambió más de 2°, para que el mapa no tiemble con el ruido del GPS.
+  useEffect(() => {
+    const m = mapa.current;
+    if (!m) return;
+    const actual = m.getBearing();
+    const diferencia = Math.abs(((rumbo - actual + 540) % 360) - 180);
+    if (diferencia > 2 || (rumbo === 0 && actual !== 0)) m.setBearing(rumbo);
+  }, [rumbo]);
+
+  // La estela: lo volado, en violeta con un borde oscuro, debajo del avión.
+  const lineaEstela = useRef<L.Polyline[] | null>(null);
+  useEffect(() => {
+    const c = capasRef.current;
+    if (!c) return;
+    const coords = (estela ?? []).map((p) => [p[1], p[2]] as L.LatLngTuple);
+    if (coords.length < 2) {
+      c.estela.clearLayers();
+      lineaEstela.current = null;
+      return;
+    }
+    if (!lineaEstela.current) {
+      lineaEstela.current = [
+        L.polyline(coords, { color: "#1e1b4b", weight: 6, opacity: 0.55, interactive: false }).addTo(c.estela),
+        L.polyline(coords, { color: "#c084fc", weight: 3, opacity: 1, interactive: false }).addTo(c.estela),
+      ];
+    } else for (const linea of lineaEstela.current) linea.setLatLngs(coords);
+  }, [estela]);
+
   // El avión propio y la línea al próximo punto.
   useEffect(() => {
     const m = mapa.current;
@@ -315,12 +403,29 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
           [posicion.lat, posicion.lon],
           [destino.lat, destino.lon],
         ],
-        { color: "#f59e0b", weight: 2.5, dashArray: "6 6" }
+        { color: "#f59e0b", weight: 2.5, dashArray: "6 6", interactive: false }
       ).addTo(c.avion);
     }
-    L.marker([posicion.lat, posicion.lon], { icon: iconoAvion(posicion.trackT), interactive: false, zIndexOffset: 1000 }).addTo(c.avion);
-    if (seguir) m.setView([posicion.lat, posicion.lon], Math.max(m.getZoom(), 10), { animate: true });
-  }, [posicion, proximo, puntos, seguir]);
+    L.marker([posicion.lat, posicion.lon], { icon: iconoAvion(posicion.trackT, m.getBearing()), interactive: false, zIndexOffset: 1000 }).addTo(c.avion);
+    if (!seguir) return;
+    /*
+      El avión va al centro de lo que se ve entre las bandas de vuelo y, con la nariz arriba, más
+      abajo (al 68 %), para ver lo que viene. Con el mapa rotado, "más abajo" en la pantalla no es
+      el sur: la pantalla es el mapa rotado θ en el sentido del reloj, así que para que el avión
+      quede `bajar` px abajo del centro, el centro va a avión − (bajar·sen θ, bajar·cos θ) en los píxeles del
+      mapa (sin rotar).
+    */
+    const zoom = Math.max(m.getZoom(), 10);
+    const tamano = m.getSize();
+    const arriba = margenes.arriba;
+    const abajo = tamano.y - margenes.abajo;
+    const deseado = narizArriba ? arriba + (abajo - arriba) * 0.68 : (arriba + abajo) / 2;
+    const bajar = deseado - tamano.y / 2;
+    const theta = (m.getBearing() * Math.PI) / 180;
+    const avion = m.project([posicion.lat, posicion.lon], zoom);
+    const centro = m.unproject(avion.subtract(L.point(bajar * Math.sin(theta), bajar * Math.cos(theta))), zoom);
+    m.setView(centro, zoom, { animate: false });
+  }, [posicion, proximo, puntos, seguir, rumbo, margenes, narizArriba]);
 
   // La mira mientras se agregan puntos.
   useEffect(() => {
@@ -330,9 +435,14 @@ export default function MapaLeaflet({ capas, puntos, proximo, posicion, seguir, 
   return (
     <div
       ref={contenedor}
+      // En vuelo, los botones de zoom son los de la pantalla de vuelo, y la atribución de OSM sube
+      // por encima de la banda de abajo (tiene que verse).
+      style={{ "--abajo": `${margenes.abajo}px` } as CSSProperties}
       // `isolate`: los z-index de Leaflet (400, 600…) quedan adentro y no tapan la tarjeta.
       // En oscuro, los tiles de OSM se invierten: no hay una versión oscura con la misma licencia.
-      className="absolute inset-0 isolate bg-zinc-100 dark:bg-zinc-900 dark:[&_.leaflet-tile-pane]:[filter:invert(1)_hue-rotate(180deg)_brightness(0.85)_contrast(0.9)]"
+      className={`absolute inset-0 isolate bg-zinc-100 dark:bg-zinc-900 dark:[&_.leaflet-tile-pane]:[filter:invert(1)_hue-rotate(180deg)_brightness(0.85)_contrast(0.9)] ${
+        volando ? "[&_.leaflet-control-zoom]:hidden [&_.leaflet-bottom]:bottom-[var(--abajo)]" : ""
+      }`}
     />
   );
 }

@@ -41,6 +41,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+// Sin imports propios: Node lo lee con sus tipos (la lista y la composición son las de la app).
+import { FONDO_ARRANQUE, LADO_MARCA, PANTALLAS_IPHONE, archivoDeArranque, isotipoSvg } from "../src/lib/arranque.ts";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MARCA = path.join(RAIZ, "public", "marca");
@@ -61,6 +63,20 @@ async function main() {
   }
   await escribir("icono-512-maskable.png", await sharp(pieza("icono-app-maskable"), { density: 300 }).resize(512, 512).png().toBuffer());
   await escribir("apple-touch-icon.png", await sharp(pieza("icono-app-cuadrado"), { density: 300 }).resize(180, 180).flatten({ background: FONDO }).png().toBuffer());
+  // Las imágenes de arranque de iOS (3.16.0): la marca centrada sobre la noche, del mismo tamaño
+  // que en la página de arranque del service worker, para que el paso de una a otra no se note.
+  fs.mkdirSync(path.join(SALIDA, "arranque"), { recursive: true });
+  for (const p of PANTALLAS_IPHONE) {
+    const ancho = p.ancho * p.dpr;
+    const alto = p.alto * p.dpr;
+    const lado = LADO_MARCA * p.dpr;
+    const marca = await sharp(Buffer.from(isotipoSvg(lado)), { density: 72 * p.dpr }).resize(lado, lado).png().toBuffer();
+    const imagen = await sharp({ create: { width: ancho, height: alto, channels: 3, background: FONDO_ARRANQUE } })
+      .composite([{ input: marca, left: Math.round((ancho - lado) / 2), top: Math.round((alto - lado) / 2) }])
+      .png({ compressionLevel: 9, palette: true })
+      .toBuffer();
+    await escribir(archivoDeArranque(p).slice(1), imagen);
+  }
   // El favicon de Next (`src/app/icon.svg`) es la pieza para tamaños chicos.
   fs.copyFileSync(path.join(MARCA, "favicon.svg"), path.join(RAIZ, "src", "app", "icon.svg"));
   console.log("  src/app/icon.svg             (favicon)");

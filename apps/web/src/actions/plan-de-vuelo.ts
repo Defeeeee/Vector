@@ -13,6 +13,7 @@ import { oficinaParaSalida } from "@/lib/oficinas-aro";
 import { enviarMail } from "@/lib/mailer";
 import fs from "node:fs";
 import path from "node:path";
+import { cambiosMandados, enmienda, nombreDeCambio, revisarCambio, type CambioCasilla } from "@/lib/cambio-plan";
 import { demoraDesdeHoraUtc, eobtVigente, nombreDeCancelacion, nombreDeDemora, planConDemora, planVigente, revisarDemora, type Demora } from "@/lib/demora-plan";
 
 /**
@@ -387,6 +388,65 @@ export async function cancelarPlan(id: string, modo: ModoEnvio = "aro") {
     revalidatePath(LISTA);
     revalidatePath("/dashboard");
     return { ok: true as const, a: mail.para, cc: mail.cc, anotado: anotado.ok };
+  } catch (e) {
+    if (esErrorDeRedirect(e)) throw e;
+    return { error: "Error de conexión con el servidor." };
+  }
+}
+
+/**
+ * Manda una modificación (CHG, AIP ENR 1.10 punto 6 y Apéndice 3) con su formulario firmado,
+ * a la misma oficina que el plan: arriba el plan vigente (con la última demora, si hubo) y en
+ * la casilla 22 lo que cambia. **El plan guardado no se toca**: la CHG es un mensaje sobre el
+ * plan presentado, y el piloto decide si además corrige el formulario.
+ *
+ * Como mucho tres por vuelo (6.2): se cuentan las mandadas a la oficina, no las de prueba.
+ */
+export async function enviarCambio(id: string, modo: ModoEnvio, cambios: CambioCasilla[]) {
+  try {
+    const texto = enmienda(cambios);
+    if (!texto) return { error: "Escribí qué cambia." };
+    if (texto.length > 300) return { error: "La enmienda es demasiado larga para el formulario." };
+    const p = await prepararEnvio(id, modo);
+    if (!p.ok) return { error: p.error };
+    if (p.guardado.cancelado_at) return { error: "El plan está cancelado: no se le manda nada más." };
+    const demoras = p.guardado.demoras ?? [];
+    const chequeo = revisarCambio(p.f, demoras, cambiosMandados(p.guardado.envios ?? []), new Date().toISOString());
+    if (chequeo.error) return { error: chequeo.error };
+    const plan = planVigente(p.r.plan, demoras);
+
+    const { pdfCambio } = await import("@/lib/plan-de-vuelo-pdf");
+    const pdf = await pdfCambio(
+      {
+        plan,
+        eobt: plan.c13hora,
+        c18: plan.c18,
+        nombre: (p.piloto.nombre || p.f.piloto).toUpperCase(),
+        licencia: p.piloto.licencia ?? "",
+        enmienda: texto,
+      },
+      { fondoPng: fondo("plan-de-vuelo-chg.png"), firmaPng: p.firmaPng }
+    );
+    const mail = armarMailPlan({ plan, nombres: p.nombres, piloto: p.email, oficina: p.oficina, modo, aviso: { tipo: "chg", enmienda: texto } });
+    const enviado = await enviarMail({
+      para: mail.para,
+      cc: mail.cc,
+      responderA: mail.responderA,
+      asunto: mail.asunto,
+      texto: mail.texto,
+      html: mail.html,
+      adjuntos: [{ nombre: nombreDeCambio(plan), base64: Buffer.from(pdf).toString("base64") }],
+      nombreRemitente: p.piloto.nombre ? `${p.piloto.nombre} vía Vector` : undefined,
+      casilla: "plandevuelo",
+    });
+    if (!enviado.enviado) return { error: `No se pudo mandar el mail: ${enviado.motivo ?? "error desconocido"}` };
+
+    const anotado = await apiFetch(`/planes-de-vuelo/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ envio: { modo, tipo: "chg", a: mail.para, resend_id: enviado.id ?? null } }),
+    });
+    revalidatePath(LISTA);
+    return { ok: true as const, a: mail.para, cc: mail.cc, enmienda: texto, anotado: anotado.ok, aviso: chequeo.aviso };
   } catch (e) {
     if (esErrorDeRedirect(e)) throw e;
     return { error: "Error de conexión con el servidor." };

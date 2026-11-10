@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { AlertTriangle, Layers, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Loader2, MapPin, Navigation, Radio, Square, Undo2 } from "lucide-react";
+import { AlertTriangle, Layers, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Download, Loader2, MapPin, Minus, Navigation, NotebookPen, Plus, Radio, Square, Trash2, Undo2 } from "lucide-react";
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { EspacioAereo } from "@/lib/espacios-aereos";
 import { aMagnetico } from "@/lib/navegacion";
@@ -24,7 +24,8 @@ import {
   tramosDeRuta,
   variacionDeRuta,
 } from "@/lib/mapa-ruta";
-import type { CapasMapa, Posicion } from "./MapaLeaflet";
+import type { ApiMapa, CapasMapa, Posicion } from "./MapaLeaflet";
+import { CLAVE_TRACK, fechaArgentina, gpxDelTrack, leerTrack, nombreDelGpx, resumenTrack, sigueElTrack, sumarPunto, type TrackVuelo } from "@/lib/track-vuelo";
 import MenuCapas from "./MenuCapas";
 import { alternarCapa, CAPAS_POR_DEFECTO, CLAVE_CAPAS, leerCapas, OPACIDAD_CARTA_POR_DEFECTO, type IdCapa } from "@/lib/capas-mapa";
 import BriefingRuta from "../BriefingRuta";
@@ -40,9 +41,12 @@ import RutaAcciones from "./RutaAcciones";
  * - **Planificar:** se escribe la ruta (aeródromos, radioayudas, puntos, aerovías, como en el
  *   Planificador) o se tocan aeródromos en el mapa, y se dibuja al instante con sus tramos,
  *   los espacios aéreos que cruza y, a pedido, la meteo y los NOTAM.
- * - **Volar:** la misma tarjeta pasa a mostrar la posición del GPS del teléfono, el próximo
- *   punto con su distancia, rumbo y tiempo, y en qué espacio aéreo estás. Mantiene la
- *   pantalla prendida. Es una ayuda VFR y lo dice: no reemplaza la carta ni el instrumental.
+ * - **Volar** (3.16.0, después de que Federico salió a navegar con la 3.15): el mapa ocupa la
+ *   pantalla entre dos bandas, la de arriba con el próximo punto y los instrumentos y la de abajo
+ *   con quién hablás; al costado, norte o nariz arriba, seguir, zoom y capas. Mientras vuela graba
+ *   el track (`lib/track-vuelo.ts`) y lo dibuja como una estela; al terminar se baja como GPX o se
+ *   va a Registrar vuelo. Mantiene la pantalla prendida. Es una ayuda VFR y lo dice: no reemplaza
+ *   la carta ni el instrumental.
  *
  * Reemplaza a la sesión en vivo (el cronómetro de puesta en marcha), que se sacó en la 3.0.0.
  *
@@ -60,6 +64,8 @@ const MapaLeaflet = dynamic(() => import("./MapaLeaflet"), {
 });
 
 const TAS_POR_DEFECTO = 100;
+const CLAVE_ORIENTACION = "vector-mapa-orientacion";
+const ROTULO = "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400";
 const ANCHO_TARJETA = 380;
 const clave = (c: { q: string; desde: string; hasta: string }) => `${c.q}|${c.desde}|${c.hasta}`;
 const grados = (n: number) => String(Math.round(n) % 360 || 360).padStart(3, "0");
@@ -240,11 +246,53 @@ export default function MapaClient({
   const [seguir, setSeguir] = useState(true);
   const puedeGps = montado && typeof navigator !== "undefined" && "geolocation" in navigator;
 
+  // El track (`lib/track-vuelo.ts`): en el teléfono. Se lee al montar (para mostrar el último
+  // vuelo grabado) y se guarda cada 10 s mientras se vuela, al esconder la app y al terminar.
+  const [track, setTrack] = useState<TrackVuelo | null>(null);
+  const ultimoGuardado = useRef(0);
+  const guardarTrack = useCallback((t: TrackVuelo | null) => {
+    ultimoGuardado.current = Date.now();
+    try {
+      if (t) localStorage.setItem(CLAVE_TRACK, JSON.stringify(t));
+      else localStorage.removeItem(CLAVE_TRACK);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    let texto: string | null = null;
+    try {
+      texto = localStorage.getItem(CLAVE_TRACK);
+    } catch {}
+    setTrack(leerTrack(texto));
+  }, []);
+  useEffect(() => {
+    if (volando && track && Date.now() - ultimoGuardado.current > 10_000) guardarTrack(track);
+  }, [volando, track, guardarTrack]);
+  const trackRef = useRef(track);
+  trackRef.current = track;
+  useEffect(() => {
+    if (!volando) return;
+    const alEsconder = () => document.visibilityState === "hidden" && guardarTrack(trackRef.current);
+    document.addEventListener("visibilitychange", alEsconder);
+    window.addEventListener("pagehide", alEsconder);
+    return () => {
+      document.removeEventListener("visibilitychange", alEsconder);
+      window.removeEventListener("pagehide", alEsconder);
+    };
+  }, [volando, guardarTrack]);
+
   useEffect(() => {
     if (!volando) return;
     setErrorGps(null);
     const id = navigator.geolocation.watchPosition(
-      (p) => setLectura(lecturaGps(p.coords)),
+      (p) => {
+        const l = lecturaGps(p.coords);
+        setLectura(l);
+        setTrack((t) => {
+          if (!t) return t;
+          const puntos = sumarPunto(t.puntos, l, p.timestamp || Date.now());
+          return puntos === t.puntos ? t : { ...t, puntos };
+        });
+      },
       (e) =>
         setErrorGps(
           e.code === e.PERMISSION_DENIED
@@ -290,13 +338,52 @@ export default function MapaClient({
         ) ?? null
       : null;
 
+  // Norte o nariz arriba: se recuerda en el teléfono. Con la nariz arriba el mapa gira con el
+  // track del GPS, y en el suelo (menos de 15 kt, el track no sirve) se queda donde estaba.
+  const [narizArriba, setNarizArriba] = useState(false);
+  useEffect(() => {
+    try {
+      setNarizArriba(localStorage.getItem(CLAVE_ORIENTACION) === "nariz");
+    } catch {}
+  }, []);
+  const alternarOrientacion = () => {
+    setNarizArriba((v) => {
+      try {
+        localStorage.setItem(CLAVE_ORIENTACION, v ? "norte" : "nariz");
+      } catch {}
+      return !v;
+    });
+  };
+  const ultimoTrackValido = useRef<number | null>(null);
+  if (posicion?.trackT != null) ultimoTrackValido.current = posicion.trackT;
+  const rumboMapa = volando && narizArriba && ultimoTrackValido.current !== null ? (360 - ultimoTrackValido.current) % 360 : 0;
+
+  // Lo que tapan las bandas de vuelo: el avión se centra en lo que queda a la vista.
+  const [margenes, setMargenes] = useState({ arriba: 0, abajo: 0 });
+  const apiMapa = useRef<ApiMapa | null>(null);
+
   const empezar = () => {
     setProximo(0);
     setSeguir(true);
     setLectura(null);
     setVolando(true);
     setPlegada(false);
+    // Si iOS cerró la app en vuelo y se vuelve a "Volar" enseguida, sigue el mismo track.
+    const ahora = Date.now();
+    const anterior = trackRef.current;
+    setTrack(sigueElTrack(anterior, ahora) && anterior ? { ...anterior, terminado: null } : { inicio: ahora, puntos: [], ruta: tokens.join(" "), terminado: null });
   };
+
+  const terminar = () => {
+    setVolando(false);
+    setDetallesVuelo(false);
+    const t = trackRef.current;
+    if (!t) return;
+    const final = t.puntos.length > 1 ? { ...t, terminado: Date.now() } : null;
+    setTrack(final);
+    guardarTrack(final);
+  };
+  const [detallesVuelo, setDetallesVuelo] = useState(false);
 
   /* --------------------------------------------------------------- capas --- */
   const [menuCapas, setMenuCapas] = useState(false);
@@ -342,40 +429,16 @@ export default function MapaClient({
   if (!montado) return null;
   const preparar = SECCIONES.find((x) => x.clave === "preparar");
 
-  /*
-    En vuelo, en el teléfono (3.4.0), la tarjeta baja y se vuelve una hoja pegada al borde de
-    abajo, que se lee con el teléfono en la mano o en la pierna; la barra de secciones se esconde
-    (`data-sin-barra-movil`). Arriba, lo que se mira cada minuto: el próximo punto y con quién
-    hablás. Planificando sigue arriba a la izquierda.
-  */
-  const enHoja = volando ? "max-lg:top-auto max-lg:inset-x-0 max-lg:bottom-0 max-lg:rounded-b-none max-lg:border-x-0 max-lg:border-b-0 max-lg:max-h-[72%] max-lg:pb-[env(safe-area-inset-bottom)]" : "";
   const tarjeta = (
     <div
-      className={`absolute z-10 top-3 left-3 right-3 lg:top-4 lg:left-4 lg:right-auto lg:w-[380px] max-h-[calc(100%-7.5rem-env(safe-area-inset-bottom))] lg:max-h-[calc(100%-2rem)] ${enHoja} flex flex-col rounded-3xl bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-2xl shadow-black/10 overflow-hidden`}
+      className={`absolute z-10 top-3 left-3 right-3 lg:top-4 lg:left-4 lg:right-auto lg:w-[380px] max-h-[calc(100%-7.5rem-env(safe-area-inset-bottom))] lg:max-h-[calc(100%-2rem)] flex flex-col rounded-3xl bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-2xl shadow-black/10 overflow-hidden`}
     >
-      {volando && (
-        <div className="lg:hidden flex justify-center pt-2" aria-hidden="true">
-          <span className="w-9 h-1.5 rounded-full bg-zinc-300 dark:bg-white/20" />
-        </div>
-      )}
       {/* Encabezado: el modo y, en el teléfono, plegar para ver el mapa entero. */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-3 shrink-0">
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{volando ? "En vuelo" : "Ruta"}</p>
-          {plegada && (
-            <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">
-              {volando && destino ? `→ ${destino.codigo}${hacia ? ` · ${hacia.distanciaNm.toFixed(1)} NM` : ""}` : tokens.join(" ") || "Sin ruta"}
-            </p>
-          )}
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Ruta</p>
+          {plegada && <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{tokens.join(" ") || "Sin ruta"}</p>}
         </div>
-        {volando ? (
-          <button
-            onClick={() => setVolando(false)}
-            className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex items-center gap-1.5 rounded-full text-xs font-semibold px-3 py-1.5"
-          >
-            <Square className="w-3 h-3" fill="currentColor" /> Terminar
-          </button>
-        ) : (
           <button
             onClick={empezar}
             disabled={!puedeGps}
@@ -384,7 +447,6 @@ export default function MapaClient({
           >
             <Navigation className="w-3.5 h-3.5" /> Volar
           </button>
-        )}
         <button
           onClick={() => setMenuCapas((v) => !v)}
           aria-label="Capas del mapa"
@@ -404,93 +466,12 @@ export default function MapaClient({
       </div>
 
       <div className={`${plegada ? "hidden" : "flex"} flex-col min-h-0 overflow-y-auto custom-scrollbar px-4 pb-4 gap-4`}>
-        {volando && (
-          <section className="flex flex-col gap-3">
-            {errorGps && !lectura && <p className="text-sm text-amber-600 dark:text-amber-400">{errorGps}</p>}
-            {!lectura && !errorGps && (
-              <p className="text-sm text-zinc-500 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" /> Buscando el GPS…
-              </p>
-            )}
-            {lectura && (
-              <>
-                <div className="grid grid-cols-3 gap-2 max-lg:order-2">
-                  <Dato etiqueta="GS" valor={lectura.gsKt !== null ? Math.round(lectura.gsKt).toString() : "—"} unidad="kt" />
-                  <Dato etiqueta="Track" valor={lectura.trackT !== null && (lectura.gsKt ?? 0) > 15 ? grados(variacion !== null ? aMagnetico(lectura.trackT, variacion) : lectura.trackT) : "—"} unidad={variacion !== null ? "°M" : "°V"} />
-                  <Dato etiqueta="Alt. GPS" valor={lectura.altitudFt !== null ? miles(lectura.altitudFt) : "—"} unidad="ft" />
-                </div>
-                {destino && hacia && (
-                  <div className="rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 p-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setProximo((i) => Math.max(0, i - 1))}
-                        disabled={proximo === 0}
-                        aria-label="Punto anterior"
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-500 hover:bg-zinc-200 dark:hover:bg-white/10 disabled:opacity-30"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      <div className="flex-1 min-w-0 text-center">
-                        <p className="text-[11px] text-zinc-500">Próximo punto · {proximo + 1} de {puntos.length}</p>
-                        <p className="text-lg font-bold text-zinc-900 dark:text-white truncate">
-                          {destino.codigo} <span className="text-sm font-medium text-zinc-500">{destino.label}</span>
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setProximo((i) => Math.min(puntos.length - 1, i + 1))}
-                        disabled={proximo >= puntos.length - 1}
-                        aria-label="Punto siguiente"
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-500 hover:bg-zinc-200 dark:hover:bg-white/10 disabled:opacity-30"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                      <Dato etiqueta="Distancia" valor={hacia.distanciaNm.toFixed(1)} unidad="NM" />
-                      <Dato etiqueta="Rumbo" valor={grados(variacion !== null ? aMagnetico(hacia.rumboT, variacion) : hacia.rumboT)} unidad={variacion !== null ? "°M" : "°V"} />
-                      <Dato etiqueta="Tiempo" valor={hacia.eteMin !== null ? duracionCorta(hacia.eteMin) : "—"} />
-                    </div>
-                  </div>
-                )}
-                {ahora && (
-                  <div className="rounded-2xl bg-aviation-blue/10 border border-aviation-blue/20 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-aviation-blue mb-1 flex items-center gap-1.5">
-                      <Radio className="w-3.5 h-3.5" /> Hablás con
-                    </p>
-                    <DependenciaFila d={ahora} grande />
-                    {despues && (
-                      <p className="mt-2 text-xs text-zinc-500">
-                        En {despues.desdeNm.toFixed(0)} NM: <b className="text-zinc-700 dark:text-zinc-300">{despues.dependencia.distintivo}</b> {despues.dependencia.mhz.join(" · ")}
-                      </p>
-                    )}
-                  </div>
-                )}
-                <div className="max-lg:order-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">Estás dentro de</p>
-                  {dentro.length ? (
-                    <ListaEspacios espacios={dentro} />
-                  ) : (
-                    <p className="text-sm text-zinc-500">Ningún espacio controlado de los que dibuja el mapa.</p>
-                  )}
-                </div>
-                <div className="flex items-center justify-between gap-2 text-[11px] text-zinc-500 max-lg:order-4">
-                  <span>Precisión ±{Math.round(lectura.precisionM)} m{lectura.precisionM > 100 ? " · señal débil" : ""}</span>
-                  {!seguir && (
-                    <button onClick={() => setSeguir(true)} className="inline-flex items-center gap-1 font-semibold text-aviation-blue">
-                      <Crosshair className="w-3.5 h-3.5" /> Seguir
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-            <p className="text-[11px] leading-snug text-zinc-500 flex gap-1.5 max-lg:order-5">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" />
-              Ayuda VFR con el GPS del teléfono: no reemplaza la carta ni la navegación. La altura es la del GPS, no la del altímetro.
-            </p>
-          </section>
-        )}
+        {track && track.puntos.length > 1 && <VueloGrabado track={track} avionId={avionId} onBorrar={() => {
+          setTrack(null);
+          guardarTrack(null);
+        }} />}
 
-        <section className={`space-y-2 ${volando ? "max-lg:hidden" : ""}`}>
+        <section className="space-y-2">
           <textarea
             value={texto}
             onChange={(e) => setTexto(e.target.value.toUpperCase())}
@@ -500,7 +481,6 @@ export default function MapaClient({
             placeholder="SADF DCT SADM · con aerovías: SADF UGIMI W18 BCA SAZB · por un corredor VFR: SADF BENAVIDEZ SAAK"
             className="w-full resize-none rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-3 py-2.5 font-mono text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-aviation-blue/40"
           />
-          {!volando && (
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setAgregando((v) => !v)}
@@ -517,8 +497,7 @@ export default function MapaClient({
                 </button>
               )}
             </div>
-          )}
-          {!volando && <p className="text-[11px] text-zinc-500">Aeródromos, radioayudas, puntos, aerovías y puntos VFR, como en el Planificador. Tocar un aeródromo en el mapa lo suma a la ruta.</p>}
+          <p className="text-[11px] text-zinc-500">Aeródromos, radioayudas, puntos, aerovías y puntos VFR, como en el Planificador. Tocar un aeródromo en el mapa lo suma a la ruta.</p>
           {sinUbicar.length > 0 && <p className="text-xs text-amber-600 dark:text-amber-400">No encontré {sinUbicar.join(", ")}: no se dibuja.</p>}
           {buscando && (
             <p className="text-xs text-zinc-500 flex items-center gap-1.5">
@@ -535,7 +514,7 @@ export default function MapaClient({
                 return (
                   <li
                     key={`${p.codigo}-${i}`}
-                    className={`flex items-center gap-2.5 rounded-xl px-2 py-1.5 ${volando && i === proximo ? "bg-aviation-blue/10" : ""}`}
+                    className="flex items-center gap-2.5 rounded-xl px-2 py-1.5"
                   >
                     <span className="w-5 h-5 shrink-0 rounded-full border-2 border-aviation-blue text-[10px] font-bold text-aviation-blue flex items-center justify-center">{i + 1}</span>
                     <div className="flex-1 min-w-0">
@@ -609,7 +588,6 @@ export default function MapaClient({
           </section>
         )}
 
-        {!volando && (
           <RutaAcciones
             tokens={tokens}
             resueltos={resueltos}
@@ -633,9 +611,8 @@ export default function MapaClient({
               cambios: cambios.map((c) => ({ desdeNm: c.desdeNm, donde: c.dependencia.donde, distintivo: c.dependencia.distintivo, mhz: c.dependencia.mhz })),
             }}
           />
-        )}
 
-        {cambios.length > 0 && !volando && (
+        {cambios.length > 0 && (
           <section>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5 flex items-center gap-1.5">
               <Radio className="w-3.5 h-3.5" /> Con quién hablás
@@ -740,8 +717,44 @@ export default function MapaClient({
         margenIzquierdo={escritorio ? ANCHO_TARJETA : 0}
         visibles={visibles}
         opacidadCarta={opacidadCarta}
+        rumbo={rumboMapa}
+        margenes={volando ? margenes : undefined}
+        narizArriba={volando && narizArriba}
+        estela={track?.puntos ?? null}
+        onMapa={(api) => (apiMapa.current = api)}
       />
-      {tarjeta}
+      {volando ? (
+        <PantallaDeVuelo
+          lectura={lectura}
+          errorGps={errorGps}
+          destino={destino}
+          hacia={hacia}
+          proximo={proximo}
+          totalPuntos={puntos.length}
+          onProximo={(i) => setProximo(Math.max(0, Math.min(puntos.length - 1, i)))}
+          variacion={variacion}
+          ahora={ahora}
+          despues={despues}
+          dentro={dentro}
+          puntos={puntos}
+          track={track}
+          narizArriba={narizArriba}
+          rumboMapa={rumboMapa}
+          onOrientacion={alternarOrientacion}
+          seguir={seguir}
+          onSeguir={() => setSeguir(true)}
+          onAcercar={() => apiMapa.current?.acercar()}
+          onAlejar={() => apiMapa.current?.alejar()}
+          menuCapas={menuCapas}
+          onCapas={() => setMenuCapas((v) => !v)}
+          detalles={detallesVuelo}
+          onDetalles={() => setDetallesVuelo((v) => !v)}
+          onTerminar={terminar}
+          onMargenes={setMargenes}
+        />
+      ) : (
+        tarjeta
+      )}
       {/*
         Las pestañas de Preparar vuelo (3.12.0). Desde que el Mapa es la primera, el ícono de la
         sección cae acá, y el mapa a pantalla completa tapaba las de la página. En el teléfono el
@@ -833,5 +846,308 @@ function ListaEspacios({ espacios }: { espacios: EspacioAereo[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/* ------------------------------------------------------------ la pantalla de vuelo --- */
+
+/**
+ * En vuelo (3.16.0): el mapa entre dos bandas de borde a borde, sin tarjetas flotando. Arriba lo
+ * que se mira cada minuto (el próximo punto y los instrumentos); abajo con quién hablás, "Más" y
+ * Terminar; al costado, los botones del mapa, grandes para el dedo con turbulencia.
+ */
+function PantallaDeVuelo(p: {
+  lectura: Lectura | null;
+  errorGps: string | null;
+  destino: { codigo: string; label: string } | null;
+  hacia: { distanciaNm: number; rumboT: number; eteMin: number | null } | null;
+  proximo: number;
+  totalPuntos: number;
+  onProximo: (i: number) => void;
+  variacion: number | null;
+  ahora: Dependencia | null;
+  despues: { desdeNm: number; dependencia: Dependencia } | null;
+  dentro: EspacioAereo[];
+  puntos: { codigo: string; label: string }[];
+  track: TrackVuelo | null;
+  narizArriba: boolean;
+  rumboMapa: number;
+  onOrientacion: () => void;
+  seguir: boolean;
+  onSeguir: () => void;
+  onAcercar: () => void;
+  onAlejar: () => void;
+  menuCapas: boolean;
+  onCapas: () => void;
+  detalles: boolean;
+  onDetalles: () => void;
+  onTerminar: () => void;
+  onMargenes: (m: { arriba: number; abajo: number }) => void;
+}) {
+  const arriba = useRef<HTMLDivElement>(null);
+  const abajo = useRef<HTMLDivElement>(null);
+  const { onMargenes } = p;
+  useEffect(() => {
+    const medir = () => onMargenes({ arriba: arriba.current?.offsetHeight ?? 0, abajo: abajo.current?.offsetHeight ?? 0 });
+    medir();
+    const ro = new ResizeObserver(medir);
+    if (arriba.current) ro.observe(arriba.current);
+    if (abajo.current) ro.observe(abajo.current);
+    return () => {
+      ro.disconnect();
+      onMargenes({ arriba: 0, abajo: 0 });
+    };
+  }, [onMargenes]);
+
+  const l = p.lectura;
+  const magnetico = (t: number) => grados(p.variacion !== null ? aMagnetico(t, p.variacion) : t);
+  const unidadRumbo = p.variacion !== null ? "°M" : "°V";
+  const trackValido = l && l.trackT !== null && (l.gsKt ?? 0) > 15;
+  const grabado = p.track && p.track.puntos.length > 1 ? resumenTrack(p.track.puntos) : null;
+  const boton = "pointer-events-auto w-12 h-12 rounded-full flex items-center justify-center bg-noche/90 backdrop-blur-xl border border-white/15 text-white shadow-lg shadow-black/40";
+
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col pointer-events-none">
+      {/* Arriba: el próximo punto y los instrumentos. */}
+      <div ref={arriba} className="pointer-events-auto bg-noche/90 backdrop-blur-xl border-b border-white/10 pt-[max(env(safe-area-inset-top),0.5rem)]">
+        {!l ? (
+          <div className="px-4 py-3 space-y-1.5">
+            {p.errorGps ? (
+              <p className="text-sm text-amber-400">{p.errorGps}</p>
+            ) : (
+              <p className="text-sm text-zinc-300 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Buscando el GPS…
+              </p>
+            )}
+            <p className="text-[11px] leading-snug text-zinc-500">
+              Ayuda VFR con el GPS del teléfono: no reemplaza la carta ni la navegación. La altura es la del GPS, no la del altímetro.
+            </p>
+          </div>
+        ) : (
+          <>
+            {p.destino && p.hacia ? (
+              <div className="flex items-center gap-1 px-1.5 pt-1">
+                <button
+                  onClick={() => p.onProximo(p.proximo - 1)}
+                  disabled={p.proximo === 0}
+                  aria-label="Punto anterior"
+                  className="w-10 h-12 shrink-0 flex items-center justify-center text-zinc-400 disabled:opacity-25"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <div className="flex-1 min-w-0">
+                  <p className={ROTULO}>
+                    Próximo · {p.proximo + 1} de {p.totalPuntos}
+                  </p>
+                  <p className="truncate leading-tight">
+                    <span className="font-display text-[26px] font-bold tracking-tight text-white">{p.destino.codigo}</span>{" "}
+                    <span className="text-sm text-zinc-400">{p.destino.label !== p.destino.codigo ? p.destino.label : ""}</span>
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className={ROTULO}>Distancia</p>
+                  <p className="font-display text-[26px] font-bold leading-tight tabular-nums text-aviation-cyan">
+                    {p.hacia.distanciaNm.toFixed(1)}
+                    <span className="ml-0.5 text-xs font-semibold text-zinc-400">NM</span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => p.onProximo(p.proximo + 1)}
+                  disabled={p.proximo >= p.totalPuntos - 1}
+                  aria-label="Punto siguiente"
+                  className="w-10 h-12 shrink-0 flex items-center justify-center text-zinc-400 disabled:opacity-25"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <p className="px-4 pt-2 text-sm text-zinc-400">Sin ruta: tu posición y el track.</p>
+            )}
+            <div className={`grid ${p.hacia ? "grid-cols-5" : "grid-cols-3"} divide-x divide-white/10 py-2`}>
+              {p.hacia && (
+                <>
+                  <Instrumento rotulo="Rumbo" valor={magnetico(p.hacia.rumboT)} unidad={unidadRumbo} />
+                  <Instrumento rotulo="ETE" valor={p.hacia.eteMin !== null ? duracionCorta(p.hacia.eteMin).replace(" min", "′").replace(" h ", ":") : "—"} />
+                </>
+              )}
+              <Instrumento rotulo="GS" valor={l.gsKt !== null ? Math.round(l.gsKt).toString() : "—"} unidad="kt" />
+              <Instrumento rotulo="Track" valor={trackValido ? magnetico(l.trackT!) : "—"} unidad={unidadRumbo} />
+              <Instrumento rotulo="Alt GPS" valor={l.altitudFt !== null ? miles(l.altitudFt) : "—"} unidad="ft" />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* El medio es el mapa: sólo los botones y el estado del track. */}
+      <div className="relative flex-1">
+        <div className="absolute right-3 bottom-8 flex flex-col gap-2">
+          <button
+            onClick={p.onOrientacion}
+            aria-label={p.narizArriba ? "Nariz arriba: tocá para poner el norte arriba" : "Norte arriba: tocá para poner la nariz arriba"}
+            title={p.narizArriba ? "Nariz arriba" : "Norte arriba"}
+            className={`${boton} flex-col gap-0 ${p.narizArriba ? "!border-aviation-cyan" : ""}`}
+          >
+            {/* La flecha apunta al norte de la pantalla: con la nariz arriba, gira con el mapa. */}
+            <svg width="18" height="18" viewBox="0 0 18 18" style={{ transform: `rotate(${p.rumboMapa}deg)` }} aria-hidden="true">
+              <path d="M9 1 L13 11 L9 9 L5 11 Z" fill="#f87171" />
+              <path d="M9 17 L13 11 L9 9 L5 11 Z" fill="#a1a1aa" />
+            </svg>
+            <span className="font-mono text-[9px] font-bold leading-none">{p.narizArriba ? "NARIZ" : "N"}</span>
+          </button>
+          <button onClick={p.onSeguir} aria-label="Seguir al avión" className={`${boton} ${p.seguir ? "" : "!bg-aviation-cyan !text-noche !border-aviation-cyan"}`}>
+            <Crosshair className="w-5 h-5" />
+          </button>
+          <button onClick={p.onAcercar} aria-label="Acercar" className={boton}>
+            <Plus className="w-5 h-5" />
+          </button>
+          <button onClick={p.onAlejar} aria-label="Alejar" className={boton}>
+            <Minus className="w-5 h-5" />
+          </button>
+          <button onClick={p.onCapas} aria-label="Capas del mapa" aria-expanded={p.menuCapas} className={`${boton} ${p.menuCapas ? "!border-aviation-cyan" : ""}`}>
+            <Layers className="w-5 h-5" />
+          </button>
+        </div>
+        {p.track && (
+          <p className="absolute left-3 bottom-8 rounded-full bg-noche/80 backdrop-blur px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Grabando
+            {grabado && grabado.minutos >= 1 ? ` · ${duracionCorta(grabado.minutos)} · ${grabado.distanciaNm.toFixed(0)} NM` : ""}
+          </p>
+        )}
+      </div>
+
+      {/* Abajo: con quién hablás, los detalles y Terminar. */}
+      <div ref={abajo} className="pointer-events-auto bg-noche/90 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
+        {p.detalles && (
+          <div className="max-h-[45vh] overflow-y-auto custom-scrollbar px-4 pt-4 pb-2 space-y-4 border-b border-white/10">
+            <div>
+              <p className={`${ROTULO} mb-1.5`}>Estás dentro de</p>
+              {p.dentro.length ? <ListaEspacios espacios={p.dentro} /> : <p className="text-sm text-zinc-400">Ningún espacio controlado de los que dibuja el mapa.</p>}
+            </div>
+            {p.puntos.length > 0 && (
+              <div>
+                <p className={`${ROTULO} mb-1.5`}>La ruta</p>
+                <ol className="space-y-1">
+                  {p.puntos.map((x, i) => (
+                    <li key={`${x.codigo}-${i}`}>
+                      <button onClick={() => p.onProximo(i)} className={`w-full text-left flex items-center gap-2.5 py-1 text-sm ${i === p.proximo ? "text-aviation-cyan font-semibold" : "text-zinc-300"}`}>
+                        <span className="w-5 font-mono text-[11px] text-zinc-500">{i + 1}</span>
+                        {x.codigo} <span className="truncate text-zinc-500 font-normal">{x.label !== x.codigo ? x.label : ""}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+            {l && (
+              <p className="text-[11px] text-zinc-500">
+                Precisión ±{Math.round(l.precisionM)} m{l.precisionM > 100 ? " · señal débil" : ""}. El track se graba en el teléfono mientras la pantalla está prendida.
+              </p>
+            )}
+            <p className="text-[11px] leading-snug text-zinc-500 flex gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" />
+              Ayuda VFR con el GPS del teléfono: no reemplaza la carta ni la navegación. La altura es la del GPS, no la del altímetro.
+            </p>
+          </div>
+        )}
+        <div className="flex items-center gap-2 px-4 py-2.5">
+          <div className="flex-1 min-w-0">
+            {p.ahora ? (
+              <>
+                <p className={`${ROTULO} flex items-center gap-1.5 min-w-0`}>
+                  <Radio className="w-3 h-3 shrink-0" /> <span className="truncate">Hablás con {p.ahora.distintivo}</span>
+                </p>
+                {/* Las frecuencias enteras, en su línea: es lo que se marca en la radio. Un centro con
+                    sectores trae varias, y se parten en dos renglones antes que cortarse. */}
+                <p className={`${p.ahora.mhz.length > 2 ? "text-[15px]" : "text-lg"} font-bold tabular-nums leading-snug text-aviation-cyan`}>
+                  {p.ahora.mhz.length ? p.ahora.mhz.join(" · ") : "Sin frecuencia publicada"}
+                </p>
+                {p.despues && (
+                  <p className="truncate text-xs text-zinc-400">
+                    En {p.despues.desdeNm.toFixed(0)} NM: {p.despues.dependencia.distintivo} {p.despues.dependencia.mhz.join(" · ")}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-xs text-zinc-400">{l ? "Con quién hablás aparece con las capas del mapa." : "Esperando el GPS."}</p>
+            )}
+          </div>
+          <button
+            onClick={p.onDetalles}
+            aria-expanded={p.detalles}
+            aria-label={p.detalles ? "Menos detalles" : "Más detalles: espacios, ruta, precisión"}
+            className="shrink-0 w-10 h-10 rounded-full border border-white/15 text-zinc-200 inline-flex items-center justify-center"
+          >
+            <ChevronDown className={`w-4 h-4 transition-transform ${p.detalles ? "" : "rotate-180"}`} />
+          </button>
+          <button onClick={p.onTerminar} className="shrink-0 h-10 px-4 rounded-full bg-aviation-cyan text-noche text-xs font-semibold inline-flex items-center gap-1.5">
+            <Square className="w-3 h-3" fill="currentColor" /> Terminar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Instrumento({ rotulo, valor, unidad }: { rotulo: string; valor: string; unidad?: string }) {
+  return (
+    <div className="px-1 text-center min-w-0">
+      <p className={ROTULO}>{rotulo}</p>
+      <p className="text-lg font-bold tabular-nums text-white leading-tight truncate">
+        {valor}
+        {unidad && <span className="ml-0.5 text-[10px] font-semibold text-zinc-500">{unidad}</span>}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * El último vuelo grabado, en la tarjeta de la ruta: cuánto duró, cuánto se voló, bajarlo como
+ * GPX o ir a Registrar vuelo con la ruta, el avión y la fecha (sin horarios: el libro va con las
+ * del tacómetro, como con el plan de vuelo).
+ */
+function VueloGrabado({ track, avionId, onBorrar }: { track: TrackVuelo; avionId: string; onBorrar: () => void }) {
+  const r = resumenTrack(track.puntos);
+  const bajar = () => {
+    const url = URL.createObjectURL(new Blob([gpxDelTrack(track)], { type: "application/gpx+xml" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nombreDelGpx(track);
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const ruta = track.ruta.trim().split(/\s+/).filter(Boolean);
+  const registrar = new URLSearchParams({ prefill: "true", date: fechaArgentina(track.inicio) });
+  if (ruta.length) registrar.set("route", ruta.length > 1 ? `${ruta[0]} ${ruta[ruta.length - 1]}` : ruta[0]);
+  if (avionId) registrar.set("aircraft_id", avionId);
+  return (
+    <section className="border-y border-white/10 -mx-4 px-4 py-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className={`${ROTULO} flex items-center gap-1.5`}>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#c084fc]" /> {track.terminado ? "Último vuelo grabado" : "Vuelo grabado sin terminar"}
+        </p>
+        <button
+          onClick={() => window.confirm("¿Borrar el track grabado? Queda sólo en este teléfono.") && onBorrar()}
+          aria-label="Borrar el track"
+          className="-mr-1 w-8 h-8 inline-flex items-center justify-center rounded-full text-zinc-500 hover:text-red-500"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <p className="text-sm text-zinc-900 dark:text-white tabular-nums">
+        {track.ruta || "Sin ruta"} · {duracionCorta(r.minutos)} · {r.distanciaNm.toFixed(0)} NM
+        {r.altitudMaxFt !== null ? ` · máx ${miles(r.altitudMaxFt)} ft` : ""}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href={`/dashboard/log-flight?${registrar}`}
+          className="inline-flex items-center gap-1.5 rounded-full bg-aviation-cyan text-noche px-3 py-1.5 text-xs font-semibold"
+        >
+          <NotebookPen className="w-3.5 h-3.5" /> Registrar el vuelo
+        </Link>
+        <button onClick={bajar} className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+          <Download className="w-3.5 h-3.5" /> Bajar el track (GPX)
+        </button>
+      </div>
+    </section>
   );
 }

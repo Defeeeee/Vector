@@ -7,6 +7,7 @@ import NextTopLoader from "nextjs-toploader";
 import ServiceWorkerVector from "@/components/ServiceWorkerVector";
 import PixelMeta from "@/components/PixelMeta";
 import { SITIO_URL } from "@/lib/sitio";
+import { PANTALLAS_IPHONE, archivoDeArranque, mediaDeArranque } from "@/lib/arranque";
 
 // Single unified typeface across the app for both body text and display/headline roles:
 // **Plus Jakarta Sans** desde la 3.4.0 (Federico, 2026-11-03). Hasta ahí fue Nunito, cuyos remates
@@ -62,8 +63,14 @@ export const metadata: Metadata = {
   description:
     "La bitácora de vuelo digital para pilotos argentinos: el desglose de la hoja, tus vencimientos, tu camino a la PCA y el libro en PDF para firmar.",
   applicationName: "Vector",
-  // Los dos los toma iOS, que no lee el manifest para esto.
-  appleWebApp: { capable: true, title: "Vector", statusBarStyle: "default" },
+  // Los toma iOS, que no lee el manifest para esto. Las imágenes de arranque (3.16.0) son la
+  // marca sobre la noche, por pantalla: sin ellas la app instalada arrancaba en negro.
+  appleWebApp: {
+    capable: true,
+    title: "Vector",
+    statusBarStyle: "default",
+    startupImage: PANTALLAS_IPHONE.map((p) => ({ url: archivoDeArranque(p), media: mediaDeArranque(p) })),
+  },
   openGraph: { siteName: "Vector", locale: "es_AR", type: "website" },
   twitter: { card: "summary_large_image" },
 };

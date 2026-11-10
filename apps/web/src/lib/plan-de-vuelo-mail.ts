@@ -31,7 +31,7 @@ export interface DatosMailPlan {
   /**
    * Un aviso sobre el plan: la demora (DLA, AIP ENR 1.10, 7.2), con `plan` ya con la nueva
    * EOBT y fecha (`planConDemora`) y la hora de antes acá, o la cancelación (CNL, Apéndice
-   * 5). El asunto lleva `DLA` o `CNL` adelante del de siempre.
+   * 5), o la modificación (CHG, Apéndice 3). El asunto lleva `DLA`, `CNL` o `CHG` adelante.
    */
   aviso?: AvisoDelPlan;
 }

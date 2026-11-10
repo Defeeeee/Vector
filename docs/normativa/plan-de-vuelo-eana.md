@@ -105,6 +105,37 @@ Leídas el 2026-10-10. Lo regulatorio se escribe contra esto, no de memoria
   imagen de la AIP (`src/lib/plan-de-vuelo-dla.png`). La casilla 18 va con la DOF/ de la
   nueva fecha, como lo hace FPL.AR.
 
+## La modificación (CHG) — AIP ENR 1.10, punto 6 y Apéndice 3
+
+Leído del PDF de la AIP (ENR 1.10, AIRAC AMDT 2/2025) el 2026-11-10, bajado desde un
+navegador.
+
+- **6.1:** los cambios "con respecto a la autonomía de vuelo o el número total de personas
+  transportadas a bordo, u otras modificaciones de importancias" se rectifican o se avisan
+  con un CHG a la oficina ARO/AIS "como mínimo hasta 15 minutos antes de la Hora de Fuera
+  de Calzos". Vector avisa, no frena (como en la demora).
+- **6.2:** "La cantidad máxima de presentaciones de CHG en la Oficina ARO/AIS es de tres (3)
+  formularios por vuelo." Vector cuenta las mandadas desde Vector a la oficina
+  (`envios` con `tipo: "chg"`) y no deja mandar la cuarta. Las que se bajan para presentar
+  a mano **no se cuentan**: Vector no sabe si se presentaron.
+- **6.4:** los CHG "solo son aplicables a cambios en planes de vuelo que aún no hayan
+  recibido autorización ATC"; con la autorización dada, el cambio va "por radiotelefonía
+  directamente a la dependencia ATC". La pantalla lo dice.
+- **El formulario es el del Apéndice 3** (ENR 1.10-39): la misma planilla que la demora,
+  con "MODIFICACIÓN" y "CHG", la casilla 18 de tres renglones y la **22, ENMIENDA**, de
+  cuatro. La imagen es la de la AIP (`src/lib/plan-de-vuelo-chg.png`, 872×852 px, a
+  140,93 pt del borde de arriba, pasada a grises como las otras dos).
+- **Va con el plan vigente** (con la última demora, si hubo), y **no cambia el plan
+  guardado**: es un mensaje sobre el plan presentado.
+- **Cómo se escribe la casilla 22 no lo dice la AIP.** Vector sigue el campo 22 del Doc
+  4444 de OACI (Apéndice 3): el número de la casilla, una barra y la casilla entera con el
+  dato nuevo (`19/E/0430 P/3`), y cada una más separada por un guion
+  (`19/E/0430 P/3 -15/N0100VFR DCT`). **El Doc 4444 no está en el repo**: esto se escribió
+  sin tenerlo delante (invariante 6), y por eso la pantalla muestra la línea armada y cada
+  casilla se puede corregir antes de mandarla. Las casillas que se ofrecen son las 8, 9,
+  10, 15, 16, 18 y 19; la 7, la 13 y la DOF identifican el plan y no se cambian con un CHG
+  (un cambio de hora es una demora).
+
 ## La cancelación (CNL) — AIP ENR 1.10, Apéndice 5
 
 - **El formulario es el del Apéndice 5** (ENR 1.10-41, AIRAC AMDT 2/2025), la misma planilla
@@ -118,7 +149,7 @@ Leídas el 2026-10-10. Lo regulatorio se escribe contra esto, no de memoria
 - El texto de la ENR 1.10 sobre la CNL (punto 4.4 del acuerdo de RPL) es para planes
   repetitivos: "se trasmitirán cuando se anule un vuelo un día determinado". Para un plan
   común, la AIP sólo trae el formulario; Vector no le pone plazo.
-- **La licencia tiene 6 celdas** en los dos formularios. Una licencia más larga (8 cifras)
+- **La licencia tiene 6 celdas** en los tres formularios. Una licencia más larga (8 cifras)
   va entera y centrada, tapando las divisiones, en vez de cortada.
 
 ## El horario de las oficinas — AIP AD 2.3

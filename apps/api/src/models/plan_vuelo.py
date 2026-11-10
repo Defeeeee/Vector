@@ -95,12 +95,12 @@ MAX_ENVIOS = 20
 class Envio(BaseModel):
     """
     Un envío por mail. `prueba` va al piloto; `aro`, a la oficina con copia al piloto.
-    `tipo`: el plan (`fpl`), un aviso de demora (`dla`) o la cancelación (`cnl`); los
-    anotados antes son del plan.
+    `tipo`: el plan (`fpl`), un aviso de demora (`dla`), la cancelación (`cnl`) o una
+    modificación (`chg`, AIP ENR 1.10 punto 6); los anotados antes son del plan.
     """
 
     modo: Literal["prueba", "aro"]
-    tipo: Literal["fpl", "dla", "cnl"] = "fpl"
+    tipo: Literal["fpl", "dla", "cnl", "chg"] = "fpl"
     a: str = Field(max_length=200)
     resend_id: Optional[str] = Field(default=None, max_length=100)
     at: Optional[dt.datetime] = None

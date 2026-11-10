@@ -286,6 +286,8 @@ export interface DatosPdfDemora {
   c18: string;
   nombre: string;
   licencia: string;
+  /** Sólo la modificación (CHG): la casilla 22, ENMIENDA. */
+  enmienda?: string;
 }
 
 /**
@@ -299,6 +301,8 @@ interface FormularioMensaje {
   arribaPt: number;
   cajas: Record<"c7" | "c13ad" | "c13hora" | "c16ad" | "c16eet" | "c16altn" | "nombre" | "licencia" | "firma", [number, number, number, number]>;
   renglones: [number, number][];
+  /** Los renglones de la casilla 22 (ENMIENDA): sólo el de la modificación los tiene. */
+  renglonesEnmienda?: [number, number][];
 }
 
 async function pdfMensaje(
@@ -333,6 +337,9 @@ async function pdfMensaje(
   enCeldas(page, n, d.plan.c16eet, caja(m.cajas.c16eet), 4);
   enCeldas(page, n, d.plan.c16altn1, caja(m.cajas.c16altn), 4);
   enRenglones(page, f, d.c18, m.renglones.map(([y1, y2]) => caja([6, y1, m.anchoPx - 12, y2])), true);
+  if (m.renglonesEnmienda && d.enmienda) {
+    enRenglones(page, f, d.enmienda, m.renglonesEnmienda.map(([y1, y2]) => caja([6, y1, m.anchoPx - 12, y2])), false);
+  }
   izquierda(page, n, d.nombre, caja(m.cajas.nombre));
   enCeldas(page, n, d.licencia, caja(m.cajas.licencia), 6);
 
@@ -401,5 +408,39 @@ export function pdfCancelacion(d: DatosPdfDemora, opciones: { fondoPng: Uint8Arr
   return pdfMensaje(CNL, d, opciones, {
     titulo: `Cancelación ${d.plan.c7} ${d.plan.c13ad} ${d.eobt}`,
     asunto: "Formulario de cancelación (CNL), AIP Argentina ENR 1.10, Apéndice 5",
+  });
+}
+
+/**
+ * La modificación: Apéndice 3 (ENR 1.10-39, AIRAC AMDT 2/2025), `plan-de-vuelo-chg.png`.
+ * La imagen de la AIP es de 872×852 px, en x 42,55–552,75 pt y a 140,93 pt del borde de
+ * arriba (la matriz [510,2 0 0 498,5 42,55 202,49] de la página). Es la misma planilla de la
+ * demora con la casilla 18 más corta y la 22, ENMIENDA, abajo; las cajas se midieron con sus
+ * líneas negras.
+ */
+const CHG: FormularioMensaje = {
+  anchoPx: 872,
+  altoPx: 852,
+  arribaPt: 140.93,
+  cajas: {
+    c7: [275, 339, 509, 369],
+    c13ad: [127, 411, 259, 438],
+    c13hora: [363, 411, 493, 438],
+    c16ad: [127, 507, 259, 534],
+    c16eet: [363, 507, 493, 534],
+    c16altn: [559, 507, 696, 534],
+    nombre: [8, 806, 375, 846],
+    licencia: [379, 826, 577, 846],
+    firma: [580, 806, 862, 846],
+  },
+  renglones: [[590, 612], [612, 634], [634, 656]],
+  renglonesEnmienda: [[722, 744], [744, 766], [766, 786], [786, 806]],
+};
+
+/** La modificación (CHG): el plan vigente arriba y lo que cambia en la casilla 22. */
+export function pdfCambio(d: DatosPdfDemora, opciones: { fondoPng: Uint8Array; firmaPng?: Uint8Array }): Promise<Uint8Array> {
+  return pdfMensaje(CHG, d, opciones, {
+    titulo: `Modificación ${d.plan.c7} ${d.plan.c13ad} ${d.eobt}`,
+    asunto: "Formulario de modificación (CHG), AIP Argentina ENR 1.10, Apéndice 3",
   });
 }

@@ -341,13 +341,14 @@ export function asuntoDelMail(p: Pick<PlanOaci, "c7" | "c13ad" | "c13hora" | "c1
   return `${p.c7 || "FPL"}-${p.c13ad}(${p.c13hora || "????"})${p.c16ad}${fecha}`;
 }
 
-/** Un mensaje sobre un plan ya presentado (AIP ENR 1.10, Apéndices 4 y 5). */
-export type AvisoDelPlan = { tipo: "dla"; eobtAnterior: string } | { tipo: "cnl" };
+/** Un mensaje sobre un plan ya presentado (AIP ENR 1.10, Apéndices 3, 4 y 5). */
+export type AvisoDelPlan = { tipo: "dla"; eobtAnterior: string } | { tipo: "cnl" } | { tipo: "chg"; enmienda: string };
 
 const QUE_SE_ADJUNTA = {
   fpl: "el plan de vuelo",
   dla: "el aviso de demora (DLA) del plan de vuelo",
   cnl: "la cancelación (CNL) del plan de vuelo",
+  chg: "la modificación (CHG) del plan de vuelo",
 } as const;
 
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -379,6 +380,7 @@ export function cuerpoDelMail(
     `  Hasta : ${lugar(nombres.destino, p.c16ad)}`,
     `  Fecha : ${fecha}`,
     aviso?.tipo === "dla" ? `  Nueva EOBT : ${p.c13hora} UTC (antes ${aviso.eobtAnterior} UTC)` : `  EOBT  : ${p.c13hora} UTC`,
+    ...(aviso?.tipo === "chg" ? [`  Enmienda : ${aviso.enmienda}`] : []),
     "",
     "Cordiales saludos,",
     "",
