@@ -38,6 +38,8 @@ interface Props {
   consumoLh: number;
   consumoEstimado: boolean;
   piloto: PilotoParaPlan;
+  /** Por qué esa duración. Por defecto, la del planificador con viento; el Mapa la calcula sin viento. */
+  motivoEet?: string;
 }
 
 /** Los puntos del medio de la ruta, como los necesita la casilla 15. */
@@ -69,7 +71,7 @@ export function formularioDesdePlanificador(p: Props): FormularioPlan {
   if (p.minutosTotales && p.minutosTotales > 0) {
     sugerencias.eet = {
       valor: duracionHhmm(Math.max(1, Math.round(p.minutosTotales))),
-      motivo: `${Math.round(p.distanciaNm)} NM, con el viento del planificador`,
+      motivo: p.motivoEet ?? `${Math.round(p.distanciaNm)} NM, con el viento del planificador`,
       ruta,
     };
   }

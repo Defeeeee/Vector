@@ -83,7 +83,7 @@ export default async function SettingsPage() {
           <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
             <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-zinc-900" />
           </div>
-          <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Libros de vuelo</h3>
+          <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">{logbooks.length > 1 ? "Libros de vuelo" : "Tu libro de vuelo"}</h3>
         </div>
         <LogbooksManager logbooks={logbooks} />
       </section>}

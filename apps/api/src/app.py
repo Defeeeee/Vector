@@ -13,6 +13,7 @@ from src.controllers.auth import AuthController
 from src.controllers.flight_packs import FlightPacksController
 from src.controllers.planned_flights import PlannedFlightsController
 from src.controllers.planes_de_vuelo import PlanesDeVueloController, PlanesRecordatoriosController
+from src.controllers.rutas_guardadas import RutasGuardadasController
 from src.controllers.logbooks import LogbooksController
 from src.controllers.custom_stats import CustomStatsController
 from src.controllers.dashboard import DashboardController
@@ -86,7 +87,7 @@ api_router = Router(
         ProfilesController, 
         AircraftController, 
         FlightsController,
-        FlightPacksController, PlannedFlightsController, PlanesDeVueloController,
+        FlightPacksController, PlannedFlightsController, PlanesDeVueloController, RutasGuardadasController,
         LogbooksController,
         CustomStatsController,
         DashboardController,

@@ -39,6 +39,11 @@ export default function LogbooksManager({ logbooks }: { logbooks: Logbook[] }) {
   const [pending, startTransition] = useTransition();
 
   const { notificar } = useAvisos();
+  /*
+    Un solo libro (3.13.0): ninguna cuenta tiene dos (medido el 2026-11-05), así que con uno no se
+    ofrece agregar, ni borrar, ni se dice "por defecto". Quien ya tiene varios sigue viéndolos todos.
+  */
+  const varios = logbooks.length > 1;
 
   const handleDelete = (book: Logbook) => {
     setError(null);
@@ -85,7 +90,7 @@ export default function LogbooksManager({ logbooks }: { logbooks: Logbook[] }) {
                   <span className="text-sm font-bold text-zinc-900 dark:text-white truncate">
                     {book.name}
                   </span>
-                  {book.is_default && (
+                  {varios && book.is_default && (
                     <span className="font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-white/10 text-zinc-500 dark:text-zinc-400">
                       Por defecto
                     </span>
@@ -112,7 +117,7 @@ export default function LogbooksManager({ logbooks }: { logbooks: Logbook[] }) {
                 >
                   <Pencil className="w-4 h-4" />
                 </button>
-                <button
+                {varios && <button
                   type="button"
                   onClick={() => handleDelete(book)}
                   disabled={pending && busyId === book.id}
@@ -124,21 +129,21 @@ export default function LogbooksManager({ logbooks }: { logbooks: Logbook[] }) {
                   ) : (
                     <Trash2 className="w-4 h-4" />
                   )}
-                </button>
+                </button>}
               </div>
             </div>
           );
         })}
       </div>
 
-      <button
+      {logbooks.length === 0 && <button
         type="button"
         onClick={() => { setError(null); setAdding(true); }}
         className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white hover:opacity-70 transition-opacity"
       >
         <Plus className="w-4 h-4" />
-        Agregar libro
-      </button>
+        Crear el libro
+      </button>}
 
       {(adding || editing) && (
         <LogbookForm

@@ -29,6 +29,10 @@ import MenuCapas from "./MenuCapas";
 import { alternarCapa, CAPAS_POR_DEFECTO, CLAVE_CAPAS, leerCapas, OPACIDAD_CARTA_POR_DEFECTO, type IdCapa } from "@/lib/capas-mapa";
 import BriefingRuta from "../BriefingRuta";
 import { SECCIONES } from "@/lib/secciones";
+import type { Aircraft } from "@/types";
+import type { PilotoParaPlan } from "@/lib/formulario-plan";
+import type { RutaGuardada } from "@/lib/rutas-guardadas";
+import RutaAcciones from "./RutaAcciones";
 
 /**
  * **El Mapa** (3.0.0): todo es mapa, con la tarjeta de la ruta flotando arriba a la izquierda.
@@ -70,7 +74,19 @@ const COLOR_TIPO: Record<EspacioAereo["tipo"], string> = {
 
 type Lectura = ReturnType<typeof lecturaGps>;
 
-export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial: string; tasDelHangar: number | null }) {
+export default function MapaClient({
+  rutaInicial,
+  aeronaves,
+  aeronaveInicial,
+  piloto,
+  rutasGuardadas,
+}: {
+  rutaInicial: string;
+  aeronaves: Aircraft[];
+  aeronaveInicial: string;
+  piloto: PilotoParaPlan;
+  rutasGuardadas: RutaGuardada[] | null;
+}) {
   const [montado, setMontado] = useState(false);
   useEffect(() => setMontado(true), []);
 
@@ -154,7 +170,24 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
   }, []);
   const deshacer = () => setTexto((t) => t.trim().split(/\s+/).slice(0, -1).join(" "));
 
-  const [tas, setTas] = useState(String(tasDelHangar ?? TAS_POR_DEFECTO));
+  // El avión (3.13.0): pone la TAS y el consumo, y va al plan de vuelo. Arranca en el de la URL
+  // (`?av=`) o en el primero del Hangar con TAS cargada, como hacía la TAS sola.
+  const [avionId, setAvionId] = useState(
+    () => aeronaves.find((a) => a.id === aeronaveInicial)?.id ?? aeronaves.find((a) => a.cruise_tas_kt)?.id ?? aeronaves[0]?.id ?? ""
+  );
+  const aeronave = aeronaves.find((a) => a.id === avionId) ?? null;
+  const [tas, setTas] = useState(String(aeronave?.cruise_tas_kt ?? TAS_POR_DEFECTO));
+  const elegirAvion = (id: string) => {
+    setAvionId(id);
+    const a = aeronaves.find((x) => x.id === id);
+    if (a?.cruise_tas_kt) setTas(String(a.cruise_tas_kt));
+  };
+  const [rutas, setRutas] = useState<RutaGuardada[] | null>(rutasGuardadas);
+  const cargarRuta = (r: RutaGuardada) => {
+    setTexto(r.ruta);
+    setTextoFirme(r.ruta);
+    if (r.aircraft_id && aeronaves.some((a) => a.id === r.aircraft_id)) elegirAvion(r.aircraft_id);
+  };
   const tasNum = Number(tas) > 30 ? Number(tas) : null;
 
   // La altitud de crucero decide con quién hablás: a FL 060 pasás por arriba de un ATZ de
@@ -513,7 +546,7 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
                     </div>
                     {tramo && (
                       <span className="text-xs tabular-nums text-zinc-500 text-right shrink-0">
-                        {tramo.distanciaNm.toFixed(1)} NM
+                        {tramo.distanciaNm.toFixed(1)} NM{tasNum ? ` · ${duracionCorta((tramo.distanciaNm / tasNum) * 60)}` : ""}
                         <br />
                         {grados(tramo.rumboM ?? tramo.rumboT)}
                         {tramo.rumboM !== null ? "°M" : "°V"}
@@ -528,6 +561,25 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
                 <div>
                   <p className="text-sm font-bold text-zinc-900 dark:text-white tabular-nums">{totalNm.toFixed(1)} NM</p>
                   <p className="text-[11px] text-zinc-500">{tasNum ? `${duracionCorta((totalNm / tasNum) * 60)} sin viento` : "Poné la TAS"}</p>
+                  {tasNum && aeronave?.fuel_burn_lph ? (
+                    <p className="text-[11px] text-zinc-500 tabular-nums">
+                      ≈ {Math.ceil((totalNm / tasNum) * aeronave.fuel_burn_lph)} L a {aeronave.fuel_burn_lph} L/h
+                    </p>
+                  ) : null}
+                  {aeronaves.length > 0 && (
+                    <select
+                      value={avionId}
+                      onChange={(e) => elegirAvion(e.target.value)}
+                      aria-label="Avión"
+                      className="mt-1.5 max-w-[150px] rounded-lg bg-white dark:bg-black/30 border border-zinc-200 dark:border-white/10 px-2 py-1 text-xs font-semibold text-zinc-900 dark:text-white"
+                    >
+                      {aeronaves.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.registration} · {a.type}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
                 <label className="flex items-center gap-1.5 text-xs text-zinc-500">
@@ -555,6 +607,22 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
               </div>
             )}
           </section>
+        )}
+
+        {!volando && (
+          <RutaAcciones
+            tokens={tokens}
+            resueltos={resueltos}
+            aeronave={aeronave}
+            tasKt={tasNum}
+            altitudFt={altitudNum}
+            distanciaNm={totalNm}
+            minutosSinViento={tasNum && totalNm > 0 ? (totalNm / tasNum) * 60 : null}
+            piloto={piloto}
+            rutas={rutas}
+            onRutas={setRutas}
+            onCargar={cargarRuta}
+          />
         )}
 
         {cambios.length > 0 && !volando && (
@@ -634,14 +702,6 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
           </section>
         )}
 
-        {tokens.length > 1 && !volando && (
-          <Link
-            href={`/dashboard/mapa/planilla?ruta=${encodeURIComponent(tokens.join("-"))}`}
-            className="text-xs font-semibold text-aviation-blue hover:underline"
-          >
-            Planilla, combustible y plan de vuelo →
-          </Link>
-        )}
       </div>
     </div>
   );

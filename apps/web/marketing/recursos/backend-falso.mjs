@@ -120,6 +120,7 @@ function rutaCad(req, res, ruta, json) {
 export const DATOS = { perfil, aviones, vuelos };
 // Planes de vuelo (migración 024), en memoria: se pierden al reiniciar.
 const planes = new Map();
+const rutasGuardadas = [{ id: "r1", nombre: "SADF → SAAK por BENAVIDEZ", ruta: "SADF BENAVIDEZ SAAK", aircraft_id: null, created_at: "2026-11-09T12:00:00Z", updated_at: "2026-11-09T12:00:00Z" }];
 let firma = null;
 const resumenPlan = (p) => {
   const f = p.formulario ?? {};
@@ -237,6 +238,22 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
   }
   if (ruta.startsWith("/api/qr/") || ruta.startsWith("/api/admin/qr")) {
     const r = pegatinasQr(req, ruta, json);
+    res.writeHead(r === undefined ? 404 : 200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(r ?? { detail: "No existe" }));
+  }
+  // Las rutas guardadas del Mapa (migración 039), en memoria.
+  if (ruta.startsWith("/api/rutas")) {
+    const id = ruta.split("/")[3];
+    let r;
+    if (!id && req.method === "POST") {
+      const ahora = new Date().toISOString();
+      r = { id: crypto.randomUUID(), nombre: json.nombre, ruta: json.ruta, aircraft_id: json.aircraft_id ?? null, created_at: ahora, updated_at: ahora };
+      rutasGuardadas.unshift(r);
+    } else if (!id) r = rutasGuardadas;
+    else if (req.method === "DELETE") {
+      const i = rutasGuardadas.findIndex((x) => x.id === id);
+      r = i >= 0 ? rutasGuardadas.splice(i, 1) && {} : undefined;
+    }
     res.writeHead(r === undefined ? 404 : 200, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(r ?? { detail: "No existe" }));
   }
