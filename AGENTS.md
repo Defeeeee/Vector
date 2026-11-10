@@ -140,10 +140,13 @@ Actividad.
 - **El teléfono tiene su propio diseño** (3.4.0, Federico): distinto en el navegador y en la app
   instalada. La variante `app:` de Tailwind (`globals.css`) es `display-mode: standalone` **y menos
   de `lg`**: CSS puro, nunca JavaScript (invariante 1), y una PWA instalada en la compu sigue con el
-  escritorio. En el navegador: encabezado blanco de 56 px (logo, buscador, cuenta), pestañas
-  subrayadas y abajo la píldora con el nombre de cada sección más el +. En la app: sin logo, título
-  grande ("Hola, …" con la fecha en el inicio, el nombre de la sección en el resto,
-  `TituloTelefono`), el + arriba y una barra de pestañas de borde a borde. Las medidas de la app son
+  escritorio. **Desde la 3.14.0 el teléfono tiene la misma estética que la compu**: el inicio es
+  `InicioEscritorio` en una columna, las pestañas son subrayadas en mono (también en la app), y abajo
+  hay una barra de borde a borde con los nombres en mono y la sección activa en cian (en el navegador
+  lleva el + cian al final). En el navegador: encabezado de 56 px (logo, buscador, cuenta). En la
+  app: sin logo, título ("Hola, …" con la fecha en mono en el inicio, el nombre de la sección en el
+  resto, `TituloTelefono`) y el + arriba. Escala del teléfono: títulos en Bold (no ExtraBold:
+  "muy grande y gordo"), 34 px el del inicio, 26 px el de una página. Las medidas de la app son
   las del diseño (58 px arriba o la muesca, 8 px al contenido, 12 entre tarjetas): no a ojo. El
   "Cerrar sesión" del teléfono está en el Hangar. **Desde la 3.11.0 Vector es sólo oscuro**
   (`forcedTheme`): la escala `zinc` de Tailwind está redefinida en `.dark` con la paleta de la marca
@@ -171,10 +174,12 @@ Actividad.
   pantallas donde se escribe (`actualizarSinPreguntar`), al salir, con una franja de borde a borde
   que lo avisa. Si un cambio rompe a las pestañas viejas, se sube `VERSION_MINIMA` (`lib/pwa.ts`):
   la app más vieja lo lee de `/api/version` y se actualiza sin opción.
-  **Las demás pantallas** (3.5.0) no tienen diseño propio en el teléfono: las alcanzan reglas de
-  `globals.css` que sólo valen debajo de `lg` y adentro de `main` (tarjetas de 32–40 px a 20 px y
-  sin sombra, sin borde en la app, 20 px entre bloques) y `PageHeader` (28 px, sin el rótulo de
-  arriba; `esLaSeccion` lo esconde en la app cuando repite el encabezado). Una pantalla nueva las
+  **Las demás pantallas** no tienen diseño propio en el teléfono: las alcanzan reglas de
+  `globals.css` que sólo valen debajo de `lg` y adentro de `main` (3.14.0: las tarjetas grandes sin
+  caja, separadas por una línea fina arriba, los títulos en Bold) y `PageHeader` (26 px, sin el
+  rótulo de arriba; `esLaSeccion` lo esconde en la app cuando repite el encabezado). En oscuro, el
+  azul viejo (`aviation-blue`) es el cian de la marca y lo activo que era una píldora blanca
+  (`dark:bg-white dark:text-zinc-900`) también pasa a cian, todo desde `globals.css`. Una pantalla nueva las
   toma sola; si algo se rompe en 390 px (una tabla, una grilla), se arregla en esa pantalla.
 - **Registrar vuelo es una sola página** (`/dashboard/log-flight`). Hubo un modal
   interceptado (`@modal/(.)log-flight`) que se llevó cinco commits de arreglos en un

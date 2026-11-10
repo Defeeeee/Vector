@@ -43,23 +43,17 @@ export default function SeccionTabs({
   if (!seccion || seccion.pestanas.length < 2) return null;
 
   /*
-    En el teléfono (3.4.0): en el navegador, pestañas subrayadas en una franja blanca pegada
-    al encabezado; instalada (`app:`), un control segmentado gris cuando entran (hasta cuatro).
-    Desde `md`, las píldoras de siempre.
+    Las pestañas (3.14.0): en todas las pantallas, subrayadas, con el nombre en mono y la activa en
+    cian, como el encabezado de la landing. En el teléfono, una franja de borde a borde pegada al
+    encabezado (también en la app instalada, donde hasta la 3.13.0 eran un control segmentado gris);
+    en la compu, con la línea fina abajo.
   */
-  const segmentado = seccion.pestanas.length <= 4;
   return (
     <nav
       aria-label={seccion.label}
-      className={`-mx-4 -mt-4 mb-4 px-4 scroll-px-4 bg-white dark:bg-black border-b border-zinc-200 dark:border-white/10 md:mx-0 md:mt-0 md:px-0 md:scroll-px-0 md:mb-10 md:bg-transparent md:dark:bg-transparent md:border-0 lg:mb-12 lg:border-b lg:border-white/10 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-        segmentado ? "app:mx-0 app:mt-0 app:px-0 app:mb-2.5 app:bg-transparent app:dark:bg-transparent app:border-0" : "app:bg-transparent app:dark:bg-transparent"
-      }`}
+      className="-mx-4 -mt-4 mb-5 px-4 scroll-px-4 bg-noche border-b border-white/10 md:-mx-8 md:mt-0 md:px-8 lg:mx-0 lg:mt-0 lg:px-0 lg:scroll-px-0 lg:mb-12 lg:bg-transparent overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <div
-        className={`flex h-10 items-end gap-[18px] md:inline-flex md:h-auto md:items-center md:gap-1 md:p-1 md:rounded-2xl md:bg-zinc-100 md:dark:bg-white/5 md:border md:border-zinc-200 md:dark:border-white/10 lg:flex lg:gap-9 lg:p-0 lg:rounded-none lg:bg-transparent lg:dark:bg-transparent lg:border-0 ${
-          segmentado ? "app:grid app:grid-flow-col app:auto-cols-fr app:h-9 app:items-stretch app:gap-0 app:p-[3px] app:rounded-[11px] app:bg-zinc-200 app:dark:bg-white/10" : ""
-        }`}
-      >
+      <div className="flex h-11 lg:h-auto items-end gap-[18px] lg:gap-9">
         {seccion.pestanas.map((pestana) => {
           const esActiva = pestana.href === activa?.href;
           const cantidad = contadores[pestana.href] ?? 0;
@@ -70,12 +64,8 @@ export default function SeccionTabs({
               href={pestana.href}
               ref={esActiva ? activaRef : undefined}
               aria-current={esActiva ? "page" : undefined}
-              className={`shrink-0 inline-flex items-center gap-2 pb-[9px] border-b-2 md:border-b-0 md:px-4 md:py-2 md:rounded-xl text-[13px] md:text-sm md:font-semibold lg:px-0 lg:py-0 lg:pb-4 lg:-mb-px lg:rounded-none lg:border-b-2 lg:font-mono lg:text-[12px] lg:uppercase lg:tracking-[0.14em] lg:font-medium whitespace-nowrap transition-colors ${
-                segmentado ? "app:justify-center app:pb-0 app:border-b-0 app:rounded-[9px] app:text-[12.5px]" : ""
-              } ${
-                esActiva
-                  ? `border-zinc-900 dark:border-white font-extrabold md:bg-white md:dark:bg-white/10 text-zinc-900 dark:text-white md:shadow-sm lg:bg-transparent lg:dark:bg-transparent lg:shadow-none lg:font-medium lg:border-aviation-cyan ${segmentado ? "app:bg-white app:dark:bg-zinc-800 app:shadow-sm" : ""}`
-                  : "border-transparent font-bold lg:font-medium text-zinc-500 dark:text-zinc-400 lg:dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+              className={`shrink-0 inline-flex items-center gap-2 pb-3 lg:pb-4 -mb-px border-b-2 font-mono text-[10.5px] lg:text-[12px] uppercase tracking-[0.06em] lg:tracking-[0.14em] whitespace-nowrap transition-colors ${
+                esActiva ? "border-aviation-cyan text-white" : "border-transparent text-zinc-500 hover:text-white"
               }`}
             >
               {pestana.label}

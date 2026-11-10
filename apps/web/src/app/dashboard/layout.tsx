@@ -255,21 +255,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </div>
 
       {/*
-        El pie del teléfono: la píldora de las secciones y, al lado, "Nuevo vuelo". Una sola
-        fila, a la misma altura. Hasta el 2026-11-02 el + compartía una píldora con el
-        copiloto y la navegación le dejaba 9,5rem; el copiloto ahora vive en la lupa (⌘K).
+        El pie del teléfono (3.14.0): una barra de borde a borde contra el borde de abajo, en el
+        navegador y en la app instalada, con la estética nueva (sin la píldora flotante: Federico,
+        "sin bento"). En el navegador lleva al final el + de Nuevo vuelo, cian; en la app el + está
+        arriba, en el encabezado.
       */}
       <div
         data-imprimir="no"
-        className="lg:hidden [body:has([data-sin-barra-movil])_&]:hidden fixed inset-x-3 bottom-[calc(1rem+env(safe-area-inset-bottom))] app:inset-x-0 app:bottom-0 z-50 flex items-center gap-2.5 pointer-events-none"
+        className="lg:hidden [body:has([data-sin-barra-movil])_&]:hidden fixed inset-x-0 bottom-0 z-50 flex items-center gap-1 pl-1 pr-3 app:pr-1 pb-[env(safe-area-inset-bottom)] bg-noche/95 backdrop-blur-xl border-t border-white/10"
       >
-        <div className="flex-1 min-w-0 pointer-events-auto">
+        <div className="flex-1 min-w-0">
           <DashboardNav variant="mobile" alertas={alertas} />
         </div>
         <Link
           href="/dashboard/log-flight"
           aria-label="Nuevo vuelo"
-          className="app:hidden pointer-events-auto shrink-0 w-[60px] h-[60px] rounded-full bg-aviation-blue text-white flex items-center justify-center shadow-lg shadow-aviation-blue/30 transition-transform active:scale-95"
+          className="app:hidden shrink-0 w-12 h-12 rounded-full bg-aviation-cyan text-noche flex items-center justify-center transition-transform active:scale-95"
         >
           <Plus className="w-6 h-6" strokeWidth={2.5} />
         </Link>

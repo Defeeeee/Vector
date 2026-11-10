@@ -28,7 +28,7 @@ export default function PageHeader({ eyebrow, title, esLaSeccion = false, action
           <span aria-hidden="true" className="hidden lg:block w-1.5 h-1.5 rounded-full bg-aviation-cyan" />
           {eyebrow}
         </p>
-        <h2 className={`${esLaSeccion ? "app:hidden " : ""}text-[28px] md:text-5xl lg:text-[clamp(52px,5.2vw,80px)] font-display font-extrabold tracking-tight lg:tracking-[-0.05em] text-zinc-900 dark:text-white leading-tight md:leading-none lg:leading-[0.92]`}>{title}</h2>
+        <h2 className={`${esLaSeccion ? "app:hidden " : ""}text-[26px] md:text-4xl lg:text-[clamp(52px,5.2vw,80px)] font-display font-bold lg:font-extrabold tracking-[-0.03em] lg:tracking-[-0.05em] text-zinc-900 dark:text-white leading-tight md:leading-none lg:leading-[0.92]`}>{title}</h2>
         {children}
       </div>
       {action && <div className="flex items-center gap-3 self-start md:self-auto">{action}</div>}

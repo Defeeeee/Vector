@@ -101,12 +101,13 @@ const CATEGORY_TONE: Record<string, string> = {
 
 function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon px-4 py-3.5">
-      <div className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
+    // Sin caja (3.14.0): el dato con su rótulo en mono y una línea fina arriba, como las cifras del Resumen.
+    <div className="border-t border-white/10 pt-3 min-w-0">
+      <div className="flex items-center gap-1.5 text-zinc-500">
         {icon}
-        <span className="font-mono text-[10px] font-bold uppercase tracking-wider">{label}</span>
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.12em]">{label}</span>
       </div>
-      <p className="data text-base font-bold text-zinc-900 dark:text-white mt-1.5 truncate">{value}</p>
+      <p className="data text-[15px] font-semibold text-white mt-1.5 truncate">{value}</p>
     </div>
   );
 }
@@ -312,8 +313,8 @@ export default function AirportsClient({
 
       {selected && (
         <div ref={fichaRef} className="space-y-6 scroll-mt-24">
-          <div className="flex flex-wrap items-end gap-x-5 gap-y-2">
-            <h2 className="data text-5xl md:text-7xl font-bold text-zinc-900 dark:text-white leading-none tracking-tight">
+          <div className="flex flex-col md:flex-row md:flex-wrap md:items-end gap-x-5 gap-y-2">
+            <h2 className="font-display text-[44px] md:text-7xl font-bold lg:font-extrabold text-white leading-none tracking-[-0.04em]">
               {selected.icao}
             </h2>
             <div className="pb-1 min-w-0 flex-1 flex flex-wrap items-center justify-between gap-4">
@@ -339,7 +340,7 @@ export default function AirportsClient({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-5">
             <Fact
               icon={<Mountain className="w-3.5 h-3.5" />}
               label="Elevación"

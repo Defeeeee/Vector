@@ -20,8 +20,14 @@ export default function TituloTelefono({ fecha, nombre, children }: { fecha: str
     <>
       <div className="app:hidden">{children}</div>
       <div className="hidden app:block min-w-0" data-titulo-inicio={enElInicio ? "" : undefined}>
-        {enElInicio && <p className="eyebrow truncate">{fecha}</p>}
-        <h1 className="text-[32px] font-display font-extrabold tracking-[-0.8px] leading-[42px] text-zinc-900 dark:text-white truncate mt-0.5">
+        {/* Con la estética de la 3.14.0: la fecha en mono con el punto cian, el título en Bold. */}
+        {enElInicio && (
+          <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-zinc-500 truncate">
+            <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-aviation-cyan shrink-0" />
+            {fecha}
+          </p>
+        )}
+        <h1 className="text-[28px] font-display font-bold tracking-[-0.03em] leading-[42px] text-white truncate mt-0.5">
           {enElInicio ? `Hola, ${nombre}` : seccion!.clave === "preparar" ? "Preparar" : seccion!.label}
         </h1>
       </div>

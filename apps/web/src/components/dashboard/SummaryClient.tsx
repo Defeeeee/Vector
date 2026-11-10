@@ -246,7 +246,7 @@ export default function SummaryClient({
           </div>
 
           {/* Headline tiles */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-x-8 lg:gap-y-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-5 lg:gap-x-8 lg:gap-y-8">
             <StatTile icon={<Clock className="w-3.5 h-3.5" />} label="PIC" value={stats.pic.toFixed(1)} caption="Al mando" />
             <StatTile icon={<CloudFog className="w-3.5 h-3.5" />} label="IMC" value={stats.imc.toFixed(1)} caption="En instrumentos" />
             <StatTile icon={<Moon className="w-3.5 h-3.5" />} label="Noche" value={stats.night.toFixed(1)} caption="Vuelo nocturno" />

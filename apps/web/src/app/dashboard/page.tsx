@@ -6,21 +6,14 @@ import { Flight, Aircraft, FlightPack, PilotDocument, Logbook, Transaction, Prof
 import ChangelogNotice from "@/components/dashboard/ChangelogNotice";
 import PlanesParaRegistrar from "@/components/dashboard/plan-de-vuelo/PlanesParaRegistrar";
 import PrimerosPasos from "@/components/dashboard/PrimerosPasos";
-import FlightStatusCard from "@/components/dashboard/FlightStatusCard";
-import ProximoVencimiento from "@/components/dashboard/ProximoVencimiento";
-import PCATracker from "@/components/dashboard/PCATracker";
-import PPATracker from "@/components/dashboard/PPATracker";
 import { esAlumno, vuelosDesdeLaPpa } from "@/lib/licencias";
 import { horasQueFaltanPPA, requisitosPPA } from "@/lib/ppa-progress";
 import { horasQueFaltan, requisitosLicencia } from "@/lib/pca-progress";
-import ResumenRapido, { type Mitad, type VueloCorto } from "@/components/dashboard/ResumenRapido";
 import InstalarVector from "@/components/dashboard/InstalarVector";
 import { splitRoute } from "@/lib/route";
 import { horasDeLaFila } from "@/lib/simulador";
 import { pesos } from "@/lib/costos";
 import { esTravesiaLarga } from "@/lib/travesia-larga";
-import SaldoCard from "@/components/dashboard/SaldoCard";
-import FlightPackWidget from "@/components/dashboard/FlightPackWidget";
 import TuRedInicio from "@/components/social/TuRedInicio";
 import { estadoOnboarding } from "@/lib/onboarding";
 import { soloVolados } from "@/lib/simulador";
@@ -149,71 +142,14 @@ export default async function Dashboard() {
   const alumno = esAlumno(profile?.license_type);
   const desdeLaPpa = vuelosDesdeLaPpa(bitacora as Flight[], profile?.fecha_ppa);
 
-  /*
-    El inicio en el teléfono (3.4.0): "te quedan" y "te falta" en una fila, después de "¿Puedo
-    volar hoy?". En el escritorio no se usa (ver `ResumenRapido`).
-  */
   const packsActivos = (packs as FlightPack[]).filter((p) => p.is_active);
-  const queda: Mitad | null =
-    profile?.tracking_mode === "balance"
-      ? saldoConocido
-        ? { etiqueta: "Saldo", valor: pesos(balance), detalle: balance < 0 ? "Debés" : "A favor", porcentaje: null, href: "/dashboard/balance" }
-        : null
-      : packsActivos.length
-        ? (() => {
-            const resta = packsActivos.reduce((s, p) => s + p.remaining_hours, 0);
-            const total = packsActivos.reduce((s, p) => s + p.total_hours, 0);
-            return {
-              etiqueta: "Te quedan",
-              valor: resta.toFixed(1).replace(".", ","),
-              unidad: `/ ${total.toFixed(0)} h`,
-              detalle: packsActivos.length === 1 ? packsActivos[0].name : `${packsActivos.length} packs`,
-              porcentaje: total > 0 ? (resta / total) * 100 : null,
-              href: "/dashboard/balance",
-            };
-          })()
-        : null;
   const requisitos = alumno
     ? requisitosPPA(bitacora as Flight[], { aircraft: aircraft as Aircraft[], logbooks: logbooks as Logbook[], travesiaLarga: esTravesiaLarga })
     : vaALaComercial
       ? requisitosLicencia(desdeLaPpa, logbooks as Logbook[], aircraft as Aircraft[])
       : null;
   const faltaHoras = requisitos ? (alumno ? horasQueFaltanPPA(requisitos) : horasQueFaltan(requisitos)) : null;
-  // La barra de "te falta" es la del requisito que frena: el total en la PPA y, en la PCA,
-  // el de horas con más camino por delante (el mismo que da `horasQueFaltan`).
-  const frena = requisitos
-    ? alumno
-      ? requisitos.find((r) => r.clave === "total")
-      : requisitos.filter((r) => r.esHoras).sort((a, b) => b.objetivo - b.actual - (a.objetivo - a.actual))[0]
-    : undefined;
-  const falta: Mitad | null =
-    faltaHoras === null || !disponible("flights")
-      ? null
-      : {
-          etiqueta: "Te falta",
-          valor: faltaHoras.toFixed(1).replace(".", ","),
-          unidad: "h",
-          detalle: alumno ? "para la PPA" : "para la PCA",
-          porcentaje: frena && frena.objetivo > 0 ? (frena.actual / frena.objetivo) * 100 : null,
-          tono: "neutro",
-          href: "#tracker",
-        };
-  // Los últimos tres renglones del libro, escritos acá (invariante 1): en el teléfono van en una
-  // tarjeta compacta en vez de `RecentFlights`.
   const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-  const ultimos: VueloCorto[] = [...(bitacora as Flight[])]
-    .sort((a, b) => (b.date + (b.takeoff ?? "")).localeCompare(a.date + (a.takeoff ?? "")))
-    .slice(0, 3)
-    .map((f) => {
-      const sim = Boolean((aircraft as Aircraft[]).find((a) => a.id === f.aircraft_id)?.is_simulator);
-      const [o, d] = splitRoute(f.route, "");
-      return {
-        id: f.id,
-        fecha: `${f.date.slice(8, 10)} ${MESES[Number(f.date.slice(5, 7)) - 1] ?? ""}`,
-        ruta: sim ? `SIM · ${o}` : d ? `${o} → ${d}` : o,
-        horas: horasDeLaFila(f, sim).toFixed(1).replace(".", ","),
-      };
-    });
   const carrera = cifrasDeCarrera(vuelosDesdeLaPpa(flights as Flight[], alumno ? null : profile?.fecha_ppa), logbooks as Logbook[], todayIso, { alumno });
 
   /* ----------------------------------------------- el inicio del escritorio (3.11.0) --- */
@@ -317,51 +253,29 @@ export default async function Dashboard() {
   const preparar = SECCIONES.find((x) => x.clave === "preparar");
 
   /*
-    En el teléfono el orden es otro (`max-lg:order-*`): primero "¿Puedo volar hoy?", después
-    cuánto te queda y te falta, lo que te pide algo, los últimos vuelos y al final el detalle
-    del saldo y del tracker. En el escritorio, el de siempre.
+    Desde la 3.14.0 el inicio es el mismo en la compu y en el teléfono (`InicioEscritorio`, que
+    se acomoda a una columna): el hero que contesta "¿puedo volar hoy?" con las horas totales, el
+    camino a la licencia, cuánto te queda, los últimos vuelos y la lista de chequeo. Debajo, lo que
+    te pide algo y lo demás. La versión del teléfono de la 3.4.0 (tarjetas) se sacó.
   */
   return (
-    <div className="flex flex-col gap-8 md:gap-10 max-lg:gap-3 app:pt-[13px] animate-in fade-in slide-in-from-bottom-4 duration-1000 w-full">
-      {/* Header */}
-      {/* En el teléfono no hay título: en el navegador ya está el logo arriba y en la app el
-          saludo con la fecha (`TituloTelefono`, en el layout). */}
-      <div className="lg:hidden app:hidden max-lg:order-0 empty:hidden">
+    <div className="flex flex-col gap-8 md:gap-10 animate-in fade-in slide-in-from-bottom-4 duration-1000 w-full">
+      <InicioEscritorio
+        nombre={profile?.first_name || "Comandante"}
+        estado={disponible("flights") || documentosDisponibles ? estado : null}
+        carrera={disponible("flights") ? carrera : null}
+        licencia={licenciaEscritorio}
+        queda={quedaEscritorio}
+        fajas={disponible("flights") ? fajas : []}
+        chequeo={chequeo}
+        hrefPreparar={preparar ? hrefDeSeccion(preparar) : "/dashboard/mapa/planilla"}
+      />
+
+      {/* Instalar la app: sólo en el teléfono y fuera de la app instalada. */}
+      <div className="lg:hidden app:hidden empty:hidden">
         <InstalarVector />
       </div>
-      {/* El escritorio (3.11.0): hero, camino a la licencia, cuánto queda, vuelos y chequeo. */}
-      <div className="max-lg:hidden">
-        <InicioEscritorio
-          nombre={profile?.first_name || "Comandante"}
-          estado={disponible("flights") || documentosDisponibles ? estado : null}
-          carrera={disponible("flights") ? carrera : null}
-          licencia={licenciaEscritorio}
-          queda={quedaEscritorio}
-          fajas={disponible("flights") ? fajas : []}
-          chequeo={chequeo}
-          hrefPreparar={preparar ? hrefDeSeccion(preparar) : "/dashboard/mapa/planilla"}
-        />
-      </div>
 
-      {/* 1. ¿Puedo volar hoy? — las cuatro condiciones de RAAC 61.060(a)(1), y
-          debajo lo que vence primero. Va arriba de todo porque es la única pregunta
-          de esta pantalla con consecuencias antes de despegar. */}
-      <div className="space-y-3 max-lg:order-1 lg:hidden">
-        <FlightStatusCard
-          flights={flights as Flight[]}
-          aircraft={aircraft as Aircraft[]}
-          documents={documents as PilotDocument[]}
-          profile={profile}
-          documentosDisponibles={documentosDisponibles}
-        />
-        {documentosDisponibles && <ProximoVencimiento documents={documents as PilotDocument[]} />}
-      </div>
-
-      <div className="max-lg:order-2">
-        <ResumenRapido queda={queda} falta={falta} totalHoras={carrera.total > 0 ? carrera.total.toFixed(1).replace(".", ",") : null} ultimos={ultimos} />
-      </div>
-
-      <div className="contents max-lg:block max-lg:order-3 max-lg:space-y-5">
       {/* "¿Ya volaste?" — un plan de vuelo presentado cuya llegada estimada ya pasó
           (Federico, 2026-10-20). Por `Suspense`: lee los planes y nunca demora lo de arriba. */}
       <Suspense fallback={null}>
@@ -370,17 +284,12 @@ export default async function Dashboard() {
 
       {/* Vuelos que están en el CAD sin la declaración jurada (lo sabe la sincronización, 037):
           la DDJJ es lo único del CAD que Vector no hace, así que lo recuerda. */}
-      <PendientesDdjj cuantos={cuantosPendientesDeDdjj(bitacora as Flight[])} leido={leidoDelCad(profile?.cad_leido_at, new Date())} />
+      <PendientesDdjj cuantos={pendientesDdjj} leido={leidoDelCad(profile?.cad_leido_at, new Date())} />
 
-      {/* Desaparece solo cuando los cuatro pasos están hechos. Los datos ya vienen
-          del Promise.all de arriba: no agrega ni un viaje al backend. */}
+      {/* Desaparece solo cuando los cuatro pasos están hechos. `null` y no `false` en cada paso
+          cuya consulta falló: el paso no se dibuja, en vez de pedirle al piloto que cargue algo
+          que ya tiene (el 2026-08-17 una request perdió siete de ocho consultas). */}
       <PrimerosPasos
-        // `null` y no `false` en cada paso cuya consulta falló: el paso no se
-        // dibuja, en vez de pedirle al piloto que cargue algo que ya tiene.
-        //
-        // **Los cuatro, no sólo el CMA.** El 2026-08-17 una request perdió siete
-        // de las ocho consultas y el checklist le marcó tres pasos en falso a un
-        // piloto que tenía todo cargado.
         estado={estadoOnboarding({
           profile,
           perfilDisponible: disponible("profile"),
@@ -393,52 +302,13 @@ export default async function Dashboard() {
         alumno={alumno}
       />
 
-      </div>
-
       {/* Las novedades hablan del libro, la PCA y demás: al alumno no le aplican. */}
-      {!alumno && (
-        <div className="max-lg:order-6">
-          <ChangelogNotice />
-        </div>
-      )}
-
-      {/* 3. ¿Cuánto me queda? — pesos para quien lleva saldo, horas para quien lleva
-          packs. Ninguno de los dos se dibuja si no tiene nada que decir. */}
-      <div className="max-lg:order-5 empty:hidden lg:hidden">
-      {profile?.tracking_mode === "balance" ? (
-        saldoConocido && <SaldoCard saldo={balance} gasto={gastoMes} />
-      ) : (
-        <FlightPackWidget packs={packs} />
-      )}
-      </div>
-
-      {/* ¿Cuánto me falta? — Ya no es lo principal (Federico, 2026-10-10): va después del
-          saldo, y las horas totales encabezan la pantalla. Recibe el libro entero, no `flights`: las horas de
-          instrumento en simulador cuentan para el requisito, y el tracker hace su
-          propio corte con `separarSimuladores` para que no cuenten para nada más. */}
-      <div id="tracker" className="max-lg:order-5 empty:hidden scroll-mt-24 lg:hidden">
-      {alumno ? (
-        <PPATracker
-          requisitos={requisitosPPA(bitacora as Flight[], {
-            aircraft: aircraft as Aircraft[],
-            logbooks: logbooks as Logbook[],
-            travesiaLarga: esTravesiaLarga,
-          })}
-        />
-      ) : vaALaComercial ? (
-        <PCATracker
-          flights={desdeLaPpa}
-          logbooks={logbooks as Logbook[]}
-          aircraft={aircraft as Aircraft[]}
-          todayIso={todayIso}
-        />
-      ) : null}
-      </div>
+      {!alumno && <ChangelogNotice />}
 
       {/* "Tu red": la única tarjeta que no contesta una de las tres preguntas, por
           decisión de Federico. Chica, al final, y por `Suspense`: el feed es un viaje
           más al backend y nunca puede demorar el "¿puedo volar hoy?". */}
-      <div className="max-lg:order-7 empty:hidden">
+      <div className="empty:hidden">
         <Suspense fallback={null}>
           <TuRedInicio />
         </Suspense>

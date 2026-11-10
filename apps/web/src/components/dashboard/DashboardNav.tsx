@@ -81,10 +81,9 @@ export default function DashboardNav({
   /*
     The phone. Since 3.4.0 each icon carries its name underneath ("Preparar vuelo" is
     shortened to "Preparar": it doesn't fit under a ~55 px slot).
-    - In the browser, a floating pill over Safari's bar, sharing the row with the round
-      "Nuevo vuelo" button (Federico rejected a menu bar at the top).
-    - Installed as an app (`app:`), a full-width tab bar against the bottom edge, with the
-      home indicator's safe area under it; the + moves to the header.
+    - Since 3.14.0, in the browser and installed, a full-width bar against the bottom edge (the
+      layout draws it): names in mono, the active one in cyan with a line on top. In the browser
+      the cyan + sits at the end of the bar; installed, it moves to the header.
 
     With five sections everything fits, so the "Más" sheet that used to hold the
     overflow is gone — and with it the extra tap to reach half the app.
@@ -92,7 +91,7 @@ export default function DashboardNav({
   return (
     <nav
       aria-label="Secciones"
-      className="w-full h-[60px] app:h-auto bg-white/95 dark:bg-zinc-900/95 app:dark:bg-black/90 backdrop-blur-xl p-1 app:px-1.5 app:pt-1.5 app:pb-[calc(env(safe-area-inset-bottom)+0.25rem)] rounded-full app:rounded-none grid grid-cols-4 shadow-cal dark:shadow-none app:shadow-none border border-zinc-200 dark:border-white/10 app:border-x-0 app:border-b-0 pointer-events-auto"
+      className="w-full h-16 grid grid-cols-4"
     >
       {SECCIONES.map((seccion) => {
         const Icon = ICONOS[seccion.clave];
@@ -128,22 +127,24 @@ function MobileNavItem({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`relative h-full app:h-12 flex flex-col items-center justify-center gap-0.5 transition-colors ${
-        active ? "text-aviation-blue-dark dark:text-aviation-cyan" : "text-zinc-500 dark:text-zinc-400"
+      className={`relative h-full flex flex-col items-center justify-center gap-1.5 transition-colors ${
+        active ? "text-aviation-cyan" : "text-zinc-500 active:text-zinc-300"
       }`}
     >
+      {/* La activa, con la raya cian arriba (3.14.0): sin la burbuja de fondo, que era una cajita. */}
       {active && (
-        <motion.div
+        <motion.span
           layoutId="mobile-nav-active"
-          className="absolute inset-0 rounded-full bg-aviation-blue/10 app:hidden"
+          aria-hidden="true"
+          className="absolute top-0 inset-x-4 h-0.5 rounded-full bg-aviation-cyan"
           transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
         />
       )}
-      <span className="relative z-10">
+      <span className="relative">
         {icon}
-        {flagged && <Dot ring="ring-white dark:ring-zinc-900" />}
+        {flagged && <Dot ring="ring-noche" />}
       </span>
-      <span className={`relative z-10 text-[10.5px] app:text-[11px] leading-none ${active ? "font-extrabold" : "font-bold"}`}>{label}</span>
+      <span className="font-mono text-[9.5px] uppercase tracking-[0.1em] leading-none">{label}</span>
     </Link>
   );
 }

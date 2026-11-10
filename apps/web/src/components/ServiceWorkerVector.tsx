@@ -264,7 +264,7 @@ export default function ServiceWorkerVector() {
   return (
     <div
       role="status"
-      className="fixed inset-x-0 lg:left-20 z-[45] bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] lg:bottom-0 bg-aviation-cyan text-noche shadow-[0_-12px_40px_-8px_rgb(0_0_0/0.6)]"
+      className="fixed inset-x-0 lg:left-20 z-[45] bottom-[calc(env(safe-area-inset-bottom)+4rem)] lg:bottom-0 bg-aviation-cyan text-noche shadow-[0_-12px_40px_-8px_rgb(0_0_0/0.6)]"
     >
       <div className="flex items-center gap-3 lg:gap-5 min-h-14 lg:min-h-16 px-4 lg:px-10 py-2.5">
         <RefreshCw className="w-5 h-5 shrink-0" aria-hidden="true" />

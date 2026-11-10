@@ -31,6 +31,31 @@
   --color-zinc-900: #181c22;
   --color-zinc-950: #101317;
   --color-eyebrow-dark: #8e9aa8;
+  /*
+    Un solo acento (3.14.0): el azul de antes (aviation-blue, #2563eb) pasa a ser el cian de la
+    marca. Así lo toman los ~25 componentes que lo usaban (Local/UTC, Guardar, los chips activos)
+    sin tocarlos uno por uno; el "-dark" queda como el cian claro del hover.
+  */
+  --color-aviation-blue: #38bdf8;
+  --color-aviation-blue-dark: #7dd3fc;
+}
+
+/*
+  Lo activo y lo principal, en cian (3.14.0): una ficha o un botón que en oscuro era una píldora
+  blanca con texto negro (la pestaña de Herramientas elegida, el período del Resumen, un filtro
+  prendido) pasa al cian de la marca, como el botón principal. Son decenas, muchos armados en el
+  momento (`isActive ? … : …`), y esto los alcanza a todos.
+*/
+.dark .dark\:bg-white:is(.dark\:text-zinc-900, .dark\:text-black) {
+  background-color: var(--color-aviation-cyan);
+  color: var(--color-noche);
+  border-color: transparent;
+}
+
+/* Sobre el cian, el texto va oscuro: blanco sobre #38bdf8 no se lee (2:1). */
+.dark .bg-aviation-blue.text-white,
+.dark .bg-aviation-blue .text-white {
+  color: var(--color-noche);
 }
 
 @theme {
@@ -404,24 +429,50 @@
 }
 
 /*
-  Las pantallas del teléfono que no tienen diseño propio (3.5.0): las tarjetas grandes del
-  escritorio (32–40 px de radio, sombra) se ven como las del rediseño de la 3.4.0, de 20 px y
-  planas; en la app instalada, además, sin borde sobre el fondo gris. Y entre los bloques de una
-  página, 20 px en vez de 32–48. Es CSS fuera de las capas de Tailwind a propósito: son ~140
-  tarjetas en decenas de componentes, y esto las alcanza a todas sin tocar el escritorio.
-  Sólo adentro de `main`: lo que va en un portal (el Mapa, los diálogos) tiene su propio diseño.
+  El teléfono (3.14.0, Federico: "aplicá el nuevo diseño al mobile, completamente" y "veo todo muy
+  grande y gordo"). La misma regla que la compu: **sin bento**. Las tarjetas grandes dejan de ser
+  cajas (sin fondo, borde, sombra ni relleno: el contenido queda en el margen de la página) y los
+  bloques se separan con una línea fina arriba. Además, en una pantalla angosta el ExtraBold de los
+  títulos pesa demasiado: adentro de `main` baja a Bold. Reemplaza a las reglas de la 3.5.0
+  (tarjetas de 20 px planas, sin borde en la app). Sólo adentro de `main`: lo que va en un portal
+  (el Mapa, los diálogos) tiene su propio diseño, y lo que flota (`fixed`) conserva su caja.
 */
 @media (width < 64rem) {
-  main :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-3xl) {
-    border-radius: 20px;
+  main :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-\[3rem\], .rounded-\[1\.75rem\], .rounded-3xl, .md\:rounded-\[2rem\], .md\:rounded-\[2\.5rem\], .sm\:rounded-\[2rem\], .sm\:rounded-\[2\.5rem\]):not(.fixed, .fixed *, .absolute, [role="dialog"], [role="dialog"] *) {
+    border-radius: 0;
+    border-width: 1px 0 0;
+    border-style: solid;
+    border-color: rgb(255 255 255 / 0.1);
+    background: transparent;
+    box-shadow: none;
+    padding-inline: 0;
+    padding-bottom: 0;
+    padding-top: 1.25rem;
+    overflow: visible;
+  }
+  /* Una tarjeta adentro de otra no repite la línea: quedaban dos, una pegada a la otra. */
+  main :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-\[3rem\], .rounded-\[1\.75rem\], .rounded-3xl, .md\:rounded-\[2rem\], .md\:rounded-\[2\.5rem\]) :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-\[3rem\], .rounded-\[1\.75rem\], .rounded-3xl, .md\:rounded-\[2rem\], .md\:rounded-\[2\.5rem\]):not(.fixed, .fixed *, .absolute) {
+    border-top-width: 0;
+    padding-top: 0;
   }
   main .shadow-cal {
     box-shadow: none;
   }
   main > div > :is(.space-y-8, .space-y-10, .space-y-12) > :not(:last-child) {
-    margin-block-end: 1.25rem;
+    margin-block-end: 1.5rem;
+  }
+  main .font-display:is(.font-extrabold, .font-black) {
+    font-weight: 700;
+  }
+  /* El cuadrito con el ícono al lado del título de una sección, como en la compu. */
+  main :is(.flex, .space-x-3):has(> :is(h2, h3)) > .rounded-xl:is(.w-8, .w-9, .w-10):first-child {
+    display: none;
+  }
+  main .space-x-3:has(> .rounded-xl:is(.w-8, .w-9, .w-10):first-child) > :is(h2, h3) {
+    margin-inline-start: 0;
   }
 }
+
 /*
   En la compu (3.13.0), la estética del inicio y la landing en todas las pantallas: **sin bento**
   (Federico, 2026-11-05: "ditcheamos las bento boxes"). Las tarjetas grandes (32–40 px de radio)
@@ -432,7 +483,7 @@
   flota (un diálogo `fixed`) conserva su caja.
 */
 @media (width >= 64rem) {
-  main :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-\[3rem\], .rounded-3xl, .md\:rounded-\[2rem\], .md\:rounded-\[2\.5rem\], .sm\:rounded-\[2rem\], .sm\:rounded-\[2\.5rem\]):not(.fixed, .fixed *, .absolute, [role="dialog"], [role="dialog"] *) {
+  main :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-\[3rem\], .rounded-\[1\.75rem\], .rounded-3xl, .md\:rounded-\[2rem\], .md\:rounded-\[2\.5rem\], .sm\:rounded-\[2rem\], .sm\:rounded-\[2\.5rem\]):not(.fixed, .fixed *, .absolute, [role="dialog"], [role="dialog"] *) {
     border-radius: 0;
     border-width: 0;
     background: transparent;
@@ -454,11 +505,7 @@
     margin-inline-start: 0;
   }
 }
-@media (display-mode: standalone) and (width < 64rem) {
-  main :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-3xl).border:not(.border-dashed) {
-    border-color: transparent;
-  }
-}
+
 
 /* La barra lateral se abre al pasar el mouse o al llegar con el teclado (3.11.0): los rótulos
    aparecen recién entonces. `.rail` es el panel, `.rail-rotulo` cada nombre. Con

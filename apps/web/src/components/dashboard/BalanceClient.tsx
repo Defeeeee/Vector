@@ -204,7 +204,7 @@ export default function BalanceClient({
           
           {trackingMode === "packs" ? (
             <section className="space-y-6">
-              <div className="flex items-center space-x-3 px-2">
+              <div className="flex items-center space-x-3 px-2 max-lg:px-0">
                 <div className="w-8 h-8 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
                   <Package className="w-4 h-4 text-white dark:text-zinc-900" />
                 </div>
@@ -381,7 +381,7 @@ export default function BalanceClient({
 
               {/* Transactions Ledger — receipt-tape style, not a card list */}
               <div className="space-y-6">
-                <div className="flex items-center space-x-3 px-2">
+                <div className="flex items-center space-x-3 px-2 max-lg:px-0">
                   <div className="w-8 h-8 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
                     <Coins className="w-4 h-4 text-white dark:text-zinc-900" />
                   </div>
@@ -457,7 +457,7 @@ export default function BalanceClient({
 
         {/* Right Sidebar: Aircraft Rate Configuration */}
         <section className="space-y-6">
-          <div className="flex items-center space-x-3 px-2">
+          <div className="flex items-center space-x-3 px-2 max-lg:px-0">
             <div className="w-8 h-8 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
               <Plane className="w-4 h-4 text-white dark:text-zinc-900" />
             </div>

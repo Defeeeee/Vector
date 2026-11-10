@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.14.0 — Vector nuevo, también en el teléfono
+
+_10 de noviembre de 2026_
+
+- **El inicio de la compu, en el teléfono** — Si podés volar hoy, tus horas, el camino a tu licencia, tu pack o tu saldo, los últimos vuelos y lo que vence, en una columna y sin tarjetas.
+- **Todo con el mismo estilo** — Una barra de secciones de borde a borde abajo, pestañas más claras, los botones y lo elegido en cian, y letras más livianas en la pantalla chica.
+
 ## v3.13.0 — Del Mapa al plan de vuelo
 
 _10 de noviembre de 2026_

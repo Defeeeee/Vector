@@ -78,6 +78,25 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.14.0",
+    fecha: "2026-11-10",
+    titulo: "Vector nuevo, también en el teléfono",
+    novedades: [
+      {
+        icono: "avion",
+        titulo: "El inicio de la compu, en el teléfono",
+        texto: "Si podés volar hoy, tus horas, el camino a tu licencia, tu pack o tu saldo, los últimos vuelos y lo que vence, en una columna y sin tarjetas.",
+        href: "/dashboard",
+        cta: "Ver el inicio",
+      },
+      {
+        icono: "brujula",
+        titulo: "Todo con el mismo estilo",
+        texto: "Una barra de secciones de borde a borde abajo, pestañas más claras, los botones y lo elegido en cian, y letras más livianas en la pantalla chica.",
+      },
+    ],
+  },
+  {
     version: "3.13.0",
     fecha: "2026-11-10",
     titulo: "Del Mapa al plan de vuelo",
