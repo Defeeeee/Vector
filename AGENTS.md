@@ -165,8 +165,12 @@ Actividad.
   volver a la app tras un minuto o más (`VOLVER_TRAS_MS`), cada 5 minutos a la vista y al volver la
   red; y en la app instalada, **tirar hacia abajo para actualizar** (no sobre el mapa ni en un
   campo; `data-sin-tirar` para excluir otra cosa). El círculo se va cuando cambia `servido`, la hora
-  en que el server dibujó el layout. Una versión nueva de la app **se toma sola al reabrir**, salvo
-  en las pantallas donde se escribe (`actualizarSinPreguntar`, `lib/pwa.ts`): ahí sigue el cartel.
+  en que el server dibujó el layout. **Una versión nueva de la app se aplica sola, sin cartel**
+  (3.13.0, `comoActualizar` en `lib/pwa.ts`, `ServiceWorkerVector`): al abrir o al volver a la app,
+  ya; usándola, en el próximo cambio de pantalla (un link pasa a ser una navegación entera); en las
+  pantallas donde se escribe (`actualizarSinPreguntar`), al salir, con una franja de borde a borde
+  que lo avisa. Si un cambio rompe a las pestañas viejas, se sube `VERSION_MINIMA` (`lib/pwa.ts`):
+  la app más vieja lo lee de `/api/version` y se actualiza sin opción.
   **Las demás pantallas** (3.5.0) no tienen diseño propio en el teléfono: las alcanzan reglas de
   `globals.css` que sólo valen debajo de `lg` y adentro de `main` (tarjetas de 32–40 px a 20 px y
   sin sombra, sin borde en la app, 20 px entre bloques) y `PageHeader` (28 px, sin el rótulo de

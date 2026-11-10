@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   PRECACHE,
   actualizarSinPreguntar,
+  comoActualizar,
+  compararVersiones,
+  linkParaActualizar,
   capturaVigente,
   claveDeLoServido,
   estrategiaPara,
@@ -311,5 +314,43 @@ describe("actualizarSinPreguntar", () => {
 
   it("un vuelo abierto en edición también cuenta", () => {
     expect(actualizarSinPreguntar("/dashboard/history", "?editar=v1")).toBe(false);
+  });
+});
+
+describe("cómo se aplica una versión nueva", () => {
+  it("al abrir, en una pantalla de mirar: ya", () => {
+    expect(comoActualizar({ pathname: "/dashboard", arrancando: true })).toBe("ya");
+  });
+  it("usando la app, en el próximo cambio de pantalla", () => {
+    expect(comoActualizar({ pathname: "/dashboard/history", arrancando: false })).toBe("al-navegar");
+  });
+  it("donde se escribe, al salir, aunque recién se abra", () => {
+    expect(comoActualizar({ pathname: "/dashboard/log-flight", arrancando: true })).toBe("al-salir");
+    expect(comoActualizar({ pathname: "/dashboard/history", search: "?editar=v1", arrancando: false })).toBe("al-salir");
+  });
+  it("más vieja que la mínima: obligatoria, hasta donde se escribe", () => {
+    expect(comoActualizar({ pathname: "/dashboard/log-flight", arrancando: false, version: "3.11.0", minima: "3.12.0" })).toBe("obligatoria");
+    expect(comoActualizar({ pathname: "/dashboard", arrancando: false, version: "3.12.0", minima: "3.12.0" })).toBe("al-navegar");
+  });
+  it("compara número por número", () => {
+    expect(compararVersiones("3.10.0", "3.9.2")).toBe(1);
+    expect(compararVersiones("3.12.0", "3.12.0")).toBe(0);
+    expect(compararVersiones("2.40.1", "3.0.0")).toBe(-1);
+  });
+});
+
+describe("los links que sirven para actualizar", () => {
+  const O = "https://vector.fdiaznem.com.ar";
+  it("otra pantalla de Vector, sí", () => {
+    expect(linkParaActualizar("/dashboard/summary", O, "/dashboard", {})).toBe("/dashboard/summary");
+    expect(linkParaActualizar(`${O}/dashboard/mapa?ruta=SADF-SADM`, O, "/dashboard", {})).toBe("/dashboard/mapa?ruta=SADF-SADM");
+  });
+  it("afuera, en otra pestaña, una descarga, la API o la misma pantalla, no", () => {
+    expect(linkParaActualizar("https://ais.anac.gob.ar", O, "/dashboard", {})).toBeNull();
+    expect(linkParaActualizar("/dashboard/summary", O, "/dashboard", { target: "_blank" })).toBeNull();
+    expect(linkParaActualizar("/dashboard/summary", O, "/dashboard", { modificador: true })).toBeNull();
+    expect(linkParaActualizar("/cad/vector-cad.zip", O, "/dashboard", { download: true })).toBeNull();
+    expect(linkParaActualizar("/api/export", O, "/dashboard", {})).toBeNull();
+    expect(linkParaActualizar("/dashboard#arriba", O, "/dashboard", {})).toBeNull();
   });
 });

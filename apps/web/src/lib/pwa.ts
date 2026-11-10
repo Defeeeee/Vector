@@ -363,3 +363,74 @@ export function actualizarSinPreguntar(pathname: string, search = ""): boolean {
   if (/[?&]editar=/.test(search)) return false;
   return !DONDE_SE_ESCRIBE.some((r) => r.test(pathname));
 }
+
+/* ------------------------------------------- cuándo se aplica una versión (3.13.0) --- */
+
+/**
+ * La versión más vieja de la app que todavía funciona contra el servidor. **Se sube a mano** sólo
+ * cuando un cambio rompe a las pestañas viejas (una ruta de la API que cambia de forma, un dato
+ * que la app vieja leería mal): ahí la app vieja no deja seguir y se actualiza sí o sí. Lo lee la
+ * app desde `/api/version`, que contesta el servidor nuevo.
+ */
+export const VERSION_MINIMA = "3.12.0";
+
+/** Si una versión nueva aparece en estos primeros segundos de la carga, se aplica sin más. */
+export const VENTANA_ARRANQUE_MS = 10_000;
+
+/**
+ * Qué hacer con una versión nueva que está esperando (Federico, 2026-11-10: "te deja seguir sin
+ * actualizar, es raro eso"). Hasta la 3.12.0 era un cartel que se podía ignorar todo el día.
+ *
+ * - `obligatoria`: la app es más vieja que `VERSION_MINIMA`; se actualiza ya, sin opción.
+ * - `ya`: recién se abrió (o se volvió a la app) y la pantalla no es de escribir: nadie está a
+ *   mitad de nada.
+ * - `al-salir`: es una pantalla de escribir; se aplica al irse de ella (al guardar, casi
+ *   siempre), y mientras tanto se avisa con una línea.
+ * - `al-navegar`: en cualquier otra pantalla, en el próximo cambio de pantalla, que igual iba a
+ *   dibujar algo nuevo: no se nota y no se pierde nada.
+ */
+export type ModoActualizacion = "obligatoria" | "ya" | "al-salir" | "al-navegar";
+
+export function comoActualizar(o: {
+  pathname: string;
+  search?: string;
+  /** Recién abierta, o recién vuelta de segundo plano. */
+  arrancando: boolean;
+  version?: string;
+  minima?: string | null;
+}): ModoActualizacion {
+  if (o.minima && compararVersiones(o.version ?? VERSION, o.minima) < 0) return "obligatoria";
+  if (!actualizarSinPreguntar(o.pathname, o.search ?? "")) return "al-salir";
+  return o.arrancando ? "ya" : "al-navegar";
+}
+
+/** -1, 0 o 1, número por número ("3.10.0" > "3.9.2"). */
+export function compararVersiones(a: string, b: string): number {
+  const pa = a.split(/[.-]/).map((x) => Number.parseInt(x, 10) || 0);
+  const pb = b.split(/[.-]/).map((x) => Number.parseInt(x, 10) || 0);
+  for (let k = 0; k < Math.max(pa.length, pb.length); k++) {
+    const d = (pa[k] ?? 0) - (pb[k] ?? 0);
+    if (d) return d > 0 ? 1 : -1;
+  }
+  return 0;
+}
+
+/**
+ * Si un click en un link se puede aprovechar para aplicar la versión nueva con una navegación
+ * entera: del mismo origen, sin abrir otra pestaña ni descargar, y no a la misma pantalla.
+ */
+export function linkParaActualizar(href: string, origen: string, actual: string, o: { target?: string | null; download?: boolean; modificador?: boolean }): string | null {
+  if (o.modificador || o.download || (o.target && o.target !== "_self")) return null;
+  let url: URL;
+  try {
+    url = new URL(href, origen);
+  } catch {
+    return null;
+  }
+  if (url.origin !== origen) return null;
+  if (url.pathname.startsWith("/api/")) return null;
+  const destino = url.pathname + url.search + url.hash;
+  const aqui = new URL(actual, origen);
+  if (url.pathname === aqui.pathname && url.search === aqui.search) return null;
+  return destino;
+}

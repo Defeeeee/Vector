@@ -54,6 +54,15 @@
         "cd \"$(git rev-parse --show-toplevel)/apps/web\" && API_URL=http://127.0.0.1:7599/api NEXT_PUBLIC_API_URL=http://127.0.0.1:7599/api NEXT_PUBLIC_AUTH_URL=http://127.0.0.1:7599/api NEXT_PUBLIC_CAD_ORIGEN=http://127.0.0.1:7601 npx next dev -p 3002"
       ],
       "port": 3002
+    },
+    {
+      "name": "vector-prod-falso",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd \"$(git rev-parse --show-toplevel)/apps/web\" && API_URL=http://127.0.0.1:7599/api NEXT_PUBLIC_API_URL=http://127.0.0.1:7599/api NEXT_PUBLIC_AUTH_URL=http://127.0.0.1:7599/api npx next start -p 3002"
+      ],
+      "port": 3002
     }
   ]
 }
