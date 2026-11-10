@@ -27,7 +27,7 @@ async function getData() {
 
   if (acRes.status === 401) {
     console.log("LogFlightPage: 401 Unauthorized. Redirecting to logout...");
-    redirect("/api/auth/logout?redirect=/?expired=true");
+    redirect("/api/auth/logout?redirect=/login?expirada=1");
   }
   
   const aircraft: Aircraft[] = acRes.ok ? await acRes.json() : [];

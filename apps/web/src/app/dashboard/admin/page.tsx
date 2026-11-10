@@ -208,7 +208,7 @@ export default async function PanelAdmin({ searchParams }: { searchParams: Promi
   const incluirAdmins = todos === "1";
   const res = await apiFetch(`/admin/estadisticas${incluirAdmins ? "?incluir_admins=true" : ""}`);
 
-  if (res.status === 401) redirect("/api/auth/logout?redirect=/?expired=true");
+  if (res.status === 401) redirect("/api/auth/logout?redirect=/login?expirada=1");
   if (res.status === 404) notFound();
   if (!res.ok) {
     return (

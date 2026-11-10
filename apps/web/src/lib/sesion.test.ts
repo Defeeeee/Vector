@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { vidaRestante, necesitaRenovar, MARGEN_MS } from "./sesion";
+import { vidaRestante, necesitaRenovar, MARGEN_MS, destinoSinSesion, DURACION_SESION_S } from "./sesion";
 
 const AHORA = new Date("2026-08-18T12:00:00Z").getTime();
 
@@ -94,5 +94,17 @@ describe("necesitaRenovar", () => {
     // No se toca lo que no se entiende: que decida la API, como antes de todo esto.
     expect(necesitaRenovar("cualquier-cosa", "refresh", AHORA)).toBe(false);
     expect(necesitaRenovar(jwt({ sub: "sin-exp" }), "refresh", AHORA)).toBe(false);
+  });
+});
+
+describe("sin sesión", () => {
+  it("si hubo una, el login avisa que expiró", () => {
+    expect(destinoSinSesion(true)).toBe("/login?expirada=1");
+  });
+  it("si nunca entró, el login a secas", () => {
+    expect(destinoSinSesion(false)).toBe("/login");
+  });
+  it("la sesión dura una semana sin uso", () => {
+    expect(DURACION_SESION_S).toBe(7 * 24 * 3600);
   });
 });

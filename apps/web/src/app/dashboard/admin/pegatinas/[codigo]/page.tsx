@@ -19,7 +19,7 @@ export default async function PegatinaAdmin({ params }: { params: Promise<{ codi
   const codigo = normalizarCodigo((await params).codigo);
   if (!codigo) notFound();
   const res = await apiFetch(`/admin/qr/${codigo}`, { cache: "no-store" });
-  if (res.status === 401) redirect("/api/auth/logout?redirect=/?expired=true");
+  if (res.status === 401) redirect("/api/auth/logout?redirect=/login?expirada=1");
   if (!res.ok) notFound();
   const p = (await res.json()) as PegatinaAdmin;
   const ahora = new Date().toISOString();

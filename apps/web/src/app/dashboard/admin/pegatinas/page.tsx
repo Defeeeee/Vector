@@ -17,7 +17,7 @@ const tarjeta = "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-w
 
 export default async function PegatinasAdmin() {
   const res = await apiFetch("/admin/qr", { cache: "no-store" });
-  if (res.status === 401) redirect("/api/auth/logout?redirect=/?expired=true");
+  if (res.status === 401) redirect("/api/auth/logout?redirect=/login?expirada=1");
   if (res.status === 404) notFound();
   if (!res.ok) {
     return (

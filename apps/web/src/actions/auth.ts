@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S } from "@/lib/sesion";
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.flightlog.fdiaznem.com.ar";
 
@@ -30,14 +31,12 @@ export async function login(formData: FormData) {
     }
 
     const token = data.access_token;
-    console.log(`login: Token received, length=${token?.length}`);
 
     if (!token) {
       return { error: "Authentication failed: No token received" };
     }
 
     await setSession(token, data.refresh_token, 60 * 60 * 24);
-    console.log("login: session set, redirecting...");
 
 
   } catch (error) {
@@ -90,7 +89,7 @@ export async function register(formData: FormData) {
         httpOnly: true,
         secure: true,
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30,
+        maxAge: DURACION_SESION_S,
         path: "/",
       });
     }
@@ -185,6 +184,8 @@ export async function logout(arg?: string | FormData) {
     maxAge: 0,
     expires: new Date(0),
   });
+  // Cerrar sesión a mano no es expirar: el próximo login no tiene que decir "tu sesión expiró".
+  cookieStore.set(COOKIE_HUBO_SESION, "", { path: "/", domain, maxAge: 0, expires: new Date(0) });
 
   redirect(redirectTo);
 }
@@ -216,7 +217,6 @@ export async function setSession(token: string, refresh_token?: string, maxAge: 
   const domain = process.env.NODE_ENV === "production" ? ".fdiaznem.com.ar" : undefined;
   const isSecure = process.env.NODE_ENV === "production";
   
-  console.log(`setSession: Domain=${domain} maxAge=${maxAge} tokenLength=${token?.length} secure=${isSecure}`);
 
   try {
     cookieStore.set("session_token", token, {
@@ -233,12 +233,19 @@ export async function setSession(token: string, refresh_token?: string, maxAge: 
         httpOnly: true,
         secure: isSecure,
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30, // 30 days
+        maxAge: DURACION_SESION_S,
+        path: "/",
+        domain: domain,
+      });
+      cookieStore.set(COOKIE_HUBO_SESION, "1", {
+        httpOnly: true,
+        secure: isSecure,
+        sameSite: "lax",
+        maxAge: DURACION_MARCA_S,
         path: "/",
         domain: domain,
       });
     }
-    console.log("setSession: SUCCESS - Cookies set");
   } catch (error) {
     console.error("setSession: ERROR setting cookies:", error);
   }

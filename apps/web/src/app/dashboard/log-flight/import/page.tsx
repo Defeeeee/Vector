@@ -9,7 +9,7 @@ import LogbookImportClient from "@/components/dashboard/LogbookImportClient";
 async function getAircraftList() {
   const acRes = await apiFetch("/aircraft");
   if (acRes.status === 401) {
-    redirect("/api/auth/logout?redirect=/?expired=true");
+    redirect("/api/auth/logout?redirect=/login?expirada=1");
   }
   const aircraft: Aircraft[] = acRes.ok ? await acRes.json() : [];
   return aircraft;

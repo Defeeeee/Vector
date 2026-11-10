@@ -65,7 +65,7 @@ Las rutas son relativas a `apps/web/`; las de `docs/` y `apps/extension/`, a la 
 | `src/lib/` | Lógica pura, **con sus tests al lado** (`*.test.ts`). Es lo único testeable: vitest corre en `environment: "node"`, sin DOM. |
 | `src/actions/` | Server actions. Escriben contra el backend y revalidan las pantallas afectadas. |
 | `src/lib/api.ts` | `apiFetch`: único camino al backend, con el token de la cookie. Cachea los GET 20 s. |
-| `src/proxy.ts` | Protege `/dashboard` y renueva la sesión (el JWT de Supabase dura una hora). |
+| `src/proxy.ts` | Protege `/dashboard` y renueva la sesión (el JWT de Supabase dura una hora). La sesión vence a los **7 días sin uso** (`DURACION_SESION_S`, `lib/sesion.ts`); sin sesión se va a `/login`, y con `?expirada=1` si en ese navegador hubo una (`vector_hubo_sesion`, que sólo borra "Cerrar sesión"). |
 | `src/data/` | Aeródromos, pistas, AIP, aerovías, fixes y radioayudas en TSV **commiteados**: la app no depende de red en build ni en runtime. Se regeneran con `npm run build:*`. **Lo del AIP se actualiza solo** (`.github/workflows/aip.yml`, los martes): commitea en `main` si los tests pasan, abre un PR si no, y avisa por ntfy. |
 | `src/sw/sw.ts` | El service worker (PWA). Lo compila `scripts/build-sw.mjs` después de `next build`. |
 | `docs/normativa/` | Las secciones de la RAAC 61 que cita el código, las fuentes del libro de vuelo (RAAC 61.120 y Res. ANAC 470/2025) y las del plan de vuelo (AIP ENR 1.10 y AIC A 19/2026). **La VI edición de la RAAC 61 (enero 2026) renumeró**: el libro de vuelo ya no es la 61.51. |
@@ -569,7 +569,7 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     push a los `ADMINS_RED` del backend;
   - los avisos push necesitan las claves VAPID en el `.env` del backend; sin ellas no se
     ofrecen;
-  - el login siempre vuelve a `/dashboard`, no al perfil desde el que se fue a ingresar;
+  - el login siempre vuelve a `/dashboard`, no a la pantalla desde la que se fue a ingresar (tampoco al expirar la sesión);
   - la búsqueda no tiene límite de pedidos, más allá de exigir sesión y un tope de 20
     resultados;
   - la exportación no incluye un comentario propio en una publicación que ya no podés

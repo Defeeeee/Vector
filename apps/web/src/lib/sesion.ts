@@ -68,3 +68,23 @@ export function necesitaRenovar(
   if (vida === null) return false;
   return vida < MARGEN_MS;
 }
+
+/**
+ * Cuánto dura la sesión sin usar la app (3.13.0, Federico: "hace que la sesión sea más corta").
+ * Es la vida de la cookie del refresh token, y **se corre con cada uso**: cada renovación (una
+ * por hora de uso, en `src/proxy.ts`) la vuelve a poner en siete días. Hasta la 3.12.0 eran 30.
+ */
+export const DURACION_SESION_S = 60 * 60 * 24 * 7;
+
+/**
+ * Una marca de que en este navegador hubo una sesión, sin nada adentro. Sirve para distinguir
+ * "tu sesión expiró" de "nunca entraste": cuando la cookie del refresh token vence, el navegador
+ * la borra y del otro lado no queda rastro. La borra sólo "Cerrar sesión", que no es expirar.
+ */
+export const COOKIE_HUBO_SESION = "vector_hubo_sesion";
+export const DURACION_MARCA_S = 60 * 60 * 24 * 365;
+
+/** A dónde va quien llega al dashboard sin sesión: al login, avisando si la suya expiró. */
+export function destinoSinSesion(huboSesion: boolean): string {
+  return huboSesion ? "/login?expirada=1" : "/login";
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { necesitaRenovar } from "@/lib/sesion";
+import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S, destinoSinSesion, necesitaRenovar } from "@/lib/sesion";
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.flightlog.fdiaznem.com.ar";
 
@@ -145,8 +145,9 @@ export async function proxy(request: NextRequest) {
       respuesta.cookies.set("session_token", par.access_token, { ...opciones, maxAge: 60 * 60 * 24 });
       respuesta.cookies.set("refresh_token", par.refresh_token, {
         ...opciones,
-        maxAge: 60 * 60 * 24 * 30,
+        maxAge: DURACION_SESION_S,
       });
+      respuesta.cookies.set(COOKIE_HUBO_SESION, "1", { ...opciones, maxAge: DURACION_MARCA_S });
     }
     if (sesionMuerta) {
       // Si no se borran, cada navegación vuelve a intentar canjear un token que ya
@@ -166,10 +167,11 @@ export async function proxy(request: NextRequest) {
 
   const isDashboardPage = pathname.startsWith("/dashboard");
 
+  // Sin sesión, al login (3.13.0): si en este navegador hubo una, con el aviso de que expiró.
+  // Hasta la 3.12.0 iba a la portada con `?expired=true`, que la portada no mostraba.
   if (isDashboardPage && !token) {
-    const url = aDondeVa("/");
-    url.searchParams.set("expired", "true");
-    return conCookies(NextResponse.redirect(url));
+    const huboSesion = sesionMuerta || Boolean(request.cookies.get(COOKIE_HUBO_SESION)?.value);
+    return conCookies(NextResponse.redirect(aDondeVa(destinoSinSesion(huboSesion))));
   }
 
   if (pathname === "/" && token) {

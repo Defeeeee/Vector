@@ -82,7 +82,7 @@ export default function ErrorEstado({ error, reset }: ErrorEstadoProps) {
       <div className="flex flex-wrap items-center justify-center gap-3">
         {esSesion ? (
           <Link
-            href="/api/auth/logout?redirect=/?expired=true"
+            href="/api/auth/logout?redirect=/login?expirada=1"
             className="px-6 py-3 rounded-full bg-aviation-blue text-white text-sm font-bold"
           >
             Entrar de nuevo

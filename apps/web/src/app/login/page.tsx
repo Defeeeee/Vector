@@ -18,7 +18,8 @@ function LoginContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (searchParams.get("expired") === "true") {
+    // `expirada=1` desde la 3.13.0; `expired=true` es el de antes, por si quedó en un link.
+    if (searchParams.get("expirada") === "1" || searchParams.get("expired") === "true") {
       setExpired(true);
     }
   }, [searchParams]);
@@ -70,10 +71,18 @@ function LoginContent() {
       {/* Si estás acá, no hay sesión: se borra del teléfono lo que era del
           piloto. Red de seguridad del borrado — ver `olvidar-datos.ts`. */}
       <OlvidarAlSalir />
+      {/*
+        La sesión expirada (3.13.0): en vez del cartel que tapaba la pantalla, el login mismo lo
+        dice y deja el formulario a mano. Llega con `?expirada=1` del proxy o de un 401.
+      */}
       <AuthShell
-        rotulo="Bienvenido de vuelta"
-        titulo="Tu bitácora te está esperando."
-        bajada="Cada vuelo, cada hora y cada vencimiento en un solo lugar."
+        rotulo={expired ? "Sesión vencida" : "Bienvenido de vuelta"}
+        titulo={expired ? "Tu sesión expiró." : "Tu bitácora te está esperando."}
+        bajada={
+          expired
+            ? "Por seguridad, la cerramos después de una semana sin usar Vector. Ingresá de nuevo para seguir: tus vuelos y tus datos están como los dejaste."
+            : "Cada vuelo, cada hora y cada vencimiento en un solo lugar."
+        }
         pie={
           <>
             <p>
@@ -88,29 +97,6 @@ function LoginContent() {
           </>
         }
       >
-        {expired && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
-            <div role="dialog" aria-modal="true" className="bg-carbon border border-white/10 rounded-2xl p-8 max-w-sm w-full text-center space-y-6">
-              <div className="w-14 h-14 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto">
-                <Lock className="w-6 h-6" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-2xl font-display font-extrabold tracking-[-0.03em]">Se cerró tu sesión</h2>
-                <p className="text-sm text-niebla leading-relaxed">Por seguridad, la sesión terminó. Volvé a ingresar.</p>
-              </div>
-              <button
-                onClick={() => {
-                  setExpired(false);
-                  router.replace("/login");
-                }}
-                className="w-full rounded-full bg-aviation-cyan text-noche font-bold text-sm py-3.5 hover:bg-sky-300 transition-colors"
-              >
-                Entendido
-              </button>
-            </div>
-          </div>
-        )}
-
         <form action={handleSubmit} className="space-y-5">
           {error && <ErrorAuth>{error}</ErrorAuth>}
           <CampoAuth rotulo="Correo electrónico" icono={Mail} name="email" type="email" autoComplete="email" placeholder="vos@ejemplo.com" required />

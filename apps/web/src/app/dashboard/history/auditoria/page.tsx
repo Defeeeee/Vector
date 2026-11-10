@@ -19,7 +19,7 @@ async function getAuditData() {
   ]);
 
   if (summaryRes.status === 401 || findingsRes.status === 401) {
-    redirect("/api/auth/logout?redirect=/?expired=true");
+    redirect("/api/auth/logout?redirect=/login?expirada=1");
   }
 
   const summary: AuditSummary = summaryRes.ok

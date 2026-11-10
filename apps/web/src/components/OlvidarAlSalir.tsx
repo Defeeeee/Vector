@@ -9,7 +9,7 @@ import { olvidarDatosPersonales } from "@/lib/olvidar-datos";
  * Va en la landing y en el login, y borra lo personal al montar. Captura los tres
  * caminos que los otros dos disparadores no ven:
  *
- * - la sesión que el proxy declaró muerta y redirigió a `/?expired=true`,
+ * - la sesión que el proxy declaró muerta y redirigió a `/login?expirada=1`,
  * - el refresh token vencido a los 30 días,
  * - las cookies borradas a mano desde el navegador.
  *

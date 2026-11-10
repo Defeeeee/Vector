@@ -44,7 +44,7 @@ async function getSettingsData() {
 
   if (profilesRes.status === 401 || aircraftRes.status === 401 || packsRes.status === 401) {
     console.log("SettingsPage: 401 Unauthorized. Redirecting to logout...");
-    redirect("/api/auth/logout?redirect=/?expired=true");
+    redirect("/api/auth/logout?redirect=/login?expirada=1");
   }
 
   const profiles: Profile[] = profilesRes.ok ? await profilesRes.json() : [];

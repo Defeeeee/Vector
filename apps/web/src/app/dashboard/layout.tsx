@@ -40,7 +40,7 @@ async function getProfile(): Promise<{ profile: Profile | null; disponible: bool
   const res = await apiFetch("/profiles");
   if (res.status === 401) {
     console.log("DashboardLayout: 401 Unauthorized. Logging out...");
-    redirect("/api/auth/logout?redirect=/?expired=true");
+    redirect("/api/auth/logout?redirect=/login?expirada=1");
   }
   if (!res.ok) return { profile: null, disponible: false };
   try {

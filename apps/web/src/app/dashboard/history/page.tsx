@@ -25,7 +25,7 @@ async function getHistoryData() {
 
   if (response.status === 401) {
     console.log("HistoryPage: 401 Unauthorized. Redirecting to logout...");
-    redirect("/api/auth/logout?redirect=/?expired=true");
+    redirect("/api/auth/logout?redirect=/login?expirada=1");
   }
 
   if (!response.ok) {
