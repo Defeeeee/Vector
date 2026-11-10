@@ -39,6 +39,7 @@ const BASE = "https://ais.anac.gob.ar";
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SALIDA = path.join(RAIZ, "src", "data", "aip", "ENR-2.1.txt");
 const SALIDA_VFR = path.join(RAIZ, "src", "data", "aip", "ENR-3.3-BAIRES.txt");
+const SALIDA_VFR_CORDOBA = path.join(RAIZ, "src", "data", "aip", "ENR-3.3-CORDOBA.txt");
 const FUENTES = path.join(RAIZ, "src", "data", "aip-fuentes.tsv");
 
 async function listadoEnr() {
@@ -123,6 +124,17 @@ export function partesBaires(texto) {
   return texto.slice(i, j).trimEnd();
 }
 
+/**
+ * ENR 3.3 (3.15.0): los corredores para vuelos VFR por debajo de la TMA Córdoba, desde su título
+ * hasta el final del documento. Se guarda tal cual, como la de Baires, para armar su parser
+ * leyendo el texto de la AIP y no de memoria (invariante 6).
+ */
+export function partesCordoba(texto) {
+  const i = texto.indexOf("CORREDORES PARA VUELOS VFR POR DEBAJO DEL TMA");
+  if (i < 0) return null;
+  return texto.slice(i).trimEnd();
+}
+
 async function corredores(local, html) {
   let meta = { url: "", edicion: "", vigenteDesde: "" };
   let bytes;
@@ -147,6 +159,11 @@ async function corredores(local, html) {
   ].join("\n");
   fs.writeFileSync(SALIDA_VFR, `${cabecera}${parte}\n`);
   console.log("Corredores y sectores VFR de Baires → src/data/aip/ENR-3.3-BAIRES.txt");
+  const cordoba = partesCordoba(text);
+  if (cordoba) {
+    fs.writeFileSync(SALIDA_VFR_CORDOBA, `${cabecera.replace("debajo de la TMA Baires", "debajo de la TMA Córdoba")}${cordoba}\n`);
+    console.log("Corredores VFR de Córdoba → src/data/aip/ENR-3.3-CORDOBA.txt");
+  } else console.warn("ENR 3.3 no tiene la parte de Córdoba: no se escribe.");
 }
 
 async function main() {
