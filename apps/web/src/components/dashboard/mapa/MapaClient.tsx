@@ -28,6 +28,7 @@ import type { CapasMapa, Posicion } from "./MapaLeaflet";
 import MenuCapas from "./MenuCapas";
 import { alternarCapa, CAPAS_POR_DEFECTO, CLAVE_CAPAS, leerCapas, OPACIDAD_CARTA_POR_DEFECTO, type IdCapa } from "@/lib/capas-mapa";
 import BriefingRuta from "../BriefingRuta";
+import { SECCIONES } from "@/lib/secciones";
 
 /**
  * **El Mapa** (3.0.0): todo es mapa, con la tarjeta de la ruta flotando arriba a la izquierda.
@@ -306,6 +307,7 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
   const aerodromosDeRuta = puntos.filter((p) => p.clase === "aerodromo");
 
   if (!montado) return null;
+  const preparar = SECCIONES.find((x) => x.clave === "preparar");
 
   /*
     En vuelo, en el teléfono (3.4.0), la tarjeta baja y se vuelve una hoja pegada al borde de
@@ -649,7 +651,7 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
       // El menú de capas es una hoja desde abajo: la barra de secciones le taparía el final.
       data-sin-barra-movil={volando || menuCapas ? "" : undefined}
       data-sin-encabezado-movil={volando ? "" : undefined}
-      className={`fixed inset-x-0 bottom-0 ${volando ? "top-0" : "top-14 app:top-[calc(max(58px,calc(env(safe-area-inset-top)+0.75rem))+3.25rem)]"} lg:top-0 lg:left-20 z-[35]`}
+      className={`fixed inset-x-0 bottom-0 ${volando ? "top-0" : "top-24 app:top-[calc(max(58px,calc(env(safe-area-inset-top)+0.75rem))+3.25rem)]"} lg:top-0 lg:left-20 z-[35]`}
     >
       <MapaLeaflet
         capas={capas}
@@ -667,6 +669,35 @@ export default function MapaClient({ rutaInicial, tasDelHangar }: { rutaInicial:
         opacidadCarta={opacidadCarta}
       />
       {tarjeta}
+      {/*
+        Las pestañas de Preparar vuelo (3.12.0). Desde que el Mapa es la primera, el ícono de la
+        sección cae acá, y el mapa a pantalla completa tapaba las de la página. En el teléfono el
+        mapa empieza debajo de ellas (`top-24`); en la compu flotan a la derecha de la tarjeta.
+      */}
+      {!volando && preparar && (
+        <nav
+          aria-label="Preparar vuelo"
+          className="max-lg:hidden absolute z-10 top-4 left-[calc(380px+2rem)] flex gap-1 p-1 rounded-2xl bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-2xl shadow-black/10"
+        >
+          {preparar.pestanas.map((p) => {
+            const activa = p.href === "/dashboard/mapa";
+            return (
+              <Link
+                key={p.href}
+                href={p.href}
+                aria-current={activa ? "page" : undefined}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                  activa
+                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                }`}
+              >
+                {p.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
       {menuCapas && <MenuCapas visibles={visibles} onAlternar={alternar} opacidad={opacidadCarta} onOpacidad={cambiarOpacidad} onCerrar={() => setMenuCapas(false)} />}
     </div>,
     document.body
