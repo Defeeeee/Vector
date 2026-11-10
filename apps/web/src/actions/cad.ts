@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/api";
 import { getAirport } from "@/lib/airports";
 import { TRAER_DEL_CAD, autoridadDelFormulario, matriculaCad, mismoVueloOtroDia, simuladorValido, validarTraido } from "@/lib/cad";
 import { esErrorDeRedirect } from "@/lib/redirect-error";
+import { RUTA_SIMULADOR } from "@/lib/simulador";
 import type { Aircraft, Flight } from "@/types";
 
 /**
@@ -66,10 +67,13 @@ export async function traerDelCad(items: unknown[]) {
   try {
     const [ar, fr] = await Promise.all([apiFetch("/aircraft", { next: { revalidate: 0 } }), apiFetch("/flights", { next: { revalidate: 0 } })]);
     if (!ar.ok || !fr.ok) return { ...resultado, error: "No pudimos leer tu bitácora. Probá de nuevo." };
-    const aviones = ((await ar.json()) as Aircraft[]).filter((a) => !a.is_simulator);
+    const flota = (await ar.json()) as Aircraft[];
+    const aviones = flota.filter((a) => !a.is_simulator);
     const existentes = (await fr.json()) as Flight[];
     const avionPorMatricula = new Map(aviones.map((a) => [matriculaCad(a.registration), a]));
-    const matriculaDe = new Map(aviones.map((a) => [a.id, matriculaCad(a.registration)]));
+    // Las sesiones de simulador (3.15.0) van a su equipo del Hangar, por la misma matrícula.
+    const simuladorPorMatricula = new Map(flota.filter((a) => a.is_simulator).map((a) => [matriculaCad(a.registration), a]));
+    const matriculaDe = new Map(flota.map((a) => [a.id, matriculaCad(a.registration)]));
     const yaCad = new Set(existentes.map((f) => f.cad_vuelo_id).filter(Boolean));
     const yaSalida = new Set(existentes.map((f) => `${(f.takeoff ?? "").slice(0, 16)}|${f.aircraft_id ? matriculaDe.get(f.aircraft_id) : ""}`));
     const oaci = (codigo: string) => getAirport(codigo)?.icao?.toUpperCase() || codigo;
@@ -77,13 +81,13 @@ export async function traerDelCad(items: unknown[]) {
 
     for (const v of vuelos) {
       if (!v) continue;
-      const avion = avionPorMatricula.get(matriculaCad(v.matricula));
+      const avion = (v.simulador ? simuladorPorMatricula : avionPorMatricula).get(matriculaCad(v.matricula));
       if (!avion) {
         resultado.rechazados++;
         continue;
       }
       // El mismo vuelo con un día de diferencia tampoco se crea: sería un duplicado (`mismoVueloOtroDia`).
-      if (yaCad.has(v.cadId) || yaSalida.has(`${v.takeoff.slice(0, 16)}|${matriculaCad(v.matricula)}`) || mismoVueloOtroDia(v.takeoff, v.matricula, salidas)) {
+      if (yaCad.has(v.cadId) || yaSalida.has(`${v.takeoff.slice(0, 16)}|${matriculaCad(v.matricula)}`) || (!v.simulador && mismoVueloOtroDia(v.takeoff, v.matricula, salidas))) {
         resultado.yaEstaban++;
         continue;
       }
@@ -92,7 +96,7 @@ export async function traerDelCad(items: unknown[]) {
         body: JSON.stringify({
           aircraft_id: avion.id,
           date: v.date,
-          route: `${oaci(v.origen)} ${oaci(v.destino)}`,
+          route: v.simulador ? RUTA_SIMULADOR : `${oaci(v.origen)} ${oaci(v.destino)}`,
           landings: v.landings,
           duration: v.duration,
           takeoff: v.takeoff,
@@ -108,6 +112,7 @@ export async function traerDelCad(items: unknown[]) {
           "IMC Pil": v.imc_pil,
           "IMC Cop": v.imc_cop,
           Capota: v.capota,
+          ...(v.simulador ? { "Sim Instructor": v.sim_instructor ?? 0, "Sim Pil en Inst": v.sim_pil_en_inst ?? 0 } : {}),
           purpose: v.purpose,
           cad_vuelo_id: v.cadId,
           traido_del_cad: true,

@@ -694,13 +694,26 @@ export interface VueloConocido {
   /** "2026-10-17T18:00", UTC. */
   salida: string;
   matricula: string;
+  /** Una sesión de simulador: en el CAD no tiene matrícula, así que se la reconoce por la salida. */
+  simulador?: boolean;
+}
+
+/** Un simulador del Hangar, para traer sus sesiones del CAD (3.15.0). */
+export interface SimuladorEnVector {
+  matricula: string;
+  /** El id del simulador en el CAD que eligió el piloto (`aircraft.cad_simulador`), si ya lo eligió. */
+  cadSimId: number | null;
 }
 
 /** Si un vuelo del CAD ya está en Vector: por su id, o por la misma salida y matrícula. */
 export function estaEnVector(v: Pick<VueloEnElCad, "vueloTripulanteID" | "fechaSalida" | "matricula">, conocidos: VueloConocido[]): boolean {
   const salida = (v.fechaSalida ?? "").slice(0, 16);
   const matricula = matriculaCad(v.matricula ?? "");
-  return conocidos.some((c) => c.cadId === v.vueloTripulanteID || (!!salida && c.salida === salida && matriculaCad(c.matricula) === matricula));
+  return conocidos.some(
+    (c) =>
+      c.cadId === v.vueloTripulanteID ||
+      (!!salida && c.salida === salida && (matriculaCad(c.matricula) === matricula || (!matricula && !!c.simulador)))
+  );
 }
 
 /** Lo que se le pide a Vector que cree: un vuelo con el desglose del libro, ya resuelto. */
@@ -728,6 +741,10 @@ export interface VueloTraido {
   imc_pil: number;
   imc_cop: number;
   capota: number;
+  /** Una sesión de simulador (3.15.0): la matrícula es la del equipo del Hangar y el tiempo va en su columna. */
+  simulador?: boolean;
+  sim_instructor?: number;
+  sim_pil_en_inst?: number;
 }
 
 /** Un vuelo del CAD para el panel: cómo se ve, y el vuelo para Vector o por qué no. */
@@ -784,7 +801,8 @@ export function propositoDesdeCad(finalidad: string): string | null {
 export function vueloDesdeCad(
   d: Record<string, unknown>,
   listas: { finalidades: ItemCad[]; lugares: ItemCad[] },
-  matriculasEnVector: string[]
+  matriculasEnVector: string[],
+  simuladoresEnVector: SimuladorEnVector[] = []
 ): FilaTraida {
   const cadId = Number(campo(d, "vueloTripulanteID", "id")) || 0;
   // La lista trae `fechaHoraSalida` para mostrar ("17/10/2026 18:00") y `fechaSalida` en ISO;
@@ -835,10 +853,11 @@ export function vueloDesdeCad(
   };
 
   const proposito = propositoDesdeCad(finalidad);
+  if (tipo === 3 && cadId) return sesionDeSimuladorDesdeCad(d, { cadId, salida, llegada, horas, cargo, finalidad, proposito, disc }, simuladoresEnVector);
   const enVector = new Set(matriculasEnVector.map(matriculaCad));
   let problema: string | null = null;
   if (!cadId) problema = "El CAD no devolvió el número del vuelo.";
-  else if (tipo === 3 || tipo === 4) problema = `Es un vuelo en ${tipo === 3 ? "simulador" : "planeador"}: cargalo a mano en Vector.`;
+  else if (tipo === 4) problema = "Es un vuelo en planeador: cargalo a mano en Vector.";
   else if (tipo !== 1 && tipo !== 2) problema = "No se pudo leer si es local o travesía.";
   else if (cargo !== 1 && cargo !== 2) problema = "No se pudo leer si fuiste piloto o copiloto.";
   else if (!salida || !llegada) problema = "No se pudo leer la salida o la llegada.";
@@ -882,6 +901,82 @@ export function vueloDesdeCad(
 }
 
 /**
+ * Una sesión de simulador del CAD, para traerla a Vector (3.15.0; hasta ahí había que cargarla a
+ * mano). Es lo inverso de `borradorSimulador`: tipo 3, sin matrícula ni lugares, y el tiempo en la
+ * discriminación "SIM - PILOTO INSTRUCTOR" (cargo 3) o "SIM - PILOTO EN INSTRUCCION" (cargo 6).
+ *
+ * El equipo del Hangar sale del simulador que eligió el piloto al pasar sus sesiones al CAD
+ * (`aircraft.cad_simulador`); si no eligió ninguno y tiene un solo simulador, ése. Si no hay forma
+ * de saberlo, no se adivina: queda para revisar.
+ */
+function sesionDeSimuladorDesdeCad(
+  d: Record<string, unknown>,
+  x: {
+    cadId: number;
+    salida: string | null;
+    llegada: string | null;
+    horas: number | null;
+    cargo: number;
+    finalidad: string;
+    proposito: string | null;
+    disc: (id: number) => number;
+  },
+  simuladores: SimuladorEnVector[]
+): FilaTraida {
+  const sim = (d.simulador && typeof d.simulador === "object" ? d.simulador : {}) as Record<string, unknown>;
+  const simId = Number(campo(sim, "simuladorID", "simuladorId", "id") ?? campo(d, "simuladorID", "simuladorId")) || null;
+  const nombreSim = String(campo(sim, "nombre") ?? campo(d, "simuladorDesc", "simulador") ?? "").trim();
+  const porId = simId ? simuladores.filter((s) => s.cadSimId === simId) : [];
+  const equipo = porId.length === 1 ? porId[0] : simuladores.length === 1 ? simuladores[0] : null;
+  const instructor = x.cargo === CARGO_CAD.instructor;
+  const columna = x.disc(instructor ? DISCRIMINACION_CAD.simInstructor : DISCRIMINACION_CAD.simEnInstruccion);
+  const duration = x.horas ?? 0;
+  const [y, m, dd] = (x.salida ?? "").slice(0, 10).split("-");
+  const base = {
+    cadId: x.cadId,
+    fecha: x.salida ? `${dd}/${m}/${y}` : "",
+    ruta: `Simulador${nombreSim ? ` ${nombreSim}` : ""}`,
+    matricula: equipo?.matricula ?? "",
+    horas: duration,
+    finalidad: x.finalidad,
+  };
+
+  let problema: string | null = null;
+  if (x.cargo !== CARGO_CAD.instructor && x.cargo !== CARGO_CAD.enInstruccion) problema = "No se pudo leer si fuiste instructor o piloto en instrucción.";
+  else if (!x.salida || !x.llegada || x.horas === null) problema = "No se pudo leer la salida o la llegada.";
+  else if (columna > 0 && columna !== x.horas) problema = "Las horas de simulador no dan lo que va de la salida a la llegada.";
+  else if (!simuladores.length) problema = "No tenés un simulador en tu Hangar: agregalo en Vector y volvé a leer el CAD.";
+  else if (!equipo) problema = "No sabemos cuál de tus simuladores es: pasá una sesión de ese simulador al CAD desde Vector, o cargala a mano.";
+  else if (!x.proposito) problema = x.finalidad ? `La finalidad "${x.finalidad}" no tiene par en Vector.` : "No se pudo leer la finalidad.";
+  if (problema) return { ...base, vuelo: null, problema };
+
+  return {
+    ...base,
+    problema: null,
+    vuelo: {
+      cadId: x.cadId,
+      date: x.salida!.slice(0, 10),
+      takeoff: `${x.salida!.slice(0, 16)}:00Z`,
+      landing: `${x.llegada!.slice(0, 16)}:00Z`,
+      origen: "LOCAL",
+      destino: "LOCAL",
+      matricula: equipo!.matricula,
+      landings: 0,
+      duration,
+      purpose: x.proposito!,
+      pic_day_loc: 0, pic_day_tra: 0, pic_night_loc: 0, pic_night_tra: 0,
+      sic_day_loc: 0, sic_day_tra: 0, sic_night_loc: 0, sic_night_tra: 0,
+      imc_pil: 0,
+      imc_cop: 0,
+      capota: 0,
+      simulador: true,
+      sim_instructor: instructor ? duration : 0,
+      sim_pil_en_inst: instructor ? 0 : duration,
+    },
+  };
+}
+
+/**
  * Un vuelo traído, revisado de nuevo en el server antes de crearlo: llega de otra pestaña
  * (el CAD), así que se valida la forma entera y que las horas cierren. `null` si no sirve.
  */
@@ -902,10 +997,17 @@ export function validarTraido(x: unknown): VueloTraido | null {
   if (typeof v.purpose !== "string" || !(v.purpose in FINALIDAD_CAD)) return null;
   if (!Number.isInteger(v.landings) || (v.landings as number) < 0 || (v.landings as number) > 99) return null;
   const tiempos = unDecimal(horas.slice(0, 8).reduce((t, k) => t + (v[k] as number), 0));
-  if (tiempos !== v.duration || horasCentesimalesCad(v.takeoff, v.landing) !== v.duration) return null;
-  return Object.fromEntries(
-    ["cadId", "date", "takeoff", "landing", "origen", "destino", "matricula", "landings", "purpose", ...horas].map((k) => [k, v[k]])
-  ) as unknown as VueloTraido;
+  if (horasCentesimalesCad(v.takeoff, v.landing) !== v.duration) return null;
+  const campos = ["cadId", "date", "takeoff", "landing", "origen", "destino", "matricula", "landings", "purpose", ...horas];
+  if (v.simulador === true) {
+    // Una sesión de simulador: nada en las columnas de vuelo, el tiempo entero en una sola de simulador.
+    const si = num("sim_instructor"), se = num("sim_pil_en_inst");
+    if (si === null || se === null || tiempos !== 0 || v.landings !== 0 || v.origen !== "LOCAL" || v.destino !== "LOCAL") return null;
+    if (!((si === v.duration && se === 0) || (se === v.duration && si === 0))) return null;
+    return Object.fromEntries([...campos, "simulador", "sim_instructor", "sim_pil_en_inst"].map((k) => [k, v[k]])) as unknown as VueloTraido;
+  }
+  if (tiempos !== v.duration) return null;
+  return Object.fromEntries(campos.map((k) => [k, v[k]])) as unknown as VueloTraido;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1103,10 +1205,10 @@ export function filaParaTraer(
   v: VueloEnElCad,
   detalle: Record<string, unknown> | null,
   listas: { finalidades: ItemCad[]; lugares: ItemCad[] },
-  vector: { matriculas: string[]; conocidos: VueloConocido[] }
+  vector: { matriculas: string[]; conocidos: VueloConocido[]; simuladores?: SimuladorEnVector[] }
 ): FilaTraida {
-  const t = vueloDesdeCad({ ...(v as unknown as Record<string, unknown>), ...(detalle ?? {}) }, listas, vector.matriculas);
-  const otro = t.vuelo ? mismoVueloOtroDia(t.vuelo.takeoff, t.vuelo.matricula, vector.conocidos) : null;
+  const t = vueloDesdeCad({ ...(v as unknown as Record<string, unknown>), ...(detalle ?? {}) }, listas, vector.matriculas, vector.simuladores ?? []);
+  const otro = t.vuelo && !t.vuelo.simulador ? mismoVueloOtroDia(t.vuelo.takeoff, t.vuelo.matricula, vector.conocidos) : null;
   return otro
     ? {
         ...t,

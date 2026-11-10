@@ -88,8 +88,8 @@ pantallas que no son sección son pestañas:
   (`/dashboard/pilotos/[handle]`) cuelgan de la Red.
 
 **Se sacaron en la 3.12.0**, medido en la base (0 uso): el Calendario y los vuelos programados
-(la tabla `planned_flights` y su API siguen en el backend), las métricas propias
-(`custom_stats`, ídem) y la pestaña Clima. Las URLs viejas redirigen (`next.config.js`).
+y las métricas propias (tablas, API y barrido borrados en la 3.15.0, migración 040) y la pestaña
+Clima. Las URLs viejas redirigen (`next.config.js`).
 
 **Cinco es el techo**, porque es lo que entra en la píldora
 del teléfono sin la hoja "Más", y un test lo fija. La pestaña activa es la de `href` más
@@ -510,8 +510,10 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     DDJJ (`PendientesDdjj`, excepción a las tres preguntas: aprobada por Federico).
   - **Simuladores** (2.33.0): tipo 3, cargo 6 (en instrucción) o 3 (instructor), discriminación 9 u
     8, día y noche en 0, y `simulador` con el de `GetSimuladoresListItem`, que se elige una vez por
-    equipo y queda en `aircraft.cad_simulador` (con su clase FSTD). "Traer a Vector" todavía no trae
-    simuladores.
+    equipo y queda en `aircraft.cad_simulador` (con su clase FSTD). Desde la 3.15.0 "Traer a Vector"
+    también trae las sesiones de simulador (`sesionDeSimuladorDesdeCad`): al equipo del Hangar con ese
+    simulador del CAD (o al único simulador del Hangar), en la columna de instructor o de piloto en
+    instrucción; en Vector se las reconoce por la salida, porque en el CAD no tienen matrícula.
   - **Cómo:** un marcador en la pestaña del CAD, con la sesión del piloto. Los vuelos quedan
     "Pendiente de DDJJ" y la declaración jurada la hace el piloto. Se descartó guardar la
     contraseña de ANAC en Vector.

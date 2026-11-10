@@ -357,7 +357,9 @@ describe("del CAD a Vector", () => {
 
   it("no adivina: lo que no cierra queda para revisar", () => {
     const con = (cambio: Record<string, unknown>, matriculas = ["LV-ABC"]) => vueloDesdeCad({ ...crear, ...cambio }, listas, matriculas).problema;
-    expect(con({ tipoVueloID: 3 })).toMatch(/simulador/);
+    // Desde la 3.15.0 un simulador se trae, pero con el cargo de un vuelo (piloto) no cierra.
+    expect(con({ tipoVueloID: 3 })).toMatch(/instructor o piloto en instrucción/);
+    expect(con({ tipoVueloID: 4 })).toMatch(/planeador/);
     expect(con({ tipoVueloID: undefined })).toMatch(/local o travesía/);
     expect(con({ cargoID: 7 })).toMatch(/piloto o copiloto/);
     expect(con({ fechaHoraSalida: "ayer" })).toMatch(/salida o la llegada/);
@@ -367,6 +369,59 @@ describe("del CAD a Vector", () => {
     expect(con({ origenID: "404", destinoID: "404" })).toMatch(/aeródromo/);
     expect(con({ vueloTripulanteID: undefined })).toMatch(/número/);
     expect(vueloDesdeCad({ ...crear, tipoVueloID: 3 }, listas, ["LV-ABC"]).vuelo).toBeNull();
+  });
+
+  describe("una sesión de simulador (3.15.0)", () => {
+    const sesion = {
+      vueloTripulanteID: 777,
+      tipoVueloID: 3,
+      cargoID: 6,
+      fechaHoraSalida: "2026-10-03T14:00:00",
+      fechaHoraLlegada: "2026-10-03T15:00:00",
+      horasDia: 0,
+      horasNoche: 0,
+      finalidadID: "68",
+      simulador: { simuladorID: 41, nombre: "SANTIAGO I C-172" },
+      Discriminaciones: [{ tipoDiscriminacionID: 9, horas: "1.0" }],
+    };
+    const sims = [{ matricula: "LVASG", cadSimId: 41 }];
+
+    it("va al equipo del Hangar, en la columna de piloto en instrucción", () => {
+      const f = vueloDesdeCad(sesion, listas, ["LV-ABC"], sims);
+      expect(f.problema).toBeNull();
+      expect(f.vuelo).toMatchObject({
+        simulador: true, matricula: "LVASG", origen: "LOCAL", destino: "LOCAL", landings: 0,
+        duration: 1, purpose: "INST", sim_pil_en_inst: 1, sim_instructor: 0, pic_day_loc: 0,
+      });
+      expect(validarTraido(f.vuelo)).not.toBeNull();
+    });
+
+    it("como instructor, en la otra columna", () => {
+      const f = vueloDesdeCad({ ...sesion, cargoID: 3, Discriminaciones: [{ tipoDiscriminacionID: 8, horas: "1.0" }] }, listas, [], sims);
+      expect(f.vuelo).toMatchObject({ sim_instructor: 1, sim_pil_en_inst: 0 });
+    });
+
+    it("con un solo simulador en el Hangar, aunque no se haya elegido cuál es en el CAD", () => {
+      expect(vueloDesdeCad(sesion, listas, [], [{ matricula: "LVASG", cadSimId: null }]).vuelo?.matricula).toBe("LVASG");
+    });
+
+    it("no adivina el equipo ni las horas", () => {
+      const dos = [{ matricula: "LVASG", cadSimId: null }, { matricula: "LVSIM", cadSimId: null }];
+      expect(vueloDesdeCad(sesion, listas, [], dos).problema).toMatch(/cuál de tus simuladores/);
+      expect(vueloDesdeCad(sesion, listas, [], []).problema).toMatch(/No tenés un simulador/);
+      expect(vueloDesdeCad({ ...sesion, Discriminaciones: [{ tipoDiscriminacionID: 9, horas: "0.8" }] }, listas, [], sims).problema).toMatch(/no dan/);
+    });
+
+    it("la validación del server rechaza una sesión con horas de vuelo", () => {
+      const f = vueloDesdeCad(sesion, listas, [], sims);
+      expect(validarTraido({ ...f.vuelo, pic_day_loc: 1 })).toBeNull();
+      expect(validarTraido({ ...f.vuelo, sim_instructor: 1 })).toBeNull();
+    });
+
+    it("se reconoce en Vector por la salida aunque el CAD no tenga matrícula", () => {
+      expect(estaEnVector({ vueloTripulanteID: 1, fechaSalida: "2026-10-03T14:00:00", matricula: "" }, [{ cadId: null, salida: "2026-10-03T14:00", matricula: "LVASG", simulador: true }])).toBe(true);
+      expect(estaEnVector({ vueloTripulanteID: 1, fechaSalida: "2026-10-03T14:00:00", matricula: "" }, [{ cadId: null, salida: "2026-10-03T14:00", matricula: "LVABC" }])).toBe(false);
+    });
   });
 
   it("una salida con zona se pasa a UTC", () => {
