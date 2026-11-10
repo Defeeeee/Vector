@@ -4,7 +4,7 @@ import { chatConRespaldo } from "@/lib/gemini";
 import { getSessionToken } from "@/actions/auth";
 import { apiFetch } from "@/lib/api";
 import { Flight, Aircraft, Profile, PilotDocument } from "@/types";
-import { breakdownError, buildFlightBody, isAffirmation, proposalSummary } from "@/lib/copilot-guards";
+import { breakdownError, buildFlightBody, completarDesglose, isAffirmation, proposalSummary } from "@/lib/copilot-guards";
 import { canonicalRoute } from "@/lib/madhel-reference";
 import { calculateFlightDuration, documentStatus } from "@/lib/utils";
 import { anacIndicator } from "@/lib/madhel-reference";
@@ -401,6 +401,7 @@ La fecha actual de hoy es: ${currentLocalDate} (formato YYYY-MM-DD). Usa esta fe
    - landing: Hora aterrizaje (HH:MM).
    - landings: Aterrizajes (número entero, por defecto pídelo o pon 1 si está implícito).
    - purpose: Finalidad del vuelo (debe ser un código corto como VP para Vuelo Privado, ENT para Entrenamiento, EXA para Examen, INST para Instrucción, etc. Si el piloto no lo indica, PREGÚNTALE siempre primero).
+   - DESGLOSE: si el piloto dice cómo se repartió el tiempo (de noche, como copiloto/SIC, parte local y parte en travesía), pasalo en los campos pic_*/sic_*. Lo que no asignes, el sistema lo completa como PIC diurno, local si sale y llega al mismo aeródromo o travesía si no, igual que el formulario. Si el vuelo fue total o parcialmente de noche o como copiloto y el piloto no lo aclaró, preguntáselo antes de proponerlo.
 3. Si el usuario te pide editar ('update_flight') o eliminar ('delete_flight') un vuelo, busca el UUID de ese vuelo en tu contexto de vuelos registrados (representado como [ID: uuid]) y úsalo para llamar a la función. Si no estás seguro de cuál vuelo se refiere, muéstrale los candidatos con sus datos y pídele confirmación.
 4. Si falta cualquier dato requerido, detente y pregunta amablemente. No inventes nada.
 
@@ -626,7 +627,8 @@ ${flightContext}`;
             // No escribe: propone. El vuelo se guarda recién cuando el piloto
             // confirma, resuelto antes de llamar al modelo. Era la última defensa
             // que tenía el copiloto de WhatsApp y este no.
-            propuestaNueva = { ...args, aircraft_id: ac.id, duration: computedDuration };
+            // El desglose que el modelo no mandó, como lo completa el formulario (`completarDesglose`).
+            propuestaNueva = completarDesglose({ ...args, aircraft_id: ac.id, duration: computedDuration }, { simulador: !!ac.is_simulator });
             propuestaLabel = ac.registration;
             toolResults.push({
               name: call.name,

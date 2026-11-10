@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  completarDesglose,
   RATE_LIMIT_MESSAGES,
   alreadyHandled,
   breakdownError,
@@ -195,5 +196,33 @@ describe("yaAvisadoDelLimite", () => {
   it("no confunde una respuesta normal con el aviso", () => {
     expect(yaAvisadoDelLimite([{ role: "assistant", content: "tenés 46.3 hs" }])).toBe(false);
     expect(yaAvisadoDelLimite([])).toBe(false);
+  });
+});
+
+describe("completarDesglose: como la web, lo que no se asigna va a PIC diurno", () => {
+  it("un local (sale y llega al mismo) va a PIC diurno local", () => {
+    expect(completarDesglose({ route: "SADF - SADF", duration: 1.3 }).pic_day_loc).toBe(1.3);
+  });
+
+  it("una travesía va a PIC diurno travesía", () => {
+    const p = completarDesglose({ route: "SADF-SADM", duration: 1.3 });
+    expect(p.pic_day_tra).toBe(1.3);
+    expect(p.pic_day_loc).toBeUndefined();
+  });
+
+  it("respeta lo que el modelo asignó y completa sólo el resto", () => {
+    const p = completarDesglose({ route: "SADF SADM", duration: 2, pic_night_tra: 0.5 });
+    expect(p.pic_night_tra).toBe(0.5);
+    expect(p.pic_day_tra).toBe(1.5);
+  });
+
+  it("si ya está todo asignado, no toca nada", () => {
+    const p = { route: "SADF SADM", duration: 1, sic_day_tra: 1 };
+    expect(completarDesglose(p)).toBe(p);
+  });
+
+  it("un simulador no lleva PIC/SIC", () => {
+    const p = { route: "LOCAL", duration: 1 };
+    expect(completarDesglose(p, { simulador: true })).toBe(p);
   });
 });

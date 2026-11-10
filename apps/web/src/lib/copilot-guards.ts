@@ -126,6 +126,32 @@ export function breakdownError(args: Record<string, any>, duration: number): str
   return null;
 }
 
+/**
+ * El desglose que falta, con la misma regla que el formulario web (3.16.1).
+ *
+ * En la web, lo que el piloto no reparte a mano va entero a PIC diurno: local si sale y llega
+ * al mismo aeródromo, travesía si no (`remainderKey` de `FlightLogForm`, con la ruta
+ * canonicalizada: GEZ y SRDR son el mismo). El copiloto no lo hacía: el desglose de
+ * `log_flight` es opcional, el modelo muchas veces no lo manda, y el vuelo quedaba con la
+ * duración y las casillas del libro vacías. Ahora el resto se completa igual que en la web, y
+ * el piloto lo ve en el resumen antes de confirmar.
+ *
+ * - Lo que el modelo sí asignó se respeta; sólo se completa lo que sobra.
+ * - Una sesión de simulador no lleva PIC/SIC (sus horas van en las columnas de simulador).
+ * - Nunca nocturno ni SIC por defecto, como la web: eso lo dice el piloto.
+ */
+export function completarDesglose(p: Record<string, any>, opciones: { simulador?: boolean } = {}): Record<string, any> {
+  const duracion = Number(p.duration) || 0;
+  if (opciones.simulador || duracion <= 0) return p;
+  const asignado = PIC_SIC_KEYS.reduce((t, k) => t + (Number(p[k]) || 0), 0);
+  const resto = Math.round((duracion - asignado) * 10) / 10;
+  if (resto <= 0) return p;
+  const extremos = canonicalRoute(String(p.route ?? "")).split(/\s+/).filter(Boolean);
+  const local = extremos.length < 2 || extremos[0] === extremos[extremos.length - 1];
+  const clave = local ? "pic_day_loc" : "pic_day_tra";
+  return { ...p, [clave]: Math.round(((Number(p[clave]) || 0) + resto) * 10) / 10 };
+}
+
 /** Lo que el piloto ve antes de confirmar. Se arma en código, no en el modelo:
  *  tiene que describir exactamente lo que se va a escribir. */
 export function proposalSummary(p: Record<string, any>, aircraftLabel: string, logbookLabel?: string): string {

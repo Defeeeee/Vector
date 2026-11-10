@@ -530,7 +530,9 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     "revisar" y no se manda. Lo que ya está (misma salida y matrícula) se anota sin repetir.
   - **La autoridad certificante y su nombre son de cada vuelo** (Federico, 2026-10-21). El
     panel propone la última usada para esa finalidad (`autoridadSugerida`, memoria en el
-    `localStorage` del CAD) y no carga un vuelo al que le falte alguna de las dos.
+    `localStorage` del CAD) y no carga un vuelo al que le falte alguna de las dos. Con varios
+    elegidos, "La misma autoridad para los N elegidos" (3.16.1, `AutoridadEnLote`,
+    `asignarAutoridad`) la pisa en todos y la guarda en cada vuelo de Vector.
   - "Corregir" lleva a `/dashboard/history?editar=<id>`, que abre ese vuelo en edición.
   - **Probado contra el CAD real** (Federico, 2026-10-21): borró un vuelo en el CAD y lo
     volvió a cargar desde el panel. Las listas del CAD son públicas (sin sesión). Los

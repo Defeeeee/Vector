@@ -6,6 +6,14 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.16.1 — Arreglos después de volar
+
+_10 de noviembre de 2026_
+
+- **El Mapa en vuelo, con el mapa** — Al empezar a volar se dejaban de ver el mapa de fondo y las cartas, y quedaban sólo los espacios aéreos. Ya está arreglado.
+- **La misma autoridad para varios vuelos** — En "Pasar al CAD", con varios vuelos elegidos, ponés la autoridad certificante y su nombre una vez y se aplica a todos. Queda guardada en cada vuelo.
+- **El copiloto carga el desglose** — Los vuelos que cargás por WhatsApp o con el copiloto ahora llevan el desglose del libro, como en el formulario: PIC diurno, local o travesía, salvo que le digas otra cosa.
+
 ## v3.16.0 — Volando con el Mapa
 
 _10 de noviembre de 2026_

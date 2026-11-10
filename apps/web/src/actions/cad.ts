@@ -42,6 +42,35 @@ export async function marcarEnElCad(items: { vectorId: string; cadId: number; au
   return { marcados };
 }
 
+/**
+ * La misma autoridad certificante para varios vuelos a la vez (3.16.1): la elige el piloto en
+ * "Pasar al CAD" para los vuelos elegidos y queda en cada vuelo (migración 032), así la próxima
+ * vez viene propuesta. Es una marca del libro: no toca el cobro (`MARCAS_DEL_LIBRO` del backend).
+ * Una autoridad que no está en la lista del CAD, o sin nombre, no se guarda.
+ */
+export async function asignarAutoridad(vectorIds: string[], autoridad: { id: string; nombre: string }) {
+  const datos = autoridadDelFormulario(autoridad?.id, autoridad?.nombre);
+  if (!datos.cad_autoridad_id || !datos.cad_autoridad_nombre) return { error: "Elegí la autoridad y escribí su nombre.", guardados: 0 };
+  const ids = (Array.isArray(vectorIds) ? vectorIds : []).filter((id) => /^[0-9a-f-]{36}$/i.test(String(id))).slice(0, 300);
+  let guardados = 0;
+  try {
+    // De a cinco: son PATCH chicos, y uno por vuelo es lo que el backend ya sabe hacer.
+    for (let i = 0; i < ids.length; i += 5) {
+      const tanda = await Promise.all(
+        ids.slice(i, i + 5).map((id) => apiFetch(`/flights/${id}`, { method: "PATCH", body: JSON.stringify({ ...datos, cad_autoridad_nombre: datos.cad_autoridad_nombre!.toUpperCase() }) }))
+      );
+      guardados += tanda.filter((r) => r.ok).length;
+    }
+  } catch (e) {
+    if (esErrorDeRedirect(e)) throw e;
+  }
+  if (guardados > 0) {
+    revalidatePath("/dashboard/history");
+    revalidatePath("/dashboard/history/cad");
+  }
+  return { guardados };
+}
+
 /** Las pantallas que muestran un vuelo nuevo (las mismas que al registrar uno a mano). */
 function revalidarVuelosNuevos() {
   for (const p of ["/dashboard", "/dashboard/history", "/dashboard/history/cad", "/dashboard/summary", "/dashboard/balance", "/dashboard/airports", "/dashboard/history/auditoria", "/dashboard/settings"])

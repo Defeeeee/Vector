@@ -78,6 +78,32 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.16.1",
+    fecha: "2026-11-10",
+    titulo: "Arreglos después de volar",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "El Mapa en vuelo, con el mapa",
+        texto: "Al empezar a volar se dejaban de ver el mapa de fondo y las cartas, y quedaban sólo los espacios aéreos. Ya está arreglado.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+      {
+        icono: "avion",
+        titulo: "La misma autoridad para varios vuelos",
+        texto: "En \"Pasar al CAD\", con varios vuelos elegidos, ponés la autoridad certificante y su nombre una vez y se aplica a todos. Queda guardada en cada vuelo.",
+        href: "/dashboard/history/cad",
+        cta: "Pasar al CAD",
+      },
+      {
+        icono: "conversacion",
+        titulo: "El copiloto carga el desglose",
+        texto: "Los vuelos que cargás por WhatsApp o con el copiloto ahora llevan el desglose del libro, como en el formulario: PIC diurno, local o travesía, salvo que le digas otra cosa.",
+      },
+    ],
+  },
+  {
     version: "3.16.0",
     fecha: "2026-11-10",
     titulo: "Volando con el Mapa",

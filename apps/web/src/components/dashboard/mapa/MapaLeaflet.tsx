@@ -432,17 +432,26 @@ export default function MapaLeaflet({
     if (contenedor.current) contenedor.current.style.cursor = agregando ? "crosshair" : "";
   }, [agregando]);
 
+  /*
+    ⚠️ **El `className` del contenedor de Leaflet no puede cambiar nunca.** Leaflet le agrega sus
+    clases (`leaflet-container`, `leaflet-touch`…) y React, al cambiar el atributo, las borra: en la
+    3.16.0 entrar en vuelo cambiaba la clase, se perdía `leaflet-container`, dejaba de valer la regla
+    de Leaflet que saca el `max-width: 100%` de Tailwind a las teselas, y quedaban de ancho 0: sin
+    mapa de fondo ni cartas. Lo que cambia con el vuelo va en el envoltorio de afuera.
+  */
   return (
     <div
-      ref={contenedor}
       // En vuelo, los botones de zoom son los de la pantalla de vuelo, y la atribución de OSM sube
       // por encima de la banda de abajo (tiene que verse).
       style={{ "--abajo": `${margenes.abajo}px` } as CSSProperties}
-      // `isolate`: los z-index de Leaflet (400, 600…) quedan adentro y no tapan la tarjeta.
-      // En oscuro, los tiles de OSM se invierten: no hay una versión oscura con la misma licencia.
-      className={`absolute inset-0 isolate bg-zinc-100 dark:bg-zinc-900 dark:[&_.leaflet-tile-pane]:[filter:invert(1)_hue-rotate(180deg)_brightness(0.85)_contrast(0.9)] ${
-        volando ? "[&_.leaflet-control-zoom]:hidden [&_.leaflet-bottom]:bottom-[var(--abajo)]" : ""
-      }`}
-    />
+      className={`absolute inset-0 ${volando ? "[&_.leaflet-control-zoom]:hidden [&_.leaflet-bottom]:bottom-[var(--abajo)]" : ""}`}
+    >
+      <div
+        ref={contenedor}
+        // `isolate`: los z-index de Leaflet (400, 600…) quedan adentro y no tapan la tarjeta.
+        // En oscuro, los tiles de OSM se invierten: no hay una versión oscura con la misma licencia.
+        className="absolute inset-0 isolate bg-zinc-100 dark:bg-zinc-900 dark:[&_.leaflet-tile-pane]:[filter:invert(1)_hue-rotate(180deg)_brightness(0.85)_contrast(0.9)]"
+      />
+    </div>
   );
 }

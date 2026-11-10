@@ -17,6 +17,7 @@ import {
   ChatEntry,
   alreadyHandled,
   breakdownError,
+  completarDesglose,
   isAffirmation,
   pendingFlight,
   proposalSummary,
@@ -779,6 +780,7 @@ La fecha actual de hoy es: ${currentLocalDate} (formato YYYY-MM-DD). Usa esta fe
    - Por eso no hace falta que redactes vos el resumen ni que pidas la confirmación: llamá a 'log_flight' con los datos completos y el sistema se encarga.
    - Si el piloto corrige un dato, volvé a llamar a 'log_flight' con los datos corregidos: la propuesta anterior se descarta sola.
    - El desglose PIC/SIC no puede sumar más que la duración del vuelo. Si lo intentás, la herramienta te lo rechaza con el detalle.
+   - DESGLOSE: si el piloto dice cómo se repartió el tiempo (de noche, como copiloto/SIC, parte local y parte en travesía), pasalo en los campos pic_*/sic_*. Lo que no asignes, el sistema lo completa como PIC diurno, local si sale y llega al mismo aeródromo o travesía si no, igual que la web. Si el vuelo fue total o parcialmente de noche o como copiloto y el piloto no lo aclaró, preguntáselo antes de proponerlo.
 4. Si el usuario te pide editar ('update_flight') o eliminar ('delete_flight') un vuelo, busca el UUID de ese vuelo en tu contexto de vuelos registrados (representado como [ID: uuid]) y úsalo para llamar a la función. Si no estás seguro de cuál vuelo se refiere, muéstrale los candidatos con sus datos y pídele confirmación.
 5. Si falta cualquier dato requerido, detente y pregunta amablemente. No inventes nada.
 
@@ -1039,7 +1041,11 @@ ${flightContext}`;
               logbookLabel = book.name;
             }
 
-            const proposal = { ...args, aircraft_id: ac.id, duration: proposedDuration, logbook_id: logbookId };
+            // El desglose que el modelo no mandó, como lo completa la web (`completarDesglose`).
+            const proposal = completarDesglose(
+              { ...args, aircraft_id: ac.id, duration: proposedDuration, logbook_id: logbookId },
+              { simulador: !!ac.is_simulator }
+            );
             pendingProposal = { proposal, aircraftLabel: ac.registration, logbookLabel };
             toolResults.push({
               name: call.name,

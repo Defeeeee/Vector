@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, ChevronDown, Download, Loader2, MonitorPlay, RefreshCw, Undo2, Upload } from "lucide-react";
-import { marcarEnElCad, omitirEnElCad, guardarSimuladorCad, traerDelCad } from "@/actions/cad";
+import { asignarAutoridad, marcarEnElCad, omitirEnElCad, guardarSimuladorCad, traerDelCad } from "@/actions/cad";
 import { fuenteServidor, type FuenteCad } from "@/components/dashboard/cad/fuente-cad";
 import {
   CLASES_SIMULADOR,
@@ -286,6 +286,19 @@ export default function PanelCad({ fuente = fuenteServidor }: { fuente?: FuenteC
                     {anteriores.length === 1 ? "Marcarlo" : "Marcarlos"} como ya foliado{anteriores.length === 1 ? "" : "s"}
                   </button>
                 </p>
+              )}
+              {elegidas.length > 1 && paso === "elegir" && (
+                <AutoridadEnLote
+                  lista={datos.autoridades}
+                  cuantos={elegidas.length}
+                  alAplicar={async (a) => {
+                    const ids = new Set(elegidas.map((f) => f.b.vectorId));
+                    setFilas((fs) => fs.map((x) => (ids.has(x.b.vectorId) ? { ...x, autoridad: { ...a } } : x)));
+                    setAviso("");
+                    const r = await asignarAutoridad([...ids], a);
+                    return "error" in r && r.error ? r.error : r.guardados < ids.size ? "Quedó para esta carga, pero no se pudo guardar en todos tus vuelos de Vector." : null;
+                  }}
+                />
               )}
               {[...cargadas, ...porCargar].map((f) => (
                 <Renglon
@@ -591,6 +604,50 @@ function Autoridad({
         <button onClick={alRepetir} className={`${enlace} justify-self-start sm:col-span-2`}>
           Usar esta autoridad en los que no tienen
         </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * La misma autoridad para todos los vuelos elegidos (3.16.1): pisa la que tenía cada uno (para
+ * dejar uno distinto, se cambia en su renglón después) y queda guardada en los vuelos de Vector.
+ */
+function AutoridadEnLote({ lista, cuantos, alAplicar }: { lista: ItemCad[]; cuantos: number; alAplicar: (a: AutoridadCad) => Promise<string | null> }) {
+  const [a, setA] = useState<AutoridadCad>({ id: "", nombre: "" });
+  const [estado, setEstado] = useState<{ tipo: "" | "guardando" | "listo" | "error"; texto?: string }>({ tipo: "" });
+  const aplicar = async () => {
+    setEstado({ tipo: "guardando" });
+    const error = await alAplicar({ id: a.id, nombre: a.nombre.trim().toUpperCase() });
+    setEstado(error ? { tipo: "error", texto: error } : { tipo: "listo", texto: `Listo: ${cuantos} vuelos con esa autoridad.` });
+  };
+  return (
+    <div className="border-y border-zinc-200 dark:border-white/10 py-3 px-1 space-y-2">
+      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">La misma autoridad para los {cuantos} elegidos</p>
+      <div className="grid sm:grid-cols-[1fr_1fr_auto] gap-2">
+        <select value={a.id} onChange={(e) => setA({ ...a, id: e.target.value })} className={control} aria-label="Autoridad certificante para los elegidos">
+          <option value="">Autoridad certificante…</option>
+          {lista.map((x) => (
+            <option key={x.key} value={x.key}>
+              {x.value}
+            </option>
+          ))}
+        </select>
+        <input
+          value={a.nombre}
+          onChange={(e) => setA({ ...a, nombre: e.target.value })}
+          placeholder="Nombre y apellido"
+          className={`${control} uppercase placeholder:normal-case`}
+          aria-label="Nombre y apellido de la autoridad para los elegidos"
+        />
+        <button onClick={() => void aplicar()} disabled={faltaAutoridad(a) || estado.tipo === "guardando"} className={`${botonNegro} disabled:opacity-40`}>
+          {estado.tipo === "guardando" ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : null} Usar en los {cuantos}
+        </button>
+      </div>
+      {estado.texto && (
+        <p className={`text-xs ${estado.tipo === "error" ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`} role="status">
+          {estado.texto}
+        </p>
       )}
     </div>
   );
