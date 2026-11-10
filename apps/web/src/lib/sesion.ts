@@ -70,11 +70,11 @@ export function necesitaRenovar(
 }
 
 /**
- * Cuánto dura la sesión sin usar la app (3.13.0, Federico: "hace que la sesión sea más corta").
+ * Cuánto dura la sesión sin usar la app (3.13.0, Federico: "que sea cada 2 días").
  * Es la vida de la cookie del refresh token, y **se corre con cada uso**: cada renovación (una
- * por hora de uso, en `src/proxy.ts`) la vuelve a poner en siete días. Hasta la 3.12.0 eran 30.
+ * por hora de uso, en `src/proxy.ts`) la vuelve a poner en dos días. Hasta la 3.12.0 eran 30.
  */
-export const DURACION_SESION_S = 60 * 60 * 24 * 7;
+export const DURACION_SESION_S = 60 * 60 * 24 * 2;
 
 /**
  * Una marca de que en este navegador hubo una sesión, sin nada adentro. Sirve para distinguir

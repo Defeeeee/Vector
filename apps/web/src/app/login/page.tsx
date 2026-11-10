@@ -80,7 +80,7 @@ function LoginContent() {
         titulo={expired ? "Tu sesión expiró." : "Tu bitácora te está esperando."}
         bajada={
           expired
-            ? "Por seguridad, la cerramos después de una semana sin usar Vector. Ingresá de nuevo para seguir: tus vuelos y tus datos están como los dejaste."
+            ? "Por seguridad, la cerramos después de dos días sin usar Vector. Ingresá de nuevo para seguir: tus vuelos y tus datos están como los dejaste."
             : "Cada vuelo, cada hora y cada vencimiento en un solo lugar."
         }
         pie={

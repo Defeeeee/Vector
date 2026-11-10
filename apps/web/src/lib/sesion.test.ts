@@ -104,7 +104,7 @@ describe("sin sesión", () => {
   it("si nunca entró, el login a secas", () => {
     expect(destinoSinSesion(false)).toBe("/login");
   });
-  it("la sesión dura una semana sin uso", () => {
-    expect(DURACION_SESION_S).toBe(7 * 24 * 3600);
+  it("la sesión dura dos días sin uso", () => {
+    expect(DURACION_SESION_S).toBe(2 * 24 * 3600);
   });
 });
