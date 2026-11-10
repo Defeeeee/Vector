@@ -1,0 +1,2714 @@
+# ENR 3.3 — corredores y sectores VFR debajo de la TMA Córdoba, extraído de https://ais.anac.gob.ar/descarga/aip-6700467f22536
+# AIP ARGENTINA · edición 02/24 · vigente desde 28-Nov-24
+# Generado por scripts/build-espacios.mjs. NO EDITAR A MANO.
+CORREDORES PARA VUELOS VFR POR DEBAJO DEL TMA
+CÓRDOBA Y DENTRO DE LA CTR CÓRDOBA
+CORRIDORS FOR VFR FLIGHTS BELOW TMA CÓRDOBA AND
+WITHIN CÓRDOBA CTR
+1. Generalidades
+Los vuelos VFR por debajo del límite inferior del TMA CÓRDOBA se
+efectuarán dentro de lo establecido en las Reglas VFR, en los
+presentes procedimientos locales, en la “CARTA PARA VUELOS VFR
+POR DEBAJO DEL TMA CÓRDOBA” (ENR-6.9 Cartas En-Ruta) y en
+toda publicación de información aeronáutica pertinente.
+A efectos de permitir una mayor flexibilidad a los vuelos VFR, se
+han establecido corredores VFR debajo del límite inferior del TMA
+CÓRDOBA con las características que se establecen en la TABLA-1.
+En caso de ser necesario solicitar Servicio de Información de Vuelo,
+los corredores 1, 2, 3, 4, 5, 6, 7, 8 y 11 se encuentran dentro del
+espacio aéreo de jurisdicción de la APP/TWR CÓRDOBA; y los
+corredores Nº 9 y 10 se encuentran dentro del espacio aéreo de
+jurisdicción de la TWR ESCUELA DE AVIACIÓN MILITAR. Los
+1. General
+VFR flights below the lower limit of the CÓRDOBA TMA shall be
+conducted within the VFR Rules, these local procedures, the
+"CHART FOR VFR FLIGHTS BELOW CÓRDOBA TMA” (ENR-6.9
+Cartas En-Ruta) and any relevant aeronautical information
+publication.
+To allow greater flexibility for VFR flights, VFR corridors have
+been established below the lower limit of the CÓRDOBA TMA
+with the characteristics set out in TABLE-1.
+In case it is necessary to request Flight Information Service,
+corridors 1, 2, 3, 4, 5, 6, 7, 8 and 11 are within the airspace under
+the jurisdiction of the CÓRDOBA APP/TWR; and corridors Nº 9
+and 10 are within the airspace under the jurisdiction of the
+ESCUELA DE AVIACIÓN MILITAR TWR. Corridors Nº 9 and 10
+AIP ARGENTINA ENR 3.3 - 6
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+corredores Nº 9 y 10 pasan a ser espacio aéreo Clase “D” cuando
+se encuentren activadas las zonas restringidas a cargo de TWR
+ESCUELA DE AVIACIÓN MILITAR (ESC).
+Nota. – Cuando las zonas restringidas no se encuentran activadas
+con actividad militar, el Servicio de Control de Tránsito Aéreo es
+asumido por APP/TWR CÓRDOBA.
+Las alturas de vuelo serán 1.000 ft como máximo y 500 ft como
+mínimo, excepto al sobrevolar zona poblada, en cuyo caso se
+deberá proceder teniendo en cuenta lo establecido en las RAAC,
+Parte 91.
+Las condiciones meteorológicas deberán ser “de vuelo visual”
+(VMC), excepto que, para volar con 1.000 ft, no podrá haber nubes
+por debajo de 1.500 ft.
+Las aeronaves volarán a una velocidad indicada (IAS) máxima de
+150 nudos (Kt).
+become Class "D" airspace when the restricted areas in charge
+of ESCUELA DE AVIACIÓN MILITAR (ESC) TWR are activated.
+Note. – When the restricted areas are not activated with military
+activity, the Air Traffic Control Service is assumed by CÓRDOBA
+APP/TWR.
+The flight altitudes shall be 1,000 ft maximum and 500 ft
+minimum, except when overflying populated areas, in which
+case the flight altitude shall be in accordance with RAAC, Part
+91.
+The meteorological conditions must be "visual flight conditions"
+(VMC), except that, when flying at 1,000 ft, there must be no
+clouds below 1,500 ft.
+Aircraft shall fly at a maximum indicated airspeed (IAS) of 150
+knots (Kt).
+TABLA 1 / TABLE 1
+Dirección /
+Direction
+El eje es la proyección de la línea recta imaginaría que une el centro de las localidades
+establecidas como referencia visual y/o el punto de referencia de los aeródromos (ARP). /
+The axis is the projection of the imaginary straight line joining the center of the locations
+established as visual reference and/or the aerodrome reference point (ARP).
+Sentido de circulación /
+Direction of traffic
+Doble sentido. /
+Two-way.
+Límites verticales /
+Vertical limits Desde superficie terrestre (GND) hasta 1500 ft. (AGL). /
+From ground surface (GND) to 1500 ft (AGL).
+Límites laterales dentro del
+CTR /Lateral limits within the
+CTR
+Ancho de 2.000 m, (1.000 m a cada lado del eje), circulación en ambos sentidos. /
+Width of 2,000 m, (1,000 m on each side of the axis), circulation in both directions.
+Límites laterales fuera del CTR
+/Lateral limits outside the CTR
+Ancho de corredor de 2.500 m (1.250 m a cada lado del eje), circulación en ambos sentidos. /
+Corridor width of 2,500 m (1,250 m on each side of the axis), circulation in both directions.
+Velocidad máxima en corredor
+VFR /Maximum speed in VFR
+corridor
+IAS 150 Kt
+Nota. – Los límites laterales y verticales del TMA CÓRDOBA, de la CTR CÓRDOBA, de las ATZ ESCUELA DE AVIACIÓN MILITAR,
+CORONEL OLMEDO, ALTA GRACIA las zonas restringidas y prohibidas se muestran gráficamente en la AIP ENR.
+Note. – The lateral and vertical limits of the CÓRDOBA TMA, the CÓRDOBA CTR, and the ESCUELA DE AVIACIÓN MILITAR, CORONEL
+OLMEDO, ALTA GRACIA ATZs, restricted and prohibited areas are shown graphically in the AIP ENR.
+2. Clasificación del espacio aéreo en corredores visuales
+a) La clasificación de espacio aéreo para los corredores
+VFR es Clase “G”.
+b) Los corredores 9 y 10 pasan a ser espacio aéreo Clase
+“D” cuando se encuentren activadas las zonas restringidas a
+cargo de TWR ESCUELA DE AVIACIÓN MILITAR (ESC).
+3. Vuelos VFR sin enlace radioeléctrico con el Servicio de
+Control de Tránsito Aéreo de jurisdicción
+a) Son todos aquellos vuelos VFR que se realicen en
+espacio aéreo Clase “G”:
+1) Dentro de los Corredores VFR establecidos a tal fin;
+2) Dentro de los sectores VFR establecidos a tal fin;
+3) Vuelos VFR que se lleven a cabo por debajo del límite
+inferior del TMA CÓRDOBA; y
+4) Vuelos VFR dentro de las ATZ de aeródromos no
+controlados.
+b) A fin de posibilitar los vuelos VFR sin enlace
+radioeléctrico debajo del TMA CÓRDOBA, dentro y/o próximo a la
+2. Classification of airspace in visual corridors
+a) The airspace classification for VFR corridors is Class
+"G".
+b) Corridors 9 and 10 become Class "D" airspace when
+the restricted areas in charge of ESCUELA DE AVIACIÓN MILITAR
+(ESC) TWR are activated.
+3. VFR flights without radio link with the Air Traffic
+Control Service of jurisdiction.
+a) All those VFR flights performed in Class "G" airspace:
+1) Within the VFR Corridors established for such purpose.
+2) Within the VFR sectors established for such purpose.
+3) VFR flights that take place below the lower limit of the
+CÓRDOBA TMA; and
+4) VFR flights within the ATZs of uncontrolled
+aerodromes.
+b) In order to enable VFR flights without radio link below
+the CÓRDOBA TMA, within and/or close to the CÓRDOBA CTR,
+AIP ARGENTINA ENR 3.3 - 7
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+CTR CÓRDOBA, se designan los siguientes corredores visuales, de
+circulación en ambos sentidos, especificados en la TABLA- 2.
+the following visual corridors are designated, for circulation in
+both directions, as specified in TABLE- 2.
+TABLA-2 / TABLE-2
+DESCRIPCIÓN DE LOS CORREDORES VFR / DESCRIPTION OF THE VFR CORRIDORS
+Número
+Corredor
+/Corridor
+Number
+Trayectoria y Coordenadas Geográficas/
+Path and Geographic Coordinates
+Rumbo Magnético/
+Magnetic Heading
+Distancias en NM/
+Distances in NM
+1
+AD. LA CUMBRE- 310018S-0643158W
+AD COSQUÍN/Santa María - 311709S-
+0642720W
+172°
+352° 17
+2 ASCOCHINGA - 305733S-0641626W
+AD LA CUMBRE - 310018S-0643158W
+263°
+083° 14
+3 AD JESUS MARÍA - 305915S-0640439W
+ASCOCHINGA - 305733S-0641626W
+285°
+105° 10
+4 RÍO PRIMERO - 311945S-0633735W
+AD JESUS MARIA - 305915S-0640439W
+317°
+136° 31
+5 MONTE CRISTO - 312031S-0635650W
+AD JESUS MARÍA - 305915S-0640439W
+347°
+167° 22
+6 RÍO PRIMERO - 311945S-0633735W
+AD MONTE CRISTO - 312031S-0635650W
+272°
+092° 16
+7 AD CORONEL OLMEDO - 312916S-0640831W
+MONTE CRISTO - 312031S-0635650W
+054°
+234° 13
+8
+RÍO SEGUNDO - 313920S-0635445W
+TOLEDO - 313330S-0640030W
+AD CORONEL OLMEDO - 312916S-0640831W
+325°
+145° 8
+9 AD ALTA GRACIA - 313904S-0642338W
+AD CORONEL OLMEDO - 312916S-0640831W
+307°
+127° 8
+10 CARLOS PAZ - 312527S-0642952W
+AD ALTA GRACIA - 313904S-0642338W
+058°
+238° 16
+11 AD COSQUÍN/Santa María- 311709S-0642720W
+CARLOS PAZ - 312527S-0642952W
+163°
+343° 14
+Excepción: aquellos vuelos que operen desde el Aeródromo
+JUÁREZ CELMAN (JCM) podrán unirse a la trayectoria de los
+corredores visuales, obteniendo la correspondiente
+autorización previa del Servicio de Control de Tránsito Aéreo
+APP/TWR CÓRDOBA inmediatamente después del despegue.
+De no ser posible comunicarse con el servicio de control
+citado, se mantendrán dentro del ATZ JUÁREZ CELMAN hasta
+obtener dicha autorización.
+Nota. – No se han establecido corredores VFR desde/hacia el
+aeródromo JCM debido a que el mismo se encuentra situado
+inmediatamente debajo de las trayectorias de los
+procedimientos del Aeropuerto CÓRDOBA, siendo imperativa
+la previa obtención de autorización del Servicio de Control de
+Tránsito Aéreo de jurisdicción, con la correspondiente
+asignación de trayectorias e instrucciones precisas de la
+APP/TWR CÓRDOBA.
+4. Procedimientos por seguir por los pilotos de vuelos VFR
+dentro de los corredores visuales que se efectúen sin
+enlace radioeléctrico
+Los vuelos VFR que se efectúen sin enlace radioeléctrico
+dentro de los corredores visuales deberán atenerse a los
+siguientes procedimientos:
+a) Solamente podrán realizar vuelos dentro de los
+corredores visuales sobre zonas pobladas, aquellas aeronaves
+que al sobrevolar las mismas y teniendo en cuenta la altura
+Exception: those flights operating from JUÁREZ CELMAN
+Aerodrome (JCM) may join the path of the visual corridors,
+obtaining the corresponding prior clearance from the Air
+Traffic Control Service CÓRDOBA APP/TWR immediately
+after takeoff. If it is not possible to communicate with the
+aforementioned control service, they will remain within the
+JUÁREZ CELMAN ATZ until such authorization is obtained.
+Nota. – VFR corridors have not been established from/to JCM
+aerodrome because it is located immediately below the paths
+of CÓRDOBA Airport procedures, being compulsory to obtain
+prior clearance from the Air Traffic Control Service of
+jurisdiction, with the corresponding path assignment and
+precise instructions from the APP/TWR CÓRDOBA.
+4. Procedures to be followed by pilots of VFR flights within
+visual corridors performed without radio link.
+VFR flights conducted without a radio link within the visual
+corridors shall comply with the following procedures:
+a) Only those aircraft that, when flying overpopulated
+areas and considering the maximum flight altitude
+established for each corridor, can comply with RAAC Part 91
+AIP ARGENTINA ENR 3.3 - 8
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+máxima de vuelo establecida para cada corredor, se puedan
+ajustar a lo especificado en RAAC Parte 91 (altitudes mínimas
+de seguridad VFR).
+b) Dentro de la Zona de Control (CTR): la altura máxima
+de vuelo es de 1000 pies AGL, siendo responsabilidad del piloto
+al mando mantener la separación reglamentaria con los
+obstáculos, sin superar la mencionada altura.
+c) Fuera de la Zona de Control (CTR): la altura máxima de
+vuelo es de 1500 pies AGL.
+d) Fuera de la CTR: el ancho del corredor es de 2500 m
+(1250 m a cada lado del eje), con circulación en ambos
+sentidos.
+e) Dentro de la CTR: el ancho del corredor es de 2000 m
+(1000 m a cada lado del eje), con circulación en ambos
+sentidos.
+f) Dentro del Corredor: no están autorizados los vuelos
+VFR especiales.
+g) Para todos los vuelos que se realicen en los Corredores
+VFR se considerará requisito mandatario la existencia de un
+techo de nubes que esté, por lo menos, a 500 pies sobre la
+altura a que se deberá encontrar la aeronave la que, asimismo,
+mantendrá 500 ft. sobre el terreno o 1000 ft. sobre zona
+poblada. Esto determina que el valor del techo de nubes
+deberá ser, según sea el caso, de 1000 a 1500 pies como
+mínimo; caso contrario no se podrá realizar el vuelo.
+h) Cuando existan obstáculos en la trayectoria de vuelo
+de la aeronave, y no puedan ser superados manteniendo la
+altura reglamentaria establecida en las RAAC - Parte 91 para
+sobrevuelos de obstáculos, los mismos deberán ser evitados
+lateralmente a los efectos de no transgredir las alturas
+máximas de vuelo, permitidas en los corredores VFR
+establecidos.
+5. Procedimientos por seguir por los pilotos de vuelos VFR
+fuera de los corredores VFR, sin enlace radioeléctrico y
+que no afectan espacio aéreo controlado
+a) Los vuelos VFR fuera de corredores visuales, sin enlace
+radioeléctrico y que prevean que su trayectoria no afecte
+en ningún momento espacio aéreo controlado, se
+ajustarán a lo siguiente:
+1) Debajo del TMA CÓRDOBA, la altura máxima de
+vuelo será de 1500 pies AGL.
+2) Evitarán ingresar a los espacios aéreos controlados.
+6. Procedimientos por seguir por los pilotos de vuelos
+VFR que requieren enlace radioeléctrico obligatorio con el
+Servicio de Control de Tránsito Aéreo de jurisdicción.
+a) Los vuelos que requieren enlace radioeléctrico con el
+control de jurisdicción son todos aquellos vuelos VFR que
+se realicen en espacios aéreos clases “B”, “C” o “D”; es
+decir:
+1) Dentro de las ATZ de aeródromos donde se brinda
+Servicio de Control de Tránsito Aéreo.
+2) Dentro de la CTR CÓRDOBA.
+3) Dentro del TMA CÓRDOBA.
+4) A fin de evitar demoras y/o saturación de frecuencia
+en el Servicio de Control de Tránsito Aéreo de
+jurisdicción, todo vuelo VFR que proceda de alguno de
+los aeródromos comprendidos dentro de la presente
+(minimum VFR safety altitudes), may perform flights within
+the visual corridors overpopulated areas.
+b) Within the Control Zone (CTR): the maximum flight
+altitude is 1000 feet AGL, being the responsibility of the pilot
+in command to maintain the regulatory separation with the
+obstacles, without exceeding the mentioned altitude.
+c) Outside the Control Zone (CTR): the maximum flight
+altitude is 1500 feet AGL.
+d) Outside the CTR: the corridor width is 2500 m (1250
+m on each side of the axis), with circulation in both ways.
+e) Within the CTR: the corridor width is 2000 m (1000 m
+on each side of the axis), with circulation in both ways.
+f) Within the Corridor: special VFR flights are not
+authorized.
+g) For all flights performed in the VFR Corridors, the
+existence of a cloud ceiling at least 500 feet above the
+altitude at which the aircraft must be located, which must
+also maintain 500 ft. above the terrain or 1000 ft. above a
+populated area, shall be considered a mandatory
+requirement. This determines that the value of the cloud
+ceiling must be from 1000 to 1500 feet as a minimum
+according to the case, otherwise, the flight will not be
+possible.
+h) When there are obstacles in the flight path of the
+aircraft, and they cannot be overcome while maintaining the
+regulatory altitude established in the RAAC - Part 91 for
+obstacle overflights, they must be avoided laterally in order
+not to transgress the maximum flight altitudes allowed in the
+established VFR corridors.
+5. Procedures to be followed by pilots of VFR flights
+outside VFR corridors, without radio link and not
+affecting controlled airspace.
+a) VFR flights outside of visual corridors, without radio link
+and which foresee that their path does not affect
+controlled airspace at any time, shall comply with the
+following:
+1) Below CÓRDOBA TMA, the maximum flight
+altitude shall be 1500 feet AGL.
+2) They shall avoid entering controlled airspace.
+6. Procedures to be followed by pilots of VFR flights
+that require mandatory radio link with the Air Traffic
+Control Service of jurisdiction.
+a) Flights requiring radio link with jurisdictional control are
+all those VFR flights that are conducted in class "B", "C"
+or "D" airspaces; i.e:
+1) Within the ATZs of aerodromes where Air Traffic
+Control Service is provided.
+2) Within the CÓRDOBA CTR.
+3) Within the CÓRDOBA TMA.
+4) To avoid delays and/or frequency saturation in the
+Air Traffic Control Service of jurisdiction, every VFR
+flight coming from any of the aerodromes included in
+this regulation and intending to go to CÓRDOBA
+AIP ARGENTINA ENR 3.3 - 9
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+norma y que pretenda dirigirse al Aeropuerto
+CÓRDOBA, o bien, que en su ruta prevea afectar
+espacio aéreo controlado, deberá presentar de
+manera obligatoria el correspondiente Plan de Vuelo,
+por los medios habilitados a tal fin, en la Oficina
+ARO/AIS del Aeropuerto CÓRDOBA.
+7. Normas Particulares
+a) Los pilotos de las aeronaves que no operen desde/hacia
+Coronel Olmedo (EDO), y deban volar por los corredores
+N° 7 y 9, evitarán sobrevolar dicho aeródromo y cruzar su
+circuito de tránsito, pasando por el Sur del mismo, excepto
+que verifiquen la ausencia de tránsito en ese aeródromo.
+b) Los pilotos de las aeronaves que procedan por el corredor
+N° 9 hacia Alta Gracia, deberán comunicarse con TWR
+ESCUELA a partir del aeródromo CORONEL OLMEDO
+(EDO) o pasen por su lateral Sur, antes de ingresar en la
+Zona Restringida SAR 56.
+c) Para los vuelos que se inicien en CORONEL OLMEDO (EDO)
+o en JUÁREZ CELMAN (JCM) con destino a otros
+aeródromos no comprendidos en las presentes normas, se
+deberá presentar previamente el Plan de Vuelo
+correspondiente, por los medios pertinentes, a la oficina
+ARO-AIS CÓRDOBA.
+d) Para los vuelos que se inicien en CORONEL OLMEDO (EDO),
+ALTA GRACIA (AGR) o LA CUMBRE (CUM) y que prevean
+ingresar a alguna zona restringida a cargo de TWR
+ESCUELA, a la CTR CÓRDOBA o al TMA CÓRDOBA deberán
+presentar previamente el Plan de Vuelo correspondiente,
+por los medios pertinentes, a la oficina ARO-AIS CÓRDOBA.
+e) Los pilotos de las aeronaves que procedan desde el Sur
+volarán por debajo de la Zona Restringida SAR 59 e
+ingresarán a la Zona restringida SAR 56 solamente por
+ALTA GRACIA, o bordearán dicha restringida por el Este
+ingresando por RÍO SEGUNDO/TOLEDO, excepto que TWR
+ESCUELA autorice otra trayectoria.
+Airport, or that in its route foresees to affect
+controlled airspace, must submit the corresponding
+Flight Plan, by the means enabled for such purpose,
+at the ARO/AIS Office of CÓRDOBA Airport.
+7. Particular Rules
+a) Pilots of aircraft that do not operate from/to Coronel
+Olmedo (EDO) and must fly through corridors N° 7 and 9,
+shall avoid flying over that aerodrome and crossing its
+traffic circuit, passing through the South of it, unless they
+verify the absence of traffic at that aerodrome.
+b) Pilots of aircraft proceeding along Corridor No. 9 towards
+Alta Gracia shall communicate with ESCUELA TWR
+starting from CORONEL OLMEDO (EDO) aerodrome or
+passing through its South side, before entering the SAR
+56 Restricted Area.
+c) For flights starting at CORONEL OLMEDO (EDO) or
+JUÁREZ CELMAN (JCM) with destination to other
+aerodromes not covered by these rules, the
+corresponding Flight Plan must be previously submitted,
+by the appropriate means, to the ARO-AIS CÓRDOBA
+office.
+d) For flights starting at CORONEL OLMEDO (EDO), ALTA
+GRACIA (AGR) or LA CUMBRE (CUM) and planning to
+enter any restricted area under the responsibility of
+ESCUELA TWR, CÓRDOBA CTR or CÓRDOBA TMA, the
+corresponding Flight Plan must be previously submitted,
+by the appropriate means, to the CÓRDOBA ARO-AIS
+office.
+e) Pilots of aircraft coming from the South shall fly below
+SAR Restricted Area 59 and enter SAR Restricted Area 56
+only through ALTA GRACIA or border the SAR Restricted
+Area from the East entering through RÍO
+SEGUNDO/TOLEDO, unless another path is authorized by
+ESCUELA TWR.
+AEROCLUB CONCORDIA CORREDOR Y SECTOR VFR CONCORDIA AEROCLUB CORRIDOR AND VFR SECTOR
+Corredor VFR Aeroclub Concordia
+Posterior al despegue del Aeroclub Concordia (ARP: 311814S
+0580054W, punto de referencia del aeródromo), adoptar
+rumbo magnético 304° hasta la localidad de LA CRIOLLA
+(311608.58S 0580632.16W), continuar por la vía del Ferrocarril
+General URQUIZA en dirección NW (rumbo magnético 336°)
+hasta la localidad de LOS CHARRUAS (311011.54S
+581120,67W) e ingresar al Sector VFR Aeroclub Concordia. El
+regreso al Aeroclub Concordia se efectuará en sentido
+contrario.
+Límites laterales:
+Dentro de la zona de control (CTR): el ancho del corredor es de
+2000 m (1000 m a cada lado del eje), con circulación en ambos
+sentidos.
+Fuera de la zona de control (CTR): el ancho del corredor es de
+2500 m (1250 m a cada lado del eje), con circulación en ambos
+sentidos.
+Concordia Aeroclub VFR Corridor
+After take-off from Concordia Aeroclub (ARP: 311814S
+0580054W, aerodrome reference point), take magnetic
+heading 304° to the town of LA CRIOLLA (311608.58S
+0580632.16W), continue along the General URQUIZA
+Railway track in NW (magnetic heading 336°) direction to the
+town of LOS CHARRUAS (311011.54S 581120,67W) and enter
+the Aeroclub Concordia VFR Sector. The return to Concordia
+Aeroclub will be made in the opposite direction.
+Lateral limits:
+Within the control zone (CTR): the corridor width is 2500 m
+(1250 m on each side of the axis), circulation in both
+directions.
+Outside the control zone (CTR): the corridor width is 5000 m
+(2500 m on each side of the axis), circulation in both
+directions.
+AIP ARGENTINA ENR 3.3 - 10
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+Límites verticales: 2000 FT MSL/ GND
+Dentro de la Zona de Control (CTR): la altitud máxima de vuelo
+es de 1000 FT MSL, siendo responsabilidad del piloto al mando
+mantener la separación reglamentaria con los obstáculos, sin
+superar la mencionada altitud.
+Fuera de la Zona de Control (CTR): la altitud máxima de vuelo
+es de 1500 FT MSL.
+Clase de espacio aéreo: “D”
+Sector VFR Aeroclub Concordia
+Límites laterales: A= 310900S-0581200W, B= 311800S-
+0581200W, C= 311800S-0582000W- D= 310900S-0582000W.
+Límites verticales: 2000 FT MSL/GND. Altitud máxima de vuelo
+1500 FT MSL.
+Clase de espacio aéreo: “G”
+Corredor VFR
+Normas generales: Los pilotos que se desplacen por el
+corredor VFR del Ad. Concordia, desde o hacia el sector de
+vuelo visual, aplicarán las reglas generales de vuelo y las reglas
+de vuelo visual que corresponden a la operación en espacio
+aéreo controlado clase “D”, comunicándose con la TWR
+Concordia a los fines de recibir los permisos de control y la
+información del tránsito que tiene por finalidad prevenir
+colisiones entre aeronaves, permitiendo a los pilotos aplicar
+las medidas de separación.
+Normas particulares: Los pilotos de las aeronaves que operen
+en el corredor VFR, volarán con 500, 1000 o 1500 FT de altura,
+de acuerdo con lo que establezca la TWR DIA en el permiso de
+tránsito.
+Sector de vuelo visual
+Normas generales: Los pilotos de las aeronaves que vuelen en
+el sector de vuelo visual del Ad. Concordia, aplicarán las reglas
+generales de vuelo y las reglas de vuelo visual que
+corresponden a la operación en espacio aéreo no controlado
+clase “G”.
+Normas particulares: Los pilotos de las aeronaves que se
+dirijan al sector, notificarán a la TWR DIA el ingreso al mismo,
+momento en que finalizará el vuelo controlado dentro del
+corredor VFR.
+Dentro del sector de vuelo visual, volarán con 500, 1000 o 1500
+FT de altura, siendo esta última, la altura máxima para regresar
+al AD Concordia. Antes de abandonar el sector, se
+comunicarán con la TWR DIA, a los fines de recibir el permiso
+de tránsito para ingresar y volar en el corredor VFR.
+Vertical limits: 2000 FT MSL/GND
+Within the control zone (CTR): Maximum flight altitude 1000
+FT MSL, being the pilot's responsibility to maintain the
+regulatory separation with the obstacles without exceeding
+the mentioned altitude.
+Outside the control zone (CTR): Maximum flight altitude
+1500 FT MSL
+Airspace class: "D".
+Aeroclub Concordia VFR sector
+Lateral Limits: A= 310900S-0581200W, B= 311800S-
+0581200W, C= 311800S-0582000W- D= 310900S-
+0582000W.
+Vertical limits: 2000 FT MSL/GND. Maximum flight altitude
+1500 FT / MSL
+Airspace class: "G".
+VFR corridor
+General rules: Pilots moving through the VFR corridor of
+Concordia AD, from or to the visual flight sector, shall apply
+the general flight rules and visual flight rules that correspond
+to the operation in controlled airspace class "D",
+communicating with Concordia TWR to receive control
+permissions and traffic information that aims to prevent
+collisions between aircraft, allowing pilots to apply
+separation measures.
+Particular rules: Pilots of aircraft operating in the VFR
+corridor will fly with 500, 1000 or 1500 FT of altitude,
+according to what DIA TWR establishes in the traffic permit.
+Visual flight sector
+General rules: The pilots of the aircraft flying in the visual
+flight sector of Concordia will apply the general flight rules
+and the visual flight rules that correspond to the operation in
+uncontrolled airspace class "G".
+Particular rules: The pilots of the aircraft heading to the
+sector shall notify the DIA TWR of their entry to the sector, at
+which time the controlled flight within the VFR corridor shall
+end.
+Within the visual flight sector, they will fly with 500, 1000 or
+1500 FT of altitude, being this last one, the maximum altitude
+to return to Concordia AD. Before leaving the sector they will
+communicate with the DIA TWR, in order to receive the traffic
+permission to enter and fly in the VFR corridor
+TABLA-X / TABLE-X
+DESCRIPCIÓN DE LOS CORREDORES VFR / DESCRIPTION OF THE VFR CORRIDORS
+Número
+Corredor/
+Corridor
+Number
+Trayectoria y Coordenadas Geográficas/
+Path and Geographic Coordinates
+Rumbo Magnético/
+Magnetic Heading
+Distancias en NM/
+Distances in NM
+1 AEROCLUB CONCORDIA - 311814S 0580054W
+LOC. LA CRIOLLA - 311609S 0580632W 304°/124° 5 NM
+AIP ARGENTINA ENR 3.3 - 11
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+2 LOC. LA CRIOLLA - 311609S 0580632W
+LOC. LOS CHARRUAS - 311012S 0581121W 336°/156° 7 NM
+CORREDOR Y SECTOR VFR AEROCLUB CONCORDIA
+CONCORDIA AEROCLUB CORRIDOR AND VFR SECTOR
+AEROCLUB PARANÁ CORREDOR VFR PARANÁ AEROCLUB VFR CORRIDOR
+Corredor VFR Aeroclub Paraná
+Límites laterales: Posterior al despegue de PARANÁ /
+AEROCLUB (ARP 314528S-0602226W), adoptar rumbo
+magnético 073° hasta la localidad de LA PICADA, continuar por
+la derecha vía del Ferrocarril General URQUIZA y RUTA PROV.
+N° 10 en dirección E con rumbo magnético 104° hasta ingresar
+al ATZ CLUB DE PLANEADORES PARANÁ. El regreso al Aeroclub
+Paraná se efectuará en sentido contrario. Los limites laterales
+son 1000 metros a cada lado del eje del corredor entre la
+Aeroclub Paraná VFR Corridor
+Lateral limits: After take-off from PARANÁ / AEROCLUB (ARP
+314528S-0602226W), take magnetic heading 073° until the
+town of LA PICADA, continue along the right side of the
+General URQUIZA Railway and Provincial Route N° 10 in E
+direction with magnetic heading 104° until entering the CLUB
+DE PLANEADORES PARANÁ ATZ. The return to Aeroclub
+Paraná will be made in the opposite direction. Lateral limits
+are 1000 meters on each side of the corridor axis between
+AIP ARGENTINA ENR 3.3 - 12
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+localidad de LA PICADA y PARANÁ y CLUB DE PLANEADORES
+(PNA).
+Límites verticales: 1000 FT/GND Altura máxima de vuelo 500
+FT / AGL
+Clase de espacio aéreo: “G”
+Corredor VFR
+Normas generales: las aeronaves que se desplacen por el
+corredor VFR del AEROCLUB PARANÁ (ANA), desde o hacia el
+ATZ CLUB DE PLANEADORES PARANÁ (PNA), aplicarán las
+reglas generales de vuelo y las reglas de vuelo visual que
+corresponden a la operación en espacio aéreo controlado
+clase “G”.
+Normas particulares: las aeronaves que operen en el corredor
+VFR volarán con 500 pies de altura.
+the town of LA PICADA and PARANA and CLUB DE
+PLANEADORES (PNA).
+Vertical limits: 1000 FT/GND Maximum flight altitude 500 FT
+/ AGL
+Airspace class: "G".
+VFR corridor
+General rules: Aircraft flying in the VFR corridor of the
+AEROCLUB PARANÁ (ANA), from or to the CLUB DE
+PLANEADORES PARANÁ ATZ (PNA), shall apply the general
+flight rules and visual flight rules that correspond to the
+operation in controlled airspace class "G".
+Special rules: Aircraft operating in the VFR corridor will fly at
+500 feet altitude.
+CORREDORES VFR ENTRE AEROCLUB (ANA) Y CLUB DE PLANEADORES (PNA) /
+VFR CORRIDOR BETWEEN AEROCLUB (ANA) AND GLIDING CLUB (PNA)
+AIP ARGENTINA ENR 3.3 - 13
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+VUELOS DE AERONAVES CIVILES BAJO LAS REGLAS DE VUELO VISUAL QUE SUS TRAYECTORIAS CRUCEN LA FIR COMODORO
+RIVADAVIA (ARGENTINA) O FIR PUERTO MONTT (CHILE)/
+FLIGHTS OF CIVIL AIRCRAFT UNDER VISUAL FLIGHT RULES WHICH PATHS CROSS THE COMODORO RIVADAVIA FIR (ARGENTINA)
+OR PUERTO MONTT FIR (CHILE)
+Los vuelos de aeronaves civiles bajo las Reglas de Vuelo Visual
+quese efectúen entre las latitudes 43º 00’ 00’’ S y 49º 00’ 00’’ S
+y que sus trayectorias crucen parte de la FIR Comodoro
+Rivadavia (Argentina) o Puerto Montt (Chile), se realizarán bajo
+las siguientescondiciones:
+Es obligatorio presentar el Plan de Vuelo describiendo la ruta a
+volar;
+Las dependencias ATS donde se originen los vuelos,
+direccionarán dicho FPL a los ACC de Comodoro Rivadavia y
+Puerto Montt;
+Deberán realizarse las coordinaciones de dichos vuelosentre los
+respectivos ACC;
+La presentación de los servicios de información de vuelo y alerta
+será responsabilidad del ACC o APP o TWR del Aeropuerto /
+Aeródromo donde se originó el plan de vuelo,según corresponda.
+Flights of civil aircraft under Visual Flight Rules that take place
+between latitudes 43º 00' 00'' S and 49º 00' 00'' S and that their
+paths cross part of the Comodoro Rivadavia FIR (Argentina) or
+Puerto Montt (Chile), shall be performed under the following
+conditions:
+It is mandatory to submit the Flight Plan describing the route
+to be flown;
+The ATS units where the flights originate will direct said FPL to
+the ACCs of Comodoro Rivadavia and Puerto Montt;
+The coordination of such flights shall be carried out between
+the respective ACCs;
+The presentation of the flight information and alert services
+shall be the responsibility of the ACC or APP or TWR of the
+Airport / Aerodrome where the flight plan originated, as
+appropriate.
+CORREDOR VISUAL ESCALANTE /
+VISUAL CORRIDOR ESCALANTE
+Corredor visual Escalante
+Límites verticales: desde GND/2300 FT MSL
+Limites laterales: ancho 600 M
+Clase espacio aéreo: “G”
+Escalante visual corridor
+Vertical limits: from GND/ 2300 FT MSL.
+Lateral limits: width 600 M
+Airspace class: “G”
+Número
+Corredor/
+Corridor
+Number
+Trayectoria y Coordenadas Geográficas/
+Path and Geographic Coordinates
+Rumbo Magnético/
+Magnetic Heading
+Distancias en NM/
+Distances in NM
+1 ESTACIÓN ESCALANTE: 454454S - 0674710W 082°/262° (*) 3.34 NM
+3 NMRUTA 39: 454458S - 0675157W
+(*) Este rumbo representa la trayectoria en línea recta entre los puntos “Estación Escalante” y “RUTA 39”. Volar manteniéndose sobre
+el valle entre las laderas de la orografía.
+This course represents the path in a straight line between the points "Estación Escalante" and "RUTA 39". Fly remaining over the
+valley, between the slopes of the terrain.
+AIP ARGENTINA ENR 3.3 - 14
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 2/2024 28 NOVIEMBRE 2024
+CORREDOR VISUAL ESCALANTE /
+VISUAL CORRIDOR ESCALANTE
+AIP ARGENTINA ENR 3.3 - 15
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 2/2024 28 NOVIEMBRE 2024
+CAMPAÑA LUCHA ANTIGRANIZO EN LA PROVINCIA DE MENDOZA /
+ANTI-HAIL CAMPAIGN IN MENDOZA PROVINCE
+Con motivo de llevarse a cabo la Lucha Anual Antigranizo (LAG)
+en la Provincia de Mendoza, que normalmente se realiza desde
+el 1 de noviembre al 30 de abril inclusive de cada año, se han
+establecido los siguientes sectores restringidos transitorios:
+Sector 1 - Gran Mendoza –San Martín – La Paz
+Límites Verticales: GND/UNL
+Límites Laterales: el espacio aéreo comprendido entre las
+siguientes coordenadas:
+Desde: 3219 S 06832 W
+3304 S 06914 W
+3327 S 06858 W
+3338 S 06720 W
+Hasta: 3326 S 06717 W
+Sector 2 – San Rafael
+Límites Verticales: GND/UNL
+Límites Laterales: el espacio aéreo comprendido entre las
+siguientes coordenadas:
+Desde: 3422 S 06830 W
+3430 S 06843 W
+3454 S 06833 W
+3515 S 06747 W
+3515 S 06723 W
+3454 S 06718 W
+Hasta: 3431 S 06744 W
+Sector 3 - Tunuyán
+Límites Verticales: GND/UNL
+Límites Laterales: el espacio aéreo comprendido entre las
+siguientes coordenadas:
+Desde: 3310 S 06913 W
+3336S 06923 W
+3415S 06915 W
+3415 S 06849 W Hasta: 3312S 06853 W
+La efectividad de los sectores restringidos y las fechas de
+realización se publicarán por NOTAM.
+Todas las aeronaves, previo a su ingreso a un Sector de
+Trabajo LAG, o antes del despegue si se encuentra en un
+aeródromo ubicado dentro de los mismos, deberá presentar
+PLAN DE VUELO (VFR o IFR), o comunicarse con el ACC DOZ o
+la dependencia ATS de jurisdicción para informar de su
+tránsito y cumplimentará el vuelo de acuerdo con las
+autorizaciones e instrucciones del Control de Tránsito Aéreo.
+Como ANEXO ALFA se publican las rutas correspondientes al
+espacio inferior y en el ANEXO BRAVO las del espacio
+superior.
+In order to carry out the Annual Hail Fighting Campaign (LAG)
+in the Province of Mendoza, which normally takes place from
+November 1 to April 30 of each year, the following temporal
+restricted sectors have been established:
+Sector 1 - Gran Mendoza -San Martín - La Paz.
+Vertical limits: GND/UNL
+Lateral Limits: the airspace between the following
+coordinates:
+From: 3219 S 06832 W
+3304 S 06914 W
+3327 S 06858 W
+3338 S 06720 W
+To: 3326 S 06717 W
+Sector 2 - San Rafael
+Vertical limits: GND/UNL
+Lateral limits: the airspace between the following
+coordinates:
+From: 3422 S 06830 W
+3430 S 06843 W
+3454 S 06833 W
+3515 S 06747 W
+3515 S 06723 W
+3454 S 06718 W
+To: 3431 S 06744 W
+Sector 3 - Tunuyán
+Vertical limits: GND/UNL
+Lateral limit: the airspace between the following
+coordinates:
+From: 3310 S 06913 W
+3336S 06923 W
+3415S 06915 W
+3415 S 06849 W To: 3312S 06853 W
+The effectiveness of the restricted sectors and the dates of
+completion will be published by NOTAM.
+All aircraft, prior to entering a LAG Work Sector, or before
+takeoff if it is located at an aerodrome located within them,
+must submit a FLIGHT PLAN (VFR or IFR), or contact the DOZ
+ACC or the ATS unit of jurisdiction to report its traffic and will
+complete the flight according to the authorizations and
+instructions of the Air Traffic Control.
+The routes corresponding to the lower space are published as
+ANNEX ALPHA and those of the upper space are published as
+ANNEX BRAVO.
+AIP ARGENTINA ENR 3.3 - 16
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 2/2024 28 NOVIEMBRE 2024
+ANEXO ALFA
+CAMPAÑA DE LUCHA ANTIGRANIZO EN MENDOZA / ANTI-HAIL CAMPAIGN IN MENDOZA
+SECTORES RESTRINGIDOS TRANSITORIOS / TRANSITORY RESTRICTED SECTORS
+ESPACIO AÉREO INFERIOR / LOWER AIRSPACE
+AIP ARGENTINA ENR 3.3 - 17
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 2/2024 28 NOVIEMBRE 2024
+ANEXO BRAVO
+CAMPAÑA LUCHA ANTIGRANIZO EN LAS PROVINCIAS DE MENDOZA /
+ANTI-HAIL CAMPAIGN IN THE PROVINCES OFMENDOZA
+SECTORES RESTRINGIDOS TRANSITORIOS / TRANSITORY RESTRICTED SECTORS
+ESPACIO AÉREO SUPERIOR / UPPER AIRSPACE
+AIP ARGENTINA ENR 3.3 - 18
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 2/2024 28 NOVIEMBRE 2024
+CAMPAÑA LUCHA ANTIGRANIZO EN LAS PROVINCIAS DE JUJUY Y SALTA /
+ANTI-HAIL CAMPAIGN IN THE PROVINCES OF JUJUY AND SALTA
+Con motivo de la CAMPAÑA DE LUCHA ANTIGRANIZO en las
+Provincias de Jujuy y Salta, que normalmente se realiza desde
+el 15 de septiembre al 15 de abril inclusive de cada año, se ha
+establecido la siguiente área restringida transitoria:
+AREA RESTRINGIDA “POLIGONAL JUJUY” (Jujuy – Salta): Abarca
+el espacio aéreo comprendido por las siguientes coordenadas:
+Desde:
+240844 S
+0650123 W
+243420 S
+0644522 W
+245306 S
+0645552 W
+244853 S
+0651454 W
+241539 S
+0653103 W
+240852 S
+0652901 W
+Hasta:
+240844 S
+0650123 W, extendiéndose desde el nivel del terreno (GND)
+hasta FL 305.
+La efectividad del área restringida y las fechas de realización se
+publicarán por NOTAM.
+NORMAS GENERALES
+Todas las operaciones aéreas se realizarán de acuerdo con lo
+siguiente:
+1. Todos los vuelos IFR o VFR desde o hacia aeródromos,
+helipuertos o lugares aptos denunciados (LAD), ubicados
+dentro del área restringida POLIGONAL JUJUY, o los vuelos
+que necesiten cruzar el área mencionada, deberán
+presentar PLAN DE VUELO, en forma obligatoria.
+2. DESPEGUES DE AERODROMOS, HELIPUERTOS O LUGARES
+APTOS DENUNCIADOS (LAD) UBICADOS DENTRO DEL AREA
+RESTRINGIDA: Previo al despegue deberán comunicarse
+con el Control de jurisdicción o la dependencia de Tránsito
+Aéreo más próxima, a los efectos de presentar el PLAN DE
+VUELO y recibir la correspondiente autorización e
+instrucciones.
+3. En caso de no haber presentado PLAN DE VUELO, todas las
+aeronaves, diez (10) minutos antes del ingreso a la citada
+área restringida, deberán comunicarse con el Control de
+jurisdicción a los efectos de presentar el PLAN DE VUELO y
+recibir la correspondiente autorización e instrucciones de
+la Dependencia ATC de jurisdicción.
+4. Se prohíben los despegues dentro del Área Restringida o el
+ingreso a la misma, sin previa autorización de la
+dependencia ATC de jurisdicción
+RUTAS DE ALTERNATIVA
+Cuando las áreas restringidas POLIGONAL JUJUY se encuentre
+activada, el Control dará instrucciones a las aeronaves para
+seguir RUTAS DE ALTERNATIVA.
+Como ANEXO ALFA se publican las rutas correspondientes al
+espacio inferior y en el ANEXO BRAVO las del espacio superior.
+Due to the HAIL FIGHTING CAMPAIGN in the Provinces of
+Jujuy and Salta, which is normally carried out from
+September 15 to April 15 of each year, the following
+transitory restricted area has been established:
+RESTRICTED AREA "JUJUY POLIGONAL" (Jujuy - Salta): It
+covers the airspace comprised by the following coordinates:
+From:
+240844 S
+0650123 W
+243420 S
+0644522 W
+245306 S
+0645552 W
+244853 S
+0651454 W
+241539 S
+0653103 W
+240852 S
+0652901 W
+Up to:
+240844 S
+0650123 W, extending from ground level (GND) to FL 305.
+The effectiveness of the restricted area and dates of
+completion will be published by NOTAM.
+GENERAL RULES
+All air operations will be conducted in accordance with the
+following:
+1. All IFR or VFR flights to or from aerodromes, heliports or
+reported appointed places (LAD, their acronym in
+Spanish), located within the POLYGONAL JUJUY restricted
+area, or flights that need to cross the mentioned area,
+shall submit FLIGHT PLAN, on a mandatory basis.
+2. TAKEOFFS FROM AERODROMES, HELIPORTS OR
+REPORTED APPOINTED PLACES (LAD) LOCATED WITHIN
+THE RESTRICTED AREA: Prior to takeoff, they must
+contact the Control of jurisdiction or the nearest Air
+Traffic unit, in order to submit the FLIGHT PLAN and
+receive the corresponding clearance and instructions.
+3. In case no FLIGHT PLAN has been submitted, all aircraft,
+ten (10) minutes before entering the above-mentioned
+restricted area, must contact the Control of jurisdiction in
+order to submit the FLIGHT PLAN and receive the
+corresponding clearance and instructions from the ATC
+Unit of jurisdiction.
+4. Take-offs within the Restricted Area or entry to it,
+without prior clearance from the ATC Unit of jurisdiction,
+are prohibited.
+ALTERNATIVE ROUTES
+When the POLYGONAL JUJUY restricted areas are activated,
+Control will instruct aircraft to follow ALTERNATIVE ROUTES.
+AIP ARGENTINA ENR 3.3 - 19
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 2/2024 28 NOVIEMBRE 2024
+El control podrá designar otras Rutas de Alternativa que no
+estén incluidas en los Anexos mencionados precedentemente,
+de ser ello necesario y / o conveniente.
+The routes corresponding to the lower space are published as
+ALPHA ANNEX and those of the upper space are published as
+BRAVO ANNEX.
+Control may designate other Alternate Routes not included
+in the abovementioned Annexes, if necessary and/or
+convenient.
+ANEXO ALFA
+CAMPAÑA LUCHA ANTIGRANIZO EN LAS PROVINCIAS DE JUJUY Y SALTA /
+ANTI-HAIL CAMPAIGN IN THE PROVINCES OF JUJUY AND SALTA
+SECTORES RESTRINGIDOS TRANSITORIOS / TRANSITORY RESTRICTED SECTORS
+ESPACIO AÉREO INFERIOR / LOWER AIRSPACE
+AIP ARGENTINA ENR 3.3 - 20
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 2/2024 28 NOVIEMBRE 2024
+ANEXO BRAVO
+CAMPAÑA LUCHA ANTIGRANIZO EN LAS PROVINCIAS DE JUJUY Y SALTA /
+ANTI-HAIL CAMPAIGN IN THE PROVINCES OF JUJUY AND SALTA
+SECTORES RESTRINGIDOS TRANSITORIOS / TRANSITORY RESTRICTED SECTORS
+ESPACIO AÉREO SUPERIOR / UPPER AIRSPACE
+AIP ARGENTINA ENR 3.3 - 21
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+RUTAS DE HELICÓPTEROS / HELICOPTER ROUTES
+RUTAS PARA HELICÓPTEROS EN EL ÁREA METROPOLITANA
+DE BUENOS AIRES
+1. Finalidad y ámbito
+La finalidad de esta información es ofrecer a los usuarios rutas
+y procedimientos de vuelo para los helicópteros que circulan
+sobre el Área Metropolitana de Buenos Aires a través de los
+corredores visuales denominados "helicorredores" de uso
+obligatorio para helicópteros.
+2. Introducción
+a) En el año 1995, ante el gran crecimiento de las operaciones
+de helicópteros y la necesidad de transitar dentro de un
+área que tiene establecida una restricción para aeronaves
+de estas características, se realizó un estudio que concluyó
+en el establecimiento de normas y de corredores aéreos
+que permitieron, con un aceptable nivel de seguridad, el
+vuelo de helicópteros.
+b) Estas normas que establecían los requisitos mínimos y
+creaban una nueva estructura del espacio aéreo
+denominado HELICORREDOR, fueron aprobadas mediante
+la Disposición Nº 66 de fecha 11 de julio de 1995 del
+Comandante de Regiones Aéreas.
+c) Desde aquel entonces hasta la fecha la experiencia en la
+actividad de vuelo de dichos helicorredores demuestra
+claramente que han resultado de suma utilidad, y
+mantenido un nivel aceptable de seguridad operacional.
+d) Además de esto, la Asociación de Pilotos de Helicópteros
+de la República Argentina, ha expresado su satisfacción y
+realizado propuestas de ampliación de helicorredores para
+obtener un mejor aprovechamiento del espacio aéreo,
+considerando siempre las mejores referencias visuales que
+en el eventual caso de un aterrizaje de emergencia
+permitan una operación con un aceptable nivel de
+seguridad.
+e) Estas propuestas están fundamentadas en la experiencia
+obtenida a través de los años de uso de los helicorredores,
+en la tecnología mejorada de los equipos de abordo, en
+estadísticas sobre operaciones con helicópteros que
+demuestran un bajo índice de accidentes y en las rutas de
+helicópteros establecidas en países líderes a nivel mundial
+en materia de aviación.
+f) Asimismo, en las ¨Primeras Jornadas de Aviación General¨,
+evento organizado por la ANAC y que reuniera a los
+diferentes sectores aeronáuticos, incluido los pilotos de
+helicópteros se advirtió la necesidad de ampliar la red de
+helicorredores en el Área Metropolitana de Buenos Aires.
+g) Consecuentemente esta Administración Nacional a través
+de la Dirección Nacional de Inspección de Navegación
+Aérea, desde su órgano especialista la Dirección
+Regulación Normas y Procedimiento, desarrolló una serie
+de tareas y estudios técnicos, incluidas las evaluaciones
+prácticas, para concretar el rediseño de la red de
+helicorredores.
+HELICOPTER ROUTES IN THE BUENOS AIRES
+METROPOLITAN AREA
+1. Purpose and scope
+The purpose of this information is to provide users with
+routes and flight procedures for helicopters flying over the
+Buenos Aires Metropolitan Area through the visual corridors
+known as "helicopter corridors", which are mandatory for
+helicopters.
+2. Introduction
+a) In 1995, in view of the large growth in helicopter
+operations and the need to transit within an area that
+has a restriction established for helicopters, a study was
+carried out which resulted in the establishment of rules
+and air corridors that allowed helicopter flights with an
+acceptable level of safety.
+b) These rules, which established the minimum
+requirements and created a new airspace structure
+called HELICOPTER CORRIDOR, were approved by
+Provision No. 66 dated July 11, 1995 by the Commander
+of Air Regions.
+c) From that time to date, the experience in the flight
+activity of such helicopter corridors clearly shows that
+they have proved to be extremely useful and have
+maintained an acceptable level of operational safety.
+d) In addition to this, the Association of Helicopter Pilots of
+the Argentine Republic has expressed its satisfaction and
+made proposals for the expansion of helicopter corridors
+in order to obtain a better use of the airspace, always
+considering the best visual references that in the event of
+an emergency landing would allow an operation with an
+acceptable level of safety.
+e) These proposals are based on the experience gained
+through the years of helicopter corridors use, on the
+improved technology of on-board equipment, on
+statistics on helicopter operations that show a low
+accident rate and on the helicopter routes established in
+leading aviation countries worldwide.
+f) Likewise, at the "First General Aviation Conference", an
+event organized by the ANAC and which brought
+together the different aeronautical sectors, including
+helicopter pilots, the need to expand the helicopter rotor
+network in the Buenos Aires Metropolitan Area was
+pointed out.
+g) Consequently, this National Administration, through the
+National Directorate of Air Navigation Inspection, from
+its specialized body, the Directorate of Regulation,
+Standards and Procedures, developed a series of tasks
+and technical studies, including practical evaluations, to
+carry out the redesign of the helicopter corridors
+network.
+AIP ARGENTINA ENR 3.3 - 22
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+NORMAS PARA EL VUELO DE HELICÓPTEROS
+1. Definiciones:
+Helicorredor: Espacio aéreo que se extiende desde la
+superficie terrestre o una altura especificada hasta 1000 pies
+de altura o la altura especificada para cada HELICORREDOR,
+dispuesto en forma de corredor con un ancho de 150 metros a
+cada lado de la trayectoria ideal, establecido en base a
+referencias visuales de la superficie terrestre.
+2. Requisitos:
+a) Se requiere como mínimo que el piloto posea licencia de
+piloto comercial de helicóptero o licencia de piloto privado
+de helicóptero con habilitación de vuelo VFR Controlado y
+acreditar como mínimo DOSCIENTAS (200) horas como
+piloto al mando de un helicóptero para efectuar el vuelo
+en helicorredores que crucen las Zonas Restringidas SAR-
+01, 02 o 09.
+b) El helicóptero estará equipado de conformidad con los
+requisitos mínimos establecidos para realizar vuelo VFR
+Controlado.
+c) La utilización del helicorredor es exclusivamente para el
+vuelo de helicópteros en condiciones normales de
+operación y que no transporten carga externa.
+d) Los helicópteros mantendrán encendidas las luces de
+anticolisión y –cuando lo posean– mantendrán encendidas
+las estroboscópicas y el faro de aterrizaje.
+e) Las operaciones se realizarán de acuerdo con las Reglas de
+Vuelo Visual (VFR) y con luz diurna.
+f) El espacio aéreo de los helicorredores adoptará la
+clasificación del espacio aéreo ATS que los rodea.
+g) La velocidad verdadera máxima será de:
+i. 100 Kt cuando la visibilidad sea igual o superior a 8
+km;
+ii. 80 Kt cuando la visibilidad sea inferior a 8 km.
+h) La visibilidad mínima para el vuelo es de 5 km.
+i) La altura mínima de vuelo es de 500 pies sobre el terreno
+y como mínimo 200 pies sobre el obstáculo más alto en un
+radio de 150 metros en la trayectoria prevista del
+helicóptero. La altura máxima es de 1000 pies sobre el
+terreno, salvo mayor especificación.
+j) Siempre que sea posible la trayectoria del helicóptero
+deberá coincidir con el eje longitudinal del helicorredor; y
+se evitará el sobrevuelo directo de lugares habitados.
+k) Ante el requerimiento de habilitación de helipuertos para
+operación de helicópteros dentro de los Restringidos 01,
+02 y 09, la Autoridad Aeronáutica competente estudiará la
+posibilidad de establecer helicorredores de entrada y
+salida desde los mismos hasta los helicorredores ya
+establecidos.
+HELICOPTER FLIGHT RULES
+1. Definitions:
+Helicopter corridor: Airspace extending from the earth's
+surface or a specified height up to 1000 feet in altitude or the
+altitude specified for each HELICOPTER CORRIDOR, arranged
+in the form of a corridor with a width of 150 meters on each
+side of the ideal path, established based on visual references
+from the earth's surface.
+2. Requirements:
+a) The pilot is required at least to hold a commercial
+helicopter pilot's license or private helicopter pilot's
+license with VFR Controlled flight rating and to accredit
+at least TWO HUNDRED (200) hours as pilot in command
+of a helicopter to perform the flight in helicopters
+crossing the Restricted Areas SAR-01, 02 or 09.
+b) The helicopter shall be equipped in accordance with the
+minimum requirements established to perform
+Controlled VFR flight.
+c) The use of the helicopter corridor is exclusively for the
+flight of helicopters in normal operating conditions and
+not transporting external load.
+d) Helicopters shall keep the anti-collision lights on and -
+when equipped- shall keep on the strobes and the landing
+beacon.
+e) Operations shall be conducted in accordance with Visual
+Flight Rules (VFR) and during daylight.
+f) The airspace of helicopter corridors shall adopt the
+classification of the surrounding ATS airspace.
+g) The maximum true speed shall be:
+i. 100 Kt when visibility is 8 km or more;
+ii. 80 Kt when visibility is less than 8 km.
+h) The minimum visibility for flight is 5 km.
+i) The minimum flight altitude is 500 feet above the ground
+and at least 200 feet above the highest obstacle within a
+150-meter radius in the helicopter's intended path. The
+maximum altitude is 1000 feet above the ground, unless
+further specified.
+j) Whenever possible, the path of the helicopter should
+coincide with the longitudinal axis of the helicopter
+corridor; and direct overflights of inhabited areas should
+be avoided.
+k) When heliports are required to be certified for helicopter
+operations within Restricted areas 01, 02 and 09, the
+competent Aeronautical Authority shall study the
+possibility of establishing helicopter corridors for entry
+and exit from them to the helicopter corridors already
+established.
+AIP ARGENTINA ENR 3.3 - 23
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+l) A efectos de contribuir a la seguridad de las operaciones
+en los helicorredores, los helicópteros volarán a la derecha
+del eje de trayectoria ideal del helicorredor y a una altura
+de 500 pies cuando su derrota magnética sea de 000° a
+179°, y a una altura mínima de 800 pies cuando la derrota
+magnética sea de 180° a 359°.
+3. Descripción de los helicorredores
+Referencias:
+Punto de Notificación Obligatoria
+Punto de Recorrido
+Espera
+Puntos de Notificación Obligatorios, Autorización para seguir
+adelante y Esperas Publicadas
+En la carta de Helicorredores por debajo del TMA BAIRES, ENR-
+6.12 Cartas En-Ruta - Carta para helicorredores BAIRES, se
+incluyen puntos de notificación obligatoria por parte de la
+tripulación de vuelo, en los que se deberá contar con
+autorización explícita por parte de la dependencia ATS a cargo,
+para seguir adelante o realizar espera. Estos se encuentran
+representados en la cartografía y la tabla a través del símbolo
+de punto de notificación junto a uno de espera.
+Si en el permiso otorgado para la espera se incluye la dirección
+y el punto de espera, ello indicará que debe efectuarse
+siguiendo la dirección especificada al derrotero magnético,
+más la indicación de un sentido de giro horario/anti-horario o
+derecha/izquierda.
+Si por alguna razón no se ha publicado ningún procedimiento
+de espera, ni el control especifica la dirección de giro, ésta se
+realizará de acuerdo con giro sentido horario o derecha.
+El sentido de las esperas se realizará, según las derrotas, como
+se tipifica en el siguiente detalle:
+1) “La Boca”, Helicorredor Riachuelo:
+a. Derrota hacia el ESTE, giro de 360º con viraje
+derecha.
+b. Derrota hacia el OESTE, giro de 360º con viraje
+izquierda.
+2) “Lateral Riachuelo” Helicorredor Río de la Plata:
+a. Derrota hacia el NORTE, giro de 360º con viraje
+derecha.
+b. Derrota hacia el SUR, giro de 360º con viraje
+izquierda.
+3) “Unicenter” Helicorredor Panamericana:
+a. Derrota hacia el NORTE, giro de 360º con viraje
+izquierda.
+b. Derrota hacia el SUR, giro de 360º con viraje
+derecha.
+4) “Parque San Martín” Helicorredor Cno. Buen Ayre:
+a. Derrota hacia el NORTE, giro de 360º con viraje
+derecha.
+b. Derrota hacia el SUR, giro de 360º con viraje
+izquierda.
+l) For the purpose of contributing to the safety of helicopter
+corridor operations, helicopters shall fly to the right of
+the ideal path axis of the helicopter corridor and at an
+altitude of 500 feet when their magnetic track is 000° to
+179°, and at a minimum altitude of 800 feet when the
+magnetic track is 180° to 359°.
+3. Description of the helicopter corridors
+References:
+Mandatory Reporting Point
+Waypoint
+Holding
+Mandatory Reporting Points, Clearance to proceed and
+Published Holdings
+The Helicopter corridor chart below the BAIRES TMA, ENR-
+6.12 Cartas En-Ruta - Carta para helicorredores BAIRES,
+includes mandatory reporting points for the flight crew,
+where explicit clearance from the ATS unit in charge is
+required to proceed or hold. These are represented in the
+cartography and the table by the symbol of a notification
+point next to a holding point.
+If the direction and holding point are included in the
+permission granted for holding, this will indicate that it is to
+be performed following the direction specified to the
+magnetic bearing, plus the indication of a clockwise/anti-
+clockwise or right/left turn direction. If for any reason no
+holding procedure has been published, nor the control
+specifies the direction of turn, it shall be made according to
+the clockwise or right turn.
+The direction of the holdings shall be performed, according
+to the tracks, as typified in the following detail:
+1) "La Boca", Helicopter corridor Riachuelo:
+a. Track towards the EAST, 360º turn with right turn.
+b. Track towards the WEST, 360º turn with left turn.
+2) "Lateral Riachuelo" Helicopter corridor Río de la Plata:
+a. Track towards the NORTH, 360º turn with right
+turn.
+b. Track towards the SOUTH, 360º turn with left turn.
+3) "Unicenter" Panamericana Helicopter corridor:
+a. Track towards the NORTH, 360º turn with left turn.
+b. Track towards the SOUTH, 360º turn with right
+turn.
+4) "Parque San Martín" Helicorredor Cno. Buen Ayre:
+a. Track towards the NORTH, 360º turn with right
+turn.
+b. Track towards the SOUTH, 360º turn with left turn.
+AIP ARGENTINA ENR 3.3 - 24
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+5) “Cno. Buen Ayre y FFCC San Martín”, Helicorredor Cno.
+Buen Ayre:
+a. Derrota hacia el NORESTE, giro de 360º con viraje
+derecha.
+b. Derrota hacia el SUROESTE, giro de 360º con viraje
+izquierda.
+6) “El Triángulo” Helicorredor Panamericana:
+a. Derrota hacia el SURESTE, giro de 360° con viraje
+derecha.
+b. Derrota hacia el NOROESTE, giro de 360° con viraje
+izquierda.
+7) “Lateral Aeroparque” Helicorredor Río de la Plata
+a. Derrota hacia el SURESTE, giro de 360° con viraje
+izquierda.
+b. Derrota hacia el NOROESTE, giro de 360° con viraje
+derecha.
+8) “Lateral san isidro” Helicorredor Río de la Plata Norte
+a. Derrota hacia el NORTE, giro de 360° con viraje
+derecha.
+b. Derrota hacia el SUR, giro de 360° con viraje
+izquierda.
+9) “La Horqueta” Helicorredor San Isidro
+a. Derrota hacia el SURESTE, giro de 360° con viraje
+derecha.
+b. Derrota hacia el NOROESTE, giro de 360° con viraje
+izquierda.
+10) “Hipódromo Palermo” Helicorredor Dorrego
+a. Derrota hacia el NORESTE, giro de 360° con viraje
+derecha.
+b. Derrota hacia el SUROESTE, giro de 360° con viraje
+izquierda.
+11) “Rafael Castillo” Helicorredor Belgrano
+a. Derrota hacia el ESTE giro de 360° con viraje derecha.
+Derrota hacia el OESTE giro de 360° con viraje izquierda.
+5) "Cno. Buen Ayre and FFCC San Martín", Cno. Buen Ayre
+Helicopter corridor:
+a. Track towards the NORTHEAST, 360º turn with
+right turn.
+b. Track towards the the SOUTHWEST, 360º turn with
+left turn.
+6) "El Triángulo" (“The triangle”) Pan-American
+Helicopter corridor:
+a. Track towards the SOUTHEAST, 360° turn with right
+turn.
+b. Track towards the NORTHWEST, 360° turn with left
+turn.
+7) "Lateral Aeroparque" Río de la Plata Helicopter
+corridor
+a. Track towards the SOUTHEAST, turn 360° with left
+turn.
+b. Track towards the NORTHWEST, 360° turn with
+right turn.
+c.
+8) "Lateral san isidro" Río de la Plata North Helicopter
+corridor
+a. Track towards the NORTH, turn 360° with right
+turn.
+b. Track towards the SOUTH, 360° turn with left turn.
+9) "La Horqueta" San Isidro Helicopter corridor
+a. Track towards the SOUTH EAST, turn 360° with a
+right turn.
+b. Track towards the NORTH WEST, turn 360° with left
+turn.
+10) "Palermo Racetrack" Dorrego Helicopter corridor
+a. Track towards the NORTH EAST, turn 360° with
+right turn.
+b. Track towards the SOUTHWEST, turn 360° with left
+turn.
+11) "Rafael Castillo" Belgrano Helicopter Corridor
+a. Track towards the EAST, 360° turn with right turn.
+Track towards the WEST, 360° turn with left turn.
+AIP ARGENTINA ENR 3.3 - 25
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+HELICORREDORES DE LA ZONA NORTE /
+HELICOPTER CORRIDORS OF THE NORTH AREA
+Designador de ruta / Route designator
+Nombre de puntos significativos / Name
+of signficant points
+Coordenadas geográficas /
+Geographic coordinates
+Límite superior /
+Upper limit
+Límite inferior /
+Lower limit
+Calificación del
+espacio aéreo
+/ Airspace
+classification
+ATC
+FREQ
+Observaciones / Remarks
+Referencia visual / Visual reference
+HELICORREDOR RÍO DE LA PLATA NORTE
+LATERAL AEROPARQUE
+343314S-0582430W
+LATERAL OLIVOS
+343035S-0582816W
+LATERAL SAN ISIDRO
+342811S-0582915W
+DESEMBOCADURA RÍO LUJÁN
+342641S-0583037W 1000 FT
+GND
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso
+de transpondedor. Para los helicopteros
+que prevean la utilización de este
+helicorredor, desde helipuertos privados o
+LADH cercanos o debajo del mismo,
+deberán comunicarse con el ATC vía
+frecuencia VHF o teléfono (solo si la
+comunicación vía VHF no fue posible) al
+451 41628 antes de iniciar el vuelo.
+Sobrevolar lateral Puerto de Olivos.
+Sobre el Río de la Plata, próximo a
+Barrancas de San Isidro.
+Sobre la desembocadura del Río Luján.
+Mandatory communication with ATC and
+use of transponder. For helicopters
+planning to use this helicopter corridor,
+departing from private heliports or nearby
+LADHs, they must contact the ATC via VHF
+frequency or telephone (only If VHF
+communication was not AVBL) at 451
+41628 before commencing the flight.
+Lateral overflight of Olivos Port.
+Over the Rio de la Plata, near Barrancas de
+San Isidro.
+Over the estuary of the Río Luján.
+HELICORREDOR SAN ISIDRO
+LATERAL SAN ISIDRO
+342811S-0582915W
+HIPÓDROMO DE SAN ISIDRO
+LA HORQUETA
+342947S-0583315W
+1000 FT
+GND
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso de
+transpondedor.
+Sobre el Río de la Plata, próximo a
+Barrancas de San Isidro.
+Sobrevolar Hipódromo de San Isidro.
+Sobre Ruta Panamericana y Acceso Tigre.
+Mandatory communication with ATC and
+use of transponder.
+Over the Río de la Plata, near Barrancas de
+San Isidro.
+Overflying San Isidro Racetrack.
+Over Panamerican Highway and Tigre
+Access.
+AIP ARGENTINA ENR 3.3 - 26
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+HELICORREDOR PANAMERICANA
+GENERAL PAZ Y PANAMERICANA
+343249S-0582936W
+UNICENTER
+343107S-0583054W
+LA HORQUETA
+342947S-0583315W
+PUENTE RÍO RECONQUISTA
+342913S-0583559W
+PANAMERICANA Y AV. H. YRIGOYEN
+342831S-0583948W
+EL TRIÁNGULO
+342810S-0584056W
+1000 FT
+500 FT
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso
+de transpondedor.
+Sobre intersección de Avenida General
+Paz y Autopista Panamericana. En este
+tramo sentido único hacia el NW.
+Sobre Unicenter.
+Sobre ruta Panamericana y el Acceso
+Tigre.
+Sobre Autopista Panamericana y su
+intersección con el Río Reconquista.
+Sobre AU Panamericana y Av. H. Yrigoyen.
+Sobre la bifurcación de las rutas 8 y 9
+(Ramal Escobar/Pilar)
+Mandatory communication with ATC and
+use of transponder.
+At the intersection of General Paz Avenue
+and Panamericana Highway. In this
+section, one way to the NW.
+On Unicenter.
+On Panamericana Highway and Tigre
+Access.
+On Panamericana Highway and its
+intersection with Río Reconquista.
+On Panamericana Highway and H.
+Yrigoyen Avenue.
+On the bifurcation of routes 8 and 9
+(Escobar/Pilar Branch).
+SAN FERNANDO
+TWR
+119.00 MHz
+120.05 MHz
+HELICORREDOR ESCOBAR
+EL TRIÁNGULO
+342810S-0584056W
+LATERAL PLANTA INDUSTRIAL
+AUTOMOTRIZ
+ESCOBAR
+342124S-0584753W
+1000 FT
+GND
+Clase G
+NIL
+Precaución por tránsito de aeronaves en
+instrucción por estar comprendido dentro
+del sector VFR Escuela.
+Sobre bifurcación de las Rutas 8 y 9.
+Sobre la intersección de la Ruta 9 y Ruta
+25.
+Caution due to the traffic of aircrafts in
+instruction because it is included within the
+VFR Escuela sector.
+On the junction of Routes 8 and 9.
+Over the intersection of Route 9 and
+Route 25.
+AIP ARGENTINA ENR 3.3 - 27
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+HELICORREDOR PILAR
+EL TRIÁNGULO
+342810S-0584056W
+DEL VISO
+342627S-0584658W
+PILAR
+342656S-0585419W
+1000 FT
+GND
+Clase G
+Bifurcación de las Rutas 8 y 9.
+Sobre intersección de Ruta 8 y Ruta 26.
+Obligatoria comunicación con ATC
+Sobre intersección de Ruta 8 y Ruta 25.
+Junction of Routes 8 and 9.
+At the intersection of Route 8 and Route
+26.
+Mandatory communication with ATC
+On intersection of Route 8 and Route 25.
+1000 FT
+GND
+Clase C
+MORENO
+TWR
+119.70 MHz
+118.55 MHz
+HELICORREDOR VICTORIA
+PUENTE RÍO RECONQUISTA
+342913S-0583559W
+RAMAL TIGRE Y VÍAS DEL FFCC MITRE
+342810S-0583406W
+DESEMBOCADURA RÍO LUJÁN
+342641S-0583037W 1000 FT
+500 FT
+Clase C
+SAN FERNANDO
+TWR
+119.00 MHz
+120.05 MHz
+Obligatoria comunicación con ATC y uso de
+transpondedor.
+Sentido de circulación único, con rumbo
+NE. Desde intersección del Río Reconquista
+y Ruta Panamericana.
+Sobre las vías del FFCC Mitre intersección
+de la Autopista Ramal TIGRE.
+Vías del FFCC Mitre, hasta la
+desembocadura del Río Luján.
+Mandatory communication with ATC and
+use of transponder.
+Single direction of traffic, heading NE. From
+the intersection of the Río Reconquista and
+Panamericana Highway.
+On the tracks of the Mitre Railroad,
+intersection of the TIGRE Branch Highway.
+Mitre Railroad tracks, up to the estuary of
+the Río Luján.
+HELICORREDOR TIGRE
+LA HORQUETA
+342947S-0583315W
+RAMAL TIGRE Y VÍAS DEL FFCC MITRE
+342810S-0583406W
+RAMAL TIGRE Y RUTA 202
+342710S-0583430W
+1000 FT
+500 FT
+Clase C
+SAN FERNANDO
+TWR
+119.00 MHz
+120.05 MHz
+Obligatoria comunicación con ATC y uso de
+transpondedor.
+Sobre Ruta Panamericana y Acceso Tigre.
+Sobre Acceso Tigre y Vías del FFCC MITRE.
+Sobre intersección del Acceso Tigre y Ruta
+202 en el extremo Este del Aeropuerto San
+Fernando.
+Mandatory communication with ATC and
+use of transponder.
+On Panamericana Highway and Tigre
+Access.
+On Tigre Access and MITRE Railroad tracks.
+AIP ARGENTINA ENR 3.3 - 28
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+Over the intersection of Tigre Access and
+Route 202 at the east end of San Fernando
+Airport.
+HELICORREDOR RÍO LUJÁN
+DESEMBOCADURA RÍO LUJÁN
+342641S-0583037W
+RÍO TIGRE
+342454S-0583445W
+RÍO LUJÁN Y CANAL ALIVIADOR
+342321S-0583719W
+DIQUE LUJÁN
+342106S-0584110W
+1000 FT
+GND
+Clase C
+SAN FERNANDO
+TWR
+119.00 MHz
+120.05 MHz
+Obligatoria comunicación con ATC y uso de
+transpondedor. Desembocadura Río Luján
+en el Río de la Plata.
+Sobrevolar curso del Río Luján y
+desembocadura del Río Tigre.
+Sobre intersección Río Luján y Canal
+Aliviador.
+Sobre la localidad de Dique Luján e
+intersección corredores VFR N°1 y N°13.
+Mandatory communication with ATC and
+use of transponder.
+Overfly the course of the Río Luján and the
+estuary of the Río Tigre.
+Over the intersection of the Río Luján and
+Canal Aliviador.
+Over the locality of Dique Luján and
+intersection of corridors VFR N° 1 and N°
+13.
+TRAYECTORIA DE ENTRADA/SALIDA
+CANAL ALIVIADOR (Canal de remo)
+Aeródromo San Fernando
+AD SAN FERNANDO
+342718S-0583529W
+RÍO RECONQUISTA Y CANAL ALIVIADOR
+342632S-0583545W
+RÍO LUJÁN Y CANAL ALIVIADOR
+342321S-0583719W
+1000 FT
+GND
+Clase C
+SAN FERNANDO
+TWR
+119.00 MHz
+120.05 MHz
+Obligatoria comunicación con ATC.
+Desde el Aeródromo San Fernando hacia el
+helicorredor Río Luján seguirán la
+trayectoria sobre el Canal Aliviador.
+Canal Aliviador intersección Río Luján
+excepto otras instrucciones de SAN
+FERNANDO TORRE.
+Mandatory communication with ATC.
+From San Fernando Aerodrome to the Río
+Luján helicopter corridor will follow the
+trajectory over the Canal Aliviador.
+Canal Aliviador intersection Río Luján
+except other instructions from SAN
+FERNANDO TOWER.
+AIP ARGENTINA ENR 3.3 - 29
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+HELICORREDOR DORREGO
+HIPÓDROMO PALERMO
+343401S-0582513W
+AV. LIBERTADOR Y VÍAS FFCC MITRE
+343415S-0582525W
+ESTACIÓN COLEGIALES
+343423S-0582654W
+BIFURCACIÓN FFCC MITRE (SW)
+343359S-0582821W
+ESTACIÓN COGHLAN
+343355S-0582830W
+ESTACIÓN SAAVEDRA
+343313S-582914W
+GENERAL PAZ Y PANAMERICANA
+343249S-0582936W
+1500 FT
+1000 FT
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso de
+transpondedor.
+Sobre el límite Sur del Hipódromo de
+Palermo.
+Sobre la intersección de la Av. Libertador y
+Vías FFCC Mitre.
+Sobrevolando Estación Colegiales.
+FFCC
+Sobre Bifurcación Ferrocarril Mitre. (Ramal
+Mitre y Ramal José León.
+Sobrevolar Estación COGHLAN FFCC Mitre.
+Sobrevolar Estación Saavedra.
+Sobre intersección Avenida General Paz y
+Panamericana.
+Mandatory communication with ATC and
+use of transponder.
+On the southern boundary of the Palermo
+Racetrack.
+Over the intersection of Libertador Avenue
+and Mitre Railroad tracks.
+Flying over Colegiales Railroad Station.
+Over junction of Mitre Railroad (Mitre
+Branch and José León Branch).
+Flying over COGHLAN, Mitre Railroad
+Station.
+Overflying Saavedra Railroad Station.
+Over General Paz Avenue and
+Panamericana intersection.
+AIP ARGENTINA ENR 3.3 - 30
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+HELICORREDOR PRESIDENCIA
+QUINTA PRESIDENCIAL DE OLIVOS
+343058S-0582905W
+GRAL. PAZ Y PANAMERICANA
+343249S-0582936W
+1000 FT
+GND
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+HELICORREDOR DE USO EXCLUSIVO POR
+PARTE DE PRESIDENCIA DE LA NACIÓN.
+Obligatoria comunicación con ATC y uso
+de transpondedor.
+Sobre Quinta Presidencial Olivos.
+Sobre el cruce de Panamericana y Avenida
+General Paz.
+HELICOPTER CORRIDOR FOR THE
+EXCLUSIVE USE OF THE PRESIDENCY OF
+THE NATION.
+Mandatory communication with ATC and
+use of transponder.
+Over Quinta Presidencial Olivos.
+On the intersection of Panamericana and
+General Paz Avenue.
+HELICORREDORES DE LA ZONA OESTE/
+HELICOPTER CORRIDORS OF THE WEST AREA
+Designador de ruta / Route designator
+Nombre de puntos significativos / Name
+of signficant points
+Coordenadas geográficas / Geographic
+coordinates
+Límite superior /
+Upper limit
+Límite inferior /
+Lower limit
+Calificación del
+espacio aéreo /
+Airspace
+classification
+ATC
+FREQ
+Observaciones / Remarks
+Referencia visual / Visual reference
+HELICORREDOR BUEN AYRE
+PUENTE RÍO RECONQUISTA
+342913S-0583559W
+PARQUE SAN MARTIN
+343120S-0583559W
+CAMINO DEL BUEN AYRE Y RUTA 8
+343346S-0583740W
+CAMINO DEL BUEN AYRE Y AV. GRAL.
+ROCA
+343407S-0583912W
+CAMINO DEL BUEN AYRE Y FFCC SAN
+MARTIN
+343428S-0583953W
+ACCESO OESTE Y RÍO RECONQUISTA
+343742S-0584328W
+850 FT
+GND
+Clase C
+SAN FERNANDO
+TWR
+119.00 MHz
+120.05 MHz
+Obligatoria comunicación con ATC.
+Sobre intersección Puente Río Reconquista
+y cruce FFCC Mitre.
+Sobre Parque San Martín.
+En el cruce del Camino del Buen Ayre y la
+Ruta Provincial N 8.
+En el cruce de la Avenida Julio Argentino
+Roca y el camino del Buen Ayre.
+En el cruce del Camino del Buen Ayre y
+FFCC San Martin.
+En el cruce del Acceso Oeste y Río
+Reconquista.
+Mandatory communication with ATC.
+At the intersection of the Reconquista River
+Bridge and the Mitre Railroad crossing.
+On San Martín Park.
+At the intersection of Camino del Buen Ayre
+and Provincial Route N 8.
+PALOMAR TWR
+120.30 MHz
+118.90 MHz
+121.50 MHz
+EMERG
+CAMPO DE
+MAYO
+TWR
+123.80 MHz
+118.50 MHz
+AIP ARGENTINA ENR 3.3 - 31
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+At the intersection of Julio Argentino Roca
+Avenue and Camino del Buen Ayre.
+At the intersection of Camino del Buen Ayre
+and San Martin Railroad.
+At the intersection of Acceso Oeste and
+Reconquista River.
+HELICORREDOR MORÓN
+ACCESO OESTE Y AV. GDOR. VERGARA
+343757S-0583746W
+ESTACIÓN MORÓN
+343854S-0583720W
+AV. EVA PERÓN Y FFCC BELGRANO
+344152S-0583813W
+1000 FT
+500 FT
+Clase D
+EZEIZA TWR
+118.60 MHz
+118.05 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC.
+En el cruce del Acceso Oeste y la Avenida
+Gdor. Vergara.
+Sobre Estación Morón.
+En la intersección de AV. Eva Perón y el
+FFCC Belgrano.
+Mandatory communication with ATC.
+At the intersection of Acceso Oeste and
+Gdor. Vergara Avenue.
+On Morón Station.
+At the intersection of Eva Perón Avenue
+and Belgrano Railroad.
+HELICORREDOR PALOMAR
+CAMINO DEL BUEN AYRE Y AV. GRAL.
+ROCA
+343407S-0583912W
+AV. GENERAL ROCA Y AV. GDOR.
+VERGARA
+343445S-0583828W
+ACCESO OESTE Y AV. GDOR.
+VERGARA
+343757S-0583746W
+1000 FT
+GND
+Clase C
+PALOMAR TWR
+120.30 MHz
+118.90 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC.
+Desde el cruce de la Avenida Julio
+Argentino Roca y el Camino del Buen Ayre.
+En la intersección de la Avenida Julio
+Argentino Roca. y Av. Gdor. Vergara.
+En la intersección del Acceso Oeste y Av.
+Gdor. Vergara.
+Mandatory communication with ATC.
+From the intersection of Julio Argentino
+Roca Avenue and Camino del Buen Ayre.
+At the intersection of Julio Argentino Roca
+Avenue and Gdor. Vergara Avenue.
+At the intersection of Acceso Oeste and
+Gdor. Vergara Avenue.
+HELICORREDOR GAONA
+ACCESO OESTE Y AV. GDOR. VERGARA
+343757S-0583746W
+ACCESO OESTE Y RÌO RECONQUISTA
+343742S-0584328W
+1000 FT
+GND
+Clase C
+PALOMAR TWR
+120.30 MHz
+118.90 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC.
+En la intersección del Acceso Oeste y AV.
+Gdor. Vergara.
+En el cruce del Río Reconquista y la
+Autopista Acceso Oeste.
+Mandatory communication with ATC.
+AIP ARGENTINA ENR 3.3 - 32
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+At the intersection of Acceso Oeste and
+Gdor. Vergara Avenue.
+At the intersection of Reconquista River
+and Acceso Oeste Highway.
+HELICORREDOR BELGRANO
+FFCC BELGRANO Y RIACHUELO
+344307S-0582829W
+LOS PILETONES
+344248S-0583006W
+ALDO BONZI
+344245S-0583129W
+ISIDRO CASANOVA
+344216S-0583515W
+RAFAEL CASTILLO
+344201S-0583720W
+AV. EVA PERÓN Y FFC BELGRANO
+344152S-0583813W
+1000 FT
+GND
+Clase C
+EZEIZA TWR
+118.60 MHz
+118.05 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC.
+En el cruce del ferrocarril y la rectificación
+del Riachuelo (tránsito de Aeródromo
+Matanza con prioridad).
+Sobre planta depuradora AySA Suroeste/
+Los Piletones.
+En el cruce del Camino de Cintura y las vías
+del FFCC Gral. Belgrano.
+Sobre las vías del FFCC Gral. Belgrano, al
+Oeste del cruce con la Ruta 3, en la Estación
+de FFCC Isidro Casanova.
+En la intersección de AV. Perón y FFCC
+Belgrano.
+Mandatory communication with ATC.
+At the railroad crossing and the Riachuelo
+rectification (Matanza Aerodrome traffic
+with priority).
+Over Southwest AySA wastewater
+treatment plant / Los Piletones.
+At the intersection of Camino de Cintura
+and Gral. Belgrano railroad tracks.
+On the tracks of Gral. Belgrano, west of the
+intersection with Route 3, at the Isidro
+Casanova railroad station.
+At Rafael Castillo station (from Isidro
+Casanova station call MOR TWR).
+At the intersection of Perón Avenue and
+Belgrano Railroad.
+1000 FT
+500 FT
+Clase D
+HELICORREDOR GENERAL PAZ
+PANAMERICANA Y GENERAL PAZ
+343249S-0582936W
+GENERAL PAZ Y RUTA 8
+343520S-0583107W
+1000 FT
+500 FT
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso de
+transpondedor.
+En la intersección de Autopista
+Panamericana y Avenida Gral. Paz
+siguiendo por esta avenida hacia el Sur.
+En el cruce de Av. Gral. Paz y Ruta 8.
+AIP ARGENTINA ENR 3.3 - 33
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+FFCC SAN MARTÍN Y GENERAL PAZ
+343610S-0583129W
+LINIERS
+343804S-0583148W
+PUENTE LA NORIA
+344219S-0582739W
+EZEIZA TWR
+118.60 MHz
+118.05 MHz
+121.50 MHz
+EMERG
+Sobre el cruce de las vías del FFCC San
+Martín y la Avenida Gral. Paz.
+En la intersección de la Autopista Acceso
+Oeste y la Avenida Gral. Paz, siguiendo por
+esta Avenida hacia el Sur.
+En la intersección del Riachuelo y la
+Avenida Gral. Paz, en su finalización.
+Mandatory communication with ATC and
+use of transponder.
+At the intersection of Panamericana
+Highway and Gral. Paz Avenue following
+this avenue towards the South.
+At the intersection of Gral. Paz Avenue and
+Route 8.
+At the intersection of San Martín Railroad
+and Gral. Paz Avenue.
+At the intersection of the Acceso Oeste
+Highway and Gral. Paz Avenue, following
+this Avenue towards the South.
+At the intersection of the Riachuelo and
+Gral. Paz Avenue, at its end.
+HELICORREDOR RUTA 8
+GENERAL PAZ Y RUTA 8
+343520S-0583107W
+CAMINO DEL BUEN AYRE Y RUTA 8
+343346S-0583740W 1000 FT
+500 FT
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso
+de transpondedor.
+Sobre el cruce de la Avenida Gral. Paz y
+Ruta 8.
+En el cruce del Camino del Buen Ayre y
+Ruta 8.
+Mandatory communication with ATC and
+use of transponder.
+At the intersection of Gral. Paz Avenue
+and Route 8.
+At the intersection of Camino del Buen
+Ayre and Route 8.
+PALOMAR TWR
+120.30 MHz
+118.90 MHz
+121.50 MHz
+EMERG
+HELICORREDOR FFCC SAN MARTIN
+FFCC SAN MARTÍN Y AV. H. YRIGOYEN
+343107S-0584506W
+RUTA 23 Y FFCC SAN MARTÍN
+343238S-0584251W
+CAMINO DEL BUEN AYRE Y FFCC SAN
+MARTIN
+343428S-0583953W
+850 FT
+GND
+Clase C
+CAMPO DE
+MAYO
+TWR
+123.80 MHz
+118.50 MHz
+Obligatoria comunicación con ATC.
+Sobre el cruce de Av. H. Yrigoyen y FFCC
+San Martín.
+Sobre el cruce de Ruta 23 y FFCC San
+Martín.
+Sobre el cruce del Camino del Buen Ayre y
+FFCC San Martín.
+Mandatory communication with ATC.
+At the intersection of H. Yrigoyen Avenue
+and San Martín Railroad.
+AIP ARGENTINA ENR 3.3 - 34
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+At the intersection of Route 23 and San
+Martín Railroad.
+At the intersection of Camino del Buen Ayre
+and San Martín Railroad.
+HELICORREDOR HAEDO
+MERCADO CENTRAL
+ESTACIÓN MORÓN
+343854S-0583720W
+TALLERES HAEDO
+343840S-0583613W
+ESTACIÓN HAEDO
+343839S-0583528W
+UNIVERSIDAD LA MATANZA
+343953S-0583355W
+LOS PILETONES
+344248S-0583006W
+1000 FT
+500 FT
+Clase C
+EZEIZA TWR
+118.60 MHz
+118.05 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso de
+transpondedor.
+En la estación Morón sobre FFCC
+Sarmiento hasta Talleres Haedo.
+En los talleres Haedo sobre FFCC
+Sarmiento.
+Sobre estación Haedo en la intersección de
+FFCC Sarmiento continuando al Sur este
+con el FFCC Roca.
+Sobre el FFCC Roca en la intersección con
+la Universidad La Matanza.
+Sobre planta depuraduradora Aysa Sur
+Oeste/ Los Piletones.
+Mandatory communication with ATC and
+use of transponder.
+At Morón station on Sarmiento Railroad to
+Talleres Haedo.
+At Haedo workshops on Sarmiento
+Railway.
+On Haedo station at the intersection of
+Sarmiento Railway continuing south east
+with Roca Railway.
+On Roca Railway at the intersection with La
+Matanza University.
+Over Aysa wastewater treatment plant
+Southwest/ Los Piletones.
+HELICORREDOR RUTA 24
+PANAMERICANA Y AV. H. YRIGOYEN
+342831S-0583948W
+FFCC SAN MARTIN Y AV. H. YRIGOYEN
+343107S-0584506W
+RUTA 24 Y AV. DERQUI
+343214S-0584743W
+RUTA 25 Y RUTA 24
+343401S-0585058W
+ACCESO OESTE Y RUTA 24
+343606S-0585416W
+1000 FT
+GND
+Clase C
+SAN FERNANDO
+TWR
+119.00 MHz
+120.05 MHz
+Obligatoria comunicación con ATC.
+Sobre AU Panamericana y AV H. Yrigoyen
+continuando hasta el cruce con el FFCC San
+Martin.
+Desde FFCC San Martin y Av. H. Yrigoyen
+continuando por Ruta 24 hasta el cruce
+con Av. Derqui.
+Sobre el cruce de Ruta 24 y Av. Derqui.
+Continuando por Ruta 24 posterior
+intersección con Ruta 25.
+Continuando por Ruta 24 hasta el cruce
+con la AU ACC Oeste.
+MORENO TWR
+119.70 MHz
+118.55 MHz
+AIP ARGENTINA ENR 3.3 - 35
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+RUTA 7 Y RUTA 24
+343707S-0585436W
+1000 FT
+GND
+Clase G
+NIL
+Continuando por Ruta 24 hasta
+intersección con Ruta 7.
+Mandatory communication with ATC
+On Panamericana highway and H.
+Yrigoyen Avenue continuing until the
+intersection with San Martin Railroad.
+From San Martin Railroad and Av. H.
+Yrigoyen continuing along Route 24 until
+the intersection with Derqui Avenue.
+On the intersection of Route 24 and Av.
+Derqui.
+Continuing along Route 24 until the
+intersection with Route 25.
+Continuing along Route 24 until the
+intersection with Acceso Oeste Highway.
+Continuing along Route 24 up to the
+intersection with Route 7.
+HELICORREDORES DE LA ZONA SUR/
+HELICOPTER CORRIDORS OF THE SOUTH AREA
+Designador de ruta / Route designator
+Nombre de puntos significativos / Name
+of signficant points
+Coordenadas geográficas / Geographic
+coordinates
+Límite superior /
+Upper limit
+Límite inferior /
+Lower limit
+Calificación del
+espacio aéreo /
+Airspace
+classification
+ATC
+FREQ
+Observaciones / Remarks
+Referencia visual / Visual reference
+HELICORREDOR RÍO DE LA PLATA SUR
+LATERAL AEROPARQUE
+343314S-0582430W
+LATERAL DÁRSENA NORTE
+343522S-0582050W
+LATERAL RIACHUELO
+343734S-0581938W
+LATERAL QUILMES
+344121S-0581326W
+1000 FT
+GND
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso de
+transpondedor. Para los helicópteros que
+prevean la utilización de este helicorredor,
+desde helipuertos privados o LADH
+cercanos o debajo del mismo, deberán
+comunicarse con el ATC vía frecuencia VHF
+o teléfono (solo si la comunicación vía VHF
+no fue posible) al 451 41628 antes de
+iniciar el vuelo.
+Sobre el Río de la Plata, al Este del
+Aeroparque Jorge Newbery.
+Sobre el Río de la Plata, al Este de la
+Dársena Norte.
+Sobre el Río de la Plata, lateral a la
+desembocadura del Riachuelo.
+Sobre el Río de la Plata, al Este del
+Aeródromo Quilmes.
+Mandatory communication with ATC and
+use of transponder. For helicopters
+planning to use this helicopter corridor,
+departing from private heliports or nearby
+LADHs, they must contact the ATC via VHF
+AIP ARGENTINA ENR 3.3 - 36
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+frequency or telephone (only if VHF
+communication was not AVBL) at 451
+41628 before commencing the flight.
+Over the Río de la Plata, east of Aeroparque
+Jorge Newbery.
+Over the Río de la Plata, to the
+East of the North Dock.
+On the Río de la Plata, lateral to the estuary
+of the Riachuelo.
+On the Río de la Plata, east of the Quilmes
+Aerodrome.
+HELICORREDOR RIACHUELO
+LATERAL RIACHUELO
+343734S-0581938W
+LA BOCA
+343802S-0582057W
+FFCC PTE. ROCA Y RIACHUELO
+343939S-0583107W
+PUENTE ALSINA
+343934S-0582460W
+PUENTE LA NORIA
+344219S-0582739W
+BELGRANO Y RIACHUELO
+344307S-0582829W
+CAMINO DE CINTURA Y RIACHUELO
+344418S-0582951W
+1000 FT
+GND
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso de
+transpondedor.
+Sobre el Río, lateral a la desembocadura
+del Riachuelo.
+En la entrada de la desembocadura del
+Riachuelo
+Sobre el Riachuelo, en la intersección del
+Puente de la Avenida Sáenz.
+Sobre el Riachuelo, sobre el final de la
+Avenida Gral. Paz.
+Sobre Puente La Noria.
+Sobre el Riachuelo, en la intersección con
+el cruce del FFCC Belgrano.
+Sobre el Riachuelo, en la intersección con
+el Camino de Cintura.
+Aeródromo Matanza.
+Mandatory communication with ATC and
+use of transponder.
+On the river, lateral to the estuary of the
+Riachuelo.
+At the entrance to the estuary of the
+Riachuelo.
+Over the Riachuelo, at the intersection of
+the Sáenz Avenue Bridge.
+Over the Riachuelo, at the end of Gral. Paz
+Avenue.
+Over La Noria Bridge.
+Over the Riachuelo, at the intersection with
+the Belgrano Railroad crossing.
+Over the Riachuelo, at the intersection with
+Camino de Cintura.
+Matanza Aerodrome.
+EZEIZA TWR
+118.60 MHz
+118.05 MHz
+121.50 MHz
+EMERG
+AIP ARGENTINA ENR 3.3 - 37
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+HELICORREDOR MADERO
+LA BOCA
+343802S-0582057W
+DIQUE UNO
+343721S-0582148W
+DÁRSENA NORTE
+343543S-0582159W
+1500 FT
+1000 FT
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso de
+transpondedor.
+Sobre desembocadura Río Riachuelo en el
+Río de la Plata.
+Sobrevolar los diques de Puerto Madero.
+Sobre Dársena Norte del Puerto de Buenos
+Aires.
+Mandatory communication with ATC and
+use of transponder.
+Over the estuary of the Riachuelo River in
+the Río de la Plata.
+HELICORREDOR PALERMO
+DÁRSENA NORTE
+343543S-0582159W
+RETIRO FFCC SAN MARTIN
+343524S-0582226W
+PLANETARIO
+343411S-0582442W
+HIPÓDROMO PALERMO
+343401S-0582513W
+1000 FT
+GND
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso de
+transpondedor.
+Sobre el Río de La Plata, próximo a la
+Dársena Norte.
+Sobre el dique Dársena Norte, Río de la
+Plata.
+Sobrevolar Estación Retiro, siguiendo
+sobre las vías F. C. San Martín.
+Sobrevolar vías del FFCC San Martín, lateral
+Planetario.
+Sobre el límite Sur del Hipódromo Palermo.
+Mandatory communication with ATC and
+use of transponder.
+On the Río de La Plata, near the Dársena
+Norte.
+Over the Dársena Norte dock, Río de la
+Plata.
+Overflying Retiro Station, following the F. C.
+San Martín tracks.
+To fly over the tracks of FFCC San Martin,
+lateral Planetario.
+Over the South limit of Palermo
+Racecourse.
+TRAYECTORIA CRUCE DE AEROPARQUE
+LATERAL AEROPARQUE
+343314S-0582430W
+HIPÓDROMO PALERMO
+343401S-0582513W
+1000 FT
+GND
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso
+de transpondedor.
+Sobre el Río de la Plata, al Este del
+Aeroparque Jorge Newbery.
+Sobre el límite Sur del Hipódromo
+Palermo.
+Mandatory communication with ATC and
+use of transponder.
+On the Río de la Plata, East of Aeroparque
+Jorge Newbery.
+AIP ARGENTINA ENR 3.3 - 38
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+On the southern boundary of Palermo
+Racetrack.
+HELICORREDOR FFCC ROCA
+FFCC PTE. ROCA Y RIACHUELO
+343939S-0582355W
+CANAL SARANDÍ Y FFCC PTE. ROCA
+344039S-0582026W
+AU. BS. AS.-LA PLATA Y CANAL
+SARANDÍ
+344025S-0581959W
+1000 FT
+GND
+Clase C
+AEROPARQUE
+TWR
+118.85 MHz
+118.25 MHz
+128.85 MHz
+121.50 MHz
+EMERG
+Obligatoria comunicación con ATC y uso de
+transpondedor.
+Sobre Riachuelo y cruce FFCC Roca.
+Sobre Canal Sarandí y cruce FFCC Roca.
+Sobre el cruce Autopista Buenos Aires – La
+Plata y Canal Sarandí.
+Mandatory communication with ATC and
+use of transponder.
+Over Riachuelo and Roca Railroad crossing.
+Over Canal Sarandí and FFCC Roca
+crossing.
+Over the Buenos Aires - La Plata Highway
+and Canal Sarandí intersection.
+NORMAS PARA EL VUELO DE HELICÓPTEROS MONOMOTORES SOBRE LA CIUDAD DE CÓRDOBA /
+RULES FOR THE FLIGHT OF SINGLE-ENGINE HELICOPTERS OVER THE CITY OF CÓRDOBA
+1. Finalidad y ámbito:
+Las presentes normas tienen por finalidad regular las
+operaciones de helicópteros de clase de performance 3 que se
+desarrollen en el espacio aéreo que cubre a la ciudad de
+Córdoba.
+Los helicópteros comprendidos en el párrafo anterior deberán
+circular a través de los “helicorredores” establecidos a tal fin,
+de conformidad con las condiciones que se especifican a
+continuación.
+2. Definiciones:
+HELICORREDOR: Espacio aéreo clase “D” que se extiende
+desde la superficie terrestre hasta 1000 pies de altura,
+dispuesto en forma de corredor con un ancho de 150 metros
+a cada lado de la trayectoria ideal, establecido en base a
+referencias visuales de la superficie terrestre.
+3. Normas generales para el vuelo en helicorredores:
+Se requiere como mínimo que el piloto posea licencia de Piloto
+Comercial de Helicóptero o licencia de Piloto Privado de
+Helicóptero con Habilitación de Vuelo VFR controlado y
+acreditar como mínimo cincuenta (50) horas como piloto al
+mando de un helicóptero.
+El helicóptero estará equipado de conformidad con los
+requisitos mínimos establecidos para realizar vuelo VFR
+Controlado.
+La utilización del helicorredor es exclusivamente para el vuelo
+de helicópteros en condiciones normales de operación y que
+no transporten carga externa.
+Los helicópteros ostentarán luces anticolisión y, cuando lo
+posean, mantendrán encendido el faro de aterrizaje. Las
+1. Purpose and scope
+The purpose of these rules is to regulate the operations of
+class 3 performance helicopters to be developed in the
+airspace covering the city of Cordoba.
+The helicopters included in the previous paragraph shall
+circulate through the "helicopter corridors" established for
+such purpose, in accordance with the conditions specified
+below.
+2. Definitions:
+HELICOPTER CORRIDOR: Class "D" airspace extending from
+the earth's surface up to 1000 feet in altitude, arranged in
+the form of a corridor with a width of 150 meters on each side
+of the ideal path,established since visual references from the
+earth's surface.
+3. General rules for the flight in helicopters:
+It is required as a minimum that the pilot holds a Commercial
+Helicopter Pilot's License or Private Helicopter Pilot's License
+with Controlled VFR Flight Rating and accredit at least fifty
+(50) hours aspilot in command of a helicopter.
+The helicopter shall be equipped in accordance with the
+minimumrequirements established for controlled VFR flight.
+The use of the helicopter corridor is exclusively for the flight
+of helicopters in normal operating conditions and not
+transporting external load.
+Helicopters shall display anti-collision lights and, when
+equipped, shall keep the landing beacon on. Operations shall
+AIP ARGENTINA ENR 3.3 - 39
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+operaciones se realizarán de acuerdo con las Reglas de Vuelo
+Visual (VFR) y con luz diurna.
+La velocidad verdadera máxima será de:
+a) 100 kt cuando la visibilidad sea igual o superior a 8
+km.
+b) 80 kt cuando la visibilidad sea inferior a 8 km.
+La visibilidad mínima para el vuelo es de 2.500 metros y el techo
+de 1.500 pies, notificados por Córdoba Torre o Escuela Torre
+segúncorresponda.
+La altura mínima de vuelo es de 500 pies sobre el terreno y
+como mínimo 200 pies sobre el obstáculo más alto en un radio
+de 150 metros en la trayectoria ideal del helicorredor.
+La altura máxima es de 1.000 pies sobre el terreno.
+Siempre que sea posible, se evitará el sobrevuelo directo de
+lugares habitados, utilizando el margen derecho del eje
+longitudinal del helicorredor.
+Ante el requerimiento de habilitación de helipuertos para
+operación de helicópteros de clase de performance 2 o 3,
+ubicadosdentro de la Zona Restringida SAR-64, la autoridad de
+aplicación estudiará la posibilidad de establecer helicorredores
+de entrada y salida desde los mismos hasta los helicorredores
+ya establecidos.
+Los helicópteros que adopten un rumbo entre los 000º y los
+179º, volarán a 500 pies de altura, en tanto que los que
+adopten un rumbo entre los 180° y los 359° volarán a 750 pies
+de altura.
+Descripción de los helicorredores, ver gráfico en ENR-6.11
+Cartas En-Ruta - Carta para helicorredores CÓRDOBA.
+be conducted inaccordance with Visual Flight Rules (VFR) and
+during daylight.
+The maximum true speed shall be:
+a) 100 kt when visibility is equal to or greater than 8
+km.
+b) 80 kt when visibility is less than 8 km.
+The minimum visibility for flight is 2,500 meters and the
+ceiling is 1,500 feet, notified by Córdoba Tower or Escuela
+Tower, as appropriate.
+The minimum flight altitude is 500 feet above the ground and
+at least 200 feet above the highest obstacle within a 150-
+meter radiusin the helicopter's intended path.
+The maximum altitude is 1,000 feet above the ground.
+Whenever possible, direct overflights of inhabited areas
+should beavoided, using the right margin of the helicopter
+corridor's longitudinal axis.
+When heliports are required to be certified for the operation
+of performance class 2 or 3 helicopters, located within the
+SAR-64 Restricted Area, the enforcement Authority will study
+the possibility of establishing entry and exit helicopter
+corridors from the heliports to the already established
+helicopter corridors.
+Helicopters adopting a heading between 000º and 179º will
+fly at 500 feet, while helicopters adopting a heading between
+180º and 359º will fly at 750 feet.
+Helicopter corridors description, see chart at ENR-6.11 Cartas
+En-Ruta - Carta para helicorredores CÓRDOBA.
+AIP ARGENTINA ENR 3.3 - 40
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+HELICORREDORES DE CÓRDOBA/
+HELICOPTER CORRIDORS OF CÓRDOBA
+Designador de ruta / Route designator
+Nombre de puntos significativos / Name
+of signficant points
+Coordenadas geográficas / Geographic
+coordinates
+Límite superior /
+Upper limit
+Límite inferior /
+Lower limit
+Calificación del
+espacio aéreo /
+Airspace
+classification
+ATC
+FREQ
+Observaciones / Remarks
+Referencia visual / Visual reference
+HELICORREDOR SUQUÍA
+CHATEAU
+312142S-0641433W
+PALMAR
+312425S-0640726W
+1000 FT
+GND
+Clase D
+CÓRDOBA TWR
+118.30 MHz
+118.55 MHz
+119.45 MHz
+121.50 MHz
+EMERG.
+Desde CHATEAU (Av. Circunvalación y Río
+Primero al norte del Estadio Mario Alberto
+Kempes) sobrevolando el Río Primero
+hasta su intersección con PALMAR (Av.
+Circunvalación y Río Primero).
+From CHATEAU (Av. Circunvalación and Río
+Primero and at north Mario Alberto
+Kempes Stadium) flying over the Río
+Primero to intersection with PALMAR (Av.
+Circunvalación and Río Primero).
+HELICORREDOR CIRCUNVALACIÓN
+NORTE
+CHATEAU
+312142S-0641433W
+FELIPE
+312638S-0640730W
+1000 FT
+GND
+Clase D
+CÓRDOBA TWR
+118.30 MHz
+118.55 MHz
+119.45 MHz
+121.50 MHz
+EMERG.
+Desde CHATEAU (Av. Circunvalación y Río
+Primero al norte del Estadio Mario Alberto
+Kempes) sobrevolando la Av.
+Circunvalación, al Norte de la Ciudad de
+Córdoba, hasta FELIPE (intersección de la
+Av. Circunvalación y Ex. FFCC G.B.M.).
+From CHATEAU (Av. Circunvalación and Río
+Primero and at north Mario Alberto
+Kempes Stadium), flying over Av.
+Circunvalación, north of the City of
+Córdoba, to FELIPE (intersection of Av.
+Circunvalación y Ex. FFCC G.B.M.).
+HELICORREDOR CIRCUNVALACIÓN SUR
+CHATEAU
+312142S-0641433W
+FELIPE
+312638S-0640730W
+1000 FT
+GND
+Clase D
+ESCUELA TWR
+120.60 MHz
+118.50 MHz
+121.50 MHz
+EMERG.
+Desde CHATEAU (Av. Circunvalación y Río
+Primero al norte del Estadio Mario Alberto
+Kempes) sobrevolando la Av.
+Circunvalación, al Sur de la Ciudad de
+Córdoba, hasta FELIPE (intersección de la
+Av. Circunvalación y Ex. FFCC G.B.M.).
+From CHATEAU (Av. Circunvalación and Río
+Primero and at north Mario Alberto
+Kempes Stadium), flying over Av.
+Circunvalación, south of the City of
+Córdoba, to FELIPE (intersection of Av.
+Circunvalación y Ex. FFCC G.B.M.).
+AIP ARGENTINA ENR 3.3 - 41
+ENR 3. RUTAS ATS/ATS ROUTES
+ENR 3.3 OTRAS RUTAS/OTHER ROUTES
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA AIRAC AMDT 1/2024 11 JULIO 2024
+HELICORREDOR SARMIENTO
+JUNIORS
+312520S-0341018W
+1000 FT
+GND
+Clase D
+ESCUELA TWR
+120.60 MHz
+118.50 MHz
+121.50 MHz
+EMERG.
+Desde JUNIORS (intersección Río Primero y
+Calle Bahía Blanca - lateral nudo vial Mitre),
+sobrevolando el Parque Sarmiento, el
+Parque de la Ciudad Universitaria y las vías
+del ferrocarril hasta intersección con Av.
+Circunvalación.
+From JUNIORS (intersection of Río Primero
+and Bahía Blanca St. - road junction Mitre
+side), flying over Parque Sarmiento, Parque
+de la Ciudad Universitaria and the railroad
+tracks to the intersection with Av.
+Circunvalación.
