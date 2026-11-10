@@ -116,7 +116,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             top: 0,
             width: ANCHO,
             height: ALTO,
-            backgroundImage: "linear-gradient(to bottom, rgba(17,17,17,0.9) 0%, rgba(17,17,17,0) 13%, rgba(17,17,17,0) 60%, rgba(17,17,17,0.94) 74%, #111111 100%)",
+            backgroundImage: "linear-gradient(to bottom, rgba(11,13,16,0.9) 0%, rgba(11,13,16,0) 13%, rgba(11,13,16,0) 60%, rgba(11,13,16,0.94) 74%, #0b0d10 100%)",
           }}
         />
 

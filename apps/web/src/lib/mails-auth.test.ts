@@ -15,9 +15,9 @@ describe("los mails de Supabase Auth", () => {
       expect(html.replaceAll(LINK_SUPABASE, "").includes("{{")).toBe(false);
     });
 
-    it(`${nombre}: el logo sale del dominio público y hay asunto`, () => {
+    it(`${nombre}: la marca sale del dominio público y hay asunto`, () => {
       const m = armar(APP);
-      expect(m.html).toContain(`${APP}/hotlink-ok/correo/logo.png`);
+      expect(m.html).toContain(`${APP}/hotlink-ok/correo/marca.png`);
       expect(m.asunto.length).toBeGreaterThan(10);
       expect(m.html).not.toContain("undefined");
     });

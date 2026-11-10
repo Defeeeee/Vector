@@ -1,3 +1,4 @@
+import { MARCA_FLECHA, MARCA_PROPORCION, MARCA_TEXTO, MARCA_VIEWBOX } from "./marca-svg";
 /**
  * Lo que comparten las imágenes que genera Vector con satori: la tarjeta de horas
  * (`/api/share-card`) y la vista previa del perfil público (`/u/[handle]`).
@@ -9,7 +10,8 @@
 
 /** Los tokens de `globals.css`, a mano. Si allá cambian, acá no se enteran. */
 export const COLOR = {
-  fondo: "#111111",
+  /** La noche de la marca (3.15.0; era #111111). */
+  fondo: "#0b0d10",
   texto: "#ffffff",
   tenue: "rgba(255,255,255,0.55)",
   masTenue: "rgba(255,255,255,0.35)",
@@ -70,20 +72,16 @@ export function cargarFuentes(): Promise<FuenteTarjeta[]> {
 }
 
 /**
- * El compás y "Vector". El compás va a mano: lucide dibuja SVG de verdad, pero el
- * soporte de SVG de satori es parcial y este es el único elemento sin plan B.
+ * La marca (3.10.0): la flecha de rumbo en blanco y cian y "vector", en curvas (`lib/marca-svg.ts`).
+ * Polígonos y un path: lo que satori dibuja bien. `tamano` es el alto, como el viejo compás.
  */
 export function MarcaVector({ tamano = 64 }: { tamano?: number }) {
+  const alto = Math.round(tamano * 0.8);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: Math.round(tamano * 0.31) }}>
-      <svg width={tamano} height={tamano} viewBox="0 0 24 24" fill="none">
-        <rect width="24" height="24" rx="7" fill={COLOR.texto} />
-        <circle cx="12" cy="12" r="7" stroke={COLOR.fondo} strokeWidth="1.6" />
-        <polygon points="15.2,8.8 10.6,10.6 8.8,15.2 13.4,13.4" fill={COLOR.fondo} />
-      </svg>
-      <span style={{ fontSize: Math.round(tamano * 0.69), fontWeight: 800, color: COLOR.texto, letterSpacing: -1 }}>
-        Vector
-      </span>
-    </div>
+    <svg width={Math.round(alto * MARCA_PROPORCION)} height={alto} viewBox={MARCA_VIEWBOX}>
+      <polygon points={MARCA_FLECHA[0]} fill={COLOR.texto} />
+      <polygon points={MARCA_FLECHA[1]} fill={COLOR.acento} />
+      <path transform={MARCA_TEXTO.transform} d={MARCA_TEXTO.d} fill={COLOR.texto} />
+    </svg>
   );
 }

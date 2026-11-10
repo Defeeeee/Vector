@@ -136,7 +136,8 @@ export async function GET(req: NextRequest) {
         </div>
 
         {/* Las fichas --------------------------------------------------------- */}
-        <div style={{ display: "flex", gap: 16 }}>
+        {/* Sin cajas (3.15.0): cada cifra con una línea fina arriba, como en el Resumen. */}
+        <div style={{ display: "flex", gap: 40 }}>
           {tiles.map((t) => (
             <div
               key={t.id}
@@ -144,9 +145,8 @@ export async function GET(req: NextRequest) {
                 display: "flex",
                 flexDirection: "column",
                 flex: 1,
-                border: `1px solid ${COLOR.borde}`,
-                borderRadius: 28,
-                padding: "26px 22px",
+                borderTop: `2px solid ${COLOR.borde}`,
+                paddingTop: 22,
               }}
             >
               <span
@@ -160,7 +160,7 @@ export async function GET(req: NextRequest) {
               >
                 {t.label.toUpperCase()}
               </span>
-              <span style={{ fontFamily: "PlexMono", fontSize: 52, color: COLOR.texto }}>
+              <span style={{ fontSize: 64, fontWeight: 800, letterSpacing: -2, color: COLOR.texto }}>
                 {t.value}
               </span>
             </div>

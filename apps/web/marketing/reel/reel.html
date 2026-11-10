@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Reel Vector</title>
+<style>
+  html, body { margin: 0; background: #000; }
+  canvas { display: block; width: 360px; height: 640px; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1440" height="2560"></canvas>
+<script src="carta.js"></script>
+<script>
+/*
+  Reel "De la carta al CAD." — 1440×2560, 30 fps, 28 s.
+  `dibujar(t)` es determinística: cada cuadro depende sólo de t (segundos). `render.mjs` la llama
+  cuadro por cuadro desde Chromium headless y le pasa los PNG a ffmpeg.
+*/
+const W = 1440, H = 2560, DUR = 30;
+const C = {
+  negro: "#0b0b0c", fondo: "#111111", blanco: "#ffffff", cian: "#38bdf8", azul: "#2563eb",
+  tenue: "rgba(255,255,255,0.55)", masTenue: "rgba(255,255,255,0.32)", borde: "rgba(255,255,255,0.10)",
+  verde: "#10b981", ambar: "#fbbf24", magenta: "#c026d3", zinc: "#a1a1aa",
+};
+const SANS = "Jakarta", MONO = "Plex";
+
+// ── Utilidades ─────────────────────────────────────────────────────────────
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const seg = (u, a, b) => clamp((u - a) / (b - a));
+const eOutExpo = (k) => (k >= 1 ? 1 : 1 - Math.pow(2, -10 * k));
+const eOutCubic = (k) => 1 - Math.pow(1 - k, 3);
+const eInOut = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+const eInCubic = (k) => k * k * k;
+const eOutBack = (k) => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+// Un golpe de cámara: escala que salta y vuelve.
+const golpe = (u, at, fuerza = 0.07, decae = 9) => (u < at ? 0 : fuerza * Math.exp(-(u - at) * decae) * Math.cos((u - at) * 22));
+const sacudida = (u, at, px = 26) => {
+  if (u < at || u > at + 0.35) return [0, 0];
+  const k = 1 - (u - at) / 0.35;
+  return [Math.sin(u * 91) * px * k, Math.cos(u * 77) * px * k];
+};
+// Ruido determinístico para el titileo y el grano.
+const hash = (n) => { const s = Math.sin(n * 127.1) * 43758.5453; return s - Math.floor(s); };
+
+function fuente(ctx, tam, peso = 800, fam = SANS) { ctx.font = `${peso} ${tam}px ${fam}`; }
+function texto(ctx, s, x, y, { tam = 100, peso = 800, fam = SANS, color = C.blanco, align = "left", base = "alphabetic", esp = 0, alpha = 1 } = {}) {
+  ctx.save();
+  fuente(ctx, tam, peso, fam);
+  ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = base; ctx.letterSpacing = `${esp}px`;
+  ctx.globalAlpha *= alpha;
+  ctx.fillText(s, x, y);
+  ctx.restore();
+}
+function medir(ctx, s, tam, peso = 800, fam = SANS, esp = 0) {
+  ctx.save(); fuente(ctx, tam, peso, fam); ctx.letterSpacing = `${esp}px`; const w = ctx.measureText(s).width; ctx.restore(); return w;
+}
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+// Una línea de titular que sube desde una máscara, palabra por palabra.
+function titular(ctx, s, x, y, u, t0, { tam = 150, color = C.blanco, align = "left", stagger = 0.06, dur = 0.45, peso = 800, salida = null } = {}) {
+  const palabras = s.split(" ");
+  ctx.save(); fuente(ctx, tam, peso);
+  const anchos = palabras.map((p) => ctx.measureText(p).width);
+  const sp = ctx.measureText(" ").width;
+  const total = anchos.reduce((a, b) => a + b, 0) + sp * (palabras.length - 1);
+  let cx = align === "center" ? x - total / 2 : align === "right" ? x - total : x;
+  ctx.restore();
+  palabras.forEach((p, i) => {
+    const k = eOutExpo(seg(u, t0 + i * stagger, t0 + i * stagger + dur));
+    let ks = 0;
+    if (salida !== null) ks = eInCubic(seg(u, salida + i * 0.03, salida + i * 0.03 + 0.25));
+    if (k > 0 && ks < 1) {
+      ctx.save();
+      ctx.beginPath(); ctx.rect(cx - 20, y - tam * 1.05, anchos[i] + 40, tam * 1.35); ctx.clip();
+      const dy = (1 - k) * tam * 1.1 - ks * tam * 1.1;
+      texto(ctx, p, cx, y + dy, { tam, color, peso });
+      ctx.restore();
+    }
+    cx += anchos[i] + sp;
+  });
+}
+
+// Parte un texto en líneas que entren en `ancho`.
+function partir(ctx, s, tam, ancho) {
+  const lineas = [""];
+  s.split(" ").forEach((p) => {
+    const prueba = lineas[lineas.length - 1] ? `${lineas[lineas.length - 1]} ${p}` : p;
+    if (medir(ctx, prueba, tam, 700) > ancho && lineas[lineas.length - 1]) lineas.push(p);
+    else lineas[lineas.length - 1] = prueba;
+  });
+  return lineas;
+}
+
+// El rótulo mono en mayúsculas ("01 · ANTES").
+function rotulo(ctx, s, x, y, u, t0, { color = C.cian, tam = 40, align = "left" } = {}) {
+  const n = Math.floor(clamp((u - t0) / 0.35) * s.length);
+  if (n <= 0) return;
+  texto(ctx, s.slice(0, n), x, y, { tam, peso: 600, fam: MONO, color, esp: tam * 0.18, align });
+}
+
+function fondoMarca(ctx, u = 0, glow = 1) {
+  ctx.fillStyle = C.fondo; ctx.fillRect(0, 0, W, H);
+  const g = ctx.createRadialGradient(W * 0.88, H * 0.06, 0, W * 0.88, H * 0.06, W * 1.1);
+  g.addColorStop(0, `rgba(56,189,248,${0.22 * glow})`); g.addColorStop(1, "rgba(56,189,248,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+
+// El compás de Vector, dentro del cuadrado redondeado.
+function logo(ctx, cx, cy, lado, { fondo = C.blanco, trazo = C.negro, rot = 0 } = {}) {
+  ctx.save(); ctx.translate(cx, cy);
+  rr(ctx, -lado / 2, -lado / 2, lado, lado, lado * 0.27); ctx.fillStyle = fondo; ctx.fill();
+  ctx.rotate(rot);
+  const r = lado * 0.3;
+  ctx.lineWidth = lado * 0.062; ctx.strokeStyle = trazo; ctx.lineJoin = "round";
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+  const a = r * 0.62;
+  ctx.beginPath();
+  ctx.moveTo(a * 0.71, -a * 0.71); ctx.lineTo(a * 0.3, a * 0.3); ctx.lineTo(-a * 0.71, a * 0.71); ctx.lineTo(-a * 0.3, -a * 0.3); ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ── La carta ───────────────────────────────────────────────────────────────
+// La geometría es la real del Mapa de Vector (carta.js): CTR, ATZ y TMA del AIP y los corredores
+// VFR de la ENR 3.3, a 70 px por NM. Los colores, los de la carta VFR del Mapa: TMA azul, CTR
+// magenta, ATZ rosa, corredores verdes.
+const PXNM = 70;
+const AD = Object.fromEntries(CARTA.ads.map((a) => [a.c, a]));
+const P = { SADF: AD.SADF.p, SADM: AD.SADM.p, SADP: AD.SADP.p };
+const RUTA_NM = 13.64;
+const centroide = (pts) => pts.reduce((a, q) => [a[0] + q[0] / pts.length, a[1] + q[1] / pts.length], [0, 0]);
+const largo = (pts) => pts.reduce((a, q, i) => a + (i ? Math.hypot(q[0] - pts[i - 1][0], q[1] - pts[i - 1][1]) : 0), 0) + Math.hypot(pts[0][0] - pts[pts.length - 1][0], pts[0][1] - pts[pts.length - 1][1]);
+CARTA.esp.forEach((e) => { e.c = centroide(e.p); e.l = largo(e.p); });
+const ESTILO = {
+  TMA: { trazo: "#3b82f6", relleno: "rgba(37,99,235,0.07)", ancho: 5, dash: [] },
+  CTR: { trazo: "#d946ef", relleno: "rgba(192,38,211,0.10)", ancho: 6, dash: [26, 16] },
+  ATZ: { trazo: "#ec4899", relleno: "rgba(219,39,119,0.13)", ancho: 6, dash: [14, 12] },
+};
+const NOMBRES = { "ATZ SAN FERNANDO (I)": "ATZ SAN FERNANDO", "ATZ EL PALOMAR": "ATZ EL PALOMAR", "ATZ MORÓN": "ATZ MORÓN", "CTR AEROPARQUE JORGE NEWBERY": "CTR AEROPARQUE", "ATZ MARIANO MORENO": "ATZ M. MORENO" };
+function poligono(ctx, pts, huecos) {
+  ctx.beginPath();
+  pts.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.closePath();
+  (huecos || []).forEach((h) => { h.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.closePath(); });
+}
+function carta(ctx, cam, u, prog = {}) {
+  const { tma = 1, ctr = 1, atz = 1, corr = 1, ruta = 1, etiquetas = 1 } = prog;
+  ctx.save();
+  ctx.fillStyle = "#0c0e11"; ctx.fillRect(0, 0, W, H);
+  ctx.translate(W / 2, H / 2); ctx.scale(cam.z, cam.z); ctx.translate(-cam.x, -cam.y);
+  // grilla de 5' de latitud y longitud, con sus rótulos
+  const lat0 = -34.565, lon0 = -58.616, kc = Math.cos((lat0 * Math.PI) / 180);
+  ctx.lineWidth = 2 / cam.z; ctx.strokeStyle = "rgba(255,255,255,0.05)";
+  for (let m = -40; m <= 40; m += 5) {
+    const lat = Math.ceil(lat0 * 12) / 12 + m / 60;
+    const y = 1300 - (lat - lat0) * 60 * PXNM;
+    ctx.beginPath(); ctx.moveTo(-3000, y); ctx.lineTo(4400, y); ctx.stroke();
+    const g = Math.floor(-lat), mm = Math.round((-lat - g) * 60);
+    if (etiquetas) texto(ctx, `${g}°${String(mm).padStart(2, "0")}'S`, cam.x - W / 2 / cam.z + 24 / cam.z, y - 10 / cam.z, { tam: 26 / cam.z, peso: 500, fam: MONO, color: "rgba(255,255,255,0.22)" });
+    const lon = Math.ceil(lon0 * 12) / 12 + m / 60;
+    const x = 720 + (lon - lon0) * 60 * kc * PXNM;
+    ctx.beginPath(); ctx.moveTo(x, -3000); ctx.lineTo(x, 5600); ctx.stroke();
+  }
+  // espacios: TMA, CTR y ATZ, en ese orden
+  ["TMA", "CTR", "ATZ"].forEach((tipo) => {
+    const k = tipo === "TMA" ? tma : tipo === "CTR" ? ctr : atz;
+    if (k <= 0) return;
+    const es = ESTILO[tipo];
+    CARTA.esp.filter((e) => e.t === tipo).forEach((e) => {
+      ctx.save();
+      poligono(ctx, e.p, e.h);
+      ctx.globalAlpha = k; ctx.fillStyle = e.n.endsWith("(I)") && tipo === "TMA" ? "rgba(37,99,235,0.11)" : es.relleno; ctx.fill("evenodd");
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = es.ancho / Math.max(0.6, cam.z); ctx.strokeStyle = es.trazo; ctx.lineJoin = "round";
+      if (k < 1) { ctx.setLineDash([e.l * k, e.l]); } else ctx.setLineDash(es.dash);
+      poligono(ctx, e.p); ctx.stroke();
+      ctx.restore();
+      if (etiquetas && NOMBRES[e.n] && k > 0.5) {
+        const [cx, cy] = e.c;
+        texto(ctx, NOMBRES[e.n], cx, cy + (e.n.includes("FERNANDO") ? -40 : e.n.includes("AEROPARQUE") ? -150 : 70), { tam: 30 / Math.max(0.7, cam.z), peso: 600, fam: MONO, color: es.trazo, align: "center", esp: 4, alpha: (k - 0.5) * 2 });
+      }
+    });
+  });
+  // corredores VFR: bandas verdes, clase G
+  if (corr > 0) {
+    CARTA.corr.forEach((c, i) => {
+      const k = clamp(corr * 1.6 - i * 0.06);
+      if (k <= 0) return;
+      ctx.save(); ctx.globalAlpha = k;
+      poligono(ctx, c.p); ctx.fillStyle = "rgba(16,185,129,0.30)"; ctx.fill();
+      ctx.lineWidth = 3 / Math.max(0.6, cam.z); ctx.strokeStyle = "#10b981"; ctx.stroke();
+      ctx.restore();
+    });
+    CARTA.sect.forEach((sc) => {
+      ctx.save(); ctx.globalAlpha = corr;
+      poligono(ctx, sc.p); ctx.fillStyle = "rgba(16,185,129,0.14)"; ctx.fill();
+      ctx.setLineDash([16, 10]); ctx.lineWidth = 3 / Math.max(0.6, cam.z); ctx.strokeStyle = "#059669"; ctx.stroke();
+      ctx.restore();
+    });
+  }
+  // ruta
+  if (ruta > 0) {
+    ctx.save();
+    const [a, b] = [P.SADF, P.SADM];
+    const x = lerp(a[0], b[0], ruta), y = lerp(a[1], b[1], ruta);
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(255,255,255,0.95)"; ctx.lineWidth = 22; ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(x, y); ctx.stroke();
+    ctx.strokeStyle = C.cian; ctx.lineWidth = 11; ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(x, y); ctx.stroke();
+    ctx.restore();
+  }
+  // aeródromos
+  CARTA.ads.forEach((a) => {
+    const prin = a.c === "SADF" || a.c === "SADM" || a.c === "SADP";
+    if (!/^SA/.test(a.c) && !prin) return;
+    ctx.save();
+    ctx.fillStyle = prin ? C.blanco : "#71717a";
+    ctx.beginPath(); ctx.arc(a.p[0], a.p[1], prin ? 16 : 9, 0, Math.PI * 2); ctx.fill();
+    if (prin && a.c !== "SADP") { ctx.strokeStyle = C.cian; ctx.lineWidth = 7; ctx.stroke(); }
+    if (etiquetas) {
+      texto(ctx, a.c, a.p[0] + 30, a.p[1] + 12, { tam: prin ? 46 : 30, peso: 600, fam: MONO, color: prin ? C.blanco : "#a1a1aa", esp: 3 });
+      if (prin) texto(ctx, a.n, a.p[0] + 32, a.p[1] + 56, { tam: 32, peso: 600, color: C.tenue });
+    }
+    ctx.restore();
+  });
+  if (ruta >= 1 && etiquetas) {
+    const m = [(P.SADF[0] + P.SADM[0]) / 2, (P.SADF[1] + P.SADM[1]) / 2];
+    ctx.save(); ctx.translate(m[0] - 130, m[1] - 120);
+    rr(ctx, -130, -36, 260, 72, 36); ctx.fillStyle = "#0b0b0c"; ctx.fill(); ctx.strokeStyle = C.cian; ctx.lineWidth = 4; ctx.stroke();
+    texto(ctx, "13,7 NM", 0, 14, { tam: 38, peso: 600, fam: MONO, color: C.cian, align: "center", esp: 2 });
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// El velo de arriba de la carta, para que los títulos se lean.
+function velo(ctx) {
+  const g = ctx.createLinearGradient(0, 0, 0, 1050);
+  g.addColorStop(0, "rgba(11,11,12,0.98)"); g.addColorStop(0.62, "rgba(11,11,12,0.92)"); g.addColorStop(1, "rgba(11,11,12,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, 1050);
+}
+
+// ── Escenas ────────────────────────────────────────────────────────────────
+function escLogo(ctx, u) {
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+  const k = seg(u, 0.05, 0.5);
+  const s = lerp(3.2, 1, eOutBack(k));
+  const rot = lerp(-2.2, 0, eOutExpo(k));
+  // estela
+  for (let i = 4; i >= 1; i--) {
+    const kk = seg(u - i * 0.025, 0.05, 0.5);
+    if (kk <= 0 || kk >= 1) continue;
+    ctx.save(); ctx.globalAlpha = 0.12;
+    logo(ctx, W / 2, H / 2 - 120, 360 * lerp(3.2, 1, eOutBack(kk)), { rot: lerp(-2.2, 0, eOutExpo(kk)) });
+    ctx.restore();
+  }
+  if (k > 0) logo(ctx, W / 2, H / 2 - 120, 360 * s, { rot });
+  // anillo
+  const ka = seg(u, 0.45, 0.95);
+  if (ka > 0 && ka < 1) {
+    ctx.save(); ctx.strokeStyle = C.cian; ctx.globalAlpha = 1 - ka; ctx.lineWidth = 14 * (1 - ka) + 2;
+    ctx.beginPath(); ctx.arc(W / 2, H / 2 - 120, 220 + eOutCubic(ka) * 700, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  }
+  const n = Math.floor(seg(u, 0.5, 0.85) * 6);
+  texto(ctx, "VECTOR".slice(0, n), W / 2, H / 2 + 230, { tam: 88, peso: 600, fam: MONO, color: C.blanco, align: "center", esp: 36 });
+}
+
+function escTitulo(ctx, u) {
+  fondoMarca(ctx);
+  // la carta, lejos y tenue
+  ctx.save(); ctx.globalAlpha = 0.28;
+  carta(ctx, { x: 700 + u * 60, y: 1300, z: 0.55 }, u, { etiquetas: 0 });
+  ctx.restore();
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "rgba(17,17,17,0.2)"); g.addColorStop(0.55, "rgba(17,17,17,0.85)"); g.addColorStop(1, "rgba(17,17,17,1)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const z = 1 + golpe(u, 0.08) + golpe(u, 0.42) + golpe(u, 0.8, 0.09);
+  const [sx, sy] = sacudida(u, 0.8, 30);
+  ctx.save(); ctx.translate(W / 2 + sx, H / 2 + sy); ctx.scale(z, z); ctx.translate(-W / 2, -H / 2);
+  const x = 110;
+  const palabra = (s, y, t0, tam, color) => {
+    const k = seg(u, t0, t0 + 0.22);
+    if (k <= 0) return;
+    const e = eOutExpo(k);
+    ctx.save(); ctx.translate(x, y); ctx.scale(lerp(1.7, 1, e), lerp(1.7, 1, e)); ctx.globalAlpha = clamp(k * 3);
+    texto(ctx, s, 0, 0, { tam, color, esp: -tam * 0.04 });
+    ctx.restore();
+  };
+  palabra("De la", 1180, 0.08, 230, C.blanco);
+  palabra("carta", 1480, 0.42, 330, C.blanco);
+  palabra("al CAD.", 1800, 0.8, 330, C.cian);
+  ctx.restore();
+  // bajada
+  const kb = seg(u, 1.3, 1.7);
+  if (kb > 0) {
+    ctx.save(); ctx.fillStyle = C.cian; ctx.fillRect(x, 1930, 520 * eOutExpo(kb), 8); ctx.restore();
+  }
+  rotulo(ctx, "HECHO PARA VOLAR EN ARGENTINA", x, 2050, u, 1.4, { color: C.blanco, tam: 44 });
+}
+
+// La palabra gigante de cada parte del vuelo, que cruza la pantalla.
+function cortinaParte(ctx, u, palabra, color = C.cian) {
+  if (u > 0.75) return;
+  const k = seg(u, 0, 0.75);
+  ctx.save();
+  ctx.fillStyle = `rgba(0,0,0,${0.75 * (1 - seg(u, 0.5, 0.75))})`; ctx.fillRect(0, 0, W, H);
+  const xin = lerp(W * 1.1, W / 2, eOutExpo(seg(k, 0, 0.35)));
+  const xout = lerp(0, -W * 1.4, eInCubic(seg(k, 0.6, 1)));
+  ctx.translate(xin + xout, H / 2 + 120);
+  ctx.transform(1, 0, -0.18, 1, 0, 0);
+  texto(ctx, palabra, 0, 0, { tam: 330, color, align: "center", esp: -14 });
+  ctx.restore();
+}
+
+function escAntesMapa(ctx, u) {
+  const cam = { x: lerp(880, 820, eInOut(seg(u, 0.3, 4.0))), y: lerp(1060, 1000, eInOut(seg(u, 0.3, 4.0))), z: lerp(0.7, 0.92, eInOut(seg(u, 0.3, 4.0))) + golpe(u, 0.75, 0.04) + golpe(u, 2.45, 0.04) };
+  carta(ctx, cam, u, {
+    tma: eOutCubic(seg(u, 0.5, 1.2)), ctr: eOutCubic(seg(u, 0.65, 1.3)), atz: eOutCubic(seg(u, 0.8, 1.45)),
+    corr: eOutCubic(seg(u, 1.2, 1.9)), ruta: eInOut(seg(u, 2.5, 3.2)),
+  });
+  // velo de arriba para el texto
+  velo(ctx);
+  rotulo(ctx, "01 · ANTES", 110, 260, u, 0.6);
+  const t1 = 0.75, t2 = 2.45;
+  titular(ctx, "Espacios aéreos del AIP", 110, 440, u, t1, { tam: 112, salida: t2 - 0.15 });
+  titular(ctx, "y corredores VFR.", 110, 580, u, t1 + 0.1, { tam: 112, color: "#34d399", salida: t2 - 0.15 });
+  titular(ctx, "Tu ruta,", 110, 440, u, t2, { tam: 132 });
+  titular(ctx, "sobre la carta.", 110, 590, u, t2 + 0.08, { tam: 132, color: C.cian });
+  cortinaParte(ctx, u, "ANTES");
+}
+
+function escAntesPlan(ctx, u) {
+  fondoMarca(ctx);
+  rotulo(ctx, "01 · ANTES", 110, 260, 1, 0);
+  titular(ctx, "Plan de vuelo,", 110, 440, u, 0.05, { tam: 132 });
+  titular(ctx, "listo para EANA.", 110, 590, u, 0.15, { tam: 132, color: C.cian });
+  // la planilla
+  const x0 = 110, y0 = 760, w = W - 220, h = 1180;
+  const kc = eOutExpo(seg(u, 0.05, 0.45));
+  ctx.save(); ctx.translate(0, (1 - kc) * 300); ctx.globalAlpha = kc;
+  rr(ctx, x0, y0, w, h, 64); ctx.fillStyle = "#18181b"; ctx.fill(); ctx.strokeStyle = C.borde; ctx.lineWidth = 3; ctx.stroke();
+  texto(ctx, "FPL · VFR", x0 + 70, y0 + 120, { tam: 44, peso: 600, fam: MONO, color: C.tenue, esp: 8 });
+  ctx.restore();
+  const campos = [
+    ["7 · AERONAVE", "LVABC"], ["8 · REGLAS", "V · G"],
+    ["13 · SALIDA", "SADF"], ["13 · HORA UTC", "1815"],
+    ["15 · RUTA", "DCT"], ["16 · DESTINO", "SADM"],
+    ["16 · EET", "0006"], ["19 · AUTONOMÍA", "0300"],
+  ];
+  campos.forEach(([et, val], i) => {
+    const col = i % 2, fila = Math.floor(i / 2);
+    const cx = x0 + 70 + col * (w / 2 - 20), cy = y0 + 210 + fila * 230;
+    const k = eOutExpo(seg(u, 0.25 + i * 0.06, 0.6 + i * 0.06));
+    if (k <= 0) return;
+    const dx = (hash(i + 3) - 0.5) * 900 * (1 - k), dy = (hash(i + 9) - 0.5) * 700 * (1 - k);
+    ctx.save(); ctx.translate(dx, dy); ctx.globalAlpha = clamp(k * 2);
+    rr(ctx, cx, cy, w / 2 - 110, 190, 28); ctx.fillStyle = "#0f0f11"; ctx.fill(); ctx.strokeStyle = C.borde; ctx.lineWidth = 3; ctx.stroke();
+    texto(ctx, et, cx + 34, cy + 62, { tam: 32, peso: 600, fam: MONO, color: C.zinc, esp: 3 });
+    texto(ctx, val, cx + 34, cy + 150, { tam: 76, peso: 600, fam: MONO, color: C.blanco, esp: 4 });
+    ctx.restore();
+  });
+  // el sello
+  const ks = seg(u, 0.85, 1.1);
+  if (ks > 0) {
+    const e = eOutExpo(ks);
+    ctx.save(); ctx.translate(W / 2 + 120, y0 + h - 40); ctx.rotate(lerp(-0.6, -0.12, e)); ctx.scale(lerp(2.4, 1, e), lerp(2.4, 1, e));
+    ctx.globalAlpha = clamp(ks * 3);
+    rr(ctx, -380, -110, 760, 220, 40); ctx.fillStyle = C.cian; ctx.fill();
+    texto(ctx, "ENVIADO ✓", 0, 38, { tam: 110, color: "#082f49", align: "center", esp: 4 });
+    ctx.restore();
+  }
+  const [sx, sy] = sacudida(u, 0.92, 22);
+  if (sx) { ctx.save(); ctx.globalAlpha = 0.15; ctx.fillStyle = C.cian; ctx.fillRect(0, 0, W, H); ctx.restore(); }
+  titular(ctx, "A la oficina ARO, desde Vector.", W / 2, 2200, u, 1.0, { tam: 70, peso: 700, color: C.tenue, align: "center", stagger: 0.03 });
+}
+
+function flap(ctx, s, x, y, u, t0, tam, color) {
+  // tablero de aeropuerto: cada letra gira con un pequeño retraso
+  const letras = s.split("");
+  let cx = x;
+  letras.forEach((ch, i) => {
+    const k = seg(u, t0 + i * 0.025, t0 + i * 0.025 + 0.18);
+    const w = medir(ctx, ch, tam, 600, MONO);
+    ctx.save();
+    ctx.translate(cx + w / 2, y - tam * 0.35);
+    ctx.scale(1, Math.abs(Math.cos(k * Math.PI)) * 0.9 + 0.1 * (k >= 1 ? 1 : 0) + (k >= 1 ? 0.0 : 0));
+    ctx.restore();
+    const sc = k >= 1 || k <= 0 ? 1 : Math.abs(Math.cos(k * Math.PI));
+    ctx.save(); ctx.translate(cx, y - tam * 0.35); ctx.scale(1, sc); ctx.translate(-cx, -(y - tam * 0.35));
+    texto(ctx, ch, cx, y, { tam, peso: 600, fam: MONO, color });
+    ctx.restore();
+    cx += w;
+  });
+}
+
+// Lo que calcula el Mapa para SADF → SADM: hasta 5,13 NM la ATZ San Fernando, de ahí la ATZ El
+// Palomar y desde los 11,0 NM la de Morón (cruces medidos con la geometría de carta.js).
+const DEPENDENCIAS = [
+  { desde: 0, nombre: "Fernando Torre", mhz: "119.00", espacio: "ATZ San Fernando" },
+  { desde: 5.13, nombre: "El Palomar Torre", mhz: "120.30", espacio: "ATZ El Palomar" },
+  { desde: 11.0, nombre: "Morón Torre", mhz: "118.50", espacio: "ATZ Morón" },
+];
+// Las millas recorridas en función del tiempo de la escena: lento al principio, rápido en el medio.
+const MILLAS = [[0, 4.0], [2.4, 5.3], [4.25, 11.15], [5.0, 12.2]];
+function millas(u) {
+  for (let i = 1; i < MILLAS.length; i++) {
+    if (u <= MILLAS[i][0]) { const [a, b] = [MILLAS[i - 1], MILLAS[i]]; return lerp(a[1], b[1], eInOut((u - a[0]) / (b[0] - a[0]))); }
+  }
+  return MILLAS[MILLAS.length - 1][1];
+}
+const CAMBIOS = DEPENDENCIAS.slice(1).map((d) => { let u = 0; while (millas(u) < d.desde && u < 5) u += 0.005; return u; });
+
+function escDurante(ctx, u) {
+  const d = 5.0;
+  const nm = millas(u);
+  const p = nm / RUTA_NM;
+  const pos = [lerp(P.SADF[0], P.SADM[0], p), lerp(P.SADF[1], P.SADM[1], p)];
+  const cam = { x: pos[0] + 40, y: pos[1] + 180, z: 1.25 + golpe(u, 0.75, 0.04) + CAMBIOS.reduce((a, c) => a + golpe(u, c, 0.05), 0) };
+  carta(ctx, cam, u, {});
+  // el avión, en coordenadas de pantalla
+  const sx = W / 2 + (pos[0] - cam.x) * cam.z, sy = H / 2 + (pos[1] - cam.y) * cam.z;
+  const ang = Math.atan2(P.SADM[1] - P.SADF[1], P.SADM[0] - P.SADF[0]) + Math.PI / 2;
+  ctx.save(); ctx.translate(sx, sy);
+  ctx.fillStyle = "rgba(56,189,248,0.18)"; ctx.beginPath(); ctx.arc(0, 0, 100 + Math.sin(u * 6) * 10, 0, Math.PI * 2); ctx.fill();
+  ctx.rotate(ang);
+  ctx.beginPath(); ctx.moveTo(0, -64); ctx.lineTo(46, 50); ctx.lineTo(0, 28); ctx.lineTo(-46, 50); ctx.closePath();
+  ctx.fillStyle = C.cian; ctx.fill(); ctx.strokeStyle = C.blanco; ctx.lineWidth = 9; ctx.lineJoin = "round"; ctx.stroke();
+  ctx.restore();
+  velo(ctx);
+  rotulo(ctx, "02 · DURANTE", 110, 260, u, 0.6);
+  titular(ctx, "Próximo punto.", 110, 440, u, 0.75, { tam: 132, salida: CAMBIOS[0] - 0.2 });
+  titular(ctx, "Y con quién", 110, 440, u, CAMBIOS[0] - 0.05, { tam: 132 });
+  titular(ctx, "hablás.", 110, 590, u, CAMBIOS[0] + 0.03, { tam: 132, color: C.cian });
+  // la hoja de abajo
+  const kh = eOutExpo(seg(u, 0.5, 1.0));
+  const y0 = lerp(H, 1360, kh);
+  ctx.save();
+  rr(ctx, 0, y0, W, H - y0 + 80, [80, 80, 0, 0]); ctx.fillStyle = "rgba(11,11,12,0.97)"; ctx.fill();
+  ctx.strokeStyle = C.borde; ctx.lineWidth = 3; ctx.stroke();
+  rr(ctx, W / 2 - 70, y0 + 30, 140, 16, 8); ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.fill();
+  texto(ctx, "PRÓXIMO PUNTO · 2 DE 2", 90, y0 + 150, { tam: 40, peso: 600, fam: MONO, color: C.zinc, esp: 5 });
+  texto(ctx, "SADM", 90, y0 + 290, { tam: 120, peso: 600, fam: MONO, color: C.blanco, esp: 4 });
+  texto(ctx, "Morón", 470, y0 + 290, { tam: 70, peso: 700, color: C.tenue });
+  const dist = RUTA_NM - nm;
+  const tiempo = Math.max(1, Math.round((dist / 90) * 60));
+  const tiles = [["DISTANCIA", dist.toFixed(1).replace(".", ","), "NM"], ["RUMBO", "201", "°M"], ["TIEMPO", String(tiempo), "min"]];
+  const tw = (W - 180 - 60) / 3;
+  tiles.forEach(([et, v, un], i) => {
+    const x = 90 + i * (tw + 30), y = y0 + 360;
+    rr(ctx, x, y, tw, 240, 40); ctx.fillStyle = "#18181b"; ctx.fill();
+    texto(ctx, et, x + tw / 2, y + 70, { tam: 34, peso: 600, fam: MONO, color: C.zinc, align: "center", esp: 4 });
+    const wv = medir(ctx, v, 104, 600, MONO), wu = medir(ctx, un, 40, 600, MONO);
+    texto(ctx, v, x + tw / 2 - (wv + wu + 10) / 2, y + 185, { tam: 104, peso: 600, fam: MONO });
+    texto(ctx, un, x + tw / 2 - (wv + wu + 10) / 2 + wv + 10, y + 185, { tam: 40, peso: 600, fam: MONO, color: C.zinc });
+  });
+  // con quién hablás: cambia cuando el avión entra a otra ATZ
+  const yb = y0 + 660;
+  const idx = CAMBIOS.filter((c) => u >= c).length;
+  const dep = DEPENDENCIAS[idx];
+  const desde = idx ? CAMBIOS[idx - 1] : -9;
+  const prox = idx < CAMBIOS.length ? CAMBIOS[idx] : 99;
+  const destello = clamp(1 - Math.abs(u - desde) / 0.25);
+  rr(ctx, 90, yb, W - 180, 330, 44); ctx.fillStyle = `rgba(37,99,235,${0.16 + 0.25 * destello})`; ctx.fill();
+  ctx.strokeStyle = `rgba(56,189,248,${0.35 + 0.6 * destello})`; ctx.lineWidth = 4; ctx.stroke();
+  texto(ctx, "((·)) HABLÁS CON", 150, yb + 85, { tam: 38, peso: 600, fam: MONO, color: C.cian, esp: 5 });
+  const sc = Math.min(seg(u, desde, desde + 0.15), 1 - seg(u, prox - 0.15, prox));
+  ctx.save(); ctx.translate(0, yb + 190); ctx.scale(1, Math.max(0.02, idx === 0 ? 1 - seg(u, prox - 0.15, prox) : sc)); ctx.translate(0, -(yb + 190));
+  texto(ctx, dep.nombre, 150, yb + 210, { tam: 88, color: C.blanco });
+  ctx.restore();
+  flap(ctx, dep.mhz, W - 150 - medir(ctx, dep.mhz, 104, 600, MONO), yb + 210, idx === 0 ? 9 : u, desde, 104, idx === 0 ? C.blanco : C.cian);
+  texto(ctx, dep.espacio, 150, yb + 280, { tam: 44, peso: 600, color: "rgba(147,197,253,0.9)" });
+  ctx.restore();
+  cortinaParte(ctx, u, "DURANTE");
+}
+
+function escDespuesReg(ctx, u) {
+  fondoMarca(ctx);
+  rotulo(ctx, "03 · DESPUÉS", 110, 260, u, 0.5);
+  titular(ctx, "Registrá", 110, 440, u, 0.6, { tam: 150 });
+  titular(ctx, "en segundos.", 110, 610, u, 0.68, { tam: 150, color: C.cian });
+  const y = 900, cw = (W - 220 - 40) / 2;
+  const kin = eOutExpo(seg(u, 0.45, 0.8));
+  ctx.save(); ctx.translate(0, (1 - kin) * 200); ctx.globalAlpha = kin;
+  [["Salida (UTC)", "13:05", true], ["Llegada (UTC)", u > 1.05 ? "14:17" : "--:--", u > 1.05]].forEach(([et, v, lleno], i) => {
+    const x = 110 + i * (cw + 40);
+    rr(ctx, x, y, cw, 560, 52); ctx.fillStyle = "#18181b"; ctx.fill(); ctx.strokeStyle = C.borde; ctx.lineWidth = 3; ctx.stroke();
+    texto(ctx, et, x + 50, y + 90, { tam: 44, peso: 700, color: C.zinc });
+    const kv = i === 1 ? seg(u, 1.05, 1.2) : 1;
+    ctx.save(); ctx.translate(x + 50, y + 290); ctx.scale(1, i === 1 && u > 1.05 ? eOutBack(kv) : 1);
+    texto(ctx, v, 0, 0, { tam: 150, peso: 600, fam: MONO, color: lleno ? C.blanco : "#3f3f46" });
+    ctx.restore();
+    // botón "Ahora"
+    const bx = x + 50, by = y + 400, bw = 250, bh = 110;
+    const press = i === 1 ? clamp(1 - Math.abs(u - 0.98) / 0.08) : 0;
+    ctx.save(); ctx.translate(bx + bw / 2, by + bh / 2); ctx.scale(1 - press * 0.1, 1 - press * 0.1);
+    rr(ctx, -bw / 2, -bh / 2, bw, bh, 48); ctx.fillStyle = press > 0 ? C.azul : "#27272a"; ctx.fill();
+    texto(ctx, "Ahora", 0, 16, { tam: 44, peso: 800, align: "center", color: C.blanco });
+    ctx.restore();
+    if (i === 1) {
+      const kr = seg(u, 0.98, 1.4);
+      if (kr > 0 && kr < 1) { ctx.save(); ctx.globalAlpha = 1 - kr; ctx.strokeStyle = C.cian; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(bx + bw / 2, by + bh / 2, 60 + kr * 320, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+    }
+  });
+  ctx.restore();
+  // aterrizajes
+  const ka = eOutExpo(seg(u, 0.6, 0.95));
+  ctx.save(); ctx.globalAlpha = ka; ctx.translate(0, (1 - ka) * 160);
+  rr(ctx, 110, 1560, W - 220, 220, 48); ctx.fillStyle = "#18181b"; ctx.fill(); ctx.strokeStyle = C.borde; ctx.lineWidth = 3; ctx.stroke();
+  texto(ctx, "Aterrizajes", 170, 1695, { tam: 64, peso: 800 });
+  const n = u > 1.3 ? 3 : u > 1.2 ? 2 : 1;
+  texto(ctx, String(n), W - 330, 1700, { tam: 96, peso: 600, fam: MONO, align: "center" });
+  [["−", W - 500], ["+", W - 220]].forEach(([s, x], j) => {
+    rr(ctx, x - 70, 1610, 140, 120, 30); ctx.fillStyle = j === 1 && u > 1.15 && u < 1.4 && Math.floor(u * 10) % 2 === 0 ? C.azul : "#27272a"; ctx.fill();
+    texto(ctx, s, x, 1695, { tam: 80, peso: 800, align: "center" });
+  });
+  ctx.restore();
+  // barra de guardar
+  const kg = eOutExpo(seg(u, 0.7, 1.0));
+  const yb = lerp(H, 2160, kg);
+  ctx.fillStyle = "#0b0b0c"; ctx.fillRect(0, yb, W, H - yb); ctx.fillStyle = C.borde; ctx.fillRect(0, yb, W, 3);
+  texto(ctx, "Tiempo de vuelo", 110, yb + 110, { tam: 44, peso: 700, color: C.zinc });
+  const total = lerp(0, 1.2, eOutCubic(seg(u, 1.05, 1.5)));
+  texto(ctx, total > 0 ? `${total.toFixed(1).replace(".", ",")} h` : "— h", 110, yb + 250, { tam: 120, peso: 600, fam: MONO });
+  const pulso = 1 + 0.06 * Math.max(0, Math.sin((u - 1.5) * 12)) * (u > 1.5 ? 1 : 0);
+  ctx.save(); ctx.translate(W - 370, yb + 175); ctx.scale(pulso, pulso);
+  rr(ctx, -260, -90, 520, 180, 90); ctx.fillStyle = C.azul; ctx.fill();
+  ctx.shadowColor = "rgba(37,99,235,0.6)"; ctx.shadowBlur = 60;
+  texto(ctx, "Guardar", 0, 28, { tam: 80, peso: 800, align: "center" });
+  ctx.restore();
+  cortinaParte(ctx, u, "DESPUÉS");
+}
+
+function escDespuesCad(ctx, u) {
+  fondoMarca(ctx);
+  rotulo(ctx, "03 · DESPUÉS", 110, 260, 1, 0);
+  titular(ctx, "Al CAD", 110, 440, u, 0.05, { tam: 150 });
+  titular(ctx, "de ANAC.", 110, 610, u, 0.13, { tam: 150, color: C.cian });
+  // la caja del CAD
+  const bx = W / 2 - 300, by = 1680, bw = 600, bh = 420;
+  const kb = eOutExpo(seg(u, 0.1, 0.4));
+  const cuenta = Math.round(lerp(59, 0, eInOut(seg(u, 0.5, 1.6))));
+  const listo = cuenta === 0;
+  ctx.save(); ctx.globalAlpha = kb;
+  const gb = 1 + golpe(u, 1.6, 0.08);
+  ctx.translate(bx + bw / 2, by + bh / 2); ctx.scale(gb, gb); ctx.translate(-(bx + bw / 2), -(by + bh / 2));
+  rr(ctx, bx, by, bw, bh, 60); ctx.fillStyle = "#18181b"; ctx.fill(); ctx.strokeStyle = listo ? C.verde : C.borde; ctx.lineWidth = 6; ctx.stroke();
+  texto(ctx, "CAD · ANAC", bx + bw / 2, by + 120, { tam: 52, peso: 600, fam: MONO, color: C.zinc, align: "center", esp: 8 });
+  rr(ctx, bx + bw / 2 - 150, by + 180, 300, 170, 85); ctx.fillStyle = listo ? C.verde : C.ambar; ctx.fill();
+  texto(ctx, listo ? "✓" : String(cuenta), bx + bw / 2, by + 300, { tam: 120, peso: 600, fam: MONO, color: listo ? C.blanco : "#18181b", align: "center" });
+  ctx.restore();
+  // filas que entran a la caja
+  const filas = [["24", "sáb", "SADF → SADF", "0,8"], ["09", "jue", "SADF → SADM", "1,0"], ["02", "vie", "LAD2013 → SADF", "1,4"], ["30", "mié", "SADF → SAZS", "2,3"], ["25", "vie", "SADF → SAZS", "2,3"]];
+  filas.forEach(([dia, sem, ruta, h], i) => {
+    const t0 = 0.3 + i * 0.22;
+    const k = seg(u, t0, t0 + 0.55);
+    if (k >= 1) return;
+    const y = 760 + i * 190;
+    const ent = eOutExpo(seg(u, t0 - 0.25, t0));
+    const x = lerp(-W, 110, ent);
+    const kk = eInCubic(k);
+    const tx = lerp(x, bx + bw / 2 - 600, kk), ty = lerp(y, by + bh / 2 - 85, kk), sc = lerp(1, 0.2, kk);
+    ctx.save(); ctx.translate(tx, ty); ctx.scale(sc, sc); ctx.globalAlpha = 1 - seg(k, 0.85, 1);
+    rr(ctx, 0, 0, W - 220, 170, 36); ctx.fillStyle = "#18181b"; ctx.fill(); ctx.strokeStyle = C.borde; ctx.lineWidth = 3; ctx.stroke();
+    texto(ctx, dia, 90, 90, { tam: 70, peso: 600, fam: MONO, align: "center" });
+    texto(ctx, sem, 90, 140, { tam: 34, peso: 700, color: C.zinc, align: "center" });
+    texto(ctx, ruta, 200, 105, { tam: 60, peso: 600, fam: MONO });
+    texto(ctx, h, W - 280, 105, { tam: 64, peso: 600, fam: MONO, align: "right" });
+    ctx.restore();
+  });
+  titular(ctx, "Vector nunca ve", W / 2, 2290, u, 1.05, { tam: 84, peso: 800, color: C.blanco, align: "center", stagger: 0.03 });
+  titular(ctx, "tu contraseña de ANAC.", W / 2, 2395, u, 1.13, { tam: 84, peso: 800, color: C.cian, align: "center", stagger: 0.03 });
+}
+
+function escCopiloto(ctx, u) {
+  fondoMarca(ctx);
+  // líneas de velocidad
+  ctx.save(); ctx.strokeStyle = "rgba(56,189,248,0.12)"; ctx.lineWidth = 4;
+  for (let i = 0; i < 26; i++) {
+    const y = hash(i) * H, l = 200 + hash(i + 50) * 600, v = 2600 + hash(i + 7) * 1800;
+    const x = ((hash(i + 3) * W * 2 + u * v) % (W + l * 2)) - l;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + l, y); ctx.stroke();
+  }
+  ctx.restore();
+  rotulo(ctx, "COPILOTO", 110, 260, u, 0.05);
+  titular(ctx, "Preguntale.", 110, 440, u, 0.1, { tam: 150 });
+  titular(ctx, "Al instante.", 110, 610, u, 0.22, { tam: 150, color: C.cian });
+  // la barra
+  const kb = eOutExpo(seg(u, 0.05, 0.35));
+  const bw = lerp(300, W - 220, kb);
+  const by = 800;
+  rr(ctx, W / 2 - bw / 2, by, bw, 190, 95); ctx.fillStyle = "#18181b"; ctx.fill(); ctx.strokeStyle = "rgba(56,189,248,0.5)"; ctx.lineWidth = 4; ctx.stroke();
+  const preg = "¿Cuánto me queda del pack?";
+  const n = Math.floor(seg(u, 0.3, 0.8) * preg.length);
+  if (kb > 0.9) {
+    ctx.save(); ctx.strokeStyle = C.zinc; ctx.lineWidth = 9; ctx.beginPath(); ctx.arc(200, by + 88, 32, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(224, by + 112); ctx.lineTo(252, by + 140); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.rect(270, by, W - 600, 190); ctx.clip();
+    texto(ctx, preg.slice(0, n) + (Math.floor(u * 4) % 2 && n < preg.length ? "|" : ""), 290, by + 116, { tam: 62, peso: 700 });
+    ctx.restore();
+    rr(ctx, W - 300, by + 55, 150, 80, 22); ctx.fillStyle = "#27272a"; ctx.fill();
+    texto(ctx, "⌘K", W - 225, by + 112, { tam: 44, peso: 600, fam: MONO, color: C.zinc, align: "center" });
+  }
+  // estado
+  const ke = seg(u, 0.82, 0.9) * (1 - seg(u, 1.05, 1.12));
+  if (ke > 0) {
+    ctx.save(); ctx.globalAlpha = ke; ctx.translate(170, 1140);
+    ctx.strokeStyle = C.cian; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(0, -18, 26, u * 12, u * 12 + 4.5); ctx.stroke();
+    texto(ctx, "Leyendo tu bitácora…", 60, 0, { tam: 56, peso: 600, color: C.tenue });
+    ctx.restore();
+  }
+  // respuesta de a pedazos
+  const resp = ["Te", "quedan", "6,5 h", "de", "tu", "pack", "de", "10 h."];
+  const visibles = Math.floor(seg(u, 1.1, 1.5) * resp.length + 0.001);
+  if (u > 1.1) {
+    rr(ctx, 110, 1080, W - 220, 560, 56); ctx.fillStyle = "#18181b"; ctx.fill(); ctx.strokeStyle = C.borde; ctx.lineWidth = 3; ctx.stroke();
+    let x = 180, y = 1250;
+    resp.slice(0, visibles).forEach((p) => {
+      const w = medir(ctx, p, 92);
+      if (x + w > W - 180) { x = 180; y += 120; }
+      texto(ctx, p, x, y, { tam: 92, color: p.includes("h") ? C.cian : C.blanco });
+      x += w + medir(ctx, " ", 92);
+    });
+    const kp = eOutExpo(seg(u, 1.5, 1.85));
+    if (kp > 0) {
+      rr(ctx, 180, 1500, W - 360, 30, 15); ctx.fillStyle = "#27272a"; ctx.fill();
+      rr(ctx, 180, 1500, (W - 360) * 0.65 * kp, 30, 15); ctx.fillStyle = C.azul; ctx.fill();
+    }
+  }
+}
+
+const DIFS = [
+  { fondo: C.cian, tinta: "#04121c", l1: "AIP", l2: "OFICIAL", sub: "Espacios aéreos validados contra el PDF." },
+  { fondo: C.blanco, tinta: "#111111", l1: "RAAC", l2: "61", sub: "¿Puedo volar hoy? Según la norma." },
+  { fondo: C.azul, tinta: "#ffffff", l1: "FORMATO", l2: "ANAC", sub: "Tu libro en PDF, listo para firmar." },
+];
+const DIFS_A = 21.5, DIFS_D = 1.5;
+function escDifs(ctx, u) {
+  const i = Math.min(DIFS.length - 1, Math.floor(u / DIFS_D));
+  const v = u - i * DIFS_D;
+  const d = DIFS[i];
+  ctx.fillStyle = d.fondo; ctx.fillRect(0, 0, W, H);
+  const z = 1 + golpe(v, 0.0, 0.12, 7);
+  ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(z, z); ctx.translate(-W / 2, -H / 2);
+  texto(ctx, `0${i + 1} / 0${DIFS.length}`, 110, 300, { tam: 44, peso: 600, fam: MONO, color: d.tinta, esp: 8, alpha: 0.6 });
+  texto(ctx, "POR QUÉ VECTOR", W - 110, 300, { tam: 36, peso: 600, fam: MONO, color: d.tinta, esp: 6, align: "right", alpha: 0.6 });
+  const tam = Math.min(420, ...[d.l1, d.l2].map((l) => (420 * (W - 200)) / medir(ctx, l, 420, 800, SANS, -21)));
+  [d.l1, d.l2].forEach((s, j) => {
+    const k = eOutExpo(seg(v, 0.02 + j * 0.08, 0.3 + j * 0.08));
+    const y = 1050 + j * tam * 1.02;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, y - tam, W, tam * 1.25); ctx.clip();
+    texto(ctx, s, 100, y + (1 - k) * tam, { tam, color: d.tinta, esp: -tam * 0.05 });
+    ctx.restore();
+  });
+  partir(ctx, d.sub, 84, W - 220).forEach((linea, j) => titular(ctx, linea, 110, 1110 + tam * 2.05 + j * 104, v, 0.3 + j * 0.08, { tam: 84, peso: 700, color: d.tinta, stagger: 0.03 }));
+  ctx.restore();
+}
+
+function telefonoApp(ctx, x, y, w, h) {
+  // marco
+  rr(ctx, x - 26, y - 26, w + 52, h + 52, 150); ctx.fillStyle = "#27272a"; ctx.fill();
+  rr(ctx, x, y, w, h, 128); ctx.fillStyle = "#f4f4f5"; ctx.fill();
+  ctx.save(); rr(ctx, x, y, w, h, 128); ctx.clip();
+  const s = w / 390;
+  const X = (v) => x + v * s, Y = (v) => y + v * s;
+  rr(ctx, X(140), Y(12), 110 * s, 32 * s, 16 * s); ctx.fillStyle = "#000"; ctx.fill();
+  texto(ctx, "MARTES 3 DE NOVIEMBRE", X(16), Y(70), { tam: 11 * s, peso: 600, fam: MONO, color: "#71717a", esp: 1.2 * s });
+  texto(ctx, "Hola, Lucía", X(16), Y(108), { tam: 32 * s, peso: 800, color: "#18181b", esp: -0.8 * s });
+  [[250, "#fff"], [302, C.azul]].forEach(([cx, col]) => { ctx.beginPath(); ctx.arc(X(cx + 22), Y(92), 22 * s, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill(); });
+  texto(ctx, "+", X(324), Y(101), { tam: 26 * s, peso: 800, color: "#fff", align: "center" });
+  rr(ctx, X(16), Y(131), 358 * s, 128 * s, 22 * s); ctx.fillStyle = "#14532d"; ctx.fill();
+  texto(ctx, "¿PUEDO VOLAR HOY?", X(34), Y(160), { tam: 11 * s, peso: 600, fam: MONO, color: "#bbf7d0", esp: 1 * s });
+  texto(ctx, "Sí, con pasajeros", X(34), Y(194), { tam: 26 * s, peso: 800, color: "#fff" });
+  texto(ctx, "CMA Clase 2 vigente 188 días más.", X(34), Y(226), { tam: 13 * s, peso: 600, color: "#dcfce7" });
+  [[16, "TE QUEDAN", "6,5", "/ 10 h", C.azul, 0.65], [201, "TE FALTA", "60,1", "h", "#18181b", 0.7]].forEach(([cx, et, v, un, col, pct]) => {
+    rr(ctx, X(cx), Y(271), 173 * s, 114 * s, 20 * s); ctx.fillStyle = "#fff"; ctx.fill();
+    texto(ctx, et, X(cx + 14), Y(298), { tam: 11 * s, peso: 600, fam: MONO, color: "#71717a", esp: 1 * s });
+    texto(ctx, v, X(cx + 14), Y(334), { tam: 26 * s, peso: 600, fam: MONO, color: "#18181b" });
+    texto(ctx, un, X(cx + 14) + medir(ctx, v, 26 * s, 600, MONO) + 6 * s, Y(334), { tam: 14 * s, peso: 600, fam: MONO, color: "#71717a" });
+    rr(ctx, X(cx + 14), Y(350), 145 * s, 6 * s, 3 * s); ctx.fillStyle = "#e4e4e7"; ctx.fill();
+    rr(ctx, X(cx + 14), Y(350), 145 * s * pct, 6 * s, 3 * s); ctx.fillStyle = col; ctx.fill();
+  });
+  rr(ctx, X(16), Y(397), 358 * s, 56 * s, 20 * s); ctx.fillStyle = "#fff"; ctx.fill();
+  texto(ctx, "HORAS TOTALES", X(32), Y(430), { tam: 11 * s, peso: 600, fam: MONO, color: "#71717a", esp: 1 * s });
+  texto(ctx, "139,9", X(358), Y(436), { tam: 28 * s, peso: 600, fam: MONO, color: "#18181b", align: "right" });
+  rr(ctx, X(16), Y(465), 358 * s, 132 * s, 20 * s); ctx.fillStyle = "#fff"; ctx.fill();
+  [["24 oct", "SADF → SADF", "0,8"], ["09 oct", "SADF → SADM", "1,0"], ["02 oct", "LAD2013 → SADF", "1,4"]].forEach(([f, r, hh], i) => {
+    const yy = Y(500 + i * 42);
+    texto(ctx, f, X(32), yy, { tam: 12 * s, peso: 500, fam: MONO, color: "#71717a" });
+    texto(ctx, r, X(88), yy, { tam: 14 * s, peso: 600, fam: MONO, color: "#18181b" });
+    texto(ctx, hh, X(358), yy, { tam: 14 * s, peso: 600, fam: MONO, color: "#18181b", align: "right" });
+  });
+  // barra de pestañas
+  ctx.fillStyle = "rgba(255,255,255,0.95)"; ctx.fillRect(x, Y(760), w, h - 760 * s);
+  ["Inicio", "Bitácora", "Balance", "Preparar", "Pilotos"].forEach((et, i) => {
+    const cx = X(39 + i * 78);
+    ctx.beginPath(); ctx.arc(cx, Y(788), 10 * s, 0, Math.PI * 2); ctx.strokeStyle = i === 0 ? C.azul : "#52525b"; ctx.lineWidth = 2.2 * s; ctx.stroke();
+    texto(ctx, et, cx, Y(820), { tam: 11 * s, peso: i === 0 ? 800 : 700, color: i === 0 ? C.azul : "#52525b", align: "center" });
+  });
+  ctx.restore();
+}
+
+function escPwa(ctx, u) {
+  fondoMarca(ctx);
+  rotulo(ctx, "LA APP", 110, 260, u, 0.05);
+  titular(ctx, "Instalala.", 110, 440, u, 0.1, { tam: 150 });
+  const w = 640, h = w * 844 / 390;
+  const k = seg(u, 0.15, 0.75);
+  const yy = lerp(-h - 200, 600, eOutBack(k));
+  const rot = lerp(-0.25, -0.04, eOutExpo(k)) + Math.sin(u * 2) * 0.01;
+  ctx.save(); ctx.translate(W / 2 + 60, yy + h / 2); ctx.rotate(rot); ctx.translate(-w / 2, -h / 2);
+  ctx.shadowColor = "rgba(56,189,248,0.25)"; ctx.shadowBlur = 120;
+  telefonoApp(ctx, 0, 0, w, h);
+  ctx.restore();
+  titular(ctx, "Pantalla completa,", W / 2, 2190, u, 0.9, { tam: 84, peso: 800, stagger: 0.04, align: "center" });
+  titular(ctx, "como una app.", W / 2, 2295, u, 1.0, { tam: 84, peso: 800, color: C.cian, stagger: 0.04, align: "center" });
+}
+
+function escCierre(ctx, u) {
+  fondoMarca(ctx, u, 1.4);
+  const k = eOutBack(seg(u, 0.0, 0.45));
+  logo(ctx, W / 2, 1000, 300 * k, { rot: (1 - k) * -1.2 });
+  const kw = eOutExpo(seg(u, 0.25, 0.6));
+  ctx.save(); ctx.globalAlpha = kw;
+  texto(ctx, "Vector", W / 2, 1330 + (1 - kw) * 80, { tam: 200, align: "center", esp: -6 });
+  ctx.restore();
+  titular(ctx, "De la carta al CAD.", W / 2, 1560, u, 0.4, { tam: 96, align: "center", color: C.cian, stagger: 0.05 });
+  rotulo(ctx, "VECTOR.FDIAZNEM.COM.AR", W / 2, 1720, u, 0.6, { color: C.tenue, tam: 42, align: "center" });
+  const kf = seg(u, 1.75, 2.0);
+  if (kf > 0) { ctx.fillStyle = `rgba(0,0,0,${kf})`; ctx.fillRect(0, 0, W, H); }
+}
+
+// ── Montaje ────────────────────────────────────────────────────────────────
+const ESC = [
+  // Los cortes caen en la grilla de la música: 120 BPM, un pulso cada 0,5 s (ver musica.mjs).
+  { f: escLogo, a: 0, b: 1.0, sale: "zoom" },
+  { f: escTitulo, a: 1.0, b: 3.5, sale: "whip" },
+  { f: escAntesMapa, a: 3.5, b: 7.5, sale: "whipUp" },
+  { f: escAntesPlan, a: 7.5, b: 9.5, sale: "whip" },
+  { f: escDurante, a: 9.5, b: 14.5, sale: "whip" },
+  { f: escDespuesReg, a: 14.5, b: 16.5, sale: "cut" },
+  { f: escDespuesCad, a: 16.5, b: 19.0, sale: "zoom" },
+  { f: escCopiloto, a: 19.0, b: 21.5, sale: "flash" },
+  { f: escDifs, a: 21.5, b: 26.0, sale: "whip" },
+  { f: escPwa, a: 26.0, b: 28.0, sale: "zoom" },
+  { f: escCierre, a: 28.0, b: 30.0, sale: null },
+];
+const VENT = 0.14; // media ventana de cada transición
+const canv = document.getElementById("c");
+const ctx = canv.getContext("2d");
+const bufA = new OffscreenCanvas(W, H), bufB = new OffscreenCanvas(W, H);
+const cA = bufA.getContext("2d"), cB = bufB.getContext("2d");
+
+function escenaEn(c, i, t) {
+  const e = ESC[i];
+  c.save(); c.clearRect(0, 0, W, H);
+  e.f(c, clamp(t - e.a, 0, e.b - e.a - 1e-3));
+  c.restore();
+}
+
+function dibujar(t) {
+  ctx.save(); ctx.filter = "none"; ctx.globalAlpha = 1;
+  let i = ESC.findIndex((e) => t >= e.a && t < e.b);
+  if (i < 0) i = ESC.length - 1;
+  // ¿estamos en una transición?
+  let tr = null;
+  for (let j = 0; j < ESC.length - 1; j++) {
+    const b = ESC[j].b, tipo = ESC[j].sale;
+    if (tipo && tipo !== "cut" && t >= b - VENT && t < b + VENT) tr = { j, b, tipo };
+  }
+  if (!tr) {
+    escenaEn(cA, i, t);
+    ctx.drawImage(bufA, 0, 0);
+  } else {
+    const e = (t - (tr.b - VENT)) / (2 * VENT);
+    escenaEn(cA, tr.j, Math.min(t, tr.b - 1e-3));
+    escenaEn(cB, tr.j + 1, Math.max(t, tr.b));
+    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+    const blur = Math.sin(Math.PI * e) * 46;
+    if (tr.tipo === "whip" || tr.tipo === "whipUp") {
+      const ee = eInOut(e);
+      const horiz = tr.tipo === "whip";
+      ctx.filter = `blur(${blur}px)`;
+      const off = (k) => (horiz ? [k * W * 1.05, 0] : [0, k * H * 1.05]);
+      let [ax, ay] = off(-ee), [bx, by] = off(1 - ee);
+      // estiramiento en el sentido del barrido
+      ctx.save(); ctx.translate(ax + W / 2, ay + H / 2); ctx.scale(horiz ? 1 + blur / 120 : 1, horiz ? 1 : 1 + blur / 120); ctx.drawImage(bufA, -W / 2, -H / 2); ctx.restore();
+      ctx.save(); ctx.translate(bx + W / 2, by + H / 2); ctx.scale(horiz ? 1 + blur / 120 : 1, horiz ? 1 : 1 + blur / 120); ctx.drawImage(bufB, -W / 2, -H / 2); ctx.restore();
+      ctx.filter = "none";
+    } else if (tr.tipo === "zoom") {
+      const ee = eInOut(e);
+      ctx.save(); ctx.globalAlpha = 1 - ee; ctx.filter = `blur(${blur * 0.6}px)`;
+      const za = 1 + eInCubic(e) * 4;
+      ctx.translate(W / 2, H / 2); ctx.scale(za, za); ctx.drawImage(bufA, -W / 2, -H / 2); ctx.restore();
+      ctx.save(); ctx.globalAlpha = ee; ctx.filter = `blur(${blur * 0.4}px)`;
+      const zb = lerp(0.6, 1, eOutCubic(e));
+      ctx.translate(W / 2, H / 2); ctx.scale(zb, zb); ctx.drawImage(bufB, -W / 2, -H / 2); ctx.restore();
+      ctx.filter = "none";
+    } else if (tr.tipo === "flash") {
+      ctx.drawImage(e < 0.5 ? bufA : bufB, 0, 0);
+      ctx.fillStyle = `rgba(255,255,255,${Math.sin(Math.PI * e) * 0.95})`; ctx.fillRect(0, 0, W, H);
+    }
+  }
+  // los cortes secos de la sección de diferenciales llevan un destello corto
+  if (t >= DIFS_A && t < DIFS_A + DIFS.length * DIFS_D) {
+    const v = (t - DIFS_A) % DIFS_D;
+    if (v < 0.06 && t > DIFS_A + 0.1) { ctx.fillStyle = `rgba(255,255,255,${0.5 * (1 - v / 0.06)})`; ctx.fillRect(0, 0, W, H); }
+  }
+  // la línea de progreso
+  if (t > 1.0 && t < 28) { ctx.fillStyle = C.cian; ctx.fillRect(0, 0, W * clamp((t - 1) / 27), 10); }
+  // grano
+  ctx.globalAlpha = 0.035;
+  for (let k = 0; k < 220; k++) {
+    const x = hash(k + Math.floor(t * 30) * 1.3) * W, y = hash(k * 3.1 + Math.floor(t * 30)) * H;
+    ctx.fillStyle = k % 2 ? "#fff" : "#000"; ctx.fillRect(x, y, 6, 6);
+  }
+  ctx.restore();
+}
+
+async function listo() {
+  const fuentes = [
+    new FontFace(SANS, "url(plus-jakarta-sans-latin-wght-normal.woff2)", { weight: "200 800" }),
+    new FontFace(MONO, "url(ibm-plex-mono-latin-500-normal.woff2)", { weight: "500" }),
+    new FontFace(MONO, "url(ibm-plex-mono-latin-600-normal.woff2)", { weight: "600" }),
+  ];
+  for (const f of fuentes) { await f.load(); document.fonts.add(f); }
+  await document.fonts.ready;
+  return true;
+}
+window.REEL = { W, H, DUR, dibujar, listo };
+if (!navigator.webdriver && location.hash !== "#render") {
+  listo().then(() => {
+    const t0 = performance.now();
+    const loop = () => { dibujar(((performance.now() - t0) / 1000) % DUR); requestAnimationFrame(loop); };
+    loop();
+  });
+}
+</script>
+</body>
+</html>

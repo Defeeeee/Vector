@@ -27,8 +27,9 @@ export function mensajeDeErrorApi(cuerpo: unknown, porDefecto: string): string {
 }
 
 /** "Federico Díaz Nemeth" → "FN". Para el avatar de quien todavía no subió foto. */
-export function iniciales(nombre: string): string {
-  const partes = nombre.trim().split(/\s+/).filter(Boolean);
+export function iniciales(nombre: string | null | undefined): string {
+  // Un perfil sin nombre (dato viejo o incompleto) no puede tirar la pantalla entera.
+  const partes = (nombre ?? "").trim().split(/\s+/).filter(Boolean);
   if (partes.length === 0) return "?";
   const primera = partes[0][0] ?? "";
   const ultima = partes.length > 1 ? partes[partes.length - 1][0] ?? "" : "";
