@@ -155,9 +155,11 @@ const ROUTES = [
   { path: "/dashboard/mapa", expect: (s) => s === 307 || s === 302 },
   { path: "/dashboard/log-flight", expect: (s) => s === 307 || s === 302 },
   { path: "/dashboard/airports", expect: (s) => s === 307 || s === 302 },
+  // Las pantallas que se sacaron o mudaron en la 3.12.0 redirigen (`next.config.js`).
   { path: "/dashboard/calendario", expect: (s) => s === 307 || s === 302 },
   { path: "/dashboard/planificador", expect: (s) => s === 307 || s === 302 },
   { path: "/dashboard/clima", expect: (s) => s === 307 || s === 302 },
+  { path: "/dashboard/mapa/planilla", expect: (s) => s === 307 || s === 302 },
   { path: "/dashboard/pilotos", expect: (s) => s === 307 || s === 302 },
   { path: "/dashboard/pilotos/actividad", expect: (s) => s === 307 || s === 302 },
   { path: "/dashboard/pilotos/fede.dn", expect: (s) => s === 307 || s === 302 },
@@ -210,14 +212,12 @@ const AUTH_ROUTES = [
   "/dashboard/history",
   "/dashboard/summary",
   "/dashboard/settings",
-  "/dashboard/audit",
+  "/dashboard/history/auditoria",
   "/dashboard/balance",
   "/dashboard/airports",
   "/dashboard/tools",
-  "/dashboard/calendario",
-  "/dashboard/planificador",
+  "/dashboard/mapa/planilla",
   "/dashboard/mapa",
-  "/dashboard/clima",
   // La red: la Red, sus pestañas, Publicar (que lee los vuelos) y un perfil que no
   // existe, que adentro de la app también tiene que ser 404 y no 500.
   "/dashboard/pilotos",
