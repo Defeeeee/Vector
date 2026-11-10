@@ -622,6 +622,15 @@ export default function MapaClient({
             rutas={rutas}
             onRutas={setRutas}
             onCargar={cargarRuta}
+            piernera={{
+              ruta: tokens.join(" "),
+              avion: aeronave ? [aeronave.registration, aeronave.icao || aeronave.type].filter(Boolean).join(" ") : null,
+              tasKt: tasNum,
+              altitudFt: altitudNum,
+              consumoLh: aeronave?.fuel_burn_lph ?? null,
+              tramos: tramos.map((t) => ({ desde: t.desde.codigo, hasta: t.hasta.codigo, distanciaNm: t.distanciaNm, rumboM: t.rumboM, rumboT: t.rumboT })),
+              cambios: cambios.map((c) => ({ desdeNm: c.desdeNm, donde: c.dependencia.donde, distintivo: c.dependencia.distintivo, mhz: c.dependencia.mhz })),
+            }}
           />
         )}
 

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Bookmark, FileText, Loader2, Printer, Trash2, X } from "lucide-react";
+import { Bookmark, FileDown, FileText, Loader2, Printer, Trash2, X } from "lucide-react";
 import type { Aircraft } from "@/types";
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { PilotoParaPlan } from "@/lib/formulario-plan";
@@ -10,6 +10,7 @@ import { crearPlan } from "@/actions/plan-de-vuelo";
 import { borrarRuta, guardarRuta } from "@/actions/rutas";
 import { formularioDesdePlanificador } from "@/components/dashboard/plan-de-vuelo/ArmarDesdePlanificador";
 import { MAX_NOMBRE_RUTA, nombreSugerido, type RutaGuardada } from "@/lib/rutas-guardadas";
+import { armarPiernera, nombrePiernera, type DatosPiernera } from "@/lib/piernera";
 
 /**
  * Lo que se hace con una ruta del Mapa (3.13.0, Federico: "desde el mapa podemos mandarlo a que
@@ -34,6 +35,7 @@ export default function RutaAcciones({
   rutas,
   onRutas,
   onCargar,
+  piernera,
 }: {
   tokens: string[];
   resueltos: (PuntoResuelto | null | undefined)[];
@@ -47,6 +49,8 @@ export default function RutaAcciones({
   rutas: RutaGuardada[] | null;
   onRutas: (r: RutaGuardada[]) => void;
   onCargar: (r: RutaGuardada) => void;
+  /** Lo que va en la piernera en PDF (3.15.0). */
+  piernera: DatosPiernera;
 }) {
   const [armando, empezarArmar] = useTransition();
   const [guardando, empezarGuardar] = useTransition();
@@ -55,6 +59,27 @@ export default function RutaAcciones({
   const hayRuta = tokens.length > 1;
   const textoRuta = tokens.join(" ");
   const yaGuardada = rutas?.find((r) => r.ruta === textoRuta) ?? null;
+
+  const [bajando, setBajando] = useState(false);
+  // La piernera se arma en el navegador (anda sin señal): pdf-lib se carga recién al tocar.
+  const bajarPiernera = async () => {
+    setBajando(true);
+    setError(null);
+    try {
+      const { armarPdfPiernera } = await import("@/lib/piernera-pdf");
+      const bytes = await armarPdfPiernera(armarPiernera(piernera));
+      const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nombrePiernera(tokens);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch {
+      setError("No se pudo armar la piernera.");
+    } finally {
+      setBajando(false);
+    }
+  };
 
   const armar = () =>
     empezarArmar(async () => {
@@ -156,6 +181,18 @@ export default function RutaAcciones({
       )}
 
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+
+      {hayRuta && (
+        <button
+          type="button"
+          onClick={bajarPiernera}
+          disabled={bajando}
+          className="w-full inline-flex items-center justify-center gap-1.5 rounded-2xl border border-zinc-200 dark:border-white/10 px-3 py-2.5 text-[13px] font-semibold text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-white/5 disabled:opacity-60"
+        >
+          {bajando ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+          Piernera en PDF
+        </button>
+      )}
 
       {hayRuta && (
         <Link
