@@ -3,6 +3,8 @@
 import {
   CACHE_DATOS,
   CACHE_METEO,
+  CACHE_TESELAS,
+  MAX_TESELAS,
   CACHE_PAGINAS,
   CACHES_PERSONALES,
   HEADER_CAPTURA,
@@ -453,6 +455,31 @@ async function catalogoDeBordo(): Promise<Catalogo | null> {
  * El ciclo AIRAC es de 28 días, así que servir la respuesta de ayer mientras llega la
  * de hoy no cuesta nada — y sí cuesta esperar la red en cada tecla del autocompletado.
  */
+/**
+ * Una tesela del Mapa (3.15.0): de lo guardado si está, y si no de la red, guardándola. Así el
+ * Mapa anda sin señal en lo que ya se vio (y en las cartas bajadas para la ruta). Lo guardado no
+ * se refresca: una tesela del mapa base cambia poco y las de las cartas llevan su AIRAC en la URL.
+ * Pasado `MAX_TESELAS`, se van las más viejas.
+ */
+async function teselaGuardada(evento: FetchEvent, pedido: Request): Promise<Response> {
+  const cache = await caches.open(CACHE_TESELAS);
+  const guardada = await cache.match(pedido);
+  if (guardada) return guardada;
+  const respuesta = await fetch(pedido);
+  // Sólo una respuesta que se puede leer: una opaca (sin CORS) ocupa ~7 MB de cuota en Chrome.
+  if (respuesta.ok && respuesta.type !== "opaque") {
+    const copia = respuesta.clone();
+    evento.waitUntil(
+      (async () => {
+        await cache.put(pedido, copia);
+        const claves = await cache.keys();
+        if (claves.length > MAX_TESELAS) await Promise.all(claves.slice(0, claves.length - MAX_TESELAS).map((k) => cache.delete(k)));
+      })().catch(() => undefined)
+    );
+  }
+  return respuesta;
+}
+
 async function guardadoYRefrescar(evento: FetchEvent, pedido: Request): Promise<Response> {
   const cache = await caches.open(CACHE_DATOS);
   const guardado = await cache.match(pedido);
@@ -600,6 +627,7 @@ self.addEventListener("fetch", (evento) => {
 
   if (estrategia === "assets") return evento.respondWith(delCacheODeLaRed(evento, pedido));
   if (estrategia === "datos") return evento.respondWith(guardadoYRefrescar(evento, pedido));
+  if (estrategia === "teselas") return evento.respondWith(teselaGuardada(evento, pedido));
   if (estrategia === "meteo") {
     const tope = topeMeteo(new URL(pedido.url).pathname);
     return evento.respondWith(redOMeteoGuardada(evento, pedido, tope ?? 0));

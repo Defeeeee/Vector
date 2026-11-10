@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import datos from "../data/cartas-aip.json";
 import { puntoEnCarta } from "../../scripts/cartas/lambert.mjs";
-import { CAPAS_CARTAS, teselaValida, urlTeselaCarta } from "./cartas-aip";
+import { CAPAS_CARTAS, teselaValida, teselasDeRuta, urlTeselaCarta } from "./cartas-aip";
 
 type Ajuste = (typeof datos.cartas)[keyof typeof datos.cartas];
 const cartas = Object.entries(datos.cartas) as [string, Ajuste][];
@@ -53,5 +53,30 @@ describe("la ruta de las teselas", () => {
 
   it("la URL lleva el ciclo AIRAC, para que uno nuevo no salga del cache", () => {
     expect(urlTeselaCarta("inf")).toMatch(/^\/api\/cartas\/inf\/\{z\}\/\{x\}\/\{y\}\?airac=\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("las teselas de una ruta, para el Mapa sin señal (3.15.0)", () => {
+  const vfr = CAPAS_CARTAS.find((c) => c.id === "vfr")!;
+  const ruta = [
+    { lat: -34.453, lon: -58.589 }, // San Fernando
+    { lat: -34.676, lon: -58.643 }, // Morón
+  ];
+
+  it("cubre la ruta en cada zoom de la carta, sin repetir, y son teselas válidas", () => {
+    const urls = teselasDeRuta(vfr, ruta);
+    expect(urls.length).toBeGreaterThan(10);
+    expect(new Set(urls).size).toBe(urls.length);
+    const zooms = new Set(urls.map((u) => Number(u.split("/")[4])));
+    expect([...zooms].sort((a, b) => a - b)).toEqual([8, 9, 10, 11, 12]);
+    for (const u of urls) {
+      const [, , , capa, z, x, y] = u.split("?")[0].split("/");
+      expect(teselaValida(capa, z, x, y), u).not.toBeNull();
+    }
+  });
+
+  it("corta en el máximo y no sale de los límites de la carta", () => {
+    expect(teselasDeRuta(vfr, ruta, { maximo: 20 })).toHaveLength(20);
+    expect(teselasDeRuta(vfr, [{ lat: -54.8, lon: -68.3 }, { lat: -54.9, lon: -68.0 }])).toEqual([]);
   });
 });

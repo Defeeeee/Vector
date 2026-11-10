@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Bookmark, FileDown, FileText, Loader2, Printer, Trash2, X } from "lucide-react";
+import { Bookmark, CloudOff, FileDown, FileText, Loader2, Printer, Trash2, X } from "lucide-react";
 import type { Aircraft } from "@/types";
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { PilotoParaPlan } from "@/lib/formulario-plan";
@@ -11,6 +11,7 @@ import { borrarRuta, guardarRuta } from "@/actions/rutas";
 import { formularioDesdePlanificador } from "@/components/dashboard/plan-de-vuelo/ArmarDesdePlanificador";
 import { MAX_NOMBRE_RUTA, nombreSugerido, type RutaGuardada } from "@/lib/rutas-guardadas";
 import { armarPiernera, nombrePiernera, type DatosPiernera } from "@/lib/piernera";
+import { CAPAS_CARTAS, teselasDeRuta } from "@/lib/cartas-aip";
 
 /**
  * Lo que se hace con una ruta del Mapa (3.13.0, Federico: "desde el mapa podemos mandarlo a que
@@ -36,6 +37,7 @@ export default function RutaAcciones({
   onRutas,
   onCargar,
   piernera,
+  puntosRuta,
 }: {
   tokens: string[];
   resueltos: (PuntoResuelto | null | undefined)[];
@@ -51,6 +53,8 @@ export default function RutaAcciones({
   onCargar: (r: RutaGuardada) => void;
   /** Lo que va en la piernera en PDF (3.15.0). */
   piernera: DatosPiernera;
+  /** Los puntos ubicados de la ruta, para bajar sus cartas (el Mapa sin señal, 3.15.0). */
+  puntosRuta: { lat: number; lon: number }[];
 }) {
   const [armando, empezarArmar] = useTransition();
   const [guardando, empezarGuardar] = useTransition();
@@ -79,6 +83,39 @@ export default function RutaAcciones({
     } finally {
       setBajando(false);
     }
+  };
+
+  /*
+    El Mapa sin señal (3.15.0): baja las teselas de las cartas del AIP (VFR y en ruta inferior)
+    alrededor de la ruta; el service worker las guarda (`teselaGuardada`). El mapa base de OSM no
+    se baja en masa (su política de uso no lo permite): se guarda lo que ya se miró.
+  */
+  const [bajandoCartas, setBajandoCartas] = useState<{ hechas: number; total: number } | null>(null);
+  const [guardadas, setGuardadas] = useState<number | null>(null);
+  const guardarSinSenal = async () => {
+    const urls = CAPAS_CARTAS.filter((c) => c.id !== "sup").flatMap((c) => teselasDeRuta(c, puntosRuta));
+    if (!urls.length) {
+      setError("Esta ruta no tiene cartas del AIP para guardar (están las VFR de Baires y Córdoba y la en ruta inferior).");
+      return;
+    }
+    setError(null);
+    setGuardadas(null);
+    setBajandoCartas({ hechas: 0, total: urls.length });
+    let hechas = 0;
+    let siguiente = 0;
+    // De a seis: el VPS sirve las teselas desde el disco y no hace falta apurarlo.
+    await Promise.all(
+      Array.from({ length: 6 }, async () => {
+        while (siguiente < urls.length) {
+          const u = urls[siguiente++];
+          await fetch(u).catch(() => undefined);
+          hechas++;
+          if (hechas % 10 === 0 || hechas === urls.length) setBajandoCartas({ hechas, total: urls.length });
+        }
+      })
+    );
+    setBajandoCartas(null);
+    setGuardadas(urls.length);
   };
 
   const armar = () =>
@@ -192,6 +229,26 @@ export default function RutaAcciones({
           {bajando ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
           Piernera en PDF
         </button>
+      )}
+
+      {hayRuta && (
+        <div>
+          <button
+            type="button"
+            onClick={guardarSinSenal}
+            disabled={bajandoCartas !== null}
+            className="w-full inline-flex items-center justify-center gap-1.5 rounded-2xl border border-zinc-200 dark:border-white/10 px-3 py-2.5 text-[13px] font-semibold text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-white/5 disabled:opacity-60"
+          >
+            {bajandoCartas ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudOff className="w-4 h-4" />}
+            {bajandoCartas ? `Guardando las cartas ${bajandoCartas.hechas}/${bajandoCartas.total}` : "Guardar las cartas para volar sin señal"}
+          </button>
+          <p className="mt-1.5 text-[11px] leading-snug text-zinc-500">
+            {guardadas !== null
+              ? `Listo: ${guardadas} teselas de las cartas del AIP guardadas alrededor de la ruta. `
+              : "Las cartas del AIP alrededor de la ruta (5 NM). "}
+            El mapa de fondo se guarda a medida que lo mirás: recorré la ruta en el mapa antes de salir.
+          </p>
+        </div>
       )}
 
       {hayRuta && (

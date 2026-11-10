@@ -44,12 +44,21 @@ export const CACHE_SHELL = `vector-shell-${VERSION}`;
 export const CACHE_PAGINAS = "vector-paginas";
 export const CACHE_DATOS = "vector-datos";
 export const CACHE_METEO = "vector-meteo";
+/**
+ * Las teselas del Mapa (3.15.0). Sin versión: no son del piloto ni cambian con un deploy (las de
+ * las cartas llevan el ciclo AIRAC en la URL). Con un tope de `MAX_TESELAS`: lo más viejo se va.
+ */
+export const CACHE_TESELAS = "vector-teselas";
+/** Unas 4.000 teselas son 40–80 MB: alcanza para varias rutas de escuela sin llenar el teléfono. */
+export const MAX_TESELAS = 4000;
+/** El mapa base. Su política de uso no deja bajar en masa: se guarda sólo lo que ya se vio. */
+export const ORIGEN_OSM = "https://tile.openstreetmap.org";
 
 /** Los caches con datos del piloto. Se borran al cerrar sesión; los otros no. */
 export const CACHES_PERSONALES = [CACHE_PAGINAS, CACHE_METEO];
 
 /** Todo lo que este service worker puede llegar a crear. */
-export const CACHES_SIN_VERSION = [CACHE_PAGINAS, CACHE_DATOS, CACHE_METEO];
+export const CACHES_SIN_VERSION = [CACHE_PAGINAS, CACHE_DATOS, CACHE_METEO, CACHE_TESELAS];
 
 /** Prefijo de los caches versionados, para reconocer los viejos. */
 export const PREFIJO_SHELL = "vector-shell-";
@@ -265,7 +274,12 @@ export type Estrategia =
   /** Datos aeronáuticos: se contesta con lo guardado y se refresca atrás. */
   | "datos"
   /** Meteorología: red primero, y lo guardado sólo si no pasó su tope. */
-  | "meteo";
+  | "meteo"
+  /**
+   * Las teselas del Mapa (3.15.0, "el Mapa sin señal"): las de las cartas del AIP (nuestras) y
+   * las del mapa base de OpenStreetMap que el piloto ya miró. Cache primero, con tope.
+   */
+  | "teselas";
 
 export interface Pedido {
   metodo: string;
@@ -287,8 +301,9 @@ export interface Pedido {
  * mutaciones, y como no hay cola de escritura el service worker no tiene nada que
  * aportar en ese camino. Una línea que elimina una familia entera de bugs.
  *
- * **Nada de otro origen.** Los tiles del mapa son de un tercero y son muchos MB; el
- * backend está en otro dominio y ni siquiera pasa por el navegador.
+ * **Nada de otro origen, salvo las teselas del mapa base** (3.15.0): las que el piloto ya miró,
+ * con tope (`MAX_TESELAS`), para el Mapa sin señal. El backend está en otro dominio y ni
+ * siquiera pasa por el navegador.
  *
  * **Los pedidos con header `RSC` se ignoran, no se cachean.** Son las navegaciones
  * blandas de `next/link`: devuelven un payload de Flight, no HTML, y vienen con
@@ -322,9 +337,12 @@ export function estrategiaPara(pedido: Pedido, origen: string): Estrategia {
   } catch {
     return "ignorar";
   }
+  // El mapa base: sólo las teselas (z/x/y.png). Es el único otro origen que se toca.
+  if (url.origin === ORIGEN_OSM) return /^\/\d{1,2}\/\d+\/\d+\.png$/.test(url.pathname) ? "teselas" : "ignorar";
   if (url.origin !== origen) return "ignorar";
 
   if (pedido.esRSC) return "ignorar";
+  if (/^\/api\/cartas\/[a-z]+\/\d{1,2}\/\d+\/\d+$/.test(url.pathname)) return "teselas";
   if (pedido.modo === "navigate") return "navegacion";
 
   if (url.pathname.startsWith("/_next/static/")) return "assets";

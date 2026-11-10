@@ -45,3 +45,51 @@ export function teselaValida(capa: string, z: string, x: string, y: string): { c
   if (Z < c.zoomMinimo || Z > c.zoomNativo || X >= 2 ** Z || Y >= 2 ** Z) return null;
   return { capa: c, z: Z, x: X, y: Y };
 }
+
+/**
+ * Las teselas de una carta que cubren una ruta (3.15.0, "el Mapa sin señal"): las de cada zoom de
+ * la carta en una franja de `margenNm` alrededor de cada tramo, dentro de sus límites. Son nuestras
+ * (las sirve el VPS), así que se pueden bajar antes de salir. Devuelve las URLs, sin repetir, y
+ * corta en `maximo` para no llenar el teléfono.
+ */
+export function teselasDeRuta(
+  capa: CapaCarta,
+  puntos: { lat: number; lon: number }[],
+  { margenNm = 5, maximo = 1500 }: { margenNm?: number; maximo?: number } = {}
+): string[] {
+  const [[latMin, lonMin], [latMax, lonMax]] = capa.limites;
+  const aTesela = (lat: number, lon: number, z: number) => {
+    const n = 2 ** z;
+    const x = Math.floor(((lon + 180) / 360) * n);
+    const r = (lat * Math.PI) / 180;
+    const y = Math.floor(((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * n);
+    return [Math.min(n - 1, Math.max(0, x)), Math.min(n - 1, Math.max(0, y))] as const;
+  };
+  const urls = new Set<string>();
+  const plantilla = urlTeselaCarta(capa.id);
+  for (let z = capa.zoomMinimo; z <= capa.zoomNativo; z++) {
+    for (let i = 0; i < puntos.length; i++) {
+      const a = puntos[i];
+      const b = puntos[Math.min(i + 1, puntos.length - 1)];
+      // Cada tramo en pasos de ~1 NM, con su margen alrededor.
+      const pasos = Math.max(1, Math.ceil(Math.hypot(b.lat - a.lat, (b.lon - a.lon) * Math.cos((a.lat * Math.PI) / 180)) * 60));
+      for (let k = 0; k <= pasos; k++) {
+        const lat = a.lat + ((b.lat - a.lat) * k) / pasos;
+        const lon = a.lon + ((b.lon - a.lon) * k) / pasos;
+        const dLat = margenNm / 60;
+        const dLon = margenNm / (60 * Math.cos((lat * Math.PI) / 180));
+        const s = Math.max(latMin, lat - dLat), nn = Math.min(latMax, lat + dLat);
+        const w = Math.max(lonMin, lon - dLon), e = Math.min(lonMax, lon + dLon);
+        if (s > nn || w > e) continue;
+        const [x0, y0] = aTesela(nn, w, z);
+        const [x1, y1] = aTesela(s, e, z);
+        for (let x = x0; x <= x1; x++)
+          for (let y = y0; y <= y1; y++) {
+            urls.add(plantilla.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y)));
+            if (urls.size >= maximo) return [...urls];
+          }
+      }
+    }
+  }
+  return [...urls];
+}

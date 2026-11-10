@@ -78,6 +78,30 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.15.0",
+    fecha: "2026-11-10",
+    titulo: "El Mapa, para volar",
+    novedades: [
+      {
+        icono: "libro",
+        titulo: "La piernera en PDF",
+        texto: "Desde la ruta del Mapa, una hoja A5 para imprimir: cada tramo con rumbo, distancia y tiempo, lugar para la hora estimada y la real, las frecuencias y renglones para anotar.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+      {
+        icono: "brujula",
+        titulo: "El Mapa sin señal y los corredores de Córdoba",
+        texto: "Guardá las cartas del AIP de tu ruta antes de salir, y el mapa de fondo que ya miraste queda guardado. Además, los once corredores VFR de Córdoba, con su ancho y quién da información.",
+      },
+      {
+        icono: "avion",
+        titulo: "Del CAD, también tus simuladores",
+        texto: "\"Traer a Vector\" ahora trae las sesiones de simulador del CAD a tu equipo del Hangar. Y si se te cierra la sesión, al volver a entrar seguís en la pantalla donde estabas.",
+      },
+    ],
+  },
+  {
     version: "3.14.0",
     fecha: "2026-11-10",
     titulo: "Vector nuevo, también en el teléfono",

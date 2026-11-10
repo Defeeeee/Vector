@@ -137,6 +137,14 @@ describe("estrategiaPara", () => {
     ...extra,
   });
 
+  it("las teselas del Mapa se guardan para usarlo sin señal (3.15.0)", () => {
+    expect(estrategiaPara(pedir("https://tile.openstreetmap.org/9/171/309.png"), ORIGEN)).toBe("teselas");
+    expect(estrategiaPara(pedir("/api/cartas/vfr/11/690/1236?airac=2511"), ORIGEN)).toBe("teselas");
+    // Otra cosa de OSM, u otro origen, no.
+    expect(estrategiaPara(pedir("https://tile.openstreetmap.org/robots.txt"), ORIGEN)).toBe("ignorar");
+    expect(estrategiaPara(pedir("https://otro.example/9/171/309.png"), ORIGEN)).toBe("ignorar");
+  });
+
   it("los assets con hash en la URL van al cache", () => {
     expect(estrategiaPara(pedir("/_next/static/chunks/006v7wp3sr4so.js"), ORIGEN)).toBe("assets");
     // Las tipografías salen por la misma puerta. `next/font` las auto-hospeda acá, y
@@ -179,10 +187,9 @@ describe("estrategiaPara", () => {
     );
   });
 
-  it("nada de otro origen", () => {
-    // Los tiles del mapa son de un tercero y son muchos MB; el backend vive en otro
-    // dominio y ni siquiera pasa por el navegador.
-    expect(estrategiaPara(pedir("https://tile.openstreetmap.org/8/1/2.png"), ORIGEN)).toBe("ignorar");
+  it("nada de otro origen, salvo las teselas del mapa base", () => {
+    // El backend vive en otro dominio y ni siquiera pasa por el navegador. Las teselas de OSM
+    // sí, desde la 3.15.0 (el Mapa sin señal): ver el test de "teselas".
     expect(estrategiaPara(pedir("https://api.flightlog.fdiaznem.com.ar/dashboard"), ORIGEN)).toBe("ignorar");
 
     /*

@@ -16,6 +16,9 @@ export const TILES_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 export const TILES_OPCIONES = {
   maxZoom: 19,
+  // Con CORS (OSM contesta `Access-Control-Allow-Origin: *`): así el service worker puede guardar
+  // las teselas que se vieron para el Mapa sin señal (3.15.0). Una respuesta opaca no se guarda.
+  crossOrigin: true,
   attribution:
     '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>',
 } as const;

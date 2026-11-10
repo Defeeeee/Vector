@@ -6,6 +6,14 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.15.0 — El Mapa, para volar
+
+_10 de noviembre de 2026_
+
+- **La piernera en PDF** — Desde la ruta del Mapa, una hoja A5 para imprimir: cada tramo con rumbo, distancia y tiempo, lugar para la hora estimada y la real, las frecuencias y renglones para anotar.
+- **El Mapa sin señal y los corredores de Córdoba** — Guardá las cartas del AIP de tu ruta antes de salir, y el mapa de fondo que ya miraste queda guardado. Además, los once corredores VFR de Córdoba, con su ancho y quién da información.
+- **Del CAD, también tus simuladores** — "Traer a Vector" ahora trae las sesiones de simulador del CAD a tu equipo del Hangar. Y si se te cierra la sesión, al volver a entrar seguís en la pantalla donde estabas.
+
 ## v3.14.0 — Vector nuevo, también en el teléfono
 
 _10 de noviembre de 2026_

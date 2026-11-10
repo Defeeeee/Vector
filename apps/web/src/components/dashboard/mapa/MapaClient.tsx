@@ -622,6 +622,7 @@ export default function MapaClient({
             rutas={rutas}
             onRutas={setRutas}
             onCargar={cargarRuta}
+            puntosRuta={puntos.map((p) => ({ lat: p.lat, lon: p.lon }))}
             piernera={{
               ruta: tokens.join(" "),
               avion: aeronave ? [aeronave.registration, aeronave.icao || aeronave.type].filter(Boolean).join(" ") : null,
