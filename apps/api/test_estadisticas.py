@@ -55,7 +55,7 @@ crudos = Crudos(
     seguimientos=[{"seguidor": "u1", "estado": "aceptado"}, {"seguidor": "u2", "estado": "pendiente"}],
     push=[{"user_id": "u1"}],
     reportes=2,
-    no_disponible=["metricas"],
+    no_disponible=["auditoria"],
 )
 
 r = armar(crudos, AHORA, excluir={ADMIN})
@@ -84,7 +84,7 @@ pasos = {x["paso"]: x for x in r["activacion"]}
 check("un simulador no cuenta como 'Avión cargado'", pasos["Avión cargado"]["cuentas"] == 1)
 check("licencia cargada: 2 de 3, 66,7 %", pasos["Licencia cargada"]["cuentas"] == 2 and pasos["Licencia cargada"]["pct"] == 66.7)
 check("un seguimiento pendiente no suma a 'seguimientos'", t["seguimientos"] == 1)
-check("una tabla que no se pudo leer se nombra", r["no_disponible"] == ["metricas"])
+check("una tabla que no se pudo leer se nombra", r["no_disponible"] == ["auditoria"])
 
 print("— Vuelos, aeródromos y aeronaves")
 meses = {m["mes"]: m for m in r["vuelos_por_mes"]}

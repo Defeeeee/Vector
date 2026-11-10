@@ -49,46 +49,6 @@ export interface Flight {
   remarks?: string;
 }
 
-/** Los tres estados de `planned_flights.status`, espejo del CHECK de la migración 009. */
-export type PlannedStatus = "programado" | "completado" | "descartado";
-
-/**
- * Un vuelo que el piloto planea hacer. **No es un `Flight`.**
- *
- * Vive en su propia tabla y ninguna función de agregación lo ve nunca: sumar una
- * intención a un libro de vuelo es inventar horas en un registro regulatorio. Ver
- * el comentario de `migrations/009_planned_flights.sql`, que explica los tres
- * motivos —incluido que dar de alta un vuelo real **cobra** la hora contra el saldo.
- *
- * Casi todo es opcional salvo la fecha: un plan a diez días puede ser "el sábado
- * vuelo" y nada más. Lo que falte se completa al confirmarlo.
- */
-export interface PlannedFlight {
-  id: string;
-  user_id: string;
-  /** "YYYY-MM-DD". Se compara como texto, nunca construyendo un `Date`. */
-  date: string;
-  aircraft_id?: string | null;
-  /** Mismo formato que `Flight.route`: los ICAO separados por espacio. */
-  route?: string | null;
-  notes?: string | null;
-  /**
-   * Horas tentativas, **en UTC**, como "HH:MM:SS" (Postgres manda los segundos).
-   *
-   * Misma convención que `Flight.takeoff`: lo guardado es UTC y el interruptor
-   * local/UTC del calendario sólo cambia lo que se ve. Ver `src/lib/horarios.ts`.
-   */
-  takeoff_time?: string | null;
-  landing_time?: string | null;
-  status: PlannedStatus;
-  /** Con qué vuelo se cerró. Sólo presente cuando `status` es `completado`. */
-  flight_id?: string | null;
-  /** Hasta cuándo el piloto pidió no ver la pregunta. "YYYY-MM-DD". */
-  postponed_until?: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
 export interface Aircraft {
   id: string;
   user_id: string;

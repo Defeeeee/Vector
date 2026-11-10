@@ -90,33 +90,11 @@ export async function logFlight(
     return { error: error.detail || "No se pudo registrar el vuelo" };
   }
 
-  // El vuelo creado, con su id. La respuesta se descartaba, pero cerrar un vuelo
-  // programado necesita saber **con qué vuelo** se cerró.
+  // El vuelo creado, con su id: unir un plan de vuelo necesita saber **con qué vuelo** se cerró.
   const creado = await response.json().catch(() => null);
 
-  // Si esta carga vino de "Completar" en la tarjeta de vuelos programados, se marca
-  // el plan. `planned_id` viaja como hidden input desde `FlightLogForm`.
-  //
-  // **Best-effort, y a propósito.** El vuelo ya está guardado, que es lo único que
-  // importa: es el registro legal. Si el PATCH falla, el plan queda en `programado`
-  // y la tarjeta vuelve a preguntar — un recordatorio duplicado, molesto y visible.
-  // Revertir el vuelo para mantener limpio un recordatorio sería perder una entrada
-  // de bitácora por un post-it. Es la misma dirección de falla que el marcado de
-  // los avisos de vencimiento: el peor caso es repetir, nunca callar.
-  const plannedId = (formData.get("planned_id") as string) || "";
-  if (plannedId) {
-    try {
-      await apiFetch(`/planned-flights/${plannedId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: "completado", flight_id: creado?.id ?? null }),
-      });
-    } catch (err) {
-      console.error("No se pudo cerrar el vuelo programado", plannedId, err);
-    }
-  }
-
   // Si se registró desde un plan de vuelo (el "¿ya volaste?" del inicio), se une el plan
-  // al vuelo y el inicio deja de preguntar. Best-effort, como el vuelo programado de arriba:
+  // al vuelo y el inicio deja de preguntar. Best-effort:
   // si falla, el peor caso es que pregunte de nuevo.
   const planVueloId = (formData.get("plan_vuelo_id") as string) || "";
   if (planVueloId && creado?.id) {

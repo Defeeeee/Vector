@@ -1,4 +1,4 @@
-import { sumarDias } from "@/lib/planned-flights";
+import { sumarDias } from "@/lib/fechas-iso";
 import type { ExpiryRule, OffsetUnit, PilotDocument } from "@/types";
 
 /**

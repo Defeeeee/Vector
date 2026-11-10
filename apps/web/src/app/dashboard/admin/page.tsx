@@ -26,8 +26,8 @@ const tarjeta = "rounded-[2rem] border border-zinc-200 dark:border-white/10 bg-w
 const NOMBRES_TABLAS: Record<string, string> = {
   perfiles: "perfiles", aviones: "aviones", documentos: "documentos", vuelos: "vuelos", arrobas: "@",
   publicaciones: "publicaciones", seguimientos: "seguimientos", aplausos: "aplausos", comentarios: "comentarios",
-  push: "avisos push", transacciones: "saldo", packs: "packs", programados: "vuelos programados",
-  metricas: "métricas propias", auditoria: "auditoría", reportes: "reportes", chats_whatsapp: "chats de WhatsApp",
+  push: "avisos push", transacciones: "saldo", packs: "packs",
+  auditoria: "auditoría", reportes: "reportes", chats_whatsapp: "chats de WhatsApp",
   mail_envios: "mails enviados", mail_eventos: "aperturas y clics de mails",
 };
 

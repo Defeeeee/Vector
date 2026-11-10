@@ -124,7 +124,6 @@ interface FlightLogFormProps {
    * `handleSubmit` recibe el `FormData` del form y nada más: sumarlo al payload es
    * una línea, y así `logFlight` lo encuentra sin tocar su firma.
    */
-  plannedId?: string;
   /** El plan de vuelo que se está registrando: `logFlight` lo une al vuelo. */
   planVueloId?: string;
   /**
@@ -173,7 +172,7 @@ function isValidCode(code: string, airport: AirportRef | null): boolean {
   return cleaned.length === 4 && /^[A-Z0-9]+$/.test(cleaned);
 }
 
-export default function FlightLogForm({ aircraft, logbooks = [], initialData, redirectTo, plannedId, planVueloId, autoridades = {}, cadConectado = false }: FlightLogFormProps) {
+export default function FlightLogForm({ aircraft, logbooks = [], initialData, redirectTo, planVueloId, autoridades = {}, cadConectado = false }: FlightLogFormProps) {
   const router = useRouter();
   const { notificar } = useAvisos();
   const [isPending, setIsPending] = useState(false);
@@ -475,7 +474,6 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
       className="w-full"
     >
       {/* Lo que después cierra el vuelo programado. Ver `logFlight`. */}
-      {plannedId && <input type="hidden" name="planned_id" value={plannedId} />}
       {planVueloId && <input type="hidden" name="plan_vuelo_id" value={planVueloId} />}
       <AnimatePresence>
         {error && (

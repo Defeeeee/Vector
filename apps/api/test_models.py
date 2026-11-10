@@ -17,7 +17,8 @@ tipado `NoneType` y pydantic **rechaza cualquier valor que no sea nulo**.
 
 El síntoma que ve el usuario es `Validation failed for PATCH /planned-flights/<id>`,
 sin decir qué campo. Editar un vuelo programado y posponerlo estuvieron rotos todo
-ese tiempo; lo encontró un piloto tratando de corregir un horario.
+ese tiempo; lo encontró un piloto tratando de corregir un horario. (Los vuelos programados
+se sacaron en la 3.15.0; el chequeo genérico queda.)
 
 ## Por qué el chequeo es genérico y no un test de este modelo
 
@@ -63,47 +64,6 @@ def test_ningun_campo_quedo_en_nonetype():
         + ". Casi seguro es un campo que se llama igual que un tipo importado; "
         "importá el tipo calificado (`import datetime as dt` → `dt.date`)."
     )
-
-
-def test_el_patch_de_un_vuelo_programado_acepta_lo_que_manda_el_formulario():
-    """
-    El payload exacto del calendario. Es el que fallaba.
-    """
-    from src.models.planned_flight import PlannedFlightUpdate
-
-    p = PlannedFlightUpdate(
-        date="2026-08-21",
-        aircraft_id=None,
-        route="SADF SAZM",
-        notes=None,
-        takeoff_time="12:30",
-        landing_time="15:30",
-    )
-    assert p.date.isoformat() == "2026-08-21"
-    assert p.takeoff_time.isoformat() == "12:30:00"
-    assert p.landing_time.isoformat() == "15:30:00"
-
-
-def test_posponer_acepta_una_fecha():
-    """`posponerProgramado` manda sólo este campo, y también estaba roto."""
-    from src.models.planned_flight import PlannedFlightUpdate
-
-    p = PlannedFlightUpdate(postponed_until="2026-08-22")
-    assert p.postponed_until.isoformat() == "2026-08-22"
-
-
-def test_borrar_un_horario_sigue_siendo_mandar_null():
-    """
-    El PATCH usa `exclude_unset`: `null` explícito borra, ausente deja como está.
-    Es la distinción que hace que el modelo no pueda tener defaults que no sean None.
-    """
-    from src.models.planned_flight import PlannedFlightUpdate
-
-    borra = PlannedFlightUpdate(takeoff_time=None).model_dump(exclude_unset=True)
-    assert borra == {"takeoff_time": None}
-
-    deja = PlannedFlightUpdate(route="SADF SAZM").model_dump(exclude_unset=True)
-    assert "takeoff_time" not in deja
 
 
 def test_el_libro_acepta_los_renglones_de_la_hoja_y_rechaza_lo_absurdo():

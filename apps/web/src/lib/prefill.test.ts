@@ -70,19 +70,10 @@ describe("parsePrefill", () => {
     expect(initialData?.purpose).toBe("INST");
   });
 
-  /**
-   * `planned_id` es lo que después cierra el vuelo programado. Si se perdiera acá,
-   * el vuelo se cargaría igual —que es lo importante— pero la tarjeta del dashboard
-   * seguiría preguntando por un vuelo que el piloto ya registró.
-   */
-  it("devuelve el id del vuelo programado aparte del prefill", () => {
-    const { initialData, plannedId } = parsePrefill({
-      prefill: "true",
-      planned_id: "p9",
-      date: "2026-08-13",
-    });
-    expect(plannedId).toBe("p9");
-    expect("planned_id" in (initialData as object)).toBe(false);
+  it("ignora el planned_id de los vuelos programados, que se sacaron en la 3.15.0", () => {
+    const r = parsePrefill({ prefill: "true", planned_id: "p9", date: "2026-08-13" });
+    expect("plannedId" in r).toBe(false);
+    expect("planned_id" in (r.initialData as object)).toBe(false);
   });
 
   it("un parámetro repetido se resuelve al primero", () => {

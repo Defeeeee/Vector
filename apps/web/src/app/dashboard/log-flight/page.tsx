@@ -46,7 +46,7 @@ export default async function LogFlightPage({ searchParams }: PageProps) {
   const resolvedParams = searchParams ? (searchParams instanceof Promise ? await searchParams : searchParams) : {};
   // El mismo parser que usan los links de "Completar" del calendario y los atajos
   // de iOS. Ver `src/lib/prefill.ts`.
-  const { initialData: prefillData, plannedId, planVueloId } = parsePrefill(resolvedParams);
+  const { initialData: prefillData, planVueloId } = parsePrefill(resolvedParams);
 
   const [{ aircraft, logbooks, alumno, autoridades }, conexionCad] = await Promise.all([getData(), estadoConexionCad()]);
   // "Cargarlo también en tu CAD" sólo con la cuenta de ANAC conectada y andando.
@@ -94,7 +94,6 @@ export default async function LogFlightPage({ searchParams }: PageProps) {
             aircraft={aircraft}
             logbooks={logbooks}
             initialData={prefillData}
-            plannedId={plannedId}
             planVueloId={planVueloId}
             autoridades={autoridades}
             cadConectado={cadConectado}

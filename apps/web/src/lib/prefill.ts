@@ -10,7 +10,6 @@
  * Quién genera estas URLs:
  * - el backend, al cerrar una sesión de vuelo desde WhatsApp o desde un Atajo de
  *   iOS (`flight_helper.py`);
- * - `prefillHref` en `planned-flights.ts`, al completar un vuelo programado;
  * - `hrefRegistrarDesdePlan` en `plan-cierre.ts`, al registrar un plan de vuelo ya volado
  *   (con `plan_vuelo_id`, y sin horarios).
  */
@@ -36,8 +35,7 @@ function texto(v: string | string[] | undefined): string | undefined {
 }
 
 /**
- * Lee los parámetros de prefill y, si viene, el id del vuelo programado que esta
- * carga tiene que cerrar.
+ * Lee los parámetros de prefill y, si viene, el id del plan de vuelo que esta carga cierra.
  *
  * **Las claves ausentes no aparecen en el objeto.** Antes se asignaban con un cast
  * (`resolvedParams.route as string`), que para una clave que no vino deja
@@ -46,7 +44,6 @@ function texto(v: string | string[] | undefined): string | undefined {
  */
 export function parsePrefill(params: SearchParams | undefined): {
   initialData?: FlightPrefill;
-  plannedId?: string;
   /** El plan de vuelo que se está registrando: se une al vuelo cuando se guarda. */
   planVueloId?: string;
 } {
@@ -70,7 +67,7 @@ export function parsePrefill(params: SearchParams | undefined): {
   if (date) data.date = date;
   if (duration) data.duration = duration;
   // `purpose` viajaba en la URL y se descartaba al parsear, aunque el formulario
-  // siempre lo aceptó. Un vuelo de instrucción programado puede llegar con INST.
+  // siempre lo aceptó. Un vuelo de instrucción puede llegar con INST.
   if (purpose) data.purpose = purpose;
 
   if (landings) {
@@ -82,7 +79,6 @@ export function parsePrefill(params: SearchParams | undefined): {
   const planVueloId = texto(p.plan_vuelo_id);
   return {
     initialData: data,
-    plannedId: texto(p.planned_id),
     // Un id con otra forma no llega al backend: el PATCH lo rechazaría igual.
     ...(planVueloId && /^[0-9a-f-]{36}$/i.test(planVueloId) ? { planVueloId } : {}),
   };

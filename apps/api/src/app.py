@@ -11,18 +11,15 @@ from src.controllers.aircraft import AircraftController
 from src.controllers.flights import FlightsController
 from src.controllers.auth import AuthController
 from src.controllers.flight_packs import FlightPacksController
-from src.controllers.planned_flights import PlannedFlightsController
 from src.controllers.planes_de_vuelo import PlanesDeVueloController, PlanesRecordatoriosController
 from src.controllers.rutas_guardadas import RutasGuardadasController
 from src.controllers.logbooks import LogbooksController
-from src.controllers.custom_stats import CustomStatsController
 from src.controllers.dashboard import DashboardController
 from src.controllers.transactions import TransactionsController
 from src.controllers.whatsapp import WhatsAppController
 from src.controllers.audit import AuditController
 from src.controllers.documents import DocumentsController, DocumentAlertsController
 from src.controllers.charts import ChartsController
-from src.controllers.flight_briefings import FlightBriefingsController
 from src.controllers.social import (
     PerfilPublicoController,
     PerfilesPublicosController,
@@ -87,16 +84,14 @@ api_router = Router(
         ProfilesController, 
         AircraftController, 
         FlightsController,
-        FlightPacksController, PlannedFlightsController, PlanesDeVueloController, RutasGuardadasController,
+        FlightPacksController, PlanesDeVueloController, RutasGuardadasController,
         LogbooksController,
-        CustomStatsController,
         DashboardController,
         TransactionsController,
         WhatsAppController,
         AuditController,
         DocumentsController,
         DocumentAlertsController,
-        FlightBriefingsController,
         ChartsController,
         # La red social. `PerfilesPublicosController` va sin guard: es el perfil que
         # abre el link de /u/... sin cuenta. Ver `src/controllers/social.py`.

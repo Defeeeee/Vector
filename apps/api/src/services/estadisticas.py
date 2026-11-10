@@ -52,8 +52,6 @@ class Crudos:
     push: List[dict] = field(default_factory=list)  # user_id
     transacciones: List[dict] = field(default_factory=list)  # user_id
     packs: List[dict] = field(default_factory=list)  # user_id
-    programados: List[dict] = field(default_factory=list)  # user_id
-    metricas: List[dict] = field(default_factory=list)  # user_id
     auditoria: List[dict] = field(default_factory=list)  # user_id
     mail_envios: List[dict] = field(default_factory=list)  # id, user_id, tipo, clave, enviado_at
     mail_eventos: List[dict] = field(default_factory=list)  # envio_id, tipo, destino, creado_at
@@ -229,8 +227,6 @@ def armar(c: Crudos, ahora: datetime, excluir: Optional[Set[str]] = None, dias: 
         ("Documentos", con_documentos),
         ("Saldo y pagos", de_usuarios(c.transacciones)),
         ("Packs de horas", de_usuarios(c.packs)),
-        ("Vuelos programados", de_usuarios(c.programados)),
-        ("Métricas propias", de_usuarios(c.metricas)),
         ("Auditoría", de_usuarios(c.auditoria)),
         ("Copiloto por WhatsApp", con_whatsapp),
         ("Perfil en la red (@)", set(arroba_de)),
