@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S } from "@/lib/sesion";
+import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S, volverSeguro } from "@/lib/sesion";
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.flightlog.fdiaznem.com.ar";
 
@@ -44,7 +44,8 @@ export async function login(formData: FormData) {
     return { error: "An unexpected error occurred" };
   }
 
-  redirect("/dashboard");
+  // A la pantalla de antes, si el login llegó con `volver` (3.15.0); si no, al inicio.
+  redirect(volverSeguro(formData.get("volver") as string | null) ?? "/dashboard");
 }
 
 export async function register(formData: FormData) {

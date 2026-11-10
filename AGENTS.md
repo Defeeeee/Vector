@@ -578,7 +578,7 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     push a los `ADMINS_RED` del backend;
   - los avisos push necesitan las claves VAPID en el `.env` del backend; sin ellas no se
     ofrecen;
-  - el login siempre vuelve a `/dashboard`, no a la pantalla desde la que se fue a ingresar (tampoco al expirar la sesión);
+  - el login vuelve a la pantalla de antes cuando el proxy lo mandó ahí (`?volver=`, `volverSeguro`, 3.15.0); tras un 401 de una página, al inicio;
   - la búsqueda no tiene límite de pedidos, más allá de exigir sesión y un tope de 20
     resultados;
   - la exportación no incluye un comentario propio en una publicación que ya no podés

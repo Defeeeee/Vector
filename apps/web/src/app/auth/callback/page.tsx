@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { setSession } from "@/actions/auth";
 import AuthShell, { ErrorAuth } from "@/components/acceso/AuthShell";
+import { CLAVE_VOLVER, volverSeguro } from "@/lib/sesion";
 
 /**
  * La vuelta de Google: Supabase redirige acá con el token en el hash (o en la query), se arma la
@@ -39,7 +40,12 @@ export default function AuthCallback() {
           }
           // Un respiro para que la cookie quede escrita antes de navegar.
           espera = setTimeout(() => {
-            window.location.href = "/dashboard";
+            let destino = "/dashboard";
+            try {
+              destino = volverSeguro(sessionStorage.getItem(CLAVE_VOLVER)) ?? destino;
+              sessionStorage.removeItem(CLAVE_VOLVER);
+            } catch {}
+            window.location.href = destino;
           }, 500);
         } else if (query.get("error")) {
           setError(query.get("error_description") || "Google no completó el ingreso.");

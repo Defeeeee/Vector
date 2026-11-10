@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S, destinoSinSesion, necesitaRenovar } from "@/lib/sesion";
+import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S, destinoSinSesion, loginCon, necesitaRenovar } from "@/lib/sesion";
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.flightlog.fdiaznem.com.ar";
 
@@ -171,7 +171,8 @@ export async function proxy(request: NextRequest) {
   // Hasta la 3.12.0 iba a la portada con `?expired=true`, que la portada no mostraba.
   if (isDashboardPage && !token) {
     const huboSesion = sesionMuerta || Boolean(request.cookies.get(COOKIE_HUBO_SESION)?.value);
-    return conCookies(NextResponse.redirect(aDondeVa(destinoSinSesion(huboSesion))));
+    // Con la pantalla a la que iba, para volver ahí después de ingresar (3.15.0, `volverSeguro`).
+    return conCookies(NextResponse.redirect(aDondeVa(loginCon(destinoSinSesion(huboSesion), pathname + request.nextUrl.search))));
   }
 
   if (pathname === "/" && token) {

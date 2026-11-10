@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { vidaRestante, necesitaRenovar, MARGEN_MS, destinoSinSesion, DURACION_SESION_S } from "./sesion";
+import { vidaRestante, necesitaRenovar, MARGEN_MS, destinoSinSesion, DURACION_SESION_S, volverSeguro, loginCon } from "./sesion";
 
 const AHORA = new Date("2026-08-18T12:00:00Z").getTime();
 
@@ -106,5 +106,21 @@ describe("sin sesión", () => {
   });
   it("la sesión dura dos días sin uso", () => {
     expect(DURACION_SESION_S).toBe(2 * 24 * 3600);
+  });
+});
+
+describe("volver a donde estabas", () => {
+  it("acepta una pantalla del dashboard, con su búsqueda", () => {
+    expect(volverSeguro("/dashboard/mapa?ruta=SADF-SADM")).toBe("/dashboard/mapa?ruta=SADF-SADM");
+    expect(volverSeguro(encodeURIComponent("/dashboard/history?ver=v1"))).toBe("/dashboard/history?ver=v1");
+  });
+  it("no lleva a otro sitio ni a la API", () => {
+    for (const malo of ["https://malo.example", "//malo.example", "/dashboardx", "/api/export", "/dashboard//malo.example", "/dashboard\\malo", "javascript:alert(1)", "", null, "%E0%A4%A"])
+      expect(volverSeguro(malo as string | null)).toBeNull();
+  });
+  it("arma el link del login", () => {
+    expect(loginCon("/login?expirada=1", "/dashboard/mapa")).toBe("/login?expirada=1&volver=%2Fdashboard%2Fmapa");
+    expect(loginCon("/login", "/dashboard")).toBe("/login");
+    expect(loginCon("/login", "https://malo.example")).toBe("/login");
   });
 });

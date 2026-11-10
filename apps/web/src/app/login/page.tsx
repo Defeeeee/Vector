@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import OlvidarAlSalir from "@/components/OlvidarAlSalir";
 import AuthShell, { BotonAuth, CampoAuth, ErrorAuth } from "@/components/acceso/AuthShell";
+import { CLAVE_VOLVER, volverSeguro } from "@/lib/sesion";
 
 function LoginContent() {
   const [isPending, startTransition] = useTransition();
@@ -19,6 +20,13 @@ function LoginContent() {
 
   useEffect(() => {
     // `expirada=1` desde la 3.13.0; `expired=true` es el de antes, por si quedó en un link.
+    // A dónde volver después de ingresar; para Google, que pasa por `/auth/callback`, queda en el
+    // `sessionStorage` (`CLAVE_VOLVER`).
+    try {
+      const v = volverSeguro(searchParams.get("volver"));
+      if (v) sessionStorage.setItem(CLAVE_VOLVER, v);
+      else sessionStorage.removeItem(CLAVE_VOLVER);
+    } catch {}
     if (searchParams.get("expirada") === "1" || searchParams.get("expired") === "true") {
       setExpired(true);
     }
@@ -43,7 +51,7 @@ function LoginContent() {
           setIsGooglePending(true);
           localStorage.setItem("session_token", accessToken);
           await setSession(accessToken, refreshToken || undefined);
-          router.push("/dashboard");
+          router.push(volverSeguro(searchParams.get("volver")) ?? "/dashboard");
         } else if (query.get("error")) {
           setError(query.get("error_description") || "Authentication failed");
         }
@@ -98,6 +106,7 @@ function LoginContent() {
         }
       >
         <form action={handleSubmit} className="space-y-5">
+          {volverSeguro(searchParams.get("volver")) && <input type="hidden" name="volver" value={volverSeguro(searchParams.get("volver"))!} />}
           {error && <ErrorAuth>{error}</ErrorAuth>}
           <CampoAuth rotulo="Correo electrónico" icono={Mail} name="email" type="email" autoComplete="email" placeholder="vos@ejemplo.com" required />
           <CampoAuth rotulo="Contraseña" icono={Lock} name="password" type="password" autoComplete="current-password" placeholder="••••••••" required />

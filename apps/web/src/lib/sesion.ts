@@ -88,3 +88,31 @@ export const DURACION_MARCA_S = 60 * 60 * 24 * 365;
 export function destinoSinSesion(huboSesion: boolean): string {
   return huboSesion ? "/login?expirada=1" : "/login";
 }
+
+/**
+ * Volver a la pantalla de antes al ingresar (3.15.0). El destino viaja en `?volver=` y sólo se
+ * acepta una ruta del dashboard: nada que empiece con `//` o traiga un esquema (un link armado
+ * por otro llevaría a quien ingresa a otro sitio), ni las rutas de la API.
+ */
+export function volverSeguro(volver: string | null | undefined): string | null {
+  if (!volver) return null;
+  let v: string;
+  try {
+    v = decodeURIComponent(volver);
+  } catch {
+    return null;
+  }
+  if (!/^\/dashboard(?:[/?#]|$)/.test(v)) return null;
+  if (v.includes("//") || v.includes("\\") || /[\u0000-\u001f]/.test(v)) return null;
+  return v;
+}
+
+/** Donde el login deja el destino para la vuelta de Google (`/auth/callback`). */
+export const CLAVE_VOLVER = "vector-volver";
+
+/** El login con el destino, si hay uno que valga la pena (al inicio no hace falta decirlo). */
+export function loginCon(base: string, volver: string | null | undefined): string {
+  const v = volverSeguro(volver);
+  if (!v || v === "/dashboard") return base;
+  return `${base}${base.includes("?") ? "&" : "?"}volver=${encodeURIComponent(v)}`;
+}
