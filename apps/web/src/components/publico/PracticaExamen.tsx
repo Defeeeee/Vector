@@ -130,7 +130,7 @@ export default function PracticaExamen() {
           </div>
         </div>
         <div className="flex flex-wrap gap-3 pt-1">
-          <button type="button" onClick={() => empezar()} className="px-6 py-3.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold">
+          <button type="button" onClick={() => empezar()} className="bg-aviation-cyan text-noche hover:bg-sky-300 px-6 py-3.5 rounded-full text-sm font-bold">
             Empezar
           </button>
           {paraRepasar.length > 0 && (
@@ -189,7 +189,7 @@ export default function PracticaExamen() {
           </div>
         )}
         <div className="flex flex-wrap gap-3">
-          <button type="button" onClick={() => empezar()} className="px-6 py-3.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold">
+          <button type="button" onClick={() => empezar()} className="bg-aviation-cyan text-noche hover:bg-sky-300 px-6 py-3.5 rounded-full text-sm font-bold">
             Otra tanda
           </button>
           <button type="button" onClick={() => setTanda(null)} className="px-6 py-3.5 rounded-full border border-zinc-200 dark:border-white/10 text-sm font-bold text-zinc-900 dark:text-white">
@@ -249,7 +249,7 @@ export default function PracticaExamen() {
           Salir
         </button>
         {r && (
-          <button type="button" onClick={() => setActual((a) => a + 1)} className="px-6 py-3 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold">
+          <button type="button" onClick={() => setActual((a) => a + 1)} className="bg-aviation-cyan text-noche hover:bg-sky-300 px-6 py-3 rounded-full text-sm font-bold">
             {actual + 1 < tanda.length ? "Siguiente" : "Ver el resultado"}
           </button>
         )}

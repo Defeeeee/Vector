@@ -117,7 +117,7 @@ export default function AircraftCard({ aircraft }: AircraftCardProps) {
             <button
               disabled={isPending}
               type="submit"
-              className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm px-12 py-5 rounded-full shadow-cal-highlight dark:shadow-none transition-all active:scale-[0.95] flex items-center space-x-2"
+              className="bg-aviation-cyan text-noche hover:bg-sky-300 font-semibold text-sm px-12 py-5 rounded-full transition-all active:scale-[0.95] flex items-center space-x-2"
             >
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               <span>Guardar cambios</span>

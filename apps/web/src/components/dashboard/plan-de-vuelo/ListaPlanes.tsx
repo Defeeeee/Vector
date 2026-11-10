@@ -96,14 +96,14 @@ export default function ListaPlanes({
             <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">Sin avión cargado</span>
           </button>
           <Link
-            href="/dashboard/mapa/planilla"
+            href="/dashboard/mapa"
             className="rounded-3xl border border-dashed border-zinc-300 dark:border-white/15 p-5 hover:border-zinc-500 transition-colors"
           >
             <span className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
-              <Route className="w-4 h-4" /> Desde el planificador
+              <Route className="w-4 h-4" /> Desde el Mapa
             </span>
             <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">
-              Armá la ruta y te sugiere la duración y la autonomía
+              Armá la ruta en el mapa y tocá "Armar el plan de vuelo"
             </span>
           </Link>
         </div>

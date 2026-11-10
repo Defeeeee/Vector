@@ -7,7 +7,6 @@ import Link from "next/link";
 import FlightLogForm from "@/components/dashboard/FlightLogForm";
 import SinAeronaves from "@/components/dashboard/SinAeronaves";
 import { parsePrefill } from "@/lib/prefill";
-import { ChevronLeft } from "lucide-react";
 import { autoridadesPorFinalidad } from "@/lib/cad";
 import { estadoConexionCad } from "@/actions/cad-vector";
 
@@ -57,19 +56,18 @@ export default async function LogFlightPage({ searchParams }: PageProps) {
     <div className="space-y-8 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 w-full pb-20">
       <EncabezadoRegistrar importar={!alumno} guardar={alumno || aircraft.length > 0} />
       <div className="max-lg:hidden flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8">
-        <div className="space-y-2 md:space-y-4">
-          <div className="flex items-center space-x-3 md:space-x-4">
-            <Link href="/dashboard" className="p-2 md:p-3 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-full transition-colors group bg-white dark:bg-carbon shadow-sm border border-zinc-200 dark:border-white/10 md:border-transparent md:bg-transparent md:shadow-none">
-              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white" />
-            </Link>
-            <h2 className="text-4xl md:text-6xl font-display font-bold tracking-tighter text-zinc-900 dark:text-white leading-none">Registrar</h2>
-          </div>
-          <p className="eyebrow ml-14 md:ml-16">Operaciones de vuelo</p>
+        {/* Como `PageHeader` (3.13.0): el rótulo con el punto cian arriba y el título grande. */}
+        <div className="space-y-3">
+          <p className="eyebrow flex items-center gap-2.5 tracking-[0.14em] text-zinc-500">
+            <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-aviation-cyan" />
+            Operaciones de vuelo
+          </p>
+          <h2 className="text-[clamp(52px,5.2vw,80px)] font-display font-extrabold tracking-[-0.05em] text-white leading-[0.92]">Registrar un vuelo</h2>
         </div>
 
         {!alumno && <Link 
           href="/dashboard/log-flight/import" 
-          className="border border-zinc-200 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-900 dark:text-white font-semibold text-sm px-5 py-3.5 rounded-xl transition-all shadow-sm active:scale-[0.98] self-start md:self-auto flex items-center space-x-2"
+          className="border border-white/20 hover:border-white/40 hover:bg-white/[0.04] text-white font-semibold text-sm px-5 py-3 rounded-full transition-colors self-start md:self-auto flex items-center space-x-2"
         >
           <span>Importar tu libro (PDF o fotos)</span>
         </Link>}

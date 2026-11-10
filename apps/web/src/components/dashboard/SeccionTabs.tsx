@@ -51,12 +51,12 @@ export default function SeccionTabs({
   return (
     <nav
       aria-label={seccion.label}
-      className={`-mx-4 -mt-4 mb-4 px-4 scroll-px-4 bg-white dark:bg-black border-b border-zinc-200 dark:border-white/10 md:mx-0 md:mt-0 md:px-0 md:scroll-px-0 md:mb-10 md:bg-transparent md:dark:bg-transparent md:border-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+      className={`-mx-4 -mt-4 mb-4 px-4 scroll-px-4 bg-white dark:bg-black border-b border-zinc-200 dark:border-white/10 md:mx-0 md:mt-0 md:px-0 md:scroll-px-0 md:mb-10 md:bg-transparent md:dark:bg-transparent md:border-0 lg:mb-12 lg:border-b lg:border-white/10 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
         segmentado ? "app:mx-0 app:mt-0 app:px-0 app:mb-2.5 app:bg-transparent app:dark:bg-transparent app:border-0" : "app:bg-transparent app:dark:bg-transparent"
       }`}
     >
       <div
-        className={`flex h-10 items-end gap-[18px] md:inline-flex md:h-auto md:items-center md:gap-1 md:p-1 md:rounded-2xl md:bg-zinc-100 md:dark:bg-white/5 md:border md:border-zinc-200 md:dark:border-white/10 ${
+        className={`flex h-10 items-end gap-[18px] md:inline-flex md:h-auto md:items-center md:gap-1 md:p-1 md:rounded-2xl md:bg-zinc-100 md:dark:bg-white/5 md:border md:border-zinc-200 md:dark:border-white/10 lg:flex lg:gap-9 lg:p-0 lg:rounded-none lg:bg-transparent lg:dark:bg-transparent lg:border-0 ${
           segmentado ? "app:grid app:grid-flow-col app:auto-cols-fr app:h-9 app:items-stretch app:gap-0 app:p-[3px] app:rounded-[11px] app:bg-zinc-200 app:dark:bg-white/10" : ""
         }`}
       >
@@ -70,12 +70,12 @@ export default function SeccionTabs({
               href={pestana.href}
               ref={esActiva ? activaRef : undefined}
               aria-current={esActiva ? "page" : undefined}
-              className={`shrink-0 inline-flex items-center gap-2 pb-[9px] border-b-2 md:border-b-0 md:px-4 md:py-2 md:rounded-xl text-[13px] md:text-sm md:font-semibold whitespace-nowrap transition-colors ${
+              className={`shrink-0 inline-flex items-center gap-2 pb-[9px] border-b-2 md:border-b-0 md:px-4 md:py-2 md:rounded-xl text-[13px] md:text-sm md:font-semibold lg:px-0 lg:py-0 lg:pb-4 lg:-mb-px lg:rounded-none lg:border-b-2 lg:font-mono lg:text-[12px] lg:uppercase lg:tracking-[0.14em] lg:font-medium whitespace-nowrap transition-colors ${
                 segmentado ? "app:justify-center app:pb-0 app:border-b-0 app:rounded-[9px] app:text-[12.5px]" : ""
               } ${
                 esActiva
-                  ? `border-zinc-900 dark:border-white font-extrabold md:bg-white md:dark:bg-white/10 text-zinc-900 dark:text-white md:shadow-sm ${segmentado ? "app:bg-white app:dark:bg-zinc-800 app:shadow-sm" : ""}`
-                  : "border-transparent font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                  ? `border-zinc-900 dark:border-white font-extrabold md:bg-white md:dark:bg-white/10 text-zinc-900 dark:text-white md:shadow-sm lg:bg-transparent lg:dark:bg-transparent lg:shadow-none lg:font-medium lg:border-aviation-cyan ${segmentado ? "app:bg-white app:dark:bg-zinc-800 app:shadow-sm" : ""}`
+                  : "border-transparent font-bold lg:font-medium text-zinc-500 dark:text-zinc-400 lg:dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
               {pestana.label}

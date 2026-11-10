@@ -416,6 +416,38 @@
     margin-block-end: 1.25rem;
   }
 }
+/*
+  En la compu (3.13.0), la estética del inicio y la landing en todas las pantallas: **sin bento**
+  (Federico, 2026-11-05: "ditcheamos las bento boxes"). Las tarjetas grandes (32–40 px de radio)
+  dejan de ser cajas: sin fondo, sin borde, sin sombra y sin relleno. Lo que separa los bloques es
+  la línea fina arriba de cada sección (`lg:border-t lg:border-white/10 lg:pt-9`), como en el inicio. Las cajas chicas (filas de vuelos, aviones, packs:
+  `rounded-xl`, `rounded-2xl`) quedan, como las filas del inicio. Igual que la regla del teléfono:
+  fuera de las capas y sólo adentro de `main`, para no tocar uno por uno ~140 componentes; lo que
+  flota (un diálogo `fixed`) conserva su caja.
+*/
+@media (width >= 64rem) {
+  main :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-\[3rem\], .rounded-3xl, .md\:rounded-\[2rem\], .md\:rounded-\[2\.5rem\], .sm\:rounded-\[2rem\], .sm\:rounded-\[2\.5rem\]):not(.fixed, .fixed *, .absolute, [role="dialog"], [role="dialog"] *) {
+    border-radius: 0;
+    border-width: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    overflow: visible;
+  }
+  main .shadow-cal {
+    box-shadow: none;
+  }
+  main .eyebrow {
+    letter-spacing: 0.14em;
+  }
+  /* El cuadrito con el ícono al lado del título de una sección: los títulos del inicio no lo llevan. */
+  main :is(.flex, .space-x-3):has(> :is(h2, h3)) > .rounded-xl:is(.w-8, .w-9, .w-10):first-child {
+    display: none;
+  }
+  main .space-x-3:has(> .rounded-xl:is(.w-8, .w-9, .w-10):first-child) > :is(h2, h3) {
+    margin-inline-start: 0;
+  }
+}
 @media (display-mode: standalone) and (width < 64rem) {
   main :is(.rounded-\[2rem\], .rounded-\[2\.5rem\], .rounded-3xl).border:not(.border-dashed) {
     border-color: transparent;

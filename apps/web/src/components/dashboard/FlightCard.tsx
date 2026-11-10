@@ -249,7 +249,7 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
 
           <div className="flex flex-col md:flex-row items-center justify-end gap-4 md:gap-6 pt-4">
             <button type="button" onClick={() => setIsEditing(false)} className="w-full md:w-auto text-sm font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">Cancelar</button>
-            <button disabled={isPending} type="submit" className="w-full md:w-auto bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm px-10 md:px-12 py-4 md:py-5 rounded-full shadow-cal-highlight dark:shadow-none flex items-center justify-center space-x-2 hover:opacity-90 transition-opacity">{isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}<span>Confirmar cambios</span></button>
+            <button disabled={isPending} type="submit" className="bg-aviation-cyan text-noche hover:bg-sky-300 w-full md:w-auto font-semibold text-sm px-10 md:px-12 py-4 md:py-5 rounded-full flex items-center justify-center space-x-2 transition-opacity">{isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}<span>Confirmar cambios</span></button>
           </div>
         </form>
       </motion.div>

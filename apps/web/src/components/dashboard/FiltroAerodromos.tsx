@@ -271,7 +271,7 @@ export default function FiltroAerodromos({
         <button
           type="submit"
           disabled={frase.trim().length < 3 || leyendo}
-          className="shrink-0 h-11 px-4 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold disabled:opacity-30 transition-opacity inline-flex items-center gap-2"
+          className="bg-aviation-cyan text-noche hover:bg-sky-300 shrink-0 h-11 px-4 text-sm font-bold disabled:opacity-30 transition-opacity inline-flex items-center gap-2 rounded-full"
         >
           {leyendo && <Loader2 className="w-4 h-4 animate-spin" />}
           Buscar

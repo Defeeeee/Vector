@@ -152,7 +152,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
               </Link>
             )}
             {/* En el teléfono no: el + de Nuevo vuelo está siempre a mano (3.4.0). */}
-            <Link href="/dashboard/log-flight" className="max-lg:hidden bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm px-6 py-3.5 rounded-xl shadow-cal-highlight dark:shadow-none transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 flex items-center justify-center gap-2">
+            <Link href="/dashboard/log-flight" className="bg-aviation-cyan text-noche hover:bg-sky-300 max-lg:hidden font-semibold text-sm px-6 py-3.5 transition-all flex items-center justify-center gap-2 rounded-full">
               <span>Nuevo registro</span>
               <Plus className="w-4 h-4" />
             </Link>

@@ -143,7 +143,7 @@ export default function FlightPackCard({ pack, aircraft }: FlightPackCardProps) 
                 <button 
                   disabled={isPending}
                   type="submit"
-                  className="w-full md:w-auto bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm px-10 md:px-12 py-4 md:py-5 rounded-full shadow-cal-highlight dark:shadow-none transition-all active:scale-[0.95] flex items-center justify-center space-x-2"
+                  className="bg-aviation-cyan text-noche hover:bg-sky-300 w-full md:w-auto font-semibold text-sm px-10 md:px-12 py-4 md:py-5 rounded-full transition-all active:scale-[0.95] flex items-center justify-center space-x-2"
                 >
                   {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                   <span>Guardar cambios</span>

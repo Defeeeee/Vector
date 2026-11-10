@@ -371,7 +371,7 @@ export default function MapaClient({
         {volando ? (
           <button
             onClick={() => setVolando(false)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-semibold px-3 py-1.5"
+            className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex items-center gap-1.5 rounded-full text-xs font-semibold px-3 py-1.5"
           >
             <Square className="w-3 h-3" fill="currentColor" /> Terminar
           </button>

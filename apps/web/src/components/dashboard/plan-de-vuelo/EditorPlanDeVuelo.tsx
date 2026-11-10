@@ -1072,7 +1072,7 @@ export default function EditorPlanDeVuelo({
                   type="button"
                   disabled={!listo || !oficina || !!cancelado || envio.estado === "mandando" || sinSenal}
                   onClick={mandar}
-                  className="inline-flex max-w-full items-center gap-2 px-4 py-2.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold disabled:opacity-40"
+                  className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex max-w-full items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold disabled:opacity-40"
                 >
                   {envio.estado === "mandando" ? <Loader2 className="w-4 h-4 shrink-0 animate-spin" /> : <Mail className="w-4 h-4 shrink-0" />}
                   <span className="truncate">Mandar a {oficina ? oficina.correo : "la oficina"}</span>
@@ -1193,7 +1193,7 @@ export default function EditorPlanDeVuelo({
                           type="button"
                           disabled={!demoraNueva || !listo || !oficina || ocupadoDemora}
                           onClick={mandarDemora}
-                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-semibold disabled:opacity-40"
+                          className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold disabled:opacity-40"
                         >
                           {demoraEstado.estado === "mandando" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} Mandar a{" "}
                           {oficina ? oficina.correo : "la oficina"}

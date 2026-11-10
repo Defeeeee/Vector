@@ -35,7 +35,7 @@ export default function CambiarConsentimientoMeta() {
         type="button"
         onClick={() => elegir("si")}
         disabled={eleccion === "si"}
-        className="px-4 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold disabled:opacity-40"
+        className="bg-aviation-cyan text-noche hover:bg-sky-300 px-4 py-2 text-sm font-bold disabled:opacity-40 rounded-full"
       >
         Aceptar
       </button>

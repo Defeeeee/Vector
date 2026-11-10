@@ -559,7 +559,7 @@ function DocumentForm({
         <button
           type="submit"
           disabled={pending}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold transition-opacity disabled:opacity-50"
+          className="bg-aviation-cyan text-noche hover:bg-sky-300 flex items-center gap-2 px-5 py-2.5 text-xs font-bold transition-opacity disabled:opacity-50 rounded-full"
         >
           {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CalendarClock className="w-3.5 h-3.5" />}
           {doc ? "Guardar cambios" : "Agregar"}

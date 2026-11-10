@@ -71,7 +71,7 @@ export default function ToolsClient() {
 
       <div className="bg-white dark:bg-carbon rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none p-6 md:p-10">
         <div className="mb-6 md:mb-8">
-          <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">
+          <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">
             {tool.label}
           </h3>
           <p className="mt-1 text-xs md:text-sm font-medium text-zinc-500 dark:text-zinc-400">{tool.description}</p>

@@ -494,9 +494,9 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
       {/* La tarjeta: `overflow-hidden` recorta sus esquinas redondeadas. Hasta la 3.0.0
           también se dibujaba sin tarjeta, adentro del modal que cerraba la sesión en vivo. */}
       <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-3xl md:rounded-[2.5rem] shadow-cal dark:shadow-none overflow-hidden flex flex-col transition-colors max-lg:bg-transparent! max-lg:dark:bg-transparent! max-lg:border-0 max-lg:shadow-none! max-lg:rounded-none max-lg:overflow-visible">
-          <div className="max-lg:hidden p-6 md:p-8 border-b border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 flex items-center justify-between">
+          <div className="max-lg:hidden p-6 md:p-8 lg:px-0 lg:pt-0 lg:pb-6 border-b border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 lg:dark:bg-transparent flex items-center justify-between">
             <div className="space-y-1">
-              <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">
+              <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">
                 Nueva entrada
               </h3>
               <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Bitácora electrónica</p>

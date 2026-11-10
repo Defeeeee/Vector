@@ -31,7 +31,7 @@ export default function PendientesDdjj({ cuantos, leido }: { cuantos: number; le
         href="https://cad.anac.gob.ar/portalApp/"
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold shrink-0"
+        className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold shrink-0"
       >
         Abrir el CAD <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
       </a>

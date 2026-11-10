@@ -196,7 +196,7 @@ export default function ProfileForm({ profile, cmaExpiry }: ProfileFormProps) {
                     setTimeout(() => setCopied(false), 2000);
                   }
                 }}
-                className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm px-6 py-3.5 rounded-xl transition-all active:scale-[0.95] flex-shrink-0"
+                className="bg-aviation-cyan text-noche hover:bg-sky-300 font-semibold text-sm px-6 py-3.5 transition-all active:scale-[0.95] flex-shrink-0 rounded-full"
               >
                 {copied ? "¡Copiado!" : "Copiar"}
               </button>
@@ -227,7 +227,7 @@ export default function ProfileForm({ profile, cmaExpiry }: ProfileFormProps) {
         <button 
           disabled={isPending}
           type="submit" 
-          className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm py-5 px-12 rounded-full shadow-cal-highlight dark:shadow-none transition-all active:scale-[0.95] flex items-center space-x-3 disabled:opacity-50"
+          className="bg-aviation-cyan text-noche hover:bg-sky-300 font-semibold text-sm py-5 px-12 rounded-full transition-all active:scale-[0.95] flex items-center space-x-3 disabled:opacity-50"
         >
           {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           <span>Guardar perfil</span>

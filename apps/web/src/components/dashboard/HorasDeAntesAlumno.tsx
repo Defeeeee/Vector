@@ -40,7 +40,7 @@ export default function HorasDeAntesAlumno({ logbooks }: { logbooks: Logbook[] }
           type="button"
           onClick={guardar}
           disabled={pendiente}
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold disabled:opacity-50"
+          className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-50"
         >
           {pendiente && <Loader2 className="w-4 h-4 animate-spin" />} Guardar
         </button>

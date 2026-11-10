@@ -78,6 +78,30 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.13.0",
+    fecha: "2026-11-10",
+    titulo: "Del Mapa al plan de vuelo",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "El plan de vuelo, directo desde el Mapa",
+        texto: "Elegí el avión, mirá el tiempo de cada tramo y el combustible, y tocá \"Armar el plan de vuelo\": se abre el plan con la ruta, el avión y la duración sugerida.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+      {
+        icono: "libro",
+        titulo: "Tus rutas guardadas",
+        texto: "Guardá una ruta con un nombre y abrila cuando quieras, en la compu o en el teléfono.",
+      },
+      {
+        icono: "avion",
+        titulo: "Todo Vector, de noche",
+        texto: "Las pantallas de la compu y el ingreso tienen el estilo del inicio: sin cajas, títulos grandes y los botones en cian.",
+      },
+    ],
+  },
+  {
     version: "3.12.0",
     fecha: "2026-11-10",
     titulo: "Menos pantallas, todo a mano",

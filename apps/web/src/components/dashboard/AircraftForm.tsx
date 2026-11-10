@@ -112,7 +112,7 @@ export default function AircraftForm() {
         <LoadingButton 
           isLoading={isPending}
           type="submit" 
-          className="w-full md:w-auto bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 font-semibold text-sm py-5 px-10 rounded-2xl transition-all shadow-cal-highlight dark:shadow-xl"
+          className="bg-aviation-cyan text-noche hover:bg-sky-300 w-full md:w-auto font-semibold text-sm py-5 px-10 transition-all dark:shadow-xl rounded-full"
         >
           Registrar aeronave
         </LoadingButton>

@@ -89,7 +89,7 @@ export default function ConexionCad({ rechazada, usuarioAnterior }: { rechazada?
         <button
           type="submit"
           disabled={enviando}
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold whitespace-nowrap shrink-0 disabled:opacity-60"
+          className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-sm font-semibold whitespace-nowrap shrink-0 disabled:opacity-60"
         >
           {enviando ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <KeyRound className="w-4 h-4" aria-hidden="true" />}
           {enviando ? "Entrando al CAD…" : "Conectar con ANAC"}

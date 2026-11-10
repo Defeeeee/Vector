@@ -87,7 +87,7 @@ export default function PerfilPlanAvion({ aircraftId, perfil }: { aircraftId: st
                   setEstado("error" in r ? "error" : "listo");
                 })
               }
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold disabled:opacity-50"
+              className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold disabled:opacity-50"
             >
               {pendiente ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : estado === "listo" ? <Check className="w-3.5 h-3.5" /> : null}
               {estado === "listo" ? "Guardado" : "Guardar"}

@@ -79,8 +79,10 @@ pantallas que no son sección son pestañas:
 - Bitácora = Vuelos · Resumen · Gastos (`/dashboard/balance`). La Auditoría
   (`/dashboard/history/auditoria`) cuelga de Vuelos y avisa arriba de la lista (`AvisoAuditoria`).
 - Preparar vuelo = Mapa · Plan de vuelo · Aeródromos · Herramientas. La planilla de navegación
-  (el viejo Planificador, `/dashboard/mapa/planilla`) cuelga del Mapa, que le pasa la ruta; de ahí
-  sale "Armar el plan de vuelo". El editor de un plan (`/dashboard/plan-de-vuelo/[id]`) cuelga de
+  (el viejo Planificador, `/dashboard/mapa/planilla`, con viento y para imprimir) cuelga del Mapa.
+  Desde la 3.13.0 la tarjeta de la ruta del Mapa tiene el avión (TAS y consumo), el tiempo por tramo,
+  el combustible, "Armar el plan de vuelo" y las rutas guardadas (`RutaAcciones`, `/rutas` del
+  backend, migración 039). En la compu las pestañas de Preparar flotan sobre el mapa. El editor de un plan (`/dashboard/plan-de-vuelo/[id]`) cuelga de
   Plan de vuelo. El METAR y el TAF están en la ficha de Aeródromos.
 - Pilotos = Red · Actividad. Buscar, Publicar y el perfil de un piloto
   (`/dashboard/pilotos/[handle]`) cuelgan de la Red.
@@ -148,7 +150,14 @@ Actividad.
   (`globals.css`), así que una pantalla nueva escribe sus `dark:` como siempre y toma el gris azulado
   sola; las superficies van en `bg-carbon` y el fondo en `bg-noche`. En el escritorio la barra
   lateral es azul noche (`cabina`) y se abre con los nombres al pasar el mouse o con
-  `:focus-visible`, y el inicio es `InicioEscritorio` (sin bento). Una pantalla puede esconder la barra de
+  `:focus-visible`, y el inicio es `InicioEscritorio` (sin bento). **Desde la 3.13.0 ninguna pantalla
+  de la compu usa cajas** (Federico: sin bento): en `globals.css`, a partir de `lg` y adentro de
+  `main`, las tarjetas grandes (`rounded-[2rem]`, `rounded-3xl`…) pierden fondo, borde y relleno, y
+  los bloques se separan con la línea fina de arriba (`lg:border-t lg:border-white/10 lg:pt-9`);
+  las cajas chicas (filas) quedan. `PageHeader` y `SeccionTabs` llevan el rótulo en mono con el
+  punto cian, el título grande de la landing y las pestañas subrayadas; el botón principal es la
+  píldora cian (`bg-aviation-cyan text-noche`). El ingreso, el alta y la contraseña usan
+  `components/acceso/AuthShell` (el video del hero a la derecha). Una pantalla puede esconder la barra de
   abajo (`data-sin-barra-movil`) o el encabezado (`data-sin-encabezado-movil`): Registrar vuelo y
   el Mapa en vuelo. Lo que tenga que quedar `fixed` dentro de una página va en un portal sobre
   `body`: la página entra con `animate-in`, un `transform`.
@@ -551,10 +560,9 @@ importa es el del backend (`request_max_body_size`, 30 MB).
   el procesamiento de Supabase, no la distancia. Sólo el backend habla con Supabase (su
   `.env`).
 - **La simplificación de la 3.12.0** (Federico, 2026-11-05) sacó el calendario y las métricas
-  propias. **Falta:** fusionar la planilla adentro del Mapa (prototipo primero), "Armar el plan de
-  vuelo" directo desde la tarjeta de la ruta, guardar borradores de ruta en el Mapa (pedidos de
-  Federico) y el Hangar con un solo libro. Sin decidir: poner detrás de un permiso por perfil lo
-  que excede al alumno (aerovías, HVI, Jeppesen).
+  propias; la 3.13.0 sumó al Mapa el plan de vuelo y las rutas guardadas, y el Hangar con un solo
+  libro no ofrece agregar ni borrar (quien tiene varios los sigue viendo). Sin decidir: poner detrás
+  de un permiso por perfil lo que excede al alumno (aerovías, HVI, Jeppesen).
 - **La red social deja afuera, a propósito,** editar una publicación, redirigir un @ viejo
   y páginas de escuela o aeródromo. Además:
   - los reportes no tienen pantalla: se leen en la tabla `reportes` y llegan como aviso

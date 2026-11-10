@@ -72,40 +72,40 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-      <PageHeader eyebrow="Perfil, vencimientos, aeronaves y packs de horas" title="Configuración" />
+      <PageHeader eyebrow="Tu perfil, tu libro, tus aviones y tus packs" title="Hangar" />
 
 
       {/* Logbooks — above aircraft and packs because a flight has to land in a
           book before anything else about it matters. */}
       {/* El alumno piloto no lleva libro de vuelo (ver `lib/licencias.ts`): sin la sección. */}
-      {!esAlumno(profile?.license_type) && <section id="libros" className="space-y-4 md:space-y-6 scroll-mt-24">
+      {!esAlumno(profile?.license_type) && <section id="libros" className="space-y-4 md:space-y-6 lg:border-t lg:border-white/10 lg:pt-9 scroll-mt-24">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex lg:hidden items-center justify-center shadow-lg">
             <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-zinc-900" />
           </div>
-          <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">{logbooks.length > 1 ? "Libros de vuelo" : "Tu libro de vuelo"}</h3>
+          <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">{logbooks.length > 1 ? "Libros de vuelo" : "Tu libro de vuelo"}</h3>
         </div>
         <LogbooksManager logbooks={logbooks} />
       </section>}
 
       {/* El alumno no ve los libros, pero sí sus horas de antes (`lib/apertura-alumno.ts`). */}
-      {esAlumno(profile?.license_type) && <section id="horas-de-antes" className="space-y-4 md:space-y-6 scroll-mt-24">
+      {esAlumno(profile?.license_type) && <section id="horas-de-antes" className="space-y-4 md:space-y-6 lg:border-t lg:border-white/10 lg:pt-9 scroll-mt-24">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex lg:hidden items-center justify-center shadow-lg">
             <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-zinc-900" />
           </div>
-          <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Tus horas de antes</h3>
+          <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Tus horas de antes</h3>
         </div>
         <HorasDeAntesAlumno logbooks={logbooks} />
       </section>}
 
       {/* Profile Section */}
-      <section className="space-y-4 md:space-y-6">
+      <section className="space-y-4 md:space-y-6 lg:border-t lg:border-white/10 lg:pt-9">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex lg:hidden items-center justify-center shadow-lg">
             <User className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-zinc-900" />
           </div>
-          <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Perfil del piloto</h3>
+          <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Perfil del piloto</h3>
         </div>
 
         <div className="bg-white dark:bg-carbon p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-cal dark:shadow-none hover:shadow-lg dark:hover:bg-white/[0.04] transition-all">
@@ -116,12 +116,12 @@ export default async function SettingsPage() {
       {/* El @ y lo que se publica. Pegado al perfil porque es su versión pública, y
           con ancla: "Creá tu @" en la red y en los perfiles de otros traen acá.
           `scroll-mt` para que el encabezado fijo del teléfono no lo tape. */}
-      <section id="perfil-publico" className="space-y-4 md:space-y-6 scroll-mt-24">
+      <section id="perfil-publico" className="space-y-4 md:space-y-6 lg:border-t lg:border-white/10 lg:pt-9 scroll-mt-24">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex lg:hidden items-center justify-center shadow-lg">
             <AtSign className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-zinc-900" />
           </div>
-          <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Tu perfil de piloto</h3>
+          <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Tu perfil de piloto</h3>
         </div>
         <PerfilPublicoForm
           perfil={perfilPublico}
@@ -134,13 +134,13 @@ export default async function SettingsPage() {
       </section>
 
       {/* Documents / expiry tracker */}
-      <section className="space-y-4 md:space-y-6">
+      <section className="space-y-4 md:space-y-6 lg:border-t lg:border-white/10 lg:pt-9">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex lg:hidden items-center justify-center shadow-lg">
               <CalendarClock className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-zinc-900" />
             </div>
-            <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Vencimientos</h3>
+            <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Vencimientos</h3>
           </div>
           <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-white/5 px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-zinc-200 dark:border-white/10 shadow-sm">
             {documents.length} cargados
@@ -162,13 +162,13 @@ export default async function SettingsPage() {
       {/* Aircraft + Packs side by side on wide screens */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 md:gap-10 items-start">
         {/* Aircraft Management Section */}
-        <section className="space-y-4 md:space-y-6">
+        <section className="space-y-4 md:space-y-6 lg:border-t lg:border-white/10 lg:pt-9">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex lg:hidden items-center justify-center shadow-lg">
                 <Plane className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-zinc-900" />
               </div>
-              <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Mis aeronaves</h3>
+              <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Mis aeronaves</h3>
             </div>
             <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-white/5 px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-zinc-200 dark:border-white/10 shadow-sm">
               {aircraft.length} registradas
@@ -191,13 +191,13 @@ export default async function SettingsPage() {
         </section>
 
         {/* Flight Packs Section */}
-        <section className="space-y-4 md:space-y-6">
+        <section className="space-y-4 md:space-y-6 lg:border-t lg:border-white/10 lg:pt-9">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex lg:hidden items-center justify-center shadow-lg">
                 <Package className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-zinc-900" />
               </div>
-              <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Packs de horas</h3>
+              <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Packs de horas</h3>
             </div>
             <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-white/5 px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-zinc-200 dark:border-white/10 shadow-sm">
               {packs.length} activos
@@ -222,12 +222,12 @@ export default async function SettingsPage() {
         {/* D1 — la contrapartida del borrado de cuentas. Va al final del Hangar,
             que es donde el piloto ya viene a administrar lo suyo, y no en una
             pantalla propia: es una acción que se usa una vez cada mucho. */}
-        <section className="space-y-4 md:space-y-6">
+        <section className="space-y-4 md:space-y-6 lg:border-t lg:border-white/10 lg:pt-9">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex lg:hidden items-center justify-center shadow-lg">
               <Download className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-zinc-900" />
             </div>
-            <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Tus datos</h3>
+            <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Tus datos</h3>
           </div>
 
           <div className="bg-white dark:bg-carbon p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-sm dark:shadow-none space-y-4">

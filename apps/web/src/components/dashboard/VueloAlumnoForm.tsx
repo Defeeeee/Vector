@@ -289,7 +289,7 @@ export default function VueloAlumnoForm({
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
             <input value={matricula} onChange={(e) => setMatricula(e.target.value)} placeholder="Matrícula, ej. LV-ABC" className={`${campo} uppercase`} />
             <input value={modelo} onChange={(e) => setModelo(e.target.value)} placeholder="Modelo, ej. C152" className={campo} />
-            <button type="button" onClick={agregarAvion} disabled={pendiente} className="rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm px-5 py-3 disabled:opacity-50">
+            <button type="button" onClick={agregarAvion} disabled={pendiente} className="bg-aviation-cyan text-noche hover:bg-sky-300 font-semibold text-sm px-5 py-3 disabled:opacity-50 rounded-full">
               Agregar
             </button>
           </div>

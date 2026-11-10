@@ -63,8 +63,8 @@ export default function GoogleButton({
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-zinc-200 dark:border-white/10"></div>
         </div>
-        <div className="relative flex justify-center text-[8px] font-bold uppercase tracking-[0.3em]">
-          <span className="bg-white dark:bg-black px-4 text-zinc-400 dark:text-zinc-500 transition-colors">
+        <div className="relative flex justify-center font-mono text-[11px] uppercase tracking-[0.14em]">
+          <span className="bg-noche px-4 text-zinc-500">
             O continuar con
           </span>
         </div>
@@ -76,7 +76,7 @@ export default function GoogleButton({
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         disabled={disabled || isPending}
-        className="w-full bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white font-semibold text-sm py-5 rounded-2xl transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.08] disabled:opacity-50 flex items-center justify-center space-x-3 shadow-sm dark:shadow-none"
+        className="w-full border border-white/20 text-white font-semibold text-[15px] py-4 rounded-full transition-colors hover:border-white/40 hover:bg-white/[0.04] disabled:opacity-50 flex items-center justify-center space-x-3"
       >
         {isPending ? (
           <Loader2 className="w-4 h-4 animate-spin" />

@@ -193,7 +193,7 @@ export default function CrearHandleRapido({
         <button
           type="submit"
           disabled={bloqueado}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-6 py-3 text-sm font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors disabled:opacity-50"
+          className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold transition-colors disabled:opacity-50 rounded-full"
         >
           {pendiente && <Loader2 className="w-4 h-4 animate-spin" />}
           {normalizado && !problema ? `Crear ${conArroba(normalizado)}` : "Crear mi @"}

@@ -96,7 +96,7 @@ export default function GuiaShell({
             </p>
             <Link
               href="/register"
-              className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-zinc-900 dark:bg-white px-6 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:opacity-90 transition-opacity"
+              className="bg-aviation-cyan text-noche hover:bg-sky-300 mt-5 inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold transition-opacity rounded-full"
             >
               Crear mi bitácora
               <ArrowRight className="w-4 h-4" />

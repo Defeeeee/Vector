@@ -145,7 +145,7 @@ export default function BalanceClient({
     <div className="space-y-8 md:space-y-12">
       {/* Mode Switcher Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <PageHeader eyebrow="Gestión financiera" title="Balance" esLaSeccion>
+        <PageHeader eyebrow="Packs, saldo y lo que costó cada vuelo" title="Gastos">
           <p className="text-sm text-zinc-500 dark:text-zinc-400 pt-1">
             Administrá tus consumos de vuelo, saldos y packs de horas
           </p>
@@ -208,7 +208,7 @@ export default function BalanceClient({
                 <div className="w-8 h-8 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
                   <Package className="w-4 h-4 text-white dark:text-zinc-900" />
                 </div>
-                <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Packs activos</h3>
+                <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Packs activos</h3>
               </div>
 
               <div className="grid grid-cols-1 gap-6">
@@ -372,7 +372,7 @@ export default function BalanceClient({
 
                 <button
                   onClick={() => setIsTopUpOpen(true)}
-                  className="w-full md:w-auto bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-sm px-8 py-4.5 rounded-xl shadow-cal-highlight dark:shadow-none hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all flex items-center justify-center space-x-2"
+                  className="bg-aviation-cyan text-noche hover:bg-sky-300 w-full md:w-auto font-semibold text-sm px-8 py-4.5 transition-all flex items-center justify-center space-x-2 rounded-full"
                 >
                   <Coins className="w-4 h-4" />
                   <span>Cargar saldo</span>
@@ -385,7 +385,7 @@ export default function BalanceClient({
                   <div className="w-8 h-8 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
                     <Coins className="w-4 h-4 text-white dark:text-zinc-900" />
                   </div>
-                  <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Historial de movimientos</h3>
+                  <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Historial de movimientos</h3>
                 </div>
 
                 <div className="max-w-lg mx-auto md:mx-0">
@@ -461,7 +461,7 @@ export default function BalanceClient({
             <div className="w-8 h-8 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
               <Plane className="w-4 h-4 text-white dark:text-zinc-900" />
             </div>
-            <h3 className="text-lg md:text-xl font-bold font-display text-zinc-900 dark:text-white tracking-tight">Costos aeronaves</h3>
+            <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Costos aeronaves</h3>
           </div>
 
           <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] p-6 space-y-4 shadow-sm">

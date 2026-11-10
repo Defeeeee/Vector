@@ -6,6 +6,14 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.13.0 — Del Mapa al plan de vuelo
+
+_10 de noviembre de 2026_
+
+- **El plan de vuelo, directo desde el Mapa** — Elegí el avión, mirá el tiempo de cada tramo y el combustible, y tocá "Armar el plan de vuelo": se abre el plan con la ruta, el avión y la duración sugerida.
+- **Tus rutas guardadas** — Guardá una ruta con un nombre y abrila cuando quieras, en la compu o en el teléfono.
+- **Todo Vector, de noche** — Las pantallas de la compu y el ingreso tienen el estilo del inicio: sin cajas, títulos grandes y los botones en cian.
+
 ## v3.12.0 — Menos pantallas, todo a mano
 
 _10 de noviembre de 2026_

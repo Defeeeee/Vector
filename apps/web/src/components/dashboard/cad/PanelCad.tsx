@@ -718,7 +718,7 @@ function EquipoSimulador({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => void guardar()} disabled={guardando || !simId || !clase} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold disabled:opacity-40">
+            <button onClick={() => void guardar()} disabled={guardando || !simId || !clase} className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold disabled:opacity-40">
               {guardando && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />} Guardar
             </button>
             {nota && <p className="text-xs text-amber-700 dark:text-amber-400">{nota}</p>}

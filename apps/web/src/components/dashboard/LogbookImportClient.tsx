@@ -375,7 +375,7 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
                 type="button"
                 disabled={isSubmitting}
                 onClick={handleConfirmImport}
-                className="flex-1 md:flex-none bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 disabled:opacity-50 disabled:pointer-events-none font-semibold text-sm px-8 py-3.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center space-x-2"
+                className="bg-aviation-cyan text-noche hover:bg-sky-300 flex-1 md:flex-none disabled:opacity-50 disabled:pointer-events-none font-semibold text-sm px-8 py-3.5 transition-all active:scale-[0.98] flex items-center justify-center space-x-2 rounded-full"
               >
                 {isSubmitting ? (
                   <>

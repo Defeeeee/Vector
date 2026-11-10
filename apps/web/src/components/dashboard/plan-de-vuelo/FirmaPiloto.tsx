@@ -115,7 +115,7 @@ export default function FirmaPiloto({
           type="button"
           onClick={guardar}
           disabled={!hayTrazo || estado === "guardando"}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold disabled:opacity-40"
+          className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold disabled:opacity-40"
         >
           {estado === "guardando" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
           Guardar firma
