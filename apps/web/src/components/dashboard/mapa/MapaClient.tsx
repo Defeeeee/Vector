@@ -711,7 +711,7 @@ export default function MapaClient({
       // El menú de capas es una hoja desde abajo: la barra de secciones le taparía el final.
       data-sin-barra-movil={volando || menuCapas ? "" : undefined}
       data-sin-encabezado-movil={volando ? "" : undefined}
-      className={`fixed inset-x-0 bottom-0 ${volando ? "top-0" : "top-24 app:top-[calc(max(58px,calc(env(safe-area-inset-top)+0.75rem))+3.25rem)]"} lg:top-0 lg:left-20 z-[35]`}
+      className={`fixed inset-x-0 bottom-0 ${volando ? "top-0" : "top-24 app:top-[calc(max(58px,calc(env(safe-area-inset-top)+0.75rem))+6.625rem)]"} lg:top-0 lg:left-20 z-[35]`}
     >
       <MapaLeaflet
         capas={capas}

@@ -1203,6 +1203,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.13.1",
+    fecha: "2026-11-10",
+    motivo: "En la app instalada en el teléfono, el Mapa tapaba las pestañas de Preparar vuelo: arreglo de algo que la 3.13.0 ya anunciaba, no una novedad.",
+  },
+  {
     version: "3.5.1",
     fecha: "2026-11-04",
     motivo: "Registrar vuelo del alumno piloto con el diseño del teléfono de la 3.4.0 (chips del avión, \"Ahora\", aterrizajes con − y +, Guardar abajo). Las novedades no se le muestran al alumno, y para el resto no cambia nada.",
