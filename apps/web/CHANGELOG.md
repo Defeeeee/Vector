@@ -11,6 +11,7 @@ la bitácora de `docs/bitacora/`.
 _10 de noviembre de 2026_
 
 - **El plan de vuelo, directo desde el Mapa** — Elegí el avión, mirá el tiempo de cada tramo y el combustible, y tocá "Armar el plan de vuelo": se abre el plan con la ruta, el avión y la duración sugerida.
+- **Tus rutas guardadas** — Guardá una ruta del Mapa con un nombre y abrila cuando quieras, en la compu o en el teléfono.
 - **Siempre en la última versión** — Vector se actualiza solo al abrirlo o al pasar de una pantalla a otra. Si estás cargando algo, te avisa y se aplica cuando guardes.
 - **Todo Vector, de noche** — Las pantallas de la compu y el ingreso tienen el estilo del inicio: sin cajas, títulos grandes y los botones en cian.
 

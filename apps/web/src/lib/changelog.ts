@@ -90,6 +90,11 @@ export const CHANGELOG: VersionPublicada[] = [
         cta: "Abrir el Mapa",
       },
       {
+        icono: "libro",
+        titulo: "Tus rutas guardadas",
+        texto: "Guardá una ruta del Mapa con un nombre y abrila cuando quieras, en la compu o en el teléfono.",
+      },
+      {
         icono: "reloj",
         titulo: "Siempre en la última versión",
         texto: "Vector se actualiza solo al abrirlo o al pasar de una pantalla a otra. Si estás cargando algo, te avisa y se aplica cuando guardes.",
