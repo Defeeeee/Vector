@@ -1,106 +1,81 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { setSession } from "@/actions/auth";
-import { Loader2 } from "lucide-react";
-import { Isotipo } from "@/components/Marca";
+import AuthShell, { ErrorAuth } from "@/components/acceso/AuthShell";
 
+/**
+ * La vuelta de Google: Supabase redirige acá con el token en el hash (o en la query), se arma la
+ * sesión y se va al dashboard. Con el armado de las pantallas de acceso (3.13.0).
+ *
+ * Sin `console.log` de la URL: llevaba el token de sesión a la consola del navegador.
+ */
 export default function AuthCallback() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let espera: ReturnType<typeof setTimeout> | undefined;
     async function handleAuth() {
       try {
-        console.log("AuthCallback: FULL URL:", window.location.href);
         const hash = window.location.hash;
         const query = new URLSearchParams(window.location.search);
-        
-        console.log("AuthCallback: Hash:", hash);
-        console.log("AuthCallback: Query:", query.toString());
-        
+
         let accessToken = query.get("access_token");
         let refreshToken = query.get("refresh_token");
 
         if (!accessToken && hash) {
-          console.log("AuthCallback: Found token in hash, parsing...");
           const params = new URLSearchParams(hash.substring(1));
           accessToken = params.get("access_token");
           refreshToken = params.get("refresh_token");
         }
 
         if (accessToken) {
-          console.log("AuthCallback: Token detected, updating session...");
           localStorage.setItem("session_token", accessToken);
           try {
             await setSession(accessToken, refreshToken || undefined);
-            console.log("AuthCallback: setSession call completed");
-          } catch (e) {
-            console.error("AuthCallback: setSession failed:", e);
+          } catch {
+            // Si falla, el proxy manda al login al entrar al dashboard: no hay nada mejor que hacer acá.
           }
-          
-          console.log("AuthCallback: Session set, waiting for propagation...");
-          // Small delay to ensure cookies are committed before redirect
-          setTimeout(() => {
-              console.log("AuthCallback: Success, hard redirecting to /dashboard");
-              window.location.href = "/dashboard";
+          // Un respiro para que la cookie quede escrita antes de navegar.
+          espera = setTimeout(() => {
+            window.location.href = "/dashboard";
           }, 500);
-          
         } else if (query.get("error")) {
-          console.error("AuthCallback: Supabase error:", query.get("error"), query.get("error_description"));
-          setError(query.get("error_description") || "Authentication failed");
+          setError(query.get("error_description") || "Google no completó el ingreso.");
         } else {
-          console.log("AuthCallback: No token found. URL might be incorrect or Supabase didn't redirect with tokens.");
-          const timeout = setTimeout(() => {
-             if (!accessToken) {
-               console.error("AuthCallback: Timeout - no token received");
-               setError("No se pudo encontrar el token de sesión. Verifica la URL.");
-             }
-          }, 5000);
-          return () => clearTimeout(timeout);
+          espera = setTimeout(() => setError("No llegó la sesión desde Google. Probá de nuevo."), 5000);
         }
-      } catch (err) {
-        console.error("Callback error:", err);
-        setError("Ocurrió un error inesperado al procesar el inicio de sesión.");
+      } catch {
+        setError("Ocurrió un error inesperado al ingresar.");
       }
     }
 
     handleAuth();
-  }, [router]);
+    return () => clearTimeout(espera);
+  }, []);
+
+  if (error) {
+    return (
+      <AuthShell rotulo="Ingresar con Google" titulo="No pudimos ingresar." volverA="/login">
+        <div className="space-y-6">
+          <ErrorAuth>{error}</ErrorAuth>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center rounded-full bg-aviation-cyan text-noche px-6 py-3.5 text-sm font-bold hover:bg-sky-300 transition-colors"
+          >
+            Volver a ingresar
+          </Link>
+        </div>
+      </AuthShell>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen w-full bg-[#0a0a0a] text-white">
-      <div className="flex flex-col items-center space-y-8">
-        <Isotipo sobreOscuro titulo="Vector" className="w-14 h-14 animate-pulse" />
-        
-        <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {error ? "Error de autenticación" : "Autenticando"}
-          </h1>
-
-          {error ? (
-            <div className="space-y-6">
-              <p className="text-red-500 text-sm font-medium max-w-xs mx-auto">
-                {error}
-              </p>
-              <button
-                onClick={() => router.push("/")}
-                className="text-sm font-semibold text-zinc-500 hover:text-white transition-colors border-b border-white/10 pb-1"
-              >
-                Volver al inicio
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center space-y-4">
-              <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
-              <p className="text-sm font-medium text-zinc-500">
-                Preparando tu bitácora digital...
-              </p>
-            </div>
-          )}
-        </div>
+    <AuthShell rotulo="Ingresar con Google" titulo="Preparando tu bitácora." bajada="Un segundo: estamos abriendo tu sesión.">
+      <div role="status" aria-label="Ingresando" className="h-1 w-full max-w-[280px] overflow-hidden rounded-full bg-white/10">
+        <div className="h-full w-1/3 rounded-full bg-aviation-cyan animate-[cargando_1.1s_ease-in-out_infinite]" />
       </div>
-    </div>
+    </AuthShell>
   );
 }

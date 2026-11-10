@@ -285,6 +285,12 @@
   .animate-blip {
     animation: blip 2.4s ease-in-out infinite;
   }
+
+  /* La barra de "Preparando tu bitácora" de la vuelta de Google (3.13.0). */
+  @keyframes cargando {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(300%); }
+  }
 }
 
 /**
