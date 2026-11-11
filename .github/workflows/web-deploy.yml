@@ -34,7 +34,11 @@ jobs:
     steps:
       - name: Desplegar por SSH
         uses: appleboy/ssh-action@v1
+        # Los secretos que la web necesita en su `.env` y que se cargan desde acá (ver abajo).
+        env:
+          RESEND_WEBHOOK_SECRET: ${{ secrets.RESEND_WEBHOOK_SECRET }}
         with:
+          envs: RESEND_WEBHOOK_SECRET
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -54,6 +58,21 @@ jobs:
             # La API tiene el suyo, `~/Vector/api`: con un clon compartido, el
             # `reset --hard` de acá le cambiaría el código a la API corriendo.
             cd ~/Vector/web/apps/web
+
+            # **El secreto de firma del webhook de Resend** (3.22.0, `/api/mail/entrante`) se
+            # carga desde los secretos del repo: el 2026-11-11 no se podía entrar al VPS por
+            # Tailscale. Si falta en el `.env` o cambió, se escribe; si el secreto del repo está
+            # vacío, no se toca nada. El valor no se imprime (GitHub además lo tapa en el log).
+            if [ -n "${RESEND_WEBHOOK_SECRET:-}" ]; then
+              touch .env
+              if ! grep -qxF "RESEND_WEBHOOK_SECRET=${RESEND_WEBHOOK_SECRET}" .env; then
+                grep -v '^RESEND_WEBHOOK_SECRET=' .env > .env.nuevo || true
+                cat .env.nuevo > .env && rm -f .env.nuevo
+                if [ -s .env ] && [ -n "$(tail -c1 .env)" ]; then echo >> .env; fi
+                printf 'RESEND_WEBHOOK_SECRET=%s\n' "$RESEND_WEBHOOK_SECRET" >> .env
+                echo "RESEND_WEBHOOK_SECRET escrito en el .env de la web."
+              fi
+            fi
 
             # **Lugar en disco antes de tocar nada.** El 2026-10-03 el VPS llegó a
             # 1,4 GB libres de 45, y el deploy necesita lugar para `node_modules`, el
