@@ -13,6 +13,7 @@ from src.controllers.auth import AuthController
 from src.controllers.flight_packs import FlightPacksController
 from src.controllers.planes_de_vuelo import PlanesDeVueloController, PlanesRecordatoriosController
 from src.controllers.rutas_guardadas import RutasGuardadasController
+from src.controllers.seguimientos import SeguimientosController, SeguimientosPublicosController
 from src.controllers.logbooks import LogbooksController
 from src.controllers.dashboard import DashboardController
 from src.controllers.transactions import TransactionsController
@@ -123,6 +124,9 @@ api_router = Router(
         AdsbController,
         # Pasar al CAD de ANAC desde Vector, con la cuenta que guardó el piloto.
         CadController,
+        # Que la familia siga el vuelo en vivo: el piloto con sesión, y el link público sin ella.
+        SeguimientosController,
+        SeguimientosPublicosController,
     ],
     dependencies={
         "supabase_client": Provide(AuthHandler.provide_supabase_client)

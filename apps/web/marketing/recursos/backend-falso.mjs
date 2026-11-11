@@ -120,6 +120,22 @@ function rutaCad(req, res, ruta, json) {
 export const DATOS = { perfil, aviones, vuelos };
 // Planes de vuelo (migración 024), en memoria: se pierden al reiniciar.
 const planes = new Map();
+// El seguimiento en vivo (migración 041), en memoria: un avión que sale de San Fernando hacia Santa Fe.
+// `token` fijo para abrir /seguir/<token> a mano; cada GET avanza un punto sobre la ruta.
+const TOKEN_SEGUIMIENTO = "tokenDePruebaDeSeguimiento000001";
+const seguimientoRuta = [[-34.4532, -58.5896], [-34.5, -58.9], [-34.55, -59.3], [-34.45, -59.9], [-34.2, -60.4], [-34.0, -61.0], [-33.7, -61.6]];
+let seguimiento = null;
+function nuevoSeguimiento(json) {
+  const ahora = new Date();
+  seguimiento = { id: crypto.randomUUID(), token: TOKEN_SEGUIMIENTO, nombre: "Lucía", ruta: json.ruta ?? "SADF SAAV", puntos: (json.puntos ?? []).map((p) => [p.lat, p.lon, p.codigo ?? ""]), creado: ahora, vence: new Date(+ahora + 12 * 3600e3), terminado: null, recorrido: [], ultima: null, paso: 0 };
+  return seguimiento;
+}
+function vistaSeguimiento(sg) {
+  const ahora = new Date();
+  const estado = sg.terminado ? "terminado" : ahora >= sg.vence ? "vencido" : "en_vuelo";
+  const puntos = sg.puntos.length ? sg.puntos : seguimientoRuta.map(([la, lo], i) => [la, lo, i === 0 ? "SADF" : i === seguimientoRuta.length - 1 ? "SAAV" : ""]);
+  return { nombre: sg.nombre, ruta: sg.ruta, puntos, estado, ultima: sg.ultima, recorrido: sg.recorrido, ahora: ahora.toISOString() };
+}
 const rutasGuardadas = [{ id: "r1", nombre: "SADF → SAAK por BENAVIDEZ", ruta: "SADF BENAVIDEZ SAAK", aircraft_id: null, created_at: "2026-11-09T12:00:00Z", updated_at: "2026-11-09T12:00:00Z" }];
 let firma = null;
 const resumenPlan = (p) => {
@@ -240,6 +256,51 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     const r = pegatinasQr(req, ruta, json);
     res.writeHead(r === undefined ? 404 : 200, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(r ?? { detail: "No existe" }));
+  }
+  // Seguir el vuelo en vivo (migración 041): crear, posición (rate de 10 s como el real), terminar y el link público.
+  if (ruta === "/api/seguimientos" && req.method === "POST") {
+    const sg = seguimiento && !seguimiento.terminado && new Date() < seguimiento.vence ? seguimiento : nuevoSeguimiento(json);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ id: sg.id, token: sg.token, vence_at: sg.vence.toISOString(), ya_existia: sg === seguimiento && sg.recorrido.length > 0 }));
+  }
+  if (ruta.startsWith("/api/seguimientos/") && req.method === "POST") {
+    const [, , , id, accion] = ruta.split("/");
+    let r = { detail: "Ese seguimiento no existe." }, estado = 404;
+    if (seguimiento && seguimiento.id === id) {
+      if (accion === "terminar") { seguimiento.terminado ??= new Date(); r = { terminado: true }; estado = 200; }
+      else if (accion === "posicion") {
+        if (seguimiento.terminado) { r = { detail: "Este seguimiento ya terminó." }; estado = 410; }
+        else {
+          const ahora = new Date();
+          const aceptada = !seguimiento.ultima || ahora - new Date(seguimiento.ultima.hora) >= 10000;
+          if (aceptada) {
+            seguimiento.ultima = { lat: json.lat, lon: json.lon, alt_ft: json.alt_ft ?? null, gs_kt: json.gs_kt ?? null, track: json.track ?? null, hora: ahora.toISOString() };
+            seguimiento.recorrido.push([Math.round(json.lat * 1e5) / 1e5, Math.round(json.lon * 1e5) / 1e5]);
+          }
+          r = { aceptada, vence_at: seguimiento.vence.toISOString() }; estado = 200;
+        }
+      }
+    }
+    res.writeHead(estado, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(r));
+  }
+  if (ruta.startsWith("/api/publico/seguimientos/") && req.method === "GET") {
+    const token = ruta.split("/").pop();
+    // Sin ningún vuelo creado, el token de prueba muestra uno que avanza solo (para ver la página sin el Mapa).
+    if (token === TOKEN_SEGUIMIENTO && !seguimiento) {
+      const sg = nuevoSeguimiento({ ruta: "SADF SAAV" });
+      sg.demo = true;
+    }
+    if (token === TOKEN_SEGUIMIENTO && seguimiento?.demo && !seguimiento.terminado) {
+      const i = Math.min(seguimiento.paso++, seguimientoRuta.length - 1);
+      const [la, lo] = seguimientoRuta[i];
+      const [pla, plo] = seguimientoRuta[Math.max(0, i - 1)];
+      seguimiento.recorrido.push([la, lo]);
+      seguimiento.ultima = { lat: la, lon: lo, alt_ft: 2400 + i * 50, gs_kt: 96, track: Math.round((Math.atan2(lo - plo, la - pla) * 180 / Math.PI + 360) % 360) || 270, hora: new Date().toISOString() };
+    }
+    const ok = token === TOKEN_SEGUIMIENTO && seguimiento;
+    res.writeHead(ok ? 200 : 404, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+    return res.end(JSON.stringify(ok ? vistaSeguimiento(seguimiento) : { detail: "Ese seguimiento no existe." }));
   }
   // Las rutas guardadas del Mapa (migración 039), en memoria.
   if (ruta.startsWith("/api/rutas")) {

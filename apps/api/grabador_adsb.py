@@ -12,7 +12,7 @@ deploy lo reinicia (`.github/workflows/api-deploy.yml`).
   código, en un solo pedido: así una navegación lejos de Buenos Aires se sigue grabando
   mientras alguna antena la escuche.
 - Cada 10 min relee las matrículas de los Hangares y los códigos ya aprendidos.
-- Una vez por hora borra lo que tiene más de 30 días.
+- Una vez por hora borra lo que tiene más de 30 días (también los seguimientos en vivo, migración 041).
 
 Los datos son de adsb.fi (uso no comercial, con cita) o de adsb.lol (ODbL). Si no contestan, espera y sigue: no hay nada que
 recuperar, lo que no se vio no se vio.
@@ -30,6 +30,7 @@ from typing import Dict, List, Tuple
 import httpx
 
 from src.services.adsb import limite_de_retencion, matriculas_del_hangar, nuestros, posicion, vale_guardar
+from src.services.seguimientos import limite_de_retencion as limite_seguimientos
 from src.supabase_client import SupabaseManager
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -90,6 +91,10 @@ def main() -> None:
                 releido = inicio
             if inicio - limpiado > LIMPIAR_CADA:
                 cliente.table("adsb_posiciones").delete().lt("visto_at", limite_de_retencion(datetime.now(timezone.utc))).execute()
+                try:
+                    cliente.table("seguimientos_en_vivo").delete().lt("created_at", limite_seguimientos(datetime.now(timezone.utc))).execute()
+                except Exception as exc:  # noqa: BLE001 — la tabla puede no existir todavía; no frena el ADS-B
+                    log.warning("no pude limpiar los seguimientos en vivo: %s", exc)
                 limpiado = inicio
 
             trafico: Dict[str, dict] = {}

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Bookmark, CloudOff, FileDown, FileText, Loader2, Printer, Trash2, X } from "lucide-react";
+import { Bookmark, ClipboardList, CloudOff, FileDown, FileText, Loader2, Printer, Trash2, X } from "lucide-react";
 import type { Aircraft } from "@/types";
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { PilotoParaPlan } from "@/lib/formulario-plan";
@@ -12,6 +12,8 @@ import { formularioDesdePlanificador } from "@/components/dashboard/plan-de-vuel
 import { MAX_NOMBRE_RUTA, nombreSugerido, type RutaGuardada } from "@/lib/rutas-guardadas";
 import { armarPiernera, nombrePiernera, type DatosPiernera } from "@/lib/piernera";
 import { CAPAS_CARTAS, teselasDeRuta } from "@/lib/cartas-aip";
+import { resumenDelPiloto } from "@/actions/briefing";
+import { MAX_AERODROMOS_BRIEFING, nombreBriefing, type EspacioBriefing } from "@/lib/briefing-pdf-datos";
 
 /**
  * Lo que se hace con una ruta del Mapa (3.13.0, Federico: "desde el mapa podemos mandarlo a que
@@ -38,6 +40,7 @@ export default function RutaAcciones({
   onCargar,
   piernera,
   puntosRuta,
+  espacios = null,
 }: {
   tokens: string[];
   resueltos: (PuntoResuelto | null | undefined)[];
@@ -55,6 +58,11 @@ export default function RutaAcciones({
   piernera: DatosPiernera;
   /** Los puntos ubicados de la ruta, para bajar sus cartas (el Mapa sin señal, 3.15.0). */
   puntosRuta: { lat: number; lon: number }[];
+  /**
+   * Los espacios aéreos que cruza la ruta, para el briefing en PDF. `null` (o sin pasar): no se
+   * calcularon, y la hoja lo dice.
+   */
+  espacios?: EspacioBriefing[] | null;
 }) {
   const [armando, empezarArmar] = useTransition();
   const [guardando, empezarGuardar] = useTransition();
@@ -82,6 +90,51 @@ export default function RutaAcciones({
       setError("No se pudo armar la piernera.");
     } finally {
       setBajando(false);
+    }
+  };
+
+  /*
+    El briefing en PDF: el estado del piloto (server action, texto ya armado), METAR, TAF y NOTAM
+    de cada aeródromo (el mismo camino que `BriefingRuta`: ANAC la consulta el navegador, con su
+    vigencia) y la ruta de la piernera. Todo en el navegador; pdf-lib se carga recién al tocar.
+  */
+  const [armandoBriefing, setArmandoBriefing] = useState(false);
+  const bajarBriefing = async () => {
+    setArmandoBriefing(true);
+    setError(null);
+    try {
+      const codigos = new Set<string>();
+      const aerodromos = resueltos
+        .filter((r): r is PuntoResuelto => Boolean(r) && r?.clase === "aerodromo")
+        .filter((r) => !codigos.has(r.codigo) && codigos.add(r.codigo))
+        .map((r) => ({ codigo: r.codigo, nombre: r.label }));
+      const [{ consultarAerodromos }, { armarPdfBriefing }, piloto] = await Promise.all([
+        import("@/lib/briefing-pdf-consulta"),
+        import("@/lib/briefing-pdf"),
+        resumenDelPiloto().catch(() => null),
+      ]);
+      const incluidos = aerodromos.slice(0, MAX_AERODROMOS_BRIEFING);
+      const estaciones = await consultarAerodromos(incluidos);
+      const bytes = await armarPdfBriefing({
+        armado: new Date(),
+        ruta: piernera.ruta,
+        avion: piernera.avion,
+        piloto,
+        estaciones,
+        estacionesOmitidas: aerodromos.length - incluidos.length,
+        piernera: armarPiernera(piernera),
+        espacios,
+      });
+      const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nombreBriefing(tokens);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch {
+      setError("No se pudo armar el briefing.");
+    } finally {
+      setArmandoBriefing(false);
     }
   };
 
@@ -228,6 +281,18 @@ export default function RutaAcciones({
         >
           {bajando ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
           Piernera en PDF
+        </button>
+      )}
+
+      {hayRuta && (
+        <button
+          type="button"
+          onClick={bajarBriefing}
+          disabled={armandoBriefing}
+          className="w-full inline-flex items-center justify-center gap-1.5 rounded-2xl border border-zinc-200 dark:border-white/10 px-3 py-2.5 text-[13px] font-semibold text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-white/5 disabled:opacity-60"
+        >
+          {armandoBriefing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
+          {armandoBriefing ? "Consultando el clima y los NOTAM…" : "Briefing en PDF"}
         </button>
       )}
 

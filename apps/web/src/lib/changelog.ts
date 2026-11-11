@@ -78,6 +78,37 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.20.0",
+    fecha: "2026-11-11",
+    titulo: "Para volar acompañado",
+    novedades: [
+      {
+        icono: "compartir",
+        titulo: "Que tu familia siga el vuelo",
+        texto: "En vuelo, en el Mapa, \"Compartir mi vuelo\" manda un link: quien lo abre ve dónde vas y por dónde pasaste, sin cuenta. Se apaga al terminar o a las 12 horas.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+      {
+        icono: "campana",
+        titulo: "Aviso antes de entrar a un espacio aéreo",
+        texto: "En vuelo, el Mapa te avisa antes de entrar a una CTR, ATZ o TMA, con la distancia, el tiempo y a quién llamar. Con vibración y, si lo prendés, un pitido.",
+      },
+      {
+        icono: "libro",
+        titulo: "El briefing de la ruta en PDF",
+        texto: "Desde la ruta del Mapa: si podés volar hoy, METAR, TAF y NOTAM de cada aeródromo, los tramos, las frecuencias y los espacios aéreos, en una hoja para llevar.",
+      },
+      {
+        icono: "nube",
+        titulo: "El viento pronosticado en la planilla",
+        texto: "La planilla de navegación trae el viento del pronóstico para tu ruta, tu hora de salida y tu altitud, y te lo sugiere para usar con un toque.",
+        href: "/dashboard/mapa/planilla",
+        cta: "Abrir la planilla",
+      },
+    ],
+  },
+  {
     version: "3.19.0",
     fecha: "2026-11-11",
     titulo: "Corregí el CAD desde Vector",

@@ -8,6 +8,7 @@ import { AlertTriangle, Layers, ChevronDown, ChevronLeft, ChevronRight, CloudSun
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { EspacioAereo } from "@/lib/espacios-aereos";
 import { aMagnetico } from "@/lib/navegacion";
+import { avisoDeEspacios, minutosCorto, nmCorto, sostenerAviso, type AvisoEspacio, type EstadoAviso } from "@/lib/aviso-espacios";
 import { dependenciasDeRuta, dependenciasEn, type Dependencia, type RadioDeAerodromo } from "@/lib/firs";
 import { codigoVfr, corredoresCerca, etiquetaCorredor, puntosVfr } from "@/lib/corredores-vfr";
 import {
@@ -34,6 +35,8 @@ import type { Aircraft } from "@/types";
 import type { PilotoParaPlan } from "@/lib/formulario-plan";
 import type { RutaGuardada } from "@/lib/rutas-guardadas";
 import RutaAcciones from "./RutaAcciones";
+import { useSeguimientoEnVivo, type SeguimientoEnVivo } from "./useSeguimientoEnVivo";
+import CompartirSeguimiento from "./CompartirSeguimiento";
 
 /**
  * **El Mapa** (3.0.0): todo es mapa, con la tarjeta de la ruta flotando arriba a la izquierda.
@@ -65,6 +68,9 @@ const MapaLeaflet = dynamic(() => import("./MapaLeaflet"), {
 
 const TAS_POR_DEFECTO = 100;
 const CLAVE_ORIENTACION = "vector-mapa-orientacion";
+const CLAVE_SONIDO_AVISO = "vector-mapa-aviso-sonido";
+/** Un mismo espacio no vuelve a sonar antes de esto (el aviso que se va y vuelve con el ruido del GPS). */
+const REAVISO_MS = 120_000;
 const ROTULO = "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400";
 const ANCHO_TARJETA = 380;
 const clave = (c: { q: string; desde: string; hasta: string }) => `${c.q}|${c.desde}|${c.hasta}`;
@@ -245,6 +251,9 @@ export default function MapaClient({
   const [proximo, setProximo] = useState(0);
   const [seguir, setSeguir] = useState(true);
   const puedeGps = montado && typeof navigator !== "undefined" && "geolocation" in navigator;
+  // Que la familia siga el vuelo (3.20.0): vive acá y no en la pantalla de vuelo, porque al
+  // terminar (`volando` en false) es el hook el que cierra el link.
+  const seguimiento = useSeguimientoEnVivo({ lectura, volando, ruta: tokens.join(" "), puntos });
 
   // El track (`lib/track-vuelo.ts`): en el teléfono. Se lee al montar (para mostrar el último
   // vuelo grabado) y se guarda cada 10 s mientras se vuela, al esconder la app y al terminar.
@@ -337,6 +346,75 @@ export default function MapaClient({
           (c) => c.desdeNm > 0 && ahora && c.dependencia.distintivo !== ahora.distintivo
         ) ?? null
       : null;
+
+  // El aviso de "estás por entrar a…": se proyecta el track con cada lectura y `sostenerAviso`
+  // evita que parpadee con el ruido del GPS. Vibra (y suena, si el piloto lo prendió) una vez por
+  // espacio nuevo. Ayuda VFR: no es una instrucción de control.
+  const [aviso, setAviso] = useState<AvisoEspacio | null>(null);
+  const estadoAviso = useRef<EstadoAviso | null>(null);
+  const avisados = useRef(new Map<string, number>());
+  const [sonidoAviso, setSonidoAviso] = useState(false);
+  const sonidoRef = useRef(false);
+  const audio = useRef<AudioContext | null>(null);
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem(CLAVE_SONIDO_AVISO) === "1";
+      setSonidoAviso(v);
+      sonidoRef.current = v;
+    } catch {}
+  }, []);
+  const pitar = useCallback(() => {
+    try {
+      const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AC) return;
+      const ctx = audio.current ?? (audio.current = new AC());
+      void ctx.resume();
+      // Dos pitidos cortos y agudos.
+      [0, 0.22].forEach((retraso) => {
+        const osc = ctx.createOscillator();
+        const gan = ctx.createGain();
+        const t0 = ctx.currentTime + retraso;
+        osc.frequency.value = 880;
+        gan.gain.setValueAtTime(0.0001, t0);
+        gan.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02);
+        gan.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
+        osc.connect(gan).connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.18);
+      });
+    } catch {}
+  }, []);
+  const alternarSonidoAviso = () => {
+    const v = !sonidoRef.current;
+    sonidoRef.current = v;
+    setSonidoAviso(v);
+    try {
+      localStorage.setItem(CLAVE_SONIDO_AVISO, v ? "1" : "0");
+    } catch {}
+    // Se prende con un toque: ahí el navegador deja crear el audio, y de paso suena de muestra.
+    if (v) pitar();
+  };
+  useEffect(() => {
+    if (!volando) {
+      estadoAviso.current = null;
+      setAviso(null);
+      return;
+    }
+    if (!lectura || !capas) return;
+    const ahoraMs = Date.now();
+    const nuevo = avisoDeEspacios(lectura, capas.espacios, capas.firs ?? []);
+    const estado = sostenerAviso(estadoAviso.current, nuevo, lectura, ahoraMs);
+    const id = estado?.aviso.espacio.id ?? null;
+    if (id && id !== estadoAviso.current?.aviso.espacio.id && ahoraMs - (avisados.current.get(id) ?? -Infinity) > REAVISO_MS) {
+      avisados.current.set(id, ahoraMs);
+      try {
+        navigator.vibrate?.([200, 100, 200]);
+      } catch {}
+      if (sonidoRef.current) pitar();
+    }
+    estadoAviso.current = estado;
+    setAviso(estado?.aviso ?? null);
+  }, [volando, lectura, capas, pitar]);
 
   // Norte o nariz arriba: se recuerda en el teléfono. Con la nariz arriba el mapa gira con el
   // track del GPS, y en el suelo (menos de 15 kt, el track no sirve) se queda donde estaba.
@@ -590,6 +668,8 @@ export default function MapaClient({
 
           <RutaAcciones
             tokens={tokens}
+            // Para el briefing en PDF: sin capas no se calcularon (`null`), no es que no cruce ninguno.
+            espacios={capas ? cruzados.map((e) => ({ tipo: e.tipo, nombre: e.nombre, clase: e.clase ?? null, limites: e.limites, aproximado: !!e.aproximado })) : null}
             resueltos={resueltos}
             aeronave={aeronave}
             tasKt={tasNum}
@@ -735,6 +815,10 @@ export default function MapaClient({
           variacion={variacion}
           ahora={ahora}
           despues={despues}
+          aviso={aviso}
+          sonidoAviso={sonidoAviso}
+          onSonidoAviso={alternarSonidoAviso}
+          seguimiento={seguimiento}
           dentro={dentro}
           puntos={puntos}
           track={track}
@@ -857,6 +941,7 @@ function ListaEspacios({ espacios }: { espacios: EspacioAereo[] }) {
  * Terminar; al costado, los botones del mapa, grandes para el dedo con turbulencia.
  */
 function PantallaDeVuelo(p: {
+  seguimiento: SeguimientoEnVivo;
   lectura: Lectura | null;
   errorGps: string | null;
   destino: { codigo: string; label: string } | null;
@@ -867,6 +952,9 @@ function PantallaDeVuelo(p: {
   variacion: number | null;
   ahora: Dependencia | null;
   despues: { desdeNm: number; dependencia: Dependencia } | null;
+  aviso: AvisoEspacio | null;
+  sonidoAviso: boolean;
+  onSonidoAviso: () => void;
   dentro: EspacioAereo[];
   puntos: { codigo: string; label: string }[];
   track: TrackVuelo | null;
@@ -976,6 +1064,25 @@ function PantallaDeVuelo(p: {
             </div>
           </>
         )}
+        {/* Aviso de espacio aéreo: va adentro de la banda de arriba, así `onMargenes` la mide sola. */}
+        {l && p.aviso && (
+          <div role="status" aria-live="polite" className="border-t border-amber-400/40 bg-amber-400/15 px-4 py-2">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-400">
+              Por entrar · {p.aviso.espacio.tipo} · {nmCorto(p.aviso.distanciaNm)} NM · {minutosCorto(p.aviso.minutos)}
+            </p>
+            <p className="text-sm font-semibold leading-snug text-amber-100">
+              {p.aviso.espacio.nombre}
+              {p.aviso.dependencia && (
+                <span className="tabular-nums text-amber-300">
+                  {" · "}
+                  {p.aviso.dependencia.distintivo}
+                  {p.aviso.dependencia.mhz.length ? ` ${p.aviso.dependencia.mhz.join(" · ")}` : ""}
+                </span>
+              )}
+            </p>
+            {p.aviso.condicionVertical && <p className="text-[11px] leading-snug text-amber-200/80">{p.aviso.condicionVertical.replace(/^si/, "Si")}.</p>}
+          </div>
+        )}
       </div>
 
       {/* El medio es el mapa: sólo los botones y el estado del track. */}
@@ -997,12 +1104,18 @@ function PantallaDeVuelo(p: {
           <button onClick={p.onSeguir} aria-label="Seguir al avión" className={`${boton} ${p.seguir ? "" : "!bg-aviation-cyan !text-noche !border-aviation-cyan"}`}>
             <Crosshair className="w-5 h-5" />
           </button>
-          <button onClick={p.onAcercar} aria-label="Acercar" className={boton}>
-            <Plus className="w-5 h-5" />
-          </button>
-          <button onClick={p.onAlejar} aria-label="Alejar" className={boton}>
-            <Minus className="w-5 h-5" />
-          </button>
+          {/* Con los detalles abiertos el mapa queda bajo y los cinco botones se subían encima de los
+              instrumentos: el zoom se va (queda pellizcar) y quedan orientación, seguir y capas. */}
+          {!p.detalles && (
+            <>
+              <button onClick={p.onAcercar} aria-label="Acercar" className={boton}>
+                <Plus className="w-5 h-5" />
+              </button>
+              <button onClick={p.onAlejar} aria-label="Alejar" className={boton}>
+                <Minus className="w-5 h-5" />
+              </button>
+            </>
+          )}
           <button onClick={p.onCapas} aria-label="Capas del mapa" aria-expanded={p.menuCapas} className={`${boton} ${p.menuCapas ? "!border-aviation-cyan" : ""}`}>
             <Layers className="w-5 h-5" />
           </button>
@@ -1011,6 +1124,9 @@ function PantallaDeVuelo(p: {
           <p className="absolute left-3 bottom-8 rounded-full bg-noche/80 backdrop-blur px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Grabando
             {grabado && grabado.minutos >= 1 ? ` · ${duracionCorta(grabado.minutos)} · ${grabado.distanciaNm.toFixed(0)} NM` : ""}
+            {p.seguimiento.estado === "compartiendo" && (
+              <span className={p.seguimiento.sinSenal ? "text-amber-300" : "text-aviation-cyan"}> · {p.seguimiento.sinSenal ? "Compartiendo, sin señal" : "Compartiendo"}</span>
+            )}
           </p>
         )}
       </div>
@@ -1018,7 +1134,8 @@ function PantallaDeVuelo(p: {
       {/* Abajo: con quién hablás, los detalles y Terminar. */}
       <div ref={abajo} className="pointer-events-auto bg-noche/90 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
         {p.detalles && (
-          <div className="max-h-[45vh] overflow-y-auto custom-scrollbar px-4 pt-4 pb-2 space-y-4 border-b border-white/10">
+          <div className="max-h-[36vh] overflow-y-auto custom-scrollbar px-4 pt-4 pb-2 space-y-4 border-b border-white/10">
+            <CompartirSeguimiento seguimiento={p.seguimiento} />
             <div>
               <p className={`${ROTULO} mb-1.5`}>Estás dentro de</p>
               {p.dentro.length ? <ListaEspacios espacios={p.dentro} /> : <p className="text-sm text-zinc-400">Ningún espacio controlado de los que dibuja el mapa.</p>}
@@ -1038,6 +1155,20 @@ function PantallaDeVuelo(p: {
                 </ol>
               </div>
             )}
+            <button
+              onClick={p.onSonidoAviso}
+              role="switch"
+              aria-checked={p.sonidoAviso}
+              className="w-full flex items-center justify-between gap-3 py-1 text-left"
+            >
+              <span>
+                <span className="block text-sm text-zinc-200">Pitido antes de entrar a un espacio</span>
+                <span className="block text-[11px] text-zinc-500">El aviso siempre vibra si el teléfono puede; el sonido es aparte.</span>
+              </span>
+              <span className={`shrink-0 font-mono text-[11px] font-semibold uppercase tracking-wider ${p.sonidoAviso ? "text-aviation-cyan" : "text-zinc-500"}`}>
+                {p.sonidoAviso ? "Prendido" : "Apagado"}
+              </span>
+            </button>
             {l && (
               <p className="text-[11px] text-zinc-500">
                 Precisión ±{Math.round(l.precisionM)} m{l.precisionM > 100 ? " · señal débil" : ""}. El track se graba en el teléfono mientras la pantalla está prendida.
@@ -1058,9 +1189,9 @@ function PantallaDeVuelo(p: {
                 </p>
                 {/* Las frecuencias enteras, en su línea: es lo que se marca en la radio. Un centro con
                     sectores trae varias, y se parten en dos renglones antes que cortarse. */}
-                <p className={`${p.ahora.mhz.length > 2 ? "text-[15px]" : "text-lg"} font-bold tabular-nums leading-snug text-aviation-cyan`}>
-                  {p.ahora.mhz.length ? p.ahora.mhz.join(" · ") : "Sin frecuencia publicada"}
-                </p>
+                {p.ahora.mhz.length > 0 && (
+                  <p className={`${p.ahora.mhz.length > 2 ? "text-[15px]" : "text-lg"} font-bold tabular-nums leading-snug text-aviation-cyan`}>{p.ahora.mhz.join(" · ")}</p>
+                )}
                 {p.despues && (
                   <p className="truncate text-xs text-zinc-400">
                     En {p.despues.desdeNm.toFixed(0)} NM: {p.despues.dependencia.distintivo} {p.despues.dependencia.mhz.join(" · ")}

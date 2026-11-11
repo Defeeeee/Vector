@@ -6,6 +6,15 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.20.0 — Para volar acompañado
+
+_11 de noviembre de 2026_
+
+- **Que tu familia siga el vuelo** — En vuelo, en el Mapa, "Compartir mi vuelo" manda un link: quien lo abre ve dónde vas y por dónde pasaste, sin cuenta. Se apaga al terminar o a las 12 horas.
+- **Aviso antes de entrar a un espacio aéreo** — En vuelo, el Mapa te avisa antes de entrar a una CTR, ATZ o TMA, con la distancia, el tiempo y a quién llamar. Con vibración y, si lo prendés, un pitido.
+- **El briefing de la ruta en PDF** — Desde la ruta del Mapa: si podés volar hoy, METAR, TAF y NOTAM de cada aeródromo, los tramos, las frecuencias y los espacios aéreos, en una hoja para llevar.
+- **El viento pronosticado en la planilla** — La planilla de navegación trae el viento del pronóstico para tu ruta, tu hora de salida y tu altitud, y te lo sugiere para usar con un toque.
+
 ## v3.19.0 — Corregí el CAD desde Vector
 
 _11 de noviembre de 2026_

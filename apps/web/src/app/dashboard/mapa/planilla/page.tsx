@@ -51,6 +51,7 @@ export default async function PlanificadorPage({
       rutaInicial={rutaInicial}
       aeronaveInicial={aeronaves.some((a) => a.id === aeronaveInicial) ? aeronaveInicial : ""}
       piloto={piloto}
+      ahoraUtc={new Date().toISOString()}
     />
   );
 }

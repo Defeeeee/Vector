@@ -30,13 +30,17 @@ export const metadata: Metadata = {
  * que va a la oficina ARO/AIS (`actions/plan-de-vuelo.ts`) y el mail para cargar el vuelo
  * (`/api/cron/plan-por-registrar`).
  *
+ * La sección #seguimiento (migración 041) describe lo que devuelve `GET /publico/seguimientos/{token}`
+ * (`services/seguimientos.py`, `vista_publica`): una lista fija de campos, sin matrícula ni `user_id`; el plazo
+ * de los dos tiempos (12 h, 2 h de gracia) y el borrado a los 30 días (`grabador_adsb.py`) salen de ahí.
+ *
  * Desde la 2.21.0 (migraciones 020 y 021): el número de licencia y el legajo del libro
  * en PDF, los bloqueos, los reportes y las suscripciones a los avisos push
  * (`services/avisos.py`: qué dice cada aviso, y que nunca lleva datos de la bitácora).
  */
 export default function PrivacidadPage() {
   return (
-    <LegalShell title="Política de Privacidad" updated="2 de noviembre de 2026">
+    <LegalShell title="Política de Privacidad" updated="11 de noviembre de 2026">
       <section>
         <h2>Qué es esto</h2>
         <p>
@@ -336,6 +340,40 @@ export default function PrivacidadPage() {
           <li>
             <strong>Cuánto se guarda:</strong> las posiciones sueltas se borran a los 30 días. El
             recorrido de un vuelo tuyo queda guardado con ese vuelo, y se borra si borrás el vuelo.
+          </li>
+        </ul>
+      </section>
+
+      <section id="seguimiento">
+        <h2>Compartir tu vuelo en vivo</h2>
+        <p>
+          Con el Mapa en modo vuelo podés tocar &ldquo;Compartir mi vuelo&rdquo; y mandar un link, por
+          ejemplo a tu familia, para que vea dónde vas. Es algo que elegís en cada vuelo: si no lo
+          tocás, no se comparte nada.
+        </p>
+        <ul>
+          <li>
+            <strong>Qué se comparte:</strong> tu nombre de pila, la ruta que tenías escrita en el Mapa,
+            la posición del GPS de tu teléfono (latitud, longitud, altura, velocidad y rumbo) mientras
+            vas volando, por dónde pasaste y hace cuánto se actualizó. <strong>Nunca</strong> la
+            matrícula, tu correo, tu apellido ni nada de tu bitácora.
+          </li>
+          <li>
+            <strong>Con quién:</strong> con cualquiera que tenga el link. No pide cuenta ni contraseña,
+            y el link no se puede adivinar, pero quien lo reciba puede reenviarlo. Mandalo sólo a quien
+            quieras que te vea.
+          </li>
+          <li>
+            <strong>Cuánto dura:</strong> el link deja de mostrar el vuelo en curso cuando tocás
+            Terminar o &ldquo;Dejar de compartir&rdquo;, o a las 12 horas a más tardar. Durante dos horas
+            más sigue diciendo &ldquo;El vuelo terminó&rdquo; con la última posición, y después deja de
+            abrirse. El teléfono sólo manda la posición con la pantalla prendida y con el Mapa en modo
+            vuelo.
+          </li>
+          <li>
+            <strong>Cuánto se guarda:</strong> las posiciones y el recorrido se borran a los 30 días de
+            empezar a compartir. No se muestran en ningún otro lugar de Vector, ni se usan para la
+            bitácora.
           </li>
         </ul>
       </section>

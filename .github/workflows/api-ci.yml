@@ -85,6 +85,9 @@ jobs:
       - name: Grabador ADS-B
         run: python test_adsb.py
 
+      - name: Seguir el vuelo en vivo (token, raleo, lo que ve el link público)
+        run: python test_seguimientos.py
+
       - name: Pasar al CAD desde Vector (login de ANAC falso, cifrado, Crear)
         env:
           SUPABASE_URL: "https://dummy.supabase.co"

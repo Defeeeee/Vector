@@ -17,6 +17,13 @@ import { fmt, hoursToHm, num, NumberField, ToolNote } from "./tools/ToolPrimitiv
 import { calcularPlan, type ParametrosTramo } from "@/lib/navegacion";
 import { computeFuel } from "@/lib/aviation";
 import {
+  horaUtcDeTextos,
+  horasDeMitadDeTramo,
+  textoHoraUtc,
+  vientoPromedioPonderado,
+  type VientoDeTramo,
+} from "@/lib/viento-ruta";
+import {
   diferenciaConSuperficie,
   nivelParaAltitud,
   type NivelViento,
@@ -87,9 +94,11 @@ interface Props {
   aeronaveInicial: string;
   /** Para el plan de vuelo, del perfil: "NOMBRE PPA 12345678" y el celular. */
   piloto: { comandante: string; telefono: string };
+  /** Cuándo dibujó el server la página (ISO, UTC): "ahora" sin `new Date()` en el cliente (invariante 1). */
+  ahoraUtc: string;
 }
 
-export default function PlanificadorClient({ aeronaves, rutaInicial, aeronaveInicial, piloto }: Props) {
+export default function PlanificadorClient({ aeronaves, rutaInicial, aeronaveInicial, piloto, ahoraUtc }: Props) {
   const [codigos, setCodigos] = useState<string[]>(() =>
     rutaInicial.length >= 2 ? rutaInicial : ["", ""]
   );
@@ -956,6 +965,28 @@ export default function PlanificadorClient({ aeronaves, rutaInicial, aeronaveIni
               </ToolNote>
             )}
 
+            <VientoPronosticado
+              tramos={
+                plan
+                  ? plan.tramos.map((t, i) => ({
+                      distanciaNm: t.distanciaNm,
+                      lat: (cargados[i].lat! + cargados[i + 1].lat!) / 2,
+                      lon: (cargados[i].lon! + cargados[i + 1].lon!) / 2,
+                    }))
+                  : []
+              }
+              tasKt={tasNum}
+              altitudFt={altitudNum}
+              ahoraUtc={ahoraUtc}
+              onAplicar={(direccion, velocidad) => {
+                // Lo aplicó el piloto con un toque: desde acá manda su elección y el METAR o
+                // el modelo en altura no la pisan.
+                tocoViento.current = true;
+                setVientoDir(String(direccion));
+                setVientoVel(String(velocidad));
+              }}
+            />
+
             {dispersion !== null && dispersion > DISPERSION_TOLERABLE && (
               <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-3.5 py-3">
                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-500" />
@@ -1436,6 +1467,221 @@ function Total({
       >
         {valor}
         {unidad && <span className="ml-1 text-sm font-bold text-zinc-400 dark:text-zinc-500">{unidad}</span>}
+      </p>
+    </div>
+  );
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* El viento pronosticado                                                     */
+/* -------------------------------------------------------------------------- */
+
+interface TramoParaViento {
+  distanciaNm: number;
+  /** La mitad del tramo. */
+  lat: number;
+  lon: number;
+}
+
+interface RespuestaViento {
+  puntos: ({ direccion: number; velocidad: number; horaModelo: number; niveles: [number, number] } | null)[];
+}
+
+/** "2026-11-11" y "14:00" de un ISO, redondeado a la hora siguiente. Sin `Date` local. */
+function salidaSugerida(ahoraUtc: string): { fecha: string; hora: string } {
+  const ms = Date.parse(ahoraUtc);
+  if (!Number.isFinite(ms)) return { fecha: "", hora: "" };
+  const redondeada = Math.ceil(ms / 3600_000) * 3600_000;
+  const t = textoHoraUtc(redondeada); // "AAAA-MM-DD HH:MM UTC"
+  return { fecha: t.slice(0, 10), hora: t.slice(11, 16) };
+}
+
+/**
+ * Traer el viento pronosticado para la ruta (Open-Meteo, vía `/api/viento`).
+ *
+ * **Sugerir, no llenar**: el botón trae el pronóstico y lo muestra por tramo; recién "Usar
+ * este viento" lo copia a los campos. La planilla lleva **un solo viento** para toda la ruta
+ * (verdadero, igual que el pronóstico: no hay conversión), así que lo que se ofrece es el
+ * promedio vectorial de los tramos ponderado por distancia, y la lista por tramo queda a la
+ * vista para que el piloto vea cuánto cambia. Si falta el dato de algún tramo no se ofrece
+ * un viento único (invariante 2): "no sé" no es "no hay".
+ *
+ * La hora del paso por cada tramo es la salida más lo que se tarda en llegar a su mitad con
+ * la TAS cargada, sin viento. La salida se escribe en UTC como en el plan de vuelo.
+ */
+function VientoPronosticado({
+  tramos,
+  tasKt,
+  altitudFt,
+  ahoraUtc,
+  onAplicar,
+}: {
+  tramos: TramoParaViento[];
+  tasKt: number;
+  altitudFt: number;
+  ahoraUtc: string;
+  onAplicar: (direccion: number, velocidad: number) => void;
+}) {
+  const inicial = salidaSugerida(ahoraUtc);
+  const [fecha, setFecha] = useState(inicial.fecha);
+  const [hora, setHora] = useState(inicial.hora);
+  const [estado, setEstado] = useState<"quieto" | "cargando" | "error">("quieto");
+  const [trajo, setTrajo] = useState<{ clave: string; tramos: VientoDeTramo[] } | null>(null);
+
+  const salidaMs = horaUtcDeTextos(fecha, hora);
+  const puedePedir = tramos.length > 0 && altitudFt > 0 && Number.isFinite(salidaMs);
+  const clave = JSON.stringify([tramos.map((t) => [t.lat, t.lon]), altitudFt, salidaMs, tasKt]);
+  const vigente = trajo && trajo.clave === clave ? trajo : null;
+
+  async function traer() {
+    if (!puedePedir) return;
+    setEstado("cargando");
+    const pedida = clave;
+    try {
+      const horas = horasDeMitadDeTramo(salidaMs, tramos.map((t) => t.distanciaNm), tasKt);
+      const res = await fetch("/api/viento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          puntos: tramos.map((t, i) => ({ lat: t.lat, lon: t.lon, hora: new Date(horas[i]).toISOString() })),
+          altitudFt,
+        }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const datos = (await res.json()) as RespuestaViento;
+      setTrajo({
+        clave: pedida,
+        tramos: tramos.map((t, i) => {
+          const p = datos.puntos[i];
+          return {
+            distanciaNm: t.distanciaNm,
+            viento: p ? { direccion: p.direccion, velocidad: p.velocidad } : null,
+            horaModeloMs: p ? p.horaModelo : null,
+          };
+        }),
+      });
+      setEstado("quieto");
+    } catch {
+      setEstado("error");
+    }
+  }
+
+  const promedio = vigente ? vientoPromedioPonderado(vigente.tramos) : null;
+  const horasModelo = vigente ? vigente.tramos.map((t) => t.horaModeloMs).filter((h): h is number => h !== null) : [];
+  const horaModelo = horasModelo.length ? Math.min(...horasModelo) : null;
+  const horaModeloFin = horasModelo.length ? Math.max(...horasModelo) : null;
+
+  const campo =
+    "w-full bg-transparent py-2 text-base font-bold data text-zinc-900 dark:text-white outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-700";
+  const caja =
+    "border-b-2 border-zinc-200 dark:border-white/10 focus-within:border-zinc-900 dark:focus-within:border-white transition-colors";
+  const rotulo = "block font-mono text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-1.5";
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-4">
+        <label className="block">
+          <span className={rotulo}>Salida · fecha UTC</span>
+          <div className={caja}>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+              placeholder="AAAA-MM-DD"
+              className={campo}
+            />
+          </div>
+        </label>
+        <label className="block">
+          <span className={rotulo}>Salida · hora UTC</span>
+          <div className={caja}>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={hora}
+              onChange={(e) => setHora(e.target.value)}
+              placeholder="HH:MM"
+              className={campo}
+            />
+          </div>
+        </label>
+      </div>
+
+      <button
+        type="button"
+        onClick={traer}
+        disabled={!puedePedir || estado === "cargando"}
+        className="inline-flex items-center gap-2 rounded-full bg-aviation-cyan px-4 py-2 text-xs font-bold text-noche disabled:opacity-40 transition-opacity"
+      >
+        <Wind className="w-3.5 h-3.5" />
+        {estado === "cargando" ? "Trayendo…" : "Traer el viento pronosticado"}
+      </button>
+
+      {!puedePedir && (
+        <ToolNote>
+          Hace falta la ruta cargada, la altitud de crucero y la salida (fecha y hora en UTC, como en el
+          plan de vuelo).
+        </ToolNote>
+      )}
+
+      {estado === "error" && (
+        <ToolNote>No pudimos traer el pronóstico ahora. Cargá el viento a mano o probá de nuevo.</ToolNote>
+      )}
+
+      {trajo && !vigente && (
+        <ToolNote>Cambió la ruta, la altitud o la salida: volvé a traer el viento.</ToolNote>
+      )}
+
+      {vigente && (
+        <div className="space-y-3">
+          <ul className="space-y-1 font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+            {vigente.tramos.map((t, i) => (
+              <li key={i} className="flex justify-between gap-3">
+                <span>Tramo {i + 1} · {fmt(t.distanciaNm, 0)} NM</span>
+                <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                  {t.viento ? `${grados(t.viento.direccion)}°/${fmt(t.viento.velocidad, 0)} kt` : "sin dato"}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          {promedio ? (
+            <div className="space-y-2">
+              <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+                {vigente.tramos.length === 1
+                  ? "Viento del tramo"
+                  : `Promedio vectorial de los ${vigente.tramos.length} tramos, ponderado por distancia`}
+                : <strong className="text-zinc-800 dark:text-zinc-200">{grados(promedio.direccion)}° / {fmt(promedio.velocidad, 0)} kt</strong>{" "}
+                (verdadero, como el campo de arriba).
+              </p>
+              <button
+                type="button"
+                onClick={() => onAplicar(Math.round(promedio.direccion) % 360, Math.round(promedio.velocidad))}
+                className="rounded-full border border-aviation-cyan/40 px-3.5 py-1.5 text-xs font-bold text-aviation-cyan hover:bg-aviation-cyan/10 transition-colors"
+              >
+                Usar este viento
+              </button>
+            </div>
+          ) : (
+            <ToolNote>
+              El modelo no tiene dato a esta altitud en algún tramo, así que no hay un viento único para
+              sugerir. Cargalo a mano.
+            </ToolNote>
+          )}
+
+          {horaModelo !== null && horaModeloFin !== null && (
+            <p className="font-mono text-[10px] text-zinc-400 dark:text-zinc-500">
+              Hora del modelo: {textoHoraUtc(horaModelo)}
+              {horaModeloFin !== horaModelo ? ` a ${textoHoraUtc(horaModeloFin)}` : ""}
+            </p>
+          )}
+        </div>
+      )}
+
+      <p className="text-[10px] leading-relaxed text-zinc-400 dark:text-zinc-500">
+        Pronóstico de un modelo meteorológico (Open-Meteo), no el oficial: verificalo con el SMN antes de volar.
       </p>
     </div>
   );

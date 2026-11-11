@@ -192,5 +192,8 @@ export const config = {
   // `/q/…` y la hoja de pegatinas, para que la sesión llegue renovada: el QR se escanea con
   // el teléfono, quizás horas después de la última entrada, y sin renovar el admin no se
   // reconoce y no puede asignar la pegatina.
-  matcher: ["/", "/dashboard/:path*", "/u/:path*", "/q/:path*", "/api/admin/:path*"],
+  // `/api/seguimiento/posicion`: el teléfono la llama cada ~15 s durante todo un vuelo compartido,
+  // y el JWT dura una hora; que el proxy lo renueve evita un 401 a mitad de un vuelo largo.
+  // `/seguir/…` (la página pública) NO está acá a propósito: se abre sin cuenta y sin sesión.
+  matcher: ["/", "/dashboard/:path*", "/u/:path*", "/q/:path*", "/api/admin/:path*", "/api/seguimiento/posicion"],
 };
