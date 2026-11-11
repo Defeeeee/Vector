@@ -11,6 +11,8 @@ import manifest from "../../../extension/manifest.json";
 
 export const VERSION_EXTENSION: string = manifest.version;
 export const VERSION_MINIMA_PUENTE = "1.1.0";
+/** Desde la 1.2.0 la extensión puede cambiar la autoridad de un vuelo pendiente de DDJJ. */
+export const VERSION_MINIMA_AUTORIDAD = "1.2.0";
 
 /** -1, 0 o 1, número por número ("1.10.0" > "1.9.2"). Lo que no es número cuenta como 0. */
 export function compararVersion(a: string, b: string): number {

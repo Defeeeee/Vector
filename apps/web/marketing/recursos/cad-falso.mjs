@@ -32,11 +32,12 @@ function sembrar(recibido) {
   vuelos.push({
     vueloTripulanteID: ++proximo, fechaSalida: recibido.fechaHoraSalida.slice(0, 19), fechaLlegada: recibido.fechaHoraLlegada.slice(0, 19),
     matricula: recibido.matriculaAvion, origenDesc: porKey.get(recibido.origenID), destinoDesc: porKey.get(recibido.destinoID), tiempoTotal: `${horas.toFixed(1)} hs`,
-    estadoDesc: "DECLARADO", recibido,
+    estadoDesc: vuelos.length === 0 ? "PENDIENTE DE DDJJ" : "DECLARADO", recibido,
   });
 }
 if (!process.env.SIN_SEMILLA) {
   const base = { autoridadCertificanteID: "2", observaciones: "JUAN PEREZ", potencia: 110, clase: "MONT-T", origenPersonalizado: "", destinoPersonalizado: "" };
+  // El primero quedó pendiente de DDJJ, para probar "Actualizar en el CAD" (3.18.0).
   sembrar({ ...base, tipoVueloID: "2", cargoID: "1", fechaHoraSalida: "2025-12-10T14:00:00Z", fechaHoraLlegada: "2025-12-10T15:30:00Z", horasDia: 1.5, horasNoche: 0, aterrizajes: 2, finalidadID: "63", origenID: "101", destinoID: "102", matriculaAvion: "LV-ABC", Discriminaciones: [{ tipoDiscriminacionID: 7, horas: "0.3" }] });
   sembrar({ ...base, tipoVueloID: "1", cargoID: "1", fechaHoraSalida: "2025-11-20T22:10:00Z", fechaHoraLlegada: "2025-11-20T23:10:00Z", horasDia: 0, horasNoche: 1, aterrizajes: 5, finalidadID: "68", origenID: "107", destinoID: "107", matriculaAvion: "LV-XYZ", Discriminaciones: [] });
   // El mismo vuelo que Vector tiene el 30/09 a las 12:30, con la fecha un día antes (pasó de verdad).
@@ -50,6 +51,7 @@ createServer(async (req, res) => {
   // CORS abierto sólo para simular la extensión desde la pestaña de Vector (2.36.0): el CAD real no lo tiene.
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
   if (req.method === "OPTIONS") { res.writeHead(204); return res.end(); }
   const json = (code, body) => { res.writeHead(code, { "Content-Type": "application/json" }); res.end(JSON.stringify(body)); };
   const api = url.pathname.replace("/foliadoweb/api/VueloTripulante/", "");
@@ -63,10 +65,27 @@ createServer(async (req, res) => {
   if (api === "GetSimuladoresListItem") return json(200, [{ key: "34", value: "SANTIAGO I C-172 -- ASG TRAINING CENTER" }, { key: "39", value: "C172  -- CIAC CICA" }]);
   if (api === "GetModelosPorSimuladorListItem") return json(200, [{ key: "40", value: "A320" }]);
   if (api === "GetPagedList") return json(200, { totalRows: vuelos.length, dataSource: [...vuelos].sort((a, b) => b.fechaSalida.localeCompare(a.fechaSalida)) });
-  // El detalle: se supone con los campos de "Crear" (la forma real no se pudo leer todavía).
+  // El detalle, con la forma del real (leída el 2026-11-11): sin envoltorio, las horas sin zona,
+  // `discriminaciones` en minúscula con su nombre, y sin el estado (ése sólo viene en la lista).
   if (api === "Get") {
     const v = vuelos.find((x) => String(x.vueloTripulanteID) === url.searchParams.get("id"));
-    return v ? json(200, { vueloTripulanteID: v.vueloTripulanteID, ...v.recibido }) : json(404, { message: "No existe" });
+    if (!v) return json(404, { message: "No existe" });
+    const { Discriminaciones = [], ...resto } = v.recibido;
+    return json(200, {
+      vueloTripulanteID: v.vueloTripulanteID, ...resto,
+      fechaHoraSalida: v.recibido.fechaHoraSalida.slice(0, 19), fechaHoraLlegada: v.recibido.fechaHoraLlegada.slice(0, 19),
+      discriminaciones: Discriminaciones.map((d) => ({ ...d, nombre: "DISCRIMINACION" })), simulador: v.recibido.simulador ?? null,
+    });
+  }
+  // "Modificar vuelo" (PUT, como el formulario del CAD): sólo si está pendiente de DDJJ.
+  if (api === "Edit" && req.method === "PUT") {
+    const e = JSON.parse(crudo || "{}");
+    const v = vuelos.find((x) => x.vueloTripulanteID === Number(e.vueloTripulanteID));
+    if (!v) return json(404, { message: "No existe" });
+    if (!/PENDIENTE/.test(v.estadoDesc)) return json(400, { message: "El vuelo ya fue declarado." });
+    v.recibido = { ...v.recibido, ...e, Discriminaciones: e.Discriminaciones ?? [] };
+    console.log("Edit", e.vueloTripulanteID, e.autoridadCertificanteID, e.observaciones);
+    return json(200, { ok: true });
   }
   if (api === "Create" && req.method === "POST") {
     const v = JSON.parse(crudo || "{}");

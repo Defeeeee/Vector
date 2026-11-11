@@ -14,9 +14,9 @@ import { asignarAutoridad } from "@/actions/cad";
  * vuelos —los filtros de arriba ayudan: fechas, avión, propósito— y se les pone la autoridad y
  * su nombre de una vez, estén o no en el CAD.
  *
- * Un vuelo que ya está en el CAD con otra autoridad **no se cambia allá**: Vector no edita en el
- * CAD (`src/cad/enlace-comun.ts`). En la próxima conexión, "Pasar al CAD" lo marca como que no
- * coincide (`diferenciasConElCad`, campo `autoridad`) hasta que se actualice allá.
+ * Un vuelo que ya está en el CAD con otra autoridad no se cambia allá desde acá: en la próxima
+ * conexión, "Pasar al CAD" lo marca como que no coincide (`diferenciasConElCad`, campo `autoridad`)
+ * y, si está pendiente de DDJJ, ofrece "Actualizar en el CAD" (3.18.0).
  */
 
 export function FilaElegible({
@@ -131,11 +131,11 @@ export function BandaAutoridad({ elegidos, alSalir }: { elegidos: Flight[]; alSa
             {estado.texto}
             {estado.tipo === "listo" && !!estado.enElCad && (
               <span className="block text-amber-300">
-                {estado.enElCad === 1 ? "1 ya estaba en el CAD" : `${estado.enElCad} ya estaban en el CAD`} con otra autoridad: cambiala allá también. En{" "}
+                {estado.enElCad === 1 ? "1 ya estaba en el CAD" : `${estado.enElCad} ya estaban en el CAD`} con otra autoridad. En{" "}
                 <Link href="/dashboard/history/cad" className="font-semibold underline underline-offset-2">
                   Pasar al CAD
                 </Link>{" "}
-                {estado.enElCad === 1 ? "va a aparecer como que no coincide" : "van a aparecer como que no coinciden"} hasta que lo hagas.
+                {estado.enElCad === 1 ? "aparece" : "aparecen"} para actualizarla allá con un toque, si todavía no hiciste la declaración jurada.
               </span>
             )}
           </p>

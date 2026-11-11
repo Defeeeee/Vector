@@ -1279,6 +1279,16 @@ export interface AnomaliaCad {
   fecha: string;
   ruta: string;
   diferencias: DiferenciaCad[];
+  /** El estado en el CAD ("PENDIENTE DE DDJJ"…), de la lista. */
+  estado?: string | null;
+  /** La autoridad que tiene en Vector: la que "Actualizar en el CAD" le pone allá (3.18.0). */
+  autoridad?: { id: string; nombre: string } | null;
+}
+
+/** Si a esta diferencia la puede arreglar Vector en el CAD: la autoridad de un vuelo pendiente de DDJJ. */
+export function autoridadParaActualizarEnElCad(a: AnomaliaCad): { id: string; nombre: string } | null {
+  if (!a.autoridad || !pendienteDeDdjj(a.estado)) return null;
+  return a.diferencias.some((d) => d.campo === "autoridad") ? a.autoridad : null;
 }
 
 /** Los campos que se leen sólo del detalle (`Get?id=`), no de la lista. */
@@ -1396,7 +1406,7 @@ export function diferenciasConElCad(
   if (NOMBRE_TIPO[tipo] && tipo !== b.tipoVueloID) agregar("tipo", NOMBRE_TIPO[b.tipoVueloID] ?? String(b.tipoVueloID), NOMBRE_TIPO[tipo]);
 
   // La autoridad certificante (3.17.0): si en Vector se cambió quién certifica un vuelo que ya
-  // está en el CAD, tiene que saltar acá para actualizarlo allá (Vector no edita en el CAD). El
+  // está en el CAD, tiene que saltar acá para actualizarlo allá ("Actualizar en el CAD", 3.18.0). El
   // nombre va en `observaciones`, como lo carga Vector (`armarVueloParaElCad`). Sólo si Vector
   // tiene una autoridad cargada y el CAD trae la suya.
   const autoridadCad = campo(detalle, "autoridadCertificanteID", "autoridadCertificanteId");
@@ -1431,7 +1441,16 @@ export function anomaliasConElCad(
     const detalle = detalles.get(b.cadId) ?? null;
     let difs = diferenciasConElCad(b, fila, detalle, finalidades);
     if (!detalle) difs = [...difs, ...(anteriores.get(b.cadId) ?? []).filter((x) => CAMPOS_DEL_DETALLE.includes(x.campo))];
-    if (difs.length) anomalias.push({ vectorId: b.vectorId, cadId: b.cadId, fecha: b.fecha, ruta: b.ruta, diferencias: difs });
+    if (difs.length)
+      anomalias.push({
+        vectorId: b.vectorId,
+        cadId: b.cadId,
+        fecha: b.fecha,
+        ruta: b.ruta,
+        diferencias: difs,
+        estado: (fila.estadoDesc as string | null | undefined) ?? null,
+        autoridad: b.autoridad ?? null,
+      });
   }
   return anomalias;
 }

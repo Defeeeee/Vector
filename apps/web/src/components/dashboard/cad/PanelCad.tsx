@@ -9,6 +9,7 @@ import { asignarAutoridad, marcarEnElCad, omitirEnElCad, guardarSimuladorCad, tr
 import { fuenteServidor, type FuenteCad } from "@/components/dashboard/cad/fuente-cad";
 import {
   CLASES_SIMULADOR,
+  autoridadParaActualizarEnElCad,
   claveDeAutoridad,
   faltaAutoridad,
   faltaSimulador,
@@ -212,7 +213,7 @@ export default function PanelCad({ fuente = fuenteServidor }: { fuente?: FuenteC
         ))}
       </div>
 
-      {datos.anomalias && datos.anomalias.length > 0 && <NoCoinciden anomalias={datos.anomalias} />}
+      {datos.anomalias && datos.anomalias.length > 0 && <NoCoinciden anomalias={datos.anomalias} fuente={fuente} />}
 
       {modo === "traer" ? (
         <Traer fuente={fuente} alTraer={() => void recontar()} alLeer={(n) => setDatos((d) => (d ? { ...d, sinTraer: n } : d))} />
@@ -421,8 +422,34 @@ export default function PanelCad({ fuente = fuenteServidor }: { fuente?: FuenteC
  * lado, y corregir el de Vector. Si el que está mal es el del CAD, se corrige allá: Vector no
  * edita vuelos del CAD (sólo lee y crea, `src/cad/enlace-comun.ts`).
  */
-function NoCoinciden({ anomalias }: { anomalias: AnomaliaCad[] }) {
+function NoCoinciden({ anomalias, fuente }: { anomalias: AnomaliaCad[]; fuente: FuenteCad }) {
   const [abierto, setAbierto] = useState(anomalias.length <= 3);
+  // Lo que se cambió en el CAD desde esta pantalla (3.18.0): por vuelo, si salió y qué dijo el CAD.
+  const [hechos, setHechos] = useState<Record<number, { ok: boolean; mensaje: string } | "mandando">>({});
+  const actualizables = fuente.cambiarAutoridad
+    ? anomalias.filter((a) => autoridadParaActualizarEnElCad(a) && !(hechos[a.cadId] && hechos[a.cadId] !== "mandando" && (hechos[a.cadId] as { ok: boolean }).ok))
+    : [];
+  const ocupado = Object.values(hechos).includes("mandando");
+
+  async function actualizar(lista: AnomaliaCad[]) {
+    if (!fuente.cambiarAutoridad || !lista.length) return;
+    const primera = autoridadParaActualizarEnElCad(lista[0])!;
+    const texto =
+      lista.length === 1
+        ? `¿Cambiar en el CAD la autoridad del vuelo del ${lista[0].fecha} a "${primera.nombre}"? Se cambia sólo la autoridad y su nombre; el vuelo sigue pendiente de DDJJ.`
+        : `¿Cambiar en el CAD la autoridad de ${lista.length} vuelos a la que tienen en Vector? Se cambia sólo la autoridad y su nombre; siguen pendientes de DDJJ.`;
+    if (!window.confirm(texto)) return;
+    // De a uno: es el CAD del Estado y cada cambio es un registro.
+    for (const a of lista) {
+      const autoridad = autoridadParaActualizarEnElCad(a);
+      if (!autoridad) continue;
+      setHechos((h) => ({ ...h, [a.cadId]: "mandando" }));
+      const r = await fuente.cambiarAutoridad(a.cadId, autoridad);
+      setHechos((h) => ({ ...h, [a.cadId]: r }));
+      if (!r.ok && /extensión/.test(r.mensaje)) break;
+    }
+  }
+
   return (
     <section className="rounded-3xl border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-5 py-4 space-y-3">
       <button type="button" onClick={() => setAbierto((v) => !v)} aria-expanded={abierto} className="w-full flex items-start gap-3 text-left">
@@ -432,43 +459,71 @@ function NoCoinciden({ anomalias }: { anomalias: AnomaliaCad[] }) {
             {anomalias.length === 1 ? "1 vuelo no coincide con el CAD" : `${anomalias.length} vuelos no coinciden con el CAD`}
           </span>
           <span className="block text-xs text-amber-900/80 dark:text-amber-200/80 mt-0.5">
-            Lo que declarás en el CAD tiene que coincidir con tu libro. Corregí el lado que esté mal: el de Vector desde acá, el del CAD
-            en el CAD.
+            Lo que declarás en el CAD tiene que coincidir con tu libro. Corregí el lado que esté mal: el de Vector desde acá; en el CAD, la
+            autoridad de los pendientes de DDJJ también desde acá, y lo demás allá.
           </span>
         </span>
         <ChevronDown className={`w-4 h-4 shrink-0 mt-1 text-amber-700 dark:text-amber-300 transition-transform ${abierto ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
+      {actualizables.length > 1 && (
+        <button type="button" disabled={ocupado} onClick={() => void actualizar(actualizables)} className={`${botonNegro} disabled:opacity-40`}>
+          {ocupado ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Upload className="w-4 h-4" aria-hidden="true" />}
+          Actualizar la autoridad de los {actualizables.length} en el CAD
+        </button>
+      )}
       {abierto && (
         <ul className="space-y-2">
-          {anomalias.map((a) => (
-            <li key={a.cadId} className="rounded-2xl bg-white/80 dark:bg-black/30 px-4 py-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                  <span className="data">{a.fecha}</span> · {a.ruta}
-                </p>
-                <Link href={`/dashboard/history?editar=${encodeURIComponent(a.vectorId)}`} className={enlace}>
-                  Corregir en Vector
-                </Link>
-              </div>
-              <div className="mt-2 grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 text-xs">
-                <span aria-hidden="true" />
-                <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Vector</span>
-                <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">CAD</span>
-                {a.diferencias.map((d) => (
-                  <div key={d.campo} className="contents">
-                    <span className="text-zinc-500 dark:text-zinc-400">{d.nombre}</span>
-                    <span className="data text-zinc-900 dark:text-white">{d.enVector}</span>
-                    <span className="data text-amber-800 dark:text-amber-300 font-semibold">{d.enElCad}</span>
-                  </div>
-                ))}
-              </div>
-              {a.diferencias.some((d) => d.campo === "autoridad") && (
-                <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">
-                  Si la autoridad de Vector es la correcta, cambiala en el CAD: Vector no edita los vuelos de allá.
-                </p>
-              )}
-            </li>
-          ))}
+          {anomalias.map((a) => {
+            const hecho = hechos[a.cadId];
+            const sePuede = actualizables.includes(a);
+            const soloAutoridad = a.diferencias.some((d) => d.campo === "autoridad");
+            return (
+              <li key={a.cadId} className="rounded-2xl bg-white/80 dark:bg-black/30 px-4 py-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+                    <span className="data">{a.fecha}</span> · {a.ruta}
+                  </p>
+                  <span className="flex items-baseline gap-3">
+                    {sePuede && (
+                      <button type="button" disabled={ocupado} onClick={() => void actualizar([a])} className={`${enlace} disabled:opacity-40`}>
+                        Actualizar en el CAD
+                      </button>
+                    )}
+                    <Link href={`/dashboard/history?editar=${encodeURIComponent(a.vectorId)}`} className={enlace}>
+                      Corregir en Vector
+                    </Link>
+                  </span>
+                </div>
+                <div className="mt-2 grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 text-xs">
+                  <span aria-hidden="true" />
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Vector</span>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">CAD</span>
+                  {a.diferencias.map((d) => (
+                    <div key={d.campo} className="contents">
+                      <span className="text-zinc-500 dark:text-zinc-400">{d.nombre}</span>
+                      <span className="data text-zinc-900 dark:text-white">{d.enVector}</span>
+                      <span className="data text-amber-800 dark:text-amber-300 font-semibold">{d.enElCad}</span>
+                    </div>
+                  ))}
+                </div>
+                {hecho === "mandando" ? (
+                  <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5">
+                    <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" /> Cambiando la autoridad en el CAD…
+                  </p>
+                ) : hecho ? (
+                  <p role="status" className={`mt-2 text-xs font-semibold ${hecho.ok ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                    {hecho.ok ? "Autoridad actualizada en el CAD. En la próxima conexión se vuelve a revisar." : hecho.mensaje}
+                  </p>
+                ) : soloAutoridad && !sePuede ? (
+                  <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">
+                    {a.estado && !/PENDIENTE/i.test(a.estado)
+                      ? `En el CAD está "${a.estado}": Vector no cambia lo ya declarado. Si corresponde, cambiala allá.`
+                      : "Si la autoridad de Vector es la correcta, cambiala en el CAD."}
+                  </p>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

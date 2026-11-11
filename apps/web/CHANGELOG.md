@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.18.0 — La autoridad, también en el CAD
+
+_11 de noviembre de 2026_
+
+- **Actualizá la autoridad en el CAD desde Vector** — Si un vuelo pendiente de DDJJ tiene en el CAD otra autoridad certificante que en Vector, "Pasar al CAD" te deja cambiarla allá con un toque, de a uno o todos juntos. Sólo se cambia la autoridad y su nombre. Con la extensión, bajá la versión nueva.
+
 ## v3.17.1 — Todos los que cambiaste
 
 _11 de noviembre de 2026_

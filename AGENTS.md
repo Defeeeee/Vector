@@ -472,7 +472,8 @@ importa es el del backend (`request_max_body_size`, 30 MB).
 - **Pasar al CAD de ANAC y Traer a Vector** (2026-10-21, anunciado en la 2.27.0; Bitácora → Vuelos → "Pasar al CAD"):
   - **La extensión y el marcador son un puente, desde la 2.36.0** (Federico, 2026-10-29: "que te diga
     volvé a Vector"). El panel está en Vector (`PanelCad` con `fuenteEnlace`, `ConElCad`); la pestaña
-    del CAD sólo contesta pedidos de una lista blanca (lecturas y "Crear", nunca la DDJJ:
+    del CAD sólo contesta pedidos de una lista blanca (lecturas, "Crear" y, desde la 3.18.0, cambiar la
+    autoridad de un vuelo pendiente de DDJJ; nunca la DDJJ:
     `src/cad/enlace-comun.ts`) y muestra "Volvé a Vector". La extensión pasa los pedidos por su service
     worker (`apps/extension/background.js`, sin permisos); el marcador abre Vector con `?enlace=1` y habla
     por `window.opener` (`src/cad/enlace.ts`, compilado a `public/cad/puente.js`, el archivo de los
@@ -494,7 +495,11 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     otra sólo si el vuelo cambió de algún lado o pasaron 30 días: lo revisado se recuerda en el
     `localStorage` (`vector-cad-revisiones`). Lo que el CAD no trae no es una diferencia
     (invariante 2). El panel muestra "N vuelos no coinciden con el CAD" con lo que dice cada lado y
-    "Corregir en Vector"; lo del CAD se corrige allá (Vector no edita en el CAD).
+    "Corregir en Vector"; lo del CAD se corrige allá, salvo **la autoridad de un vuelo pendiente de
+    DDJJ: "Actualizar en el CAD"** (3.18.0, `src/cad/editar-autoridad.ts`): la pestaña del CAD lee el
+    `Get`, cambia sólo `autoridadCertificanteID` y `observaciones` y lo manda con `PUT
+    /VueloTripulante/Edit`, como el formulario de edición del CAD (leído con la sesión de Federico el
+    2026-11-11). Pide la extensión 1.2.0; el marcador se actualiza solo.
   - **"Desde Vector" está apagado** (2026-10-29, `CAD_DESDE_VECTOR` del backend, apagado por defecto):
     ANAC bloqueó cada IP desde la que entró el backend, la última con un solo login. Lo que sigue
     describe cómo era.

@@ -40,7 +40,8 @@ import {
   type MemoriaAutoridades,
   type VueloEnElCad,
 } from "@/lib/cad";
-import { crearEnElCad, leerDelCad, type TransporteCad } from "@/lib/enlace-cad";
+import { cambiarAutoridadEnElCad, crearEnElCad, leerDelCad, type TransporteCad } from "@/lib/enlace-cad";
+import { compararVersion, VERSION_MINIMA_AUTORIDAD } from "@/lib/extension-cad";
 
 type Leido<T> = { ok: true; datos: T } | { ok: false; error: string; reconectar?: boolean };
 
@@ -56,6 +57,11 @@ export interface FuenteCad {
   cargar(item: ItemParaCargar): Promise<{ ok: boolean; mensaje: string; cadId?: number }>;
   modelo(simId: number): Promise<{ modeloId: number | null; modelo: string | null }>;
   leerParaTraer(): Promise<Leido<FilaTraida[]>>;
+  /**
+   * Cambia la autoridad de un vuelo pendiente de DDJJ en el CAD (3.18.0). Sólo con el puente
+   * (extensión 1.2.0 o marcador): "Desde Vector" no lo tiene.
+   */
+  cambiarAutoridad?(cadId: number, autoridad: { id: string; nombre: string }): Promise<{ ok: boolean; mensaje: string }>;
 }
 
 export const fuenteServidor: FuenteCad = {
@@ -90,6 +96,12 @@ function leerRevisiones(): Record<string, RevisionGuardada> {
   } catch {
     return {};
   }
+}
+/** Que el vuelo se vuelva a leer en la próxima conexión (después de cambiarlo en el CAD). */
+function olvidarRevision(cadId: number) {
+  const r = leerRevisiones();
+  delete r[String(cadId)];
+  guardarRevisiones(r);
 }
 function guardarRevisiones(r: Record<string, RevisionGuardada>) {
   try {
@@ -193,6 +205,17 @@ export function fuenteEnlace(t: TransporteCad): FuenteCad {
       const cadId = v.ok ? yaEstaEnElCad(armado.borrador, v.datos) : null;
       if (cadId) await marcarEnElCad([{ vectorId: armado.borrador.vectorId, cadId, autoridad: armado.autoridad }]);
       return { ok: true, mensaje: cadId ? "Cargado en el CAD" : "Cargado en el CAD (no pudimos anotarlo en Vector todavía)", cadId: cadId ?? undefined };
+    },
+
+    async cambiarAutoridad(cadId, autoridad) {
+      // Una extensión anterior a la 1.2.0 no conoce el pedido y no contesta: se avisa antes.
+      const instalada = document.documentElement.dataset.vectorCadExtension;
+      if (t === "extension" && (!instalada || compararVersion(instalada, VERSION_MINIMA_AUTORIDAD) < 0))
+        return { ok: false, mensaje: `Para cambiarla desde Vector, actualizá la extensión a la ${VERSION_MINIMA_AUTORIDAD} (está arriba, en esta pantalla).` };
+      const r = await cambiarAutoridadEnElCad(t, cadId, autoridad);
+      if (!r.ok) return { ok: false, mensaje: r.error };
+      if (r.datos.aceptado) olvidarRevision(cadId);
+      return { ok: r.datos.aceptado, mensaje: r.datos.mensaje };
     },
 
     async modelo(simId) {

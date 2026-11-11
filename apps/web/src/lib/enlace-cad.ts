@@ -82,6 +82,19 @@ export async function leerDelCad<T>(t: TransporteCad, ruta: string, params: Reco
   return traducir<T>(await enviar(t, { accion: "leer", ruta, params }, 60_000), t);
 }
 
+/**
+ * Cambiar la autoridad certificante de un vuelo pendiente de DDJJ (3.18.0). El cuerpo lo arma la
+ * pestaña del CAD con el `Get` del propio CAD (`src/cad/editar-autoridad.ts`): de acá sólo sale
+ * qué vuelo y qué autoridad. Pide la extensión 1.2.0 o el marcador (que se baja de Vector cada vez).
+ */
+export async function cambiarAutoridadEnElCad(
+  t: TransporteCad,
+  cadId: number,
+  autoridad: { id: string; nombre: string }
+): Promise<Resultado<{ aceptado: boolean; mensaje: string }>> {
+  return traducir(await enviar(t, { accion: "autoridad", autoridad: { cadId, id: autoridad.id, nombre: autoridad.nombre } }, 60_000), t);
+}
+
 /** "Crear" del CAD con un vuelo ya armado por Vector (`armarVueloParaElCad`). */
 export async function crearEnElCad(t: TransporteCad, vuelo: Record<string, unknown>): Promise<Resultado<{ aceptado: boolean; mensaje: string }>> {
   return traducir(await enviar(t, { accion: "crear", vuelo }, 60_000), t);

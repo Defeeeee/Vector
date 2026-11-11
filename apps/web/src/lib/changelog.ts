@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.18.0",
+    fecha: "2026-11-11",
+    titulo: "La autoridad, también en el CAD",
+    novedades: [
+      {
+        icono: "avion",
+        titulo: "Actualizá la autoridad en el CAD desde Vector",
+        texto: "Si un vuelo pendiente de DDJJ tiene en el CAD otra autoridad certificante que en Vector, \"Pasar al CAD\" te deja cambiarla allá con un toque, de a uno o todos juntos. Sólo se cambia la autoridad y su nombre. Con la extensión, bajá la versión nueva.",
+        href: "/dashboard/history/cad",
+        cta: "Pasar al CAD",
+      },
+    ],
+  },
+  {
     version: "3.17.1",
     fecha: "2026-11-11",
     titulo: "Todos los que cambiaste",

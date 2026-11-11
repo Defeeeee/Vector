@@ -367,8 +367,11 @@ export default function PrivacidadPage() {
         </p>
         <ul>
           <li>
-            <strong>Con el marcador:</strong> cargás desde tu propia sesión del CAD, en tu
-            navegador. Tu contraseña de ANAC nunca pasa por Vector.
+            <strong>Con la extensión o el marcador:</strong> todo pasa por tu propia sesión del
+            CAD, en tu navegador, y tu contraseña de ANAC nunca pasa por Vector. Desde ahí Vector
+            lee tus vuelos del CAD para compararlos con tu bitácora, carga los que elegís y, cuando
+            se lo pedís, cambia la autoridad certificante de un vuelo que todavía está pendiente de
+            declaración jurada. No toca nada más de un vuelo ya cargado ni hace la declaración.
           </li>
           <li>
             <strong>Desde Vector:</strong> si conectás tu cuenta de ANAC, guardamos tu usuario y
