@@ -84,6 +84,13 @@ createServer(async (req, res) => {
     if (!v) return json(404, { message: "No existe" });
     if (!/PENDIENTE/.test(v.estadoDesc)) return json(400, { message: "El vuelo ya fue declarado." });
     v.recibido = { ...v.recibido, ...e, Discriminaciones: e.Discriminaciones ?? [] };
+    // La lista también, como la del real después de editar.
+    const r = v.recibido;
+    Object.assign(v, {
+      fechaSalida: String(r.fechaHoraSalida).slice(0, 19), fechaLlegada: String(r.fechaHoraLlegada).slice(0, 19), matricula: r.matriculaAvion,
+      origenDesc: porKey.get(String(r.origenID)), destinoDesc: porKey.get(String(r.destinoID)),
+      tiempoTotal: `${centesimal(r.fechaHoraSalida, r.fechaHoraLlegada).toFixed(1)} hs`,
+    });
     console.log("Edit", e.vueloTripulanteID, e.autoridadCertificanteID, e.observaciones);
     return json(200, { ok: true });
   }

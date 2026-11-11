@@ -4,12 +4,12 @@
  * que necesita, de a un pedido; acá se hace cada pedido con la sesión del piloto en esta
  * pestaña, como lo haría el formulario del CAD.
  *
- * **Lista blanca:** las lecturas del panel, "Crear" y, desde la 3.18.0, **cambiar la autoridad
- * certificante de un vuelo pendiente de DDJJ** (`accion: "autoridad"`): sólo ese cambio, armado
- * acá con el `Get` del propio CAD (`editar-autoridad.ts`). Nada de la declaración jurada: ésa la
- * hace el piloto en el CAD.
+ * **Lista blanca:** las lecturas del panel, "Crear" y **corregir un vuelo pendiente de DDJJ**:
+ * la autoridad (`accion: "autoridad"`, 3.18.0) o los campos de `CAMPOS_EDITABLES`
+ * (`accion: "editar"`, 3.19.0), siempre armado acá sobre el `Get` del propio CAD
+ * (`editar-vuelo.ts`). Nada de la declaración jurada: ésa la hace el piloto en el CAD.
  */
-import { cuerpoParaCambiarAutoridad } from "./editar-autoridad";
+import { cuerpoParaCambiarAutoridad, cuerpoParaEditar, type CuerpoEdicion, type NoSeEdita } from "./editar-vuelo";
 
 export const API_CAD = "/foliadoweb/api/VueloTripulante/";
 
@@ -26,12 +26,14 @@ const LECTURAS = new Set([
 export interface PedidoCad {
   tipo: "vector-cad:pedido";
   id: string;
-  accion: "ping" | "leer" | "crear" | "autoridad";
+  accion: "ping" | "leer" | "crear" | "autoridad" | "editar";
   ruta?: string;
   params?: Record<string, string>;
   vuelo?: Record<string, unknown>;
   /** Para `autoridad`: el vuelo del CAD y la autoridad nueva. */
   autoridad?: { cadId: number; id: string; nombre: string };
+  /** Para `editar`: el vuelo del CAD y los campos que manda Vector (se filtran acá). */
+  editar?: { cadId: number; cambios: Record<string, unknown> };
 }
 
 export interface RespuestaCad {
@@ -45,7 +47,7 @@ export interface RespuestaCad {
 
 export function esPedido(d: unknown): d is PedidoCad {
   const p = d as PedidoCad;
-  return !!p && p.tipo === "vector-cad:pedido" && typeof p.id === "string" && ["ping", "leer", "crear", "autoridad"].includes(p.accion);
+  return !!p && p.tipo === "vector-cad:pedido" && typeof p.id === "string" && ["ping", "leer", "crear", "autoridad", "editar"].includes(p.accion);
 }
 
 /** Hace un pedido de Vector en esta pestaña del CAD. Nunca lanza: todo vuelve como respuesta. */
@@ -69,10 +71,10 @@ export async function atender(p: PedidoCad): Promise<RespuestaCad> {
       }
     }
 
-    if (p.accion === "autoridad") {
-      const a = p.autoridad;
-      if (!a || !Number.isInteger(a.cadId) || a.cadId <= 0) return r(false, { error: "El pedido no tiene la forma esperada." });
-      const res = await fetch(`${API_CAD}Get?id=${a.cadId}`, { credentials: "include", headers: { Accept: "application/json" } });
+    if (p.accion === "autoridad" || p.accion === "editar") {
+      const cadId = p.accion === "autoridad" ? p.autoridad?.cadId : p.editar?.cadId;
+      if (!Number.isInteger(cadId) || (cadId as number) <= 0) return r(false, { error: "El pedido no tiene la forma esperada." });
+      const res = await fetch(`${API_CAD}Get?id=${cadId}`, { credentials: "include", headers: { Accept: "application/json" } });
       if (res.status === 401 || res.status === 403 || res.redirected) return r(false, { error: "sesion" });
       if (!res.ok) return r(false, { error: `El CAD contestó ${res.status}.` });
       const leido = (await res.json().catch(() => null)) as Record<string, unknown> | null;
@@ -80,8 +82,11 @@ export async function atender(p: PedidoCad): Promise<RespuestaCad> {
       if (!detalle || typeof detalle !== "object") return r(false, { error: "sesion" });
       // Lo declarado no se toca: sólo un vuelo pendiente de DDJJ (si el CAD dice el estado).
       const estado = String(detalle.estadoDesc ?? "");
-      if (estado && !/PENDIENTE/i.test(estado)) return r(true, { datos: { aceptado: false, mensaje: `En el CAD está "${estado}": cambiala desde el CAD.` } });
-      const armado = cuerpoParaCambiarAutoridad(detalle, a.id, a.nombre);
+      if (estado && !/PENDIENTE/i.test(estado)) return r(true, { datos: { aceptado: false, mensaje: `En el CAD está "${estado}": corregilo desde el CAD.` } });
+      const armado: CuerpoEdicion | NoSeEdita =
+        p.accion === "autoridad"
+          ? cuerpoParaCambiarAutoridad(detalle, String(p.autoridad?.id ?? ""), String(p.autoridad?.nombre ?? ""))
+          : cuerpoParaEditar(detalle, p.editar?.cambios ?? {});
       if (!armado.ok) return r(true, { datos: { aceptado: false, mensaje: armado.motivo } });
       const put = await fetch(`${API_CAD}Edit`, {
         method: "PUT",
@@ -90,7 +95,7 @@ export async function atender(p: PedidoCad): Promise<RespuestaCad> {
         body: JSON.stringify(armado.cuerpo),
       });
       if (put.status === 401 || put.status === 403) return r(false, { error: "sesion" });
-      if (put.ok) return r(true, { datos: { aceptado: true, mensaje: "Autoridad actualizada en el CAD" } });
+      if (put.ok) return r(true, { datos: { aceptado: true, mensaje: "Actualizado en el CAD" } });
       const c = (await put.json().catch(() => ({}))) as Record<string, string>;
       return r(true, { datos: { aceptado: false, mensaje: `El CAD no lo aceptó: ${c.message || c.exceptionMessage || `error ${put.status}`}` } });
     }

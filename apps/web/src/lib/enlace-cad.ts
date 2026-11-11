@@ -95,6 +95,19 @@ export async function cambiarAutoridadEnElCad(
   return traducir(await enviar(t, { accion: "autoridad", autoridad: { cadId, id: autoridad.id, nombre: autoridad.nombre } }, 60_000), t);
 }
 
+/**
+ * Corregir en el CAD los campos que no coinciden (3.19.0): Vector manda sólo los campos; la pestaña
+ * del CAD los pisa sobre su propio `Get` y descarta lo que no esté en `CAMPOS_EDITABLES`. Pide la
+ * extensión 1.3.0 o el marcador.
+ */
+export async function editarEnElCad(
+  t: TransporteCad,
+  cadId: number,
+  cambios: Record<string, unknown>
+): Promise<Resultado<{ aceptado: boolean; mensaje: string }>> {
+  return traducir(await enviar(t, { accion: "editar", editar: { cadId, cambios } }, 60_000), t);
+}
+
 /** "Crear" del CAD con un vuelo ya armado por Vector (`armarVueloParaElCad`). */
 export async function crearEnElCad(t: TransporteCad, vuelo: Record<string, unknown>): Promise<Resultado<{ aceptado: boolean; mensaje: string }>> {
   return traducir(await enviar(t, { accion: "crear", vuelo }, 60_000), t);

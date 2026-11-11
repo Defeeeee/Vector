@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  actualizacionParaElCad,
   anomaliasConElCad,
   borradorCad,
   diferenciasConElCad,
@@ -182,5 +183,54 @@ describe("la autoridad certificante contra el CAD (3.17.0)", () => {
     const enElCad = muchos.map((m) => ({ ...fila, vueloTripulanteID: m.cadId })) as unknown as VueloEnElCad[];
     const guardadas = Object.fromEntries(muchos.map((m) => [String(m.cadId), { firma: "la de antes", cuando: "2026-11-09T00:00:00Z", diferencias: [] }]));
     expect(paraLeerEnDetalle(muchos, enElCad, guardadas, ahora)).toHaveLength(24);
+  });
+});
+
+describe("Actualizar en el CAD (3.19.0)", () => {
+  const lugares: ItemCad[] = [
+    { key: "101", value: "SADF -  FDO -  FDO (SAN FERNANDO)" },
+    { key: "102", value: "SADM -  MOR -  MOR (MORON)" },
+  ];
+  const listas = { finalidades, lugares };
+  const anomalia = (campos: string[], estado = "PENDIENTE DE DDJJ") => ({
+    vectorId: "v1",
+    cadId: 900,
+    fecha: "17/10/2026",
+    ruta: "SADF → SADM",
+    estado,
+    diferencias: campos.map((campo) => ({ campo, nombre: campo, enVector: "a", enElCad: "b" })),
+  }) as unknown as Parameters<typeof actualizacionParaElCad>[1];
+
+  it("los horarios van con día, noche y la discriminación", () => {
+    const r = actualizacionParaElCad(b, anomalia(["salida"]), listas);
+    expect(r && r.ok && Object.keys(r.cambios).sort()).toEqual(["Discriminaciones", "fechaHoraLlegada", "fechaHoraSalida", "horasDia", "horasNoche"]);
+    expect(r && r.ok && r.cambios.fechaHoraSalida).toBe(b.fechaHoraSalida);
+  });
+
+  it("los lugares con el tipo de vuelo y los ids del CAD", () => {
+    const r = actualizacionParaElCad(b, anomalia(["destino"]), listas);
+    expect(r && r.ok && r.cambios).toMatchObject({ origenID: "101", destinoID: "102", tipoVueloID: "2" });
+  });
+
+  it("la finalidad por su id, los aterrizajes solos", () => {
+    const r = actualizacionParaElCad(b, anomalia(["finalidad", "aterrizajes"]), listas);
+    expect(r && r.ok && r.cambios).toEqual({ finalidadID: "71", aterrizajes: 2 });
+    expect(r && r.ok && r.soloAutoridad).toBe(false);
+  });
+
+  it("lo declarado no se ofrece", () => {
+    expect(actualizacionParaElCad(b, anomalia(["aterrizajes"], "DECLARADO"), listas)).toBeNull();
+  });
+
+  it("si el CAD no conoce el lugar o la finalidad, dice por qué", () => {
+    const r = actualizacionParaElCad(b, anomalia(["destino"]), { finalidades, lugares: [lugares[0]] });
+    expect(r && !r.ok && r.motivo).toMatch(/SADM/);
+    const f = actualizacionParaElCad({ ...b, finalidad: "VUELO RARO" }, anomalia(["finalidad"]), listas);
+    expect(f && !f.ok && f.motivo).toMatch(/finalidad/);
+  });
+
+  it("sólo la autoridad, marcada como tal (la extensión 1.2.0 sabe hacerla)", () => {
+    const r = actualizacionParaElCad({ ...b, autoridad: { id: "5", nombre: "ANA" } }, anomalia(["autoridad"]), listas);
+    expect(r).toEqual({ ok: true, cambios: { autoridadCertificanteID: "5", observaciones: "ANA" }, soloAutoridad: true });
   });
 });

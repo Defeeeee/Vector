@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Vector → CAD",
   "short_name": "Vector CAD",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Conecta tu pestaña del CAD de ANAC con Vector, para pasar tus vuelos desde Vector con tu propia sesión del CAD. No guarda ni ve tu contraseña.",
   "homepage_url": "https://vector.fdiaznem.com.ar/dashboard/history/cad",
   "icons": {

@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.19.0 — Corregí el CAD desde Vector
+
+_11 de noviembre de 2026_
+
+- **Actualizar en el CAD, ahora todo lo que no coincide** — Si un vuelo pendiente de DDJJ tiene en el CAD otros horarios, tiempos, avión, lugares, aterrizajes, finalidad, cargo o autoridad que en Vector, "Pasar al CAD" lo deja como en Vector con un toque. Antes te muestra cada cambio. Con la extensión, bajá la versión nueva.
+
 ## v3.18.0 — La autoridad, también en el CAD
 
 _11 de noviembre de 2026_

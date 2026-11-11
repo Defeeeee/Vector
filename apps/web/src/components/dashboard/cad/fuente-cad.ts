@@ -20,6 +20,7 @@ import {
   prepararPanelCad,
 } from "@/actions/cad-vector";
 import {
+  actualizacionParaElCad,
   anomaliasConElCad,
   armarPanelCad,
   diferenciasConElCad,
@@ -40,8 +41,8 @@ import {
   type MemoriaAutoridades,
   type VueloEnElCad,
 } from "@/lib/cad";
-import { cambiarAutoridadEnElCad, crearEnElCad, leerDelCad, type TransporteCad } from "@/lib/enlace-cad";
-import { compararVersion, VERSION_MINIMA_AUTORIDAD } from "@/lib/extension-cad";
+import { cambiarAutoridadEnElCad, crearEnElCad, editarEnElCad, leerDelCad, type TransporteCad } from "@/lib/enlace-cad";
+import { compararVersion, VERSION_MINIMA_AUTORIDAD, VERSION_MINIMA_EDICION } from "@/lib/extension-cad";
 
 type Leido<T> = { ok: true; datos: T } | { ok: false; error: string; reconectar?: boolean };
 
@@ -58,10 +59,11 @@ export interface FuenteCad {
   modelo(simId: number): Promise<{ modeloId: number | null; modelo: string | null }>;
   leerParaTraer(): Promise<Leido<FilaTraida[]>>;
   /**
-   * Cambia la autoridad de un vuelo pendiente de DDJJ en el CAD (3.18.0). Sólo con el puente
-   * (extensión 1.2.0 o marcador): "Desde Vector" no lo tiene.
+   * Deja en el CAD lo que dice Vector de un vuelo pendiente de DDJJ que no coincide (3.18.0 la
+   * autoridad, 3.19.0 el resto: `AnomaliaCad.paraElCad`). Sólo con el puente (extensión 1.3.0, o
+   * 1.2.0 para la autoridad sola, o el marcador): "Desde Vector" no lo tiene.
    */
-  cambiarAutoridad?(cadId: number, autoridad: { id: string; nombre: string }): Promise<{ ok: boolean; mensaje: string }>;
+  actualizarEnElCad?(a: AnomaliaCad): Promise<{ ok: boolean; mensaje: string }>;
 }
 
 export const fuenteServidor: FuenteCad = {
@@ -190,7 +192,13 @@ export function fuenteEnlace(t: TransporteCad): FuenteCad {
       const vector = await datosDeVectorParaElCad();
       if (!vector) return { ok: false, error: "No pudimos leer tus vuelos de Vector. Probá de nuevo." };
       const datos = armarPanelCad(vector, [], l.datos, v.datos, memoria);
-      const anomalias = await revisarContraElCad(t, vector.marcados, v.datos, l.datos.finalidades);
+      const revisadas = await revisarContraElCad(t, vector.marcados, v.datos, l.datos.finalidades);
+      // Qué mandar para dejar cada uno en el CAD como en Vector (3.19.0).
+      const porVector = new Map(vector.marcados.map((b) => [b.vectorId, b]));
+      const anomalias = revisadas.map((a) => {
+        const b = porVector.get(a.vectorId);
+        return { ...a, paraElCad: b ? actualizacionParaElCad(b, a, l.datos) : null };
+      });
       return { ok: true, datos: { ...datos, devueltos: c.desmarcados ?? 0, anomalias } };
     },
 
@@ -207,14 +215,21 @@ export function fuenteEnlace(t: TransporteCad): FuenteCad {
       return { ok: true, mensaje: cadId ? "Cargado en el CAD" : "Cargado en el CAD (no pudimos anotarlo en Vector todavía)", cadId: cadId ?? undefined };
     },
 
-    async cambiarAutoridad(cadId, autoridad) {
-      // Una extensión anterior a la 1.2.0 no conoce el pedido y no contesta: se avisa antes.
-      const instalada = document.documentElement.dataset.vectorCadExtension;
-      if (t === "extension" && (!instalada || compararVersion(instalada, VERSION_MINIMA_AUTORIDAD) < 0))
-        return { ok: false, mensaje: `Para cambiarla desde Vector, actualizá la extensión a la ${VERSION_MINIMA_AUTORIDAD} (está arriba, en esta pantalla).` };
-      const r = await cambiarAutoridadEnElCad(t, cadId, autoridad);
+    async actualizarEnElCad(a) {
+      const p = a.paraElCad;
+      if (!p) return { ok: false, mensaje: "Este vuelo no se corrige desde Vector." };
+      if (!p.ok) return { ok: false, mensaje: p.motivo };
+      // Una extensión vieja no conoce el pedido y no contesta: se avisa antes. La 1.2.0 sabe
+      // cambiar sólo la autoridad.
+      const instalada = t === "extension" ? document.documentElement.dataset.vectorCadExtension ?? "" : null;
+      const sabeEditar = instalada === null || compararVersion(instalada, VERSION_MINIMA_EDICION) >= 0;
+      const sabeAutoridad = instalada === null || compararVersion(instalada, VERSION_MINIMA_AUTORIDAD) >= 0;
+      let r;
+      if (sabeEditar) r = await editarEnElCad(t, a.cadId, p.cambios);
+      else if (p.soloAutoridad && sabeAutoridad && a.autoridad) r = await cambiarAutoridadEnElCad(t, a.cadId, a.autoridad);
+      else return { ok: false, mensaje: `Para corregirlo desde Vector, actualizá la extensión a la ${VERSION_MINIMA_EDICION} (está arriba, en esta pantalla).` };
       if (!r.ok) return { ok: false, mensaje: r.error };
-      if (r.datos.aceptado) olvidarRevision(cadId);
+      if (r.datos.aceptado) olvidarRevision(a.cadId);
       return { ok: r.datos.aceptado, mensaje: r.datos.mensaje };
     },
 

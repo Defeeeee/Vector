@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cuerpoParaCambiarAutoridad, fechaComoLaGuardaElCad } from "./editar-autoridad";
+import { cuerpoParaCambiarAutoridad, cuerpoParaEditar, fechaComoLaGuardaElCad } from "./editar-vuelo";
 
 // Un vuelo como lo devuelve `Get?id=` (los nombres son los que lee el formulario de edición del CAD).
 const vuelo = {
@@ -79,5 +79,39 @@ describe("cambiar la autoridad de un vuelo del CAD", () => {
     expect(fechaComoLaGuardaElCad("2026-10-17T18:00:00Z")).toBeNull();
     expect(fechaComoLaGuardaElCad("2026-10-17T18:00:00-03:00")).toBeNull();
     expect(cuerpoParaCambiarAutoridad({ ...vuelo, fechaHoraSalida: "2026-10-17T18:00:00Z" }, "5", "ANA").ok).toBe(false);
+  });
+});
+
+describe("corregir otros campos de un vuelo del CAD (3.19.0)", () => {
+  it("pisa sólo lo que manda Vector, con las horas en el formato del formulario", () => {
+    const r = cuerpoParaEditar(vuelo, { fechaHoraSalida: "2026-10-17T18:30:00.000Z", fechaHoraLlegada: "2026-10-17T19:42:00Z", horasDia: 1.2, aterrizajes: 3 });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.cuerpo.fechaHoraSalida).toBe("2026-10-17T18:30:00.000Z");
+    expect(r.cuerpo.fechaHoraLlegada).toBe("2026-10-17T19:42:00.000Z");
+    expect(r.cuerpo.aterrizajes).toBe(3);
+    // Lo demás, como vino.
+    expect(r.cuerpo.autoridadCertificanteID).toBe(2);
+    expect(r.cuerpo.observaciones).toBe("JUAN PEREZ");
+    expect(r.cuerpo.matriculaAvion).toBe("LV-ABC");
+    expect(r.cuerpo.Discriminaciones).toEqual([{ tipoDiscriminacionID: 7, horas: 0.3 }]);
+  });
+
+  it("descarta lo que no está en la lista blanca (el id, el simulador, cualquier otra cosa)", () => {
+    const r = cuerpoParaEditar(vuelo, { vueloTripulanteID: 1, simulador: { simuladorID: 9 }, ddjj: true, aterrizajes: 4 });
+    expect(r.ok && r.cuerpo.vueloTripulanteID).toBe(900001);
+    expect(r.ok && "simulador" in r.cuerpo).toBe(false);
+    expect(r.ok && "ddjj" in r.cuerpo).toBe(false);
+    expect(cuerpoParaEditar(vuelo, { ddjj: true }).ok).toBe(false);
+  });
+
+  it("no pasa un vuelo a simulador ni al revés", () => {
+    expect(cuerpoParaEditar(vuelo, { tipoVueloID: "3" }).ok).toBe(false);
+  });
+
+  it("la discriminación nueva va con tipo y horas, y una hora rara no se manda", () => {
+    const r = cuerpoParaEditar(vuelo, { Discriminaciones: [{ tipoDiscriminacionID: 1, horas: 1.2, otra: "x" }] });
+    expect(r.ok && r.cuerpo.Discriminaciones).toEqual([{ tipoDiscriminacionID: 1, horas: 1.2 }]);
+    expect(cuerpoParaEditar(vuelo, { fechaHoraSalida: "ayer" }).ok).toBe(false);
   });
 });

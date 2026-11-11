@@ -1283,12 +1283,77 @@ export interface AnomaliaCad {
   estado?: string | null;
   /** La autoridad que tiene en Vector: la que "Actualizar en el CAD" le pone allá (3.18.0). */
   autoridad?: { id: string; nombre: string } | null;
+  /**
+   * Qué mandar para dejarlo en el CAD como en Vector (3.19.0, `actualizacionParaElCad`): `null` si
+   * no se ofrece (no está pendiente de DDJJ), o por qué no se puede.
+   */
+  paraElCad?: ActualizacionCad | null;
 }
 
-/** Si a esta diferencia la puede arreglar Vector en el CAD: la autoridad de un vuelo pendiente de DDJJ. */
-export function autoridadParaActualizarEnElCad(a: AnomaliaCad): { id: string; nombre: string } | null {
-  if (!a.autoridad || !pendienteDeDdjj(a.estado)) return null;
-  return a.diferencias.some((d) => d.campo === "autoridad") ? a.autoridad : null;
+export type ActualizacionCad = { ok: true; cambios: Record<string, unknown>; soloAutoridad: boolean } | { ok: false; motivo: string };
+
+/**
+ * Los campos del CAD que se pisan por cada diferencia, en grupos que el CAD acepta juntos: si
+ * cambian los horarios o el tiempo, también día, noche y la discriminación (el CAD exige que día
+ * más noche sea la duración, y la discriminación se calcula sobre ese tiempo); la matrícula con su
+ * clase y potencia; los lugares con el tipo de vuelo (local o travesía).
+ */
+const GRUPOS_PARA_EL_CAD: { campos: CampoRevisado[]; claves: string[] }[] = [
+  { campos: ["salida", "llegada", "horas", "diaNoche"], claves: ["fechaHoraSalida", "fechaHoraLlegada", "horasDia", "horasNoche", "Discriminaciones"] },
+  { campos: ["matricula"], claves: ["matriculaAvion", "clase", "potencia"] },
+  { campos: ["origen", "destino", "tipo"], claves: ["tipoVueloID", "origenID", "destinoID", "origenPersonalizado", "destinoPersonalizado"] },
+  { campos: ["aterrizajes"], claves: ["aterrizajes"] },
+  { campos: ["finalidad"], claves: ["finalidadID"] },
+  { campos: ["cargo"], claves: ["cargoID"] },
+  { campos: ["autoridad"], claves: ["autoridadCertificanteID", "observaciones"] },
+];
+
+/**
+ * Lo que "Actualizar en el CAD" manda para un vuelo que no coincide (3.19.0): los campos de Vector
+ * de lo que difiere, sacados de lo mismo que manda "Crear" (`payloadCad`), con los ids resueltos
+ * contra las listas del CAD. El CAD los pisa sobre su propio vuelo (`src/cad/editar-vuelo.ts`).
+ *
+ * Sólo vuelos **pendientes de DDJJ**; lo declarado no se toca (`null`: no se ofrece). Un vuelo que
+ * en Vector tiene algo que el CAD rechazaría (`problema`), o un lugar o una finalidad que el CAD no
+ * conoce, no se manda: se dice por qué.
+ */
+export function actualizacionParaElCad(
+  b: BorradorCad,
+  a: AnomaliaCad,
+  listas: { finalidades: ItemCad[]; lugares: ItemCad[] }
+): ActualizacionCad | null {
+  if (!pendienteDeDdjj(a.estado)) return null;
+  const campos = new Set(a.diferencias.map((d) => d.campo));
+  if (!campos.size) return null;
+  if (b.problema) return { ok: false, motivo: `Antes hay que corregirlo en Vector: ${b.problema}` };
+  const simulador = b.tipoVueloID === TIPO_VUELO_CAD.simulador;
+  const grupos = GRUPOS_PARA_EL_CAD.filter((g) => g.campos.some((c) => campos.has(c)));
+
+  let finalidadID = "";
+  if (campos.has("finalidad")) {
+    finalidadID = resolverFinalidad(b.finalidad, listas.finalidades) ?? "";
+    if (!finalidadID) return { ok: false, motivo: `El CAD no tiene la finalidad "${b.finalidad}": corregilo desde el CAD.` };
+  }
+  let origenID = "";
+  let destinoID = "";
+  if (!simulador && (campos.has("origen") || campos.has("destino") || campos.has("tipo"))) {
+    origenID = resolverLugar(b.origen, listas.lugares) ?? "";
+    destinoID = resolverLugar(b.destino, listas.lugares) ?? "";
+    if (!origenID || !destinoID) return { ok: false, motivo: `El CAD no tiene ${!origenID ? b.origen.codigo : b.destino.codigo} en su lista: corregilo desde el CAD.` };
+  }
+  if (campos.has("autoridad") && !b.autoridad) return { ok: false, motivo: "El vuelo no tiene autoridad en Vector." };
+
+  const payload = payloadCad(b, {
+    finalidadID,
+    origenID,
+    destinoID,
+    autoridadID: b.autoridad?.id ?? "",
+    autoridadNombre: b.autoridad?.nombre ?? "",
+  }) as Record<string, unknown>;
+  const cambios: Record<string, unknown> = {};
+  for (const g of grupos) for (const k of g.claves) if (k in payload) cambios[k] = payload[k];
+  if (!Object.keys(cambios).length) return null;
+  return { ok: true, cambios, soloAutoridad: grupos.length === 1 && grupos[0].campos.includes("autoridad") };
 }
 
 /** Los campos que se leen sólo del detalle (`Get?id=`), no de la lista. */

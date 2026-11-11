@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.19.0",
+    fecha: "2026-11-11",
+    titulo: "Corregí el CAD desde Vector",
+    novedades: [
+      {
+        icono: "avion",
+        titulo: "Actualizar en el CAD, ahora todo lo que no coincide",
+        texto: "Si un vuelo pendiente de DDJJ tiene en el CAD otros horarios, tiempos, avión, lugares, aterrizajes, finalidad, cargo o autoridad que en Vector, \"Pasar al CAD\" lo deja como en Vector con un toque. Antes te muestra cada cambio. Con la extensión, bajá la versión nueva.",
+        href: "/dashboard/history/cad",
+        cta: "Pasar al CAD",
+      },
+    ],
+  },
+  {
     version: "3.18.0",
     fecha: "2026-11-11",
     titulo: "La autoridad, también en el CAD",
