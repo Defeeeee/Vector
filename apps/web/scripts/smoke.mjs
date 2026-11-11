@@ -193,6 +193,8 @@ const ROUTES = [
   { path: "/api/cron/novedades?clave=smoke", method: "POST", expect: (s) => s === 401 || s === 503 },
   // Un POST sin la firma del mail no da de baja a nadie.
   { path: "/api/mail/baja?u=x&t=y", method: "POST", expect: (s) => s === 400 },
+  // El webhook de Resend: sin firma de Svix, 401 (o 503 si el server no tiene el secreto).
+  { path: "/api/mail/entrante", method: "POST", expect: (s) => s === 401 || s === 503 },
   { path: "/api/chat", method: "POST", body: JSON.stringify({ message: "hola" }), expect: (s) => s === 401 },
   // El libro de vuelo en PDF es la bitácora entera de una persona.
   { path: "/api/bitacora/libro-anac", expect: (s) => s === 401 },

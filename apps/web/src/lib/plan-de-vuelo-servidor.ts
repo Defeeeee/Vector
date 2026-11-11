@@ -3,6 +3,7 @@ import { getSessionToken } from "@/actions/auth";
 import { esAlumno } from "./licencias";
 import type { Aircraft, Profile } from "@/types";
 import type { PilotoParaPlan } from "./formulario-plan";
+import type { ClasificacionRespuesta } from "./respuesta-plan";
 
 const FRESCO = { next: { revalidate: 0 } } as RequestInit;
 
@@ -83,6 +84,9 @@ export interface PlanResumen {
   vuelo_id?: string | null;
   cancelado_at?: string | null;
   descartado_at?: string | null;
+  /** Cómo contestó la oficina la última vez (migración 043). */
+  respuesta_estado?: ClasificacionRespuesta | null;
+  respuesta_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -140,5 +144,29 @@ export async function emailDeLaSesion(): Promise<string | null> {
     return typeof claims.email === "string" && claims.email.includes("@") ? claims.email : null;
   } catch {
     return null;
+  }
+}
+
+
+/** Una respuesta de la oficina a un plan (migración 043). */
+export interface RespuestaOficina {
+  id: string;
+  de: string;
+  asunto: string;
+  texto: string;
+  clasificacion: ClasificacionRespuesta;
+  /** `false` = la escribió otra persona, no la oficina del plan: se guarda sin estado ni aviso. */
+  de_oficina: boolean;
+  recibido_at: string;
+}
+
+/** Lo que contestó la oficina, la más nueva primero. Vacío si no hay o no se pudo leer. */
+export async function leerRespuestas(planId: string): Promise<RespuestaOficina[]> {
+  const res = await apiFetch(`/planes-de-vuelo/${encodeURIComponent(planId)}/respuestas`, FRESCO);
+  if (!res.ok) return [];
+  try {
+    return (await res.json()) as RespuestaOficina[];
+  } catch {
+    return [];
   }
 }

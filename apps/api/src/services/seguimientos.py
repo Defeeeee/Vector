@@ -37,6 +37,22 @@ TOPE_PUNTOS_RUTA = 60
 
 ESTADOS = ("en_vuelo", "terminado", "vencido")
 
+#: Migración 044: quién mira el link. Un id al azar del navegador de quien mira; nada más.
+VENTANA_MIRANDO_S = 45
+#: Una consulta del mismo id se anota como mucho cada tanto (la página pregunta cada ~15 s).
+SEGUNDOS_ENTRE_VISTAS = 30
+#: Cuántos ids recientes se guardan.
+TOPE_VISITANTES = 20
+
+
+def id_de_visitante_valido(visitante: Any) -> bool:
+    """16 a 32 caracteres url-safe. Lo demás no se anota (la consulta funciona igual)."""
+    return (
+        isinstance(visitante, str)
+        and 16 <= len(visitante) <= 32
+        and all(c.isascii() and (c.isalnum() or c in "-_") for c in visitante)
+    )
+
 
 def nuevo_token() -> str:
     """32 caracteres url-safe, 192 bits de azar: no se adivina ni se recorre."""
@@ -198,6 +214,55 @@ def vence_en(ahora: datetime) -> datetime:
 
 def limite_de_retencion(ahora: datetime) -> str:
     return (ahora - timedelta(days=DIAS_DE_RETENCION)).astimezone(timezone.utc).isoformat()
+
+
+# --- quién mira (migración 044) ------------------------------------------------------------
+
+def _vistas_limpias(vistas: Any) -> Dict[str, int]:
+    """El `{id: epoch_s}` de la fila, sin basura."""
+    if not isinstance(vistas, dict):
+        return {}
+    return {k: int(v) for k, v in vistas.items() if isinstance(k, str) and _es_numero(v)}
+
+
+def anotar_vista(
+    vistas: Any, vistos_total: Any, visitante: Any, ahora: datetime
+) -> Optional[Dict[str, Any]]:
+    """
+    Qué escribir cuando alguien consulta el link, o `None` si no hay nada que escribir: el id no
+    tiene la forma o ya se anotó hace menos de `SEGUNDOS_ENTRE_VISTAS` (para no escribir en cada
+    consulta de cada visitante). Se guarda el id y la hora del servidor, **nada más**. Quedan los
+    `TOPE_VISITANTES` más recientes; `vistos_total` suma uno si el id no estaba.
+    """
+    if not id_de_visitante_valido(visitante):
+        return None
+    actuales = _vistas_limpias(vistas)
+    ahora_s = int(ahora.timestamp())
+    previa = actuales.get(visitante)
+    if previa is not None and ahora_s - previa < SEGUNDOS_ENTRE_VISTAS:
+        return None
+    actuales[visitante] = ahora_s
+    recientes = sorted(actuales.items(), key=lambda kv: kv[1], reverse=True)[:TOPE_VISITANTES]
+    total = int(vistos_total) if _es_numero(vistos_total) else 0
+    return {
+        "vistas": dict(recientes),
+        "vistos_total": total + (0 if previa is not None else 1),
+        "ultima_vista_at": ahora.astimezone(timezone.utc).isoformat(),
+    }
+
+
+def resumen_de_vistas(fila: Dict[str, Any], ahora: datetime) -> Dict[str, Any]:
+    """**Sólo para el piloto** (la respuesta de `/posicion`): cuántos miran ahora y cuántos vieron."""
+    ahora_s = ahora.timestamp()
+    mirando = sum(1 for t in _vistas_limpias(fila.get("vistas")).values() if 0 <= ahora_s - t <= VENTANA_MIRANDO_S)
+    total = fila.get("vistos_total")
+    ultima = _fecha(fila.get("ultima_vista_at"))
+    return {
+        "mirando_ahora": mirando,
+        "vistos_total": max(int(total) if _es_numero(total) else 0, mirando),
+        "ultima_vista_at": ultima.astimezone(timezone.utc).isoformat() if ultima else None,
+        "ahora": ahora.astimezone(timezone.utc).isoformat(),
+    }
 
 
 # --- lo que sale a un link público --------------------------------------------------------

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from litestar import Controller, Request, Response, get, post
@@ -29,10 +29,12 @@ from src.services.seguimientos import (
     PosicionEnVivo,
     SeguimientoCrear,
     agregar_al_recorrido,
+    anotar_vista,
     esta_activo,
     nombre_de_pila,
     nuevo_token,
     puede_aceptar_posicion,
+    resumen_de_vistas,
     vence_en,
     visible,
     vista_publica,
@@ -59,6 +61,13 @@ class PosicionAceptada(BaseModel):
     #: False si llegó antes de los 10 s de la anterior: no es un error, se ignora.
     aceptada: bool
     vence_at: str
+    #: Migración 044, **sólo para el piloto**: cuántos ids distintos consultaron el link en los
+    #: últimos 45 s, cuántos desde que empezó y cuándo fue la última vez. `ahora` es la hora del
+    #: servidor, para escribir "hace 3 min" sin depender del reloj del teléfono.
+    mirando_ahora: int = 0
+    vistos_total: int = 0
+    ultima_vista_at: Optional[str] = None
+    ahora: Optional[str] = None
 
 
 class SeguimientosController(Controller):
@@ -140,7 +149,7 @@ class SeguimientosController(Controller):
         def _agregar() -> PosicionAceptada:
             tabla = supabase_client.table("seguimientos_en_vivo")
             filas = (
-                tabla.select("vence_at,terminado_at,ultima_at,recorrido")
+                tabla.select("vence_at,terminado_at,ultima_at,recorrido,vistas,vistos_total,ultima_vista_at")
                 .eq("id", str(seguimiento_id))
                 .eq("user_id", user_id)
                 .limit(1)
@@ -155,7 +164,7 @@ class SeguimientosController(Controller):
                 # 410: el teléfono sabe que tiene que dejar de mandar.
                 raise ClientException(detail="Este seguimiento ya terminó.", status_code=410)
             if not puede_aceptar_posicion(fila.get("ultima_at"), ahora):
-                return PosicionAceptada(aceptada=False, vence_at=fila["vence_at"])
+                return PosicionAceptada(aceptada=False, vence_at=fila["vence_at"], **resumen_de_vistas(fila, ahora))
             tabla.update(
                 {
                     "ultima_lat": data.lat,
@@ -169,7 +178,7 @@ class SeguimientosController(Controller):
                     ),
                 }
             ).eq("id", str(seguimiento_id)).eq("user_id", user_id).execute()
-            return PosicionAceptada(aceptada=True, vence_at=fila["vence_at"])
+            return PosicionAceptada(aceptada=True, vence_at=fila["vence_at"], **resumen_de_vistas(fila, ahora))
 
         return await asyncio.to_thread(_agregar)
 
@@ -239,17 +248,20 @@ class SeguimientosPublicosController(Controller):
     path = "/publico/seguimientos"
 
     @get("/{token:str}")
-    async def ver(self, token: str) -> Response[Dict[str, Any]]:
+    async def ver(self, request: Request, token: str) -> Response[Dict[str, Any]]:
         # Un token con otra forma no puede existir: 404 sin ir a la base.
         if not (32 <= len(token) <= 64) or not all(c.isalnum() or c in "-_" for c in token):
             raise NotFoundException(_NO_EXISTE)
         ahora = _ahora()
+        # Un id al azar del navegador de quien mira (migración 044). Sin él, o mal formado, la
+        # consulta anda igual y no se anota. Ni IP ni user agent: no se leen.
+        visitante = request.headers.get("x-visitante")
 
         def _leer() -> Dict[str, Any]:
+            cliente = SupabaseManager.get_service_client()
             filas = (
-                SupabaseManager.get_service_client()
-                .table("seguimientos_en_vivo")
-                .select("nombre,ruta,puntos,created_at,avion_tipo,avion_icao,avion_matricula,mostrar_matricula,vence_at,terminado_at,ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido")
+                cliente.table("seguimientos_en_vivo")
+                .select("nombre,ruta,puntos,created_at,avion_tipo,avion_icao,avion_matricula,mostrar_matricula,vence_at,terminado_at,ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido,vistas,vistos_total")
                 .eq("token", token)
                 .limit(1)
                 .execute()
@@ -258,7 +270,16 @@ class SeguimientosPublicosController(Controller):
             )
             if not filas or not visible(filas[0], ahora):
                 raise NotFoundException(_NO_EXISTE)
-            return vista_publica(filas[0], ahora)
+            fila = filas[0]
+            # Sólo se anota mientras el vuelo sigue en curso; una falla acá nunca rompe la consulta.
+            if esta_activo(fila, ahora):
+                try:
+                    cambios = anotar_vista(fila.get("vistas"), fila.get("vistos_total"), visitante, ahora)
+                    if cambios:
+                        cliente.table("seguimientos_en_vivo").update(cambios).eq("token", token).execute()
+                except Exception:  # noqa: BLE001
+                    pass
+            return vista_publica(fila, ahora)
 
         cuerpo = await asyncio.to_thread(_leer)
         return Response(cuerpo, headers={"Cache-Control": "no-store"})

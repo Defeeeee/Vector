@@ -76,7 +76,11 @@ jobs:
       - name: Seguimiento de mails
         run: python test_mails.py
 
+      # Importa el controlador (las respuestas de la oficina): pide las variables de mentira.
       - name: Planes de vuelo guardados
+        env:
+          SUPABASE_URL: "https://dummy.supabase.co"
+          SUPABASE_PUBLISHABLE_KEY: "dummy-key"
         run: python test_planes_de_vuelo.py
 
       - name: Pegatinas con QR

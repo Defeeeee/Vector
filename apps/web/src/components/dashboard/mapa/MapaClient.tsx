@@ -35,6 +35,7 @@ import type { Aircraft } from "@/types";
 import type { PilotoParaPlan } from "@/lib/formulario-plan";
 import type { RutaGuardada } from "@/lib/rutas-guardadas";
 import RutaAcciones from "./RutaAcciones";
+import { textoDeVistas } from "@/lib/seguimiento";
 import { useSeguimientoEnVivo, type SeguimientoEnVivo } from "./useSeguimientoEnVivo";
 import CompartirSeguimiento from "./CompartirSeguimiento";
 
@@ -1125,7 +1126,16 @@ function PantallaDeVuelo(p: {
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Grabando
             {grabado && grabado.minutos >= 1 ? ` · ${duracionCorta(grabado.minutos)} · ${grabado.distanciaNm.toFixed(0)} NM` : ""}
             {p.seguimiento.estado === "compartiendo" && (
-              <span className={p.seguimiento.sinSenal ? "text-amber-300" : "text-aviation-cyan"}> · {p.seguimiento.sinSenal ? "Compartiendo, sin señal" : "Compartiendo"}</span>
+              <span className={p.seguimiento.sinSenal ? "text-amber-300" : "text-aviation-cyan"}>
+                {" "}· {p.seguimiento.sinSenal ? "Compartiendo, sin señal" : "Compartiendo"}
+                {textoDeVistas(p.seguimiento.vistas) && (
+                  <>
+                    {" "}·{" "}
+                    {p.seguimiento.vistas && p.seguimiento.vistas.mirandoAhora > 0 && <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-aviation-cyan align-middle animate-pulse" />}
+                    {textoDeVistas(p.seguimiento.vistas)}
+                  </>
+                )}
+              </span>
             )}
           </p>
         )}

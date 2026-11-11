@@ -11,6 +11,7 @@ from supabase import Client
 
 from src.auth.guards import auth_guard
 from src.config import settings
+from src.services.avisos import armar_aviso_respuesta_plan, enviar_aviso
 from src.services.recordatorio_plan import armar_pendientes
 from src.supabase_client import SupabaseManager
 from src.models.plan_vuelo import (
@@ -19,6 +20,8 @@ from src.models.plan_vuelo import (
     PlanVueloCreate,
     PlanVueloResumen,
     PlanVueloUpdate,
+    RespuestaEntrante,
+    RespuestaPlan,
     MAX_ENVIOS,
     resumen_para_lista,
 )
@@ -29,7 +32,7 @@ LIMITE_LISTA = 50
 
 COLUMNAS_LISTA = (
     "id,aircraft_id,completo,salida,destino,matricula,dof,eobt,descargado_at,enviado_at,"
-    "vuelo_id,cancelado_at,descartado_at,created_at,updated_at"
+    "vuelo_id,cancelado_at,descartado_at,respuesta_estado,respuesta_at,created_at,updated_at"
 )
 
 
@@ -72,6 +75,21 @@ class PlanesDeVueloController(Controller):
         if not resp.data:
             raise NotFoundException("Ese plan de vuelo no existe.")
         return PlanVuelo(**resp.data[0])
+
+    @get("/{plan_id:uuid}/respuestas")
+    async def respuestas(self, request: Request, supabase_client: Client, plan_id: UUID) -> List[RespuestaPlan]:
+        """Lo que contestó la oficina, la más nueva primero. Las protege el RLS (migración 043)."""
+        user_id = str(request.state.user.id)
+        resp = (
+            supabase_client.table("planes_respuestas")
+            .select("id,plan_id,de,asunto,texto,clasificacion,de_oficina,recibido_at")
+            .eq("plan_id", str(plan_id))
+            .eq("user_id", user_id)
+            .order("recibido_at", desc=True)
+            .limit(50)
+            .execute()
+        )
+        return [RespuestaPlan(**fila) for fila in (resp.data or [])]
 
     @post()
     async def crear(self, request: Request, supabase_client: Client, data: PlanVueloCreate) -> PlanVuelo:
@@ -192,6 +210,17 @@ class PlanesDeVueloController(Controller):
         supabase_client.table("firmas_plan_vuelo").delete().eq("user_id", user_id).execute()
 
 
+def envios_a_oficina(envios: Any) -> List[str]:
+    """Las direcciones a las que se mandó el plan a la oficina (no las pruebas, que van al piloto)."""
+    return sorted(
+        {
+            str(e["a"]).strip().lower()
+            for e in (envios if isinstance(envios, list) else [])
+            if isinstance(e, dict) and e.get("modo") == "aro" and isinstance(e.get("a"), str) and "@" in e["a"]
+        }
+    )
+
+
 class PlanesEnviados(BaseModel):
     ids: List[UUID] = Field(default_factory=list, max_length=500)
 
@@ -287,3 +316,109 @@ class PlanesRecordatoriosController(Controller):
         )
         return {"marcados": len(resp.data or [])}
 
+
+
+class PlanesRespuestasInternoController(Controller):
+    """
+    Lo que la web le pide al backend cuando la oficina contesta un plan (el webhook
+    `email.received` de Resend, `apps/web/src/app/api/mail/entrante`).
+
+    Sin sesión, con el secreto de los barridos (`X-Cron-Secret`), como los recordatorios.
+    La web ya verificó la firma de Svix y la de la dirección del plan; acá se guarda y se
+    avisa. Usa el cliente de servicio: escribe en nombre del dueño del plan.
+    """
+
+    path = "/planes-de-vuelo/interno"
+
+    def _verificar(self, request: Request) -> None:
+        esperado = settings.documents_alert_secret
+        recibido = request.headers.get("X-Cron-Secret") or ""
+        if not esperado:
+            raise NotAuthorizedException("El webhook no está configurado.")
+        if not recibido or not hmac.compare_digest(recibido, esperado):
+            raise NotAuthorizedException("Invalid secret token.")
+
+    @get("/{plan_id:uuid}")
+    async def plan(self, request: Request, plan_id: UUID) -> Dict[str, Any]:
+        """Del plan, lo que hace falta para decidir si un mail es de su oficina."""
+        self._verificar(request)
+        cliente = SupabaseManager.get_service_client()
+
+        def _leer():
+            filas = (
+                cliente.table("planes_de_vuelo").select("user_id,envios").eq("id", str(plan_id)).execute().data or []
+            )
+            if not filas:
+                return None
+            usuario = getattr(cliente.auth.admin.get_user_by_id(str(filas[0]["user_id"])), "user", None)
+            return filas[0], getattr(usuario, "email", None)
+
+        leido = await asyncio.to_thread(_leer)
+        if leido is None:
+            raise NotFoundException("Ese plan de vuelo no existe.")
+        fila, email = leido
+        return {"email": email, "envios_a_oficina": envios_a_oficina(fila.get("envios"))}
+
+    @post("/{plan_id:uuid}/respuestas", status_code=200)
+    async def registrar(self, request: Request, plan_id: UUID, data: RespuestaEntrante) -> Dict[str, bool]:
+        """
+        Guarda la respuesta (una sola vez por `email_id`) y, si es de la oficina, anota el
+        estado en el plan y avisa al dueño por push.
+        """
+        self._verificar(request)
+        cliente = SupabaseManager.get_service_client()
+
+        def _guardar():
+            plan = (
+                cliente.table("planes_de_vuelo")
+                .select("user_id,matricula,salida,destino")
+                .eq("id", str(plan_id))
+                .execute()
+                .data
+                or []
+            )
+            if not plan:
+                return None
+            if cliente.table("planes_respuestas").select("id").eq("email_id", data.email_id).execute().data:
+                return plan[0], True
+            try:
+                cliente.table("planes_respuestas").insert(
+                    {
+                        "plan_id": str(plan_id),
+                        "user_id": plan[0]["user_id"],
+                        "email_id": data.email_id,
+                        "de": data.de,
+                        "asunto": data.asunto,
+                        "texto": data.texto,
+                        "clasificacion": data.clasificacion,
+                        "de_oficina": data.avisar,
+                    }
+                ).execute()
+            except Exception as exc:  # noqa: BLE001 — un reintento simultáneo cae en el índice único
+                if "duplicate" in str(exc).lower() or "23505" in str(exc):
+                    return plan[0], True
+                raise
+            if data.avisar:
+                cliente.table("planes_de_vuelo").update(
+                    {"respuesta_estado": data.clasificacion, "respuesta_at": dt.datetime.now(dt.timezone.utc).isoformat()}
+                ).eq("id", str(plan_id)).execute()
+            return plan[0], False
+
+        guardado = await asyncio.to_thread(_guardar)
+        if guardado is None:
+            raise NotFoundException("Ese plan de vuelo no existe.")
+        plan, duplicada = guardado
+        if not duplicada and data.avisar:
+            enviar_aviso(
+                str(plan["user_id"]),
+                armar_aviso_respuesta_plan(
+                    str(plan_id),
+                    matricula=plan.get("matricula"),
+                    salida=plan.get("salida"),
+                    destino=plan.get("destino"),
+                    clasificacion=data.clasificacion,
+                    oficina=data.de,
+                    resumen=data.resumen or data.texto,
+                ),
+            )
+        return {"duplicada": duplicada}

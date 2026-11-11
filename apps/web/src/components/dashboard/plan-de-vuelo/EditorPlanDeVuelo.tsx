@@ -1,5 +1,6 @@
 "use client";
 
+import RespuestasOficina, { type RespuestaConFecha } from "./RespuestasOficina";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -89,6 +90,8 @@ interface Props {
   envioAroActivo: boolean;
   /** Cuándo lo guardó el servidor por última vez: un borrador del teléfono más nuevo le gana. */
   actualizadoInicial: string | null;
+  /** Lo que contestó la oficina (con la fecha ya escrita en el server). */
+  respuestas: RespuestaConFecha[];
 }
 
 /** "19/10 23:52Z": sin `toLocaleString`, igual en el server y en el navegador (invariante 1). */
@@ -255,6 +258,7 @@ export default function EditorPlanDeVuelo({
   canceladoInicial,
   envioAroActivo,
   actualizadoInicial,
+  respuestas,
 }: Props) {
   const [f, setF] = useState<FormularioPlan>(() => leerFormulario(formularioInicial));
   const [guardado, setGuardado] = useState<"guardado" | "guardando" | "error">("guardado");
@@ -1161,6 +1165,7 @@ export default function EditorPlanDeVuelo({
                 )}
               </div>
             )}
+            <RespuestasOficina respuestas={respuestas} />
             <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">{envioAroActivo ? "O desde tu correo:" : "Desde tu correo:"}</p>
             <div className="flex flex-wrap gap-2">
               <button

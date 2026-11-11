@@ -14,6 +14,21 @@ const plan = {
 const oficina = { correo: "acmor@eana.com.ar", nombre: "Morón", oaci: "SADM" };
 const base = { plan, nombres: { salida: "Luján", destino: "Morón" }, piloto: "lucia@example.com", oficina };
 
+describe("el mail del plan de vuelo: la dirección por la que Vector se entera", () => {
+  const direccionRespuesta = "plan-0b8f2c1e-5a4d-4c3b-9e7f-123456789abc-0123456789@respuestas.vector.fdiaznem.com.ar";
+  it("a la oficina: reply_to es el piloto y la dirección de Vector, y el piloto sigue en copia", () => {
+    const m = armarMailPlan({ ...base, modo: "aro", direccionRespuesta });
+    expect(m.responderA).toEqual(["lucia@example.com", direccionRespuesta]);
+    expect(m.cc).toEqual(["lucia@example.com"]);
+  });
+  it("la prueba, que va sólo al piloto, no la lleva", () => {
+    expect(armarMailPlan({ ...base, modo: "prueba", direccionRespuesta }).responderA).toBe("lucia@example.com");
+  });
+  it("sin la dirección (sin secreto) sale como siempre", () => {
+    expect(armarMailPlan({ ...base, modo: "aro", direccionRespuesta: null }).responderA).toBe("lucia@example.com");
+  });
+});
+
 describe("el mail del plan de vuelo", () => {
   it("a la oficina: el formato de FPL.AR, con copia y respuestas al piloto", () => {
     const m = armarMailPlan({ ...base, modo: "aro" });

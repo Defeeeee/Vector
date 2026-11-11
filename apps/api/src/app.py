@@ -11,7 +11,7 @@ from src.controllers.aircraft import AircraftController
 from src.controllers.flights import FlightsController
 from src.controllers.auth import AuthController
 from src.controllers.flight_packs import FlightPacksController
-from src.controllers.planes_de_vuelo import PlanesDeVueloController, PlanesRecordatoriosController
+from src.controllers.planes_de_vuelo import PlanesDeVueloController, PlanesRecordatoriosController, PlanesRespuestasInternoController
 from src.controllers.rutas_guardadas import RutasGuardadasController
 from src.controllers.seguimientos import SeguimientosController, SeguimientosPublicosController
 from src.controllers.logbooks import LogbooksController
@@ -114,6 +114,8 @@ api_router = Router(
         # El recordatorio del día siguiente al alta: sin sesión, con el secreto de los barridos.
         OnboardingController,
         PlanesRecordatoriosController,
+        # La oficina contestó un plan: el webhook de Resend pasa por la web, con el secreto de los barridos.
+        PlanesRespuestasInternoController,
         # El estado del alta del piloto que pregunta: con sesión.
         OnboardingEstadoController,
         ResumenMensualController,

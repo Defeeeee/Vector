@@ -6,7 +6,7 @@ import SeguimientoMapa from "./SeguimientoMapa";
 import ClimaDestino from "./ClimaDestino";
 import PerfilAltura from "./PerfilAltura";
 import { LogoVector } from "@/components/Marca";
-import { CADA_MIRANDO_MS, conMiles, haceCuanto, type SeguimientoPublico } from "@/lib/seguimiento";
+import { CADA_MIRANDO_MS, CLAVE_VISITANTE, conMiles, haceCuanto, idDeVisitanteValido, idDesdeBytes, type SeguimientoPublico } from "@/lib/seguimiento";
 import {
   avanceSobreRuta,
   duracion,
@@ -45,6 +45,28 @@ type Fin = "no-disponible" | null;
 
 const rotulo = "font-mono text-[11px] font-bold uppercase tracking-wider";
 
+/**
+ * El id al azar de este navegador, en `localStorage` (con try/catch: puede no haber; entonces vale
+ * uno por pestaña). 16 caracteres que sólo sirven para contar visitantes distintos.
+ */
+function idDeEsteNavegador(): string | null {
+  let guardado: string | null = null;
+  try {
+    guardado = localStorage.getItem(CLAVE_VISITANTE);
+  } catch {
+    /* sin almacenamiento */
+  }
+  if (idDeVisitanteValido(guardado)) return guardado;
+  if (typeof crypto === "undefined" || !crypto.getRandomValues) return null;
+  const id = idDesdeBytes(crypto.getRandomValues(new Uint8Array(16)));
+  try {
+    localStorage.setItem(CLAVE_VISITANTE, id);
+  } catch {
+    /* uno por pestaña */
+  }
+  return id;
+}
+
 export default function SeguimientoVivo({ token, inicial }: { token: string; inicial: SeguimientoPublico }) {
   const [datos, setDatos] = useState(() => normalizar(inicial));
   const [fin, setFin] = useState<Fin>(null);
@@ -55,6 +77,7 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
   const [encuadrar, setEncuadrar] = useState(0);
   const recibidoEn = useRef<number | null>(null);
   const preguntando = useRef(false);
+  const visitante = useRef<string | null>(null);
 
   const enVuelo = datos.estado === "en_vuelo" && fin === null;
 
@@ -62,7 +85,12 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
     if (preguntando.current) return;
     preguntando.current = true;
     try {
-      const res = await fetch(`/api/seguimiento/ver/${encodeURIComponent(token)}`, { cache: "no-store" });
+      // Un id al azar de este navegador (no dice quién es): así el piloto sabe cuántos miran.
+      visitante.current ??= idDeEsteNavegador();
+      const res = await fetch(`/api/seguimiento/ver/${encodeURIComponent(token)}`, {
+        cache: "no-store",
+        headers: visitante.current ? { "X-Visitante": visitante.current } : {},
+      });
       if (res.status === 404) {
         setFin("no-disponible");
         return;
@@ -88,6 +116,9 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
 
   useEffect(() => {
     if (!enVuelo) return;
+    // La página del servidor se dibujó sin id: el primer pedido con id es éste, así el piloto
+    // se entera enseguida y no a los 15 s.
+    void preguntar();
     const intervalo = window.setInterval(() => void preguntar(), CADA_MIRANDO_MS);
     const alVolver = () => {
       if (document.visibilityState === "visible") void preguntar();

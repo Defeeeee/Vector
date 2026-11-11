@@ -258,6 +258,18 @@ export default function PrivacidadPage() {
             está en tu bitácora. Es un mail por plan.
           </li>
           <li>
+            Avisarte cuando la oficina ARO/AIS contesta un plan, una demora, una modificación o
+            una cancelación que mandaste desde Vector. Esos mails salen con una dirección
+            propia de Vector (<code>respuestas.vector.fdiaznem.com.ar</code>) además de la tuya,
+            así que la respuesta de la oficina pasa también por Vector: guardamos quién la
+            mandó, el asunto, lo que escribió (sin el texto citado de tu mensaje, hasta 4.000
+            caracteres) y cómo la clasificamos (recibido, aceptado, rechazado o a corregir), y te
+            la mostramos en el plan junto con un aviso push. Para clasificarla, si las palabras
+            no alcanzan, se envía ese texto a Gemini (Google). Si la oficina te contestó sólo a
+            Vector, te reenviamos el mensaje por mail. Se guarda mientras exista el plan: al
+            borrar el plan se borran sus respuestas, y por ahora no se borran solas.
+          </li>
+          <li>
             Mandarte por mail, el primer día de cada mes, un resumen del mes anterior: horas,
             aterrizajes, lo que te falta para la próxima licencia, tu saldo y si tu CMA está
             por vencer. Te llega si cargaste al menos un vuelo, y te das de baja con el link
@@ -383,6 +395,14 @@ export default function PrivacidadPage() {
             <strong>Cuánto se guarda:</strong> las posiciones y el recorrido se borran a los 30 días de
             empezar a compartir. No se muestran en ningún otro lugar de Vector, ni se usan para la
             bitácora.
+          </li>
+          <li>
+            <strong>Quién mira el link:</strong> mientras compartís, la pantalla de vuelo te dice
+            cuánta gente está mirando y cuándo te vieron por última vez. Para contarlo, el navegador
+            de quien abre el link guarda un identificador al azar y lo manda en cada consulta; lo
+            único que se anota es ese identificador y la hora. No se guarda su dirección IP ni quién
+            es, y quien mira no ve a los demás. Esos datos se borran con el seguimiento, a los 30
+            días de empezar a compartir.
           </li>
         </ul>
       </section>

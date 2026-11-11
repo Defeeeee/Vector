@@ -8,7 +8,9 @@ import {
   posicionDeLectura,
   tocaMandar,
   urlDeSeguimiento,
+  vistasDeRespuesta,
   type LecturaParaCompartir,
+  type VistasDelLink,
   type SeguimientoGuardado,
 } from "@/lib/seguimiento";
 
@@ -47,6 +49,8 @@ export interface SeguimientoEnVivo {
   cambiarMostrarMatricula: (mostrar: boolean) => Promise<void>;
   /** El último intento de mandar falló (sin señal): el link muestra una posición vieja. */
   sinSenal: boolean;
+  /** Quién mira el link (migración 044), según la última respuesta del backend; `null` si todavía no llegó una. */
+  vistas: VistasDelLink | null;
   /** Empieza (o retoma el activo) y devuelve el link, o `null` si falló (el motivo queda en `error`). */
   compartir: () => Promise<string | null>;
   /** Deja de compartir: el link pasa a "El vuelo terminó". */
@@ -80,6 +84,7 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, aeronave 
   const [creando, setCreando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sinSenal, setSinSenal] = useState(false);
+  const [vistas, setVistas] = useState<VistasDelLink | null>(null);
   // Apagado por defecto (invariante 14, en espíritu): lo público lleva sólo lo que el piloto eligió.
   const [mostrarMatricula, setMostrarMatricula] = useState(false);
 
@@ -116,6 +121,7 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, aeronave 
     setActivo(null);
     setMostrarMatricula(false); // el próximo vuelo vuelve a empezar apagado
     setSinSenal(false);
+    setVistas(null);
     ultimaEnviada.current = null;
     ultimoIntento.current = null;
   }, []);
@@ -147,6 +153,9 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, aeronave 
       }
       ultimaEnviada.current = l;
       setSinSenal(false);
+      // Los conteos de quien mira vienen en la misma respuesta (y la hora del servidor).
+      const v = vistasDeRespuesta(await res.json().catch(() => null));
+      if (v) setVistas(v);
     } catch {
       setSinSenal(true);
     } finally {
@@ -250,6 +259,7 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, aeronave 
     sinMatricula: !aeronave?.registration,
     cambiarMostrarMatricula,
     sinSenal,
+    vistas,
     compartir,
     dejarDeCompartir,
   };

@@ -86,6 +86,40 @@ _pend = armar_pendientes(_planes, _usuarios, {"u1": {"first_name": "Lucía"}}, [
 check("el recordatorio no le escribe a un mail sin confirmar", [p["id"] for p in _pend] == ["p1"])
 check("el recordatorio lleva el nombre y sólo los vuelos de ese piloto", _pend[0]["first_name"] == "Lucía" and _pend[0]["vuelos"] == [{"date": "2026-10-20", "route": "SADF SADM"}])
 
+# --- Respuestas de la oficina (migración 043) ---------------------------------------------
+from pydantic import ValidationError as _VE  # noqa: E402
+
+from src.controllers.planes_de_vuelo import envios_a_oficina  # noqa: E402
+from src.models.plan_vuelo import RespuestaEntrante  # noqa: E402
+from src.services.avisos import armar_aviso_respuesta_plan  # noqa: E402
+
+_envios = [
+    {"modo": "prueba", "tipo": "fpl", "a": "Piloto@x.com"},
+    {"modo": "aro", "tipo": "fpl", "a": "ACMOR@eana.com.ar "},
+    {"modo": "aro", "tipo": "dla", "a": "acmor@eana.com.ar"},
+]
+check("las oficinas del plan son los envíos 'aro', sin repetir ni contar las pruebas", envios_a_oficina(_envios) == ["acmor@eana.com.ar"])
+check("sin envíos no hay oficinas (ni se rompe con basura)", envios_a_oficina(None) == [] and envios_a_oficina([1, {"modo": "aro"}]) == [])
+check("la lista trae el estado de la última respuesta", {"respuesta_estado", "respuesta_at"} <= set(PlanVueloResumen.model_fields))
+check("una respuesta con clasificación inventada no entra", falla(lambda: RespuestaEntrante(email_id="e1", de="a@b.c", clasificacion="genial")))
+check("ni una con el texto sin tope", falla(lambda: RespuestaEntrante(email_id="e1", de="a@b.c", texto="x" * 4001)))
+check("una normal sí, y avisa por defecto", RespuestaEntrante(email_id="e1", de="a@b.c").avisar is True)
+
+_av = armar_aviso_respuesta_plan(
+    "p-1", matricula="LV-ABC", salida="SADF", destino="SADM", clasificacion="aceptado",
+    oficina="acmor@eana.com.ar", resumen="Plan aceptado, buen vuelo.",
+)
+check("el aviso dice el plan y el estado", _av["titulo"] == "Plan LV-ABC SADF→SADM: aceptado")
+check("el cuerpo lleva la oficina y el resumen", _av["cuerpo"] == "acmor@eana.com.ar · Plan aceptado, buen vuelo.")
+check("tocarlo abre el plan", _av["url"] == "/dashboard/plan-de-vuelo/p-1")
+check(
+    "'corregir' se lee 'piden corregir', y lo desconocido, genérico",
+    armar_aviso_respuesta_plan("p", matricula=None, salida=None, destino=None, clasificacion="corregir", oficina=None, resumen=None)["titulo"]
+    == "Plan ????→????: piden corregir"
+    and armar_aviso_respuesta_plan("p", matricula="X", salida="A", destino="B", clasificacion="otra", oficina=None, resumen=None)["titulo"].endswith("respuesta de la oficina"),
+)
+check("sin oficina ni texto, el cuerpo manda a mirar el plan", "plan" in armar_aviso_respuesta_plan("p", matricula=None, salida=None, destino=None, clasificacion="otra", oficina=None, resumen=None)["cuerpo"])
+
 if not all(resultados):
     print(f"\n{resultados.count(False)} check(s) fallaron")
     sys.exit(1)

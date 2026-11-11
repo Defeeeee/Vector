@@ -160,3 +160,70 @@ export function conMiles(n: number): string {
   const signo = e < 0 ? "-" : "";
   return signo + String(Math.abs(e)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
+
+// --- Quién mira el link (migración 044 del backend) --------------------------------------------
+//
+// La página pública genera un id al azar de su navegador y lo manda en cada consulta
+// (`X-Visitante`). El backend anota sólo ese id y la hora: ni IP ni user agent. El piloto recibe los
+// conteos en la respuesta de cada posición. Quien mira no ve a los otros.
+
+/** Dónde el navegador de quien mira recuerda su id al azar. */
+export const CLAVE_VISITANTE = "vector-visitante-seguimiento";
+/** Largo del id que genera la página (el backend acepta de 16 a 32). */
+export const LARGO_ID_VISITANTE = 16;
+
+/** ¿Tiene la forma que acepta el backend? (16–32 caracteres url-safe). */
+export function idDeVisitanteValido(id: unknown): id is string {
+  return typeof id === "string" && /^[A-Za-z0-9_-]{16,32}$/.test(id);
+}
+
+/** Un id a partir de bytes al azar (`crypto.getRandomValues`): 16 caracteres de 62 símbolos. */
+export function idDesdeBytes(bytes: ArrayLike<number>): string {
+  const alfabeto = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let id = "";
+  for (let i = 0; i < LARGO_ID_VISITANTE; i++) id += alfabeto[(bytes[i] ?? 0) % alfabeto.length];
+  return id;
+}
+
+/** Lo que el backend le cuenta al piloto en la respuesta de cada posición. */
+export interface VistasDelLink {
+  mirandoAhora: number;
+  vistosTotal: number;
+  /** ISO de la última vez que alguien abrió el link, o `null`. */
+  ultimaVistaAt: string | null;
+  /** ISO, la hora del servidor al contestar: "hace 3 min" se cuenta contra esta. */
+  ahora: string;
+}
+
+/** Lee la respuesta de `/posicion`; `null` si no trae los campos (un backend anterior a la 044). */
+export function vistasDeRespuesta(j: unknown): VistasDelLink | null {
+  if (!j || typeof j !== "object") return null;
+  const r = j as Record<string, unknown>;
+  const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.floor(v) : null);
+  const mirando = n(r.mirando_ahora);
+  const total = n(r.vistos_total);
+  if (mirando === null || total === null || typeof r.ahora !== "string") return null;
+  return { mirandoAhora: mirando, vistosTotal: total, ultimaVistaAt: typeof r.ultima_vista_at === "string" ? r.ultima_vista_at : null, ahora: r.ahora };
+}
+
+/** El texto corto de la pantalla de vuelo: "2 te están mirando", "te vieron hace 3 min" o "nadie abrió el link todavía". */
+export function textoDeVistas(v: VistasDelLink | null): string | null {
+  if (!v) return null;
+  if (v.mirandoAhora > 0) return v.mirandoAhora === 1 ? "1 te está mirando" : `${v.mirandoAhora} te están mirando`;
+  const hace = haceCuanto(v.ultimaVistaAt, v.ahora);
+  return hace ? `te vieron ${hace}` : "nadie abrió el link todavía";
+}
+
+/** El detalle de "Compartiendo": cuántos miran ahora, cuántas personas abrieron el link y cuándo fue la última vez. */
+export function detalleDeVistas(v: VistasDelLink | null): string | null {
+  if (!v) return null;
+  if (v.vistosTotal === 0 && v.mirandoAhora === 0) return "Nadie abrió el link todavía.";
+  const total = Math.max(v.vistosTotal, v.mirandoAhora);
+  const personas = total === 1 ? "1 persona abrió el link" : `${total} personas abrieron el link`;
+  if (v.mirandoAhora > 0) {
+    const ahora = v.mirandoAhora === 1 ? "1 te está mirando ahora" : `${v.mirandoAhora} te están mirando ahora`;
+    return `${ahora} · ${personas}.`;
+  }
+  const hace = haceCuanto(v.ultimaVistaAt, v.ahora);
+  return `${personas}${hace ? `; la última vez, ${hace}` : ""}.`;
+}

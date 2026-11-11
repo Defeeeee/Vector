@@ -140,6 +140,7 @@ function nuevoSeguimiento(json) {
     avion: { tipo: json.avion?.tipo || "Cessna 152", icao: json.avion?.icao || "C152", matricula: json.mostrar_matricula ? json.avion?.matricula || null : null },
     mostrarMatricula: Boolean(json.mostrar_matricula && json.avion?.matricula),
     creado: ahora, vence: new Date(+ahora + 12 * 3600e3), terminado: null, recorrido: [], ultima: null, paso: 0,
+    vistas: new Map(), vistosTotal: 0, ultimaVista: null, // quién mira (migración 044): { id -> ms }, sin IP
   };
   return seguimiento;
 }
@@ -304,7 +305,8 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
             seguimiento.ultima = { lat: json.lat, lon: json.lon, alt_ft: json.alt_ft ?? null, gs_kt: json.gs_kt ?? null, track: json.track ?? null, hora: ahora.toISOString() };
             seguimiento.recorrido.push([Math.round(json.lat * 1e5) / 1e5, Math.round(json.lon * 1e5) / 1e5, json.alt_ft ?? null, Math.floor(+ahora / 1000)]);
           }
-          r = { aceptada, vence_at: seguimiento.vence.toISOString() }; estado = 200;
+          const mirando = [...seguimiento.vistas.values()].filter((t) => ahora - t <= 45000).length;
+          r = { aceptada, vence_at: seguimiento.vence.toISOString(), mirando_ahora: mirando, vistos_total: seguimiento.vistosTotal, ultima_vista_at: seguimiento.ultimaVista?.toISOString() ?? null, ahora: ahora.toISOString() }; estado = 200;
         }
       }
     }
@@ -334,6 +336,17 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
       seguimiento.ultima = { lat: p.la, lon: p.lo, alt_ft: p.alt, gs_kt: 96, track: p.track, hora: p.hora };
     }
     const ok = token === TOKEN_SEGUIMIENTO && seguimiento;
+    // Como el real: anota el id de quien mira (X-Visitante, 16 a 32 url-safe) sólo si el vuelo sigue en curso.
+    const visitante = req.headers["x-visitante"];
+    if (ok && !seguimiento.terminado && new Date() < seguimiento.vence && /^[A-Za-z0-9_-]{16,32}$/.test(visitante ?? "")) {
+      const ahoraMs = Date.now();
+      const previa = seguimiento.vistas.get(visitante);
+      if (previa === undefined || ahoraMs - previa >= 30000) {
+        if (previa === undefined) seguimiento.vistosTotal++;
+        seguimiento.vistas.set(visitante, ahoraMs);
+        seguimiento.ultimaVista = new Date(ahoraMs);
+      }
+    }
     res.writeHead(ok ? 200 : 404, { "Content-Type": "application/json", "Cache-Control": "no-store" });
     return res.end(JSON.stringify(ok ? vistaSeguimiento(seguimiento) : { detail: "Ese seguimiento no existe." }));
   }

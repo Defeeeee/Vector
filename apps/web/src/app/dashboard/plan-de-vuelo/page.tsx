@@ -1,5 +1,6 @@
 import PageHeader from "@/components/dashboard/PageHeader";
 import ListaPlanes, { type FilaPlan } from "@/components/dashboard/plan-de-vuelo/ListaPlanes";
+import { cuandoRespuesta } from "@/lib/respuesta-plan";
 import { localDesdeUtc } from "@/lib/formulario-plan";
 import { avionesParaPlan, listarPlanes, pilotoParaPlan } from "@/lib/plan-de-vuelo-servidor";
 
@@ -31,6 +32,8 @@ export default async function PlanDeVueloPage() {
         destino: p.destino,
         matricula: p.matricula,
         cuando: cuando(p.dof, p.eobt),
+        respuesta: p.respuesta_estado ?? null,
+        respuestaCuando: cuandoRespuesta(p.respuesta_at),
         estado: p.vuelo_id
           ? "volado"
           : p.cancelado_at

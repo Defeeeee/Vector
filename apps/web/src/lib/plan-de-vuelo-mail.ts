@@ -34,12 +34,18 @@ export interface DatosMailPlan {
    * 5), o la modificación (CHG, Apéndice 3). El asunto lleva `DLA`, `CNL` o `CHG` adelante.
    */
   aviso?: AvisoDelPlan;
+  /**
+   * La dirección por la que Vector se entera de que la oficina contestó
+   * (`direccionDeRespuesta`). Va como segundo `reply_to`, sólo en el envío a la oficina: la
+   * respuesta le sigue llegando al piloto, que va en copia.
+   */
+  direccionRespuesta?: string | null;
 }
 
 export interface MailPlan {
   para: string;
   cc: string[];
-  responderA: string;
+  responderA: string | string[];
   asunto: string;
   texto: string;
   html: string;
@@ -81,7 +87,7 @@ export function armarMailPlan(d: DatosMailPlan): MailPlan {
   return {
     para: d.modo === "prueba" || !d.oficina ? d.piloto : d.oficina.correo,
     cc: d.modo === "aro" ? [d.piloto] : [],
-    responderA: d.piloto,
+    responderA: d.modo === "aro" && d.direccionRespuesta ? [d.piloto, d.direccionRespuesta] : d.piloto,
     asunto: d.modo === "prueba" ? `PRUEBA · ${asuntoReal}` : asuntoReal,
     texto,
     html,

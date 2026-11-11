@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { detalleDeVistas } from "@/lib/seguimiento";
 import type { SeguimientoEnVivo } from "./useSeguimientoEnVivo";
 
 /**
@@ -58,7 +59,7 @@ async function mandarLink(url: string): Promise<"compartido" | "cancelado" | Avi
 }
 
 export default function CompartirSeguimiento({ seguimiento, className = "" }: { seguimiento: SeguimientoEnVivo; className?: string }) {
-  const { estado, url, error, sinSenal, compartir, dejarDeCompartir } = seguimiento;
+  const { estado, url, error, sinSenal, vistas, compartir, dejarDeCompartir } = seguimiento;
   const [aviso, setAviso] = useState<Aviso>(null);
 
   const alCompartir = async () => {
@@ -113,6 +114,7 @@ export default function CompartirSeguimiento({ seguimiento, className = "" }: { 
           </button>
         </div>
       </div>
+      {detalleDeVistas(vistas) && <p className="mt-1.5 text-xs text-white/70">{detalleDeVistas(vistas)}</p>}
       <InterruptorMatricula seguimiento={seguimiento} />
       {sinSenal && <p className="mt-1.5 text-xs text-amber-300">Sin señal: el link muestra la última posición que llegó.</p>}
       {aviso === "copiado" && <p className="mt-1.5 text-xs text-white/60">Link copiado.</p>}

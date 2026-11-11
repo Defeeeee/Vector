@@ -11,6 +11,7 @@ import { nombreDelArchivo } from "@/lib/plan-de-vuelo";
 import { oficinasAro } from "@/lib/oficinas-aro-disco";
 import { oficinaParaSalida } from "@/lib/oficinas-aro";
 import { enviarMail } from "@/lib/mailer";
+import { direccionDeRespuesta } from "@/lib/direccion-respuesta";
 import fs from "node:fs";
 import path from "node:path";
 import { cambiosMandados, enmienda, nombreDeCambio, revisarCambio, type CambioCasilla } from "@/lib/cambio-plan";
@@ -258,7 +259,7 @@ export async function enviarPlan(id: string, modo: ModoEnvio) {
 
     const { pdfPlanDeVuelo } = await import("@/lib/plan-de-vuelo-pdf");
     const pdf = await pdfPlanDeVuelo(p.r.plan, { fondoJpg: fondo("plan-de-vuelo-eana.jpg"), firmaPng: p.firmaPng });
-    const mail = armarMailPlan({ plan: p.r.plan, nombres: p.nombres, piloto: p.email, oficina: p.oficina, modo });
+    const mail = armarMailPlan({ plan: p.r.plan, nombres: p.nombres, piloto: p.email, oficina: p.oficina, modo, direccionRespuesta: direccionDeRespuesta(id, process.env.DOCUMENTS_ALERT_SECRET) });
     const enviado = await enviarMail({
       para: mail.para,
       cc: mail.cc,
@@ -316,6 +317,7 @@ export async function enviarDemora(id: string, modo: ModoEnvio, hora: string) {
       oficina: p.oficina,
       modo,
       aviso: { tipo: "dla", eobtAnterior: anterior.eobt },
+      direccionRespuesta: direccionDeRespuesta(id, process.env.DOCUMENTS_ALERT_SECRET),
     });
     const enviado = await enviarMail({
       para: mail.para,
@@ -364,7 +366,7 @@ export async function cancelarPlan(id: string, modo: ModoEnvio = "aro") {
       { plan, eobt: plan.c13hora, c18: plan.c18, nombre: (p.piloto.nombre || p.f.piloto).toUpperCase(), licencia: p.piloto.licencia ?? "" },
       { fondoPng: fondo("plan-de-vuelo-cnl.png"), firmaPng: p.firmaPng }
     );
-    const mail = armarMailPlan({ plan, nombres: p.nombres, piloto: p.email, oficina: p.oficina, modo, aviso: { tipo: "cnl" } });
+    const mail = armarMailPlan({ plan, nombres: p.nombres, piloto: p.email, oficina: p.oficina, modo, aviso: { tipo: "cnl" }, direccionRespuesta: direccionDeRespuesta(id, process.env.DOCUMENTS_ALERT_SECRET) });
     const enviado = await enviarMail({
       para: mail.para,
       cc: mail.cc,
@@ -427,7 +429,7 @@ export async function enviarCambio(id: string, modo: ModoEnvio, cambios: CambioC
       },
       { fondoPng: fondo("plan-de-vuelo-chg.png"), firmaPng: p.firmaPng }
     );
-    const mail = armarMailPlan({ plan, nombres: p.nombres, piloto: p.email, oficina: p.oficina, modo, aviso: { tipo: "chg", enmienda: texto } });
+    const mail = armarMailPlan({ plan, nombres: p.nombres, piloto: p.email, oficina: p.oficina, modo, aviso: { tipo: "chg", enmienda: texto }, direccionRespuesta: direccionDeRespuesta(id, process.env.DOCUMENTS_ALERT_SECRET) });
     const enviado = await enviarMail({
       para: mail.para,
       cc: mail.cc,

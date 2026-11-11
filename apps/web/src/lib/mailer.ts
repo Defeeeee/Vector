@@ -70,8 +70,11 @@ export interface Mail {
   cabeceras?: Record<string, string>;
   /** Copias: el plan de vuelo va a la oficina con copia al piloto. */
   cc?: string[];
-  /** A quién van las respuestas: al piloto, no a Vector. */
-  responderA?: string;
+  /**
+   * A quién van las respuestas: al piloto, no a Vector. Puede ser una lista: el plan de vuelo
+   * suma la dirección de `lib/direccion-respuesta.ts`, por la que Vector se entera.
+   */
+  responderA?: string | string[];
   /** Archivos adjuntos, en base64: el PDF del plan. */
   adjuntos?: { nombre: string; base64: string }[];
   /**
@@ -132,7 +135,7 @@ export async function enviarMail(mail: Mail): Promise<ResultadoEnvio> {
         html: mail.html,
         ...(mail.cabeceras ? { headers: mail.cabeceras } : {}),
         ...(mail.cc?.length ? { cc: mail.cc } : {}),
-        ...(mail.responderA ? { reply_to: mail.responderA } : {}),
+        ...(mail.responderA?.length ? { reply_to: mail.responderA } : {}),
         ...(mail.adjuntos?.length ? { attachments: mail.adjuntos.map((a) => ({ filename: a.nombre, content: a.base64 })) } : {}),
       }),
     });

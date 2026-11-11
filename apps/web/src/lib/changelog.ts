@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.22.0",
+    fecha: "2026-11-11",
+    titulo: "Te avisamos cuando contesta la oficina",
+    novedades: [
+      {
+        icono: "campana",
+        titulo: "La respuesta de la oficina a tu plan, en un push",
+        texto: "Cuando la oficina ARO/AIS contesta tu plan de vuelo, te llega una notificación: recibido, aceptado, rechazado o que corrijas algo. La respuesta queda en el plan y te sigue llegando a tu mail.",
+        href: "/dashboard/plan-de-vuelo",
+        cta: "Ver tus planes",
+      },
+      {
+        icono: "compartir",
+        titulo: "Sabé si te están mirando",
+        texto: "Con tu vuelo compartido, la pantalla de vuelo te dice si alguien lo está mirando ahora o cuándo lo vieron por última vez.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+    ],
+  },
+  {
     version: "3.21.0",
     fecha: "2026-11-11",
     titulo: "Tu vuelo, en detalle para quien te sigue",

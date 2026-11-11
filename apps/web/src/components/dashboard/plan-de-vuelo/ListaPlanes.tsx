@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { ArrowRight, Copy, FilePlus2, Loader2, Plane, Route, Trash2 } from "lucide-react";
 import { borrarPlan, crearPlan, duplicarPlan } from "@/actions/plan-de-vuelo";
+import { EstadoRespuesta } from "./RespuestasOficina";
+import type { ClasificacionRespuesta } from "@/lib/respuesta-plan";
 import { aplicarAvion, formularioVacio, type AvionParaPlan, type PilotoParaPlan } from "@/lib/formulario-plan";
 
 export interface FilaPlan {
@@ -14,6 +16,9 @@ export interface FilaPlan {
   /** Ya escrito en el server: "20/10 15:30 · 1830Z". */
   cuando: string;
   estado: "borrador" | "completo" | "descargado" | "enviado" | "cancelado" | "volado";
+  /** Lo último que contestó la oficina, y cuándo (ya escrito en el server). */
+  respuesta: ClasificacionRespuesta | null;
+  respuestaCuando: string;
 }
 
 const ESTADOS: Record<FilaPlan["estado"], { texto: string; clase: string }> = {
@@ -136,6 +141,7 @@ export default function ListaPlanes({
                     <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-sans font-bold ${ESTADOS[f.estado].clase}`}>
                       {ESTADOS[f.estado].texto}
                     </span>
+                    {f.respuesta && <EstadoRespuesta estado={f.respuesta} titulo={`La oficina contestó el ${f.respuestaCuando}`} />}
                   </span>
                   <span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400 truncate">
                     {f.matricula ?? "Sin avión"} · {f.cuando}

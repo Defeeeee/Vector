@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   CADA_MS,
   conMiles,
+  detalleDeVistas,
+  idDeVisitanteValido,
+  idDesdeBytes,
+  textoDeVistas,
+  vistasDeRespuesta,
   haceCuanto,
   leerSeguimientoGuardado,
   posicionDeLectura,
@@ -118,5 +123,39 @@ describe("los miles", () => {
     expect(conMiles(950)).toBe("950");
     expect(conMiles(12000)).toBe("12.000");
     expect(conMiles(-120)).toBe("-120");
+  });
+});
+
+describe("quién mira el link", () => {
+  const base = { mirandoAhora: 0, vistosTotal: 0, ultimaVistaAt: null, ahora: "2026-11-11T15:00:00Z" };
+  it("el id generado tiene la forma que acepta el backend", () => {
+    const id = idDesdeBytes(Array.from({ length: 16 }, (_, i) => i * 17));
+    expect(id).toHaveLength(16);
+    expect(idDeVisitanteValido(id)).toBe(true);
+    expect(idDeVisitanteValido("corto")).toBe(false);
+    expect(idDeVisitanteValido(null)).toBe(false);
+    expect(idDeVisitanteValido("con espacio 1234567")).toBe(false);
+  });
+  it("lee la respuesta del backend, y null si no trae los campos", () => {
+    expect(vistasDeRespuesta({ aceptada: true, mirando_ahora: 2, vistos_total: 4, ultima_vista_at: "2026-11-11T14:59:00Z", ahora: "2026-11-11T15:00:00Z" })).toEqual({
+      mirandoAhora: 2,
+      vistosTotal: 4,
+      ultimaVistaAt: "2026-11-11T14:59:00Z",
+      ahora: "2026-11-11T15:00:00Z",
+    });
+    expect(vistasDeRespuesta({ aceptada: true })).toBeNull();
+    expect(vistasDeRespuesta(null)).toBeNull();
+  });
+  it("el chip: mirando, visto hace un rato, o nadie", () => {
+    expect(textoDeVistas({ ...base, mirandoAhora: 2, vistosTotal: 2 })).toBe("2 te están mirando");
+    expect(textoDeVistas({ ...base, mirandoAhora: 1, vistosTotal: 1 })).toBe("1 te está mirando");
+    expect(textoDeVistas({ ...base, vistosTotal: 1, ultimaVistaAt: "2026-11-11T14:57:00Z" })).toBe("te vieron hace 3 min");
+    expect(textoDeVistas(base)).toBe("nadie abrió el link todavía");
+    expect(textoDeVistas(null)).toBeNull();
+  });
+  it("el detalle cuenta personas", () => {
+    expect(detalleDeVistas({ ...base, mirandoAhora: 1, vistosTotal: 4 })).toBe("1 te está mirando ahora · 4 personas abrieron el link.");
+    expect(detalleDeVistas({ ...base, vistosTotal: 1, ultimaVistaAt: "2026-11-11T14:57:00Z" })).toBe("1 persona abrió el link; la última vez, hace 3 min.");
+    expect(detalleDeVistas(base)).toBe("Nadie abrió el link todavía.");
   });
 });

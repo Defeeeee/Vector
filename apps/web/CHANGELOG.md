@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.22.0 — Te avisamos cuando contesta la oficina
+
+_11 de noviembre de 2026_
+
+- **La respuesta de la oficina a tu plan, en un push** — Cuando la oficina ARO/AIS contesta tu plan de vuelo, te llega una notificación: recibido, aceptado, rechazado o que corrijas algo. La respuesta queda en el plan y te sigue llegando a tu mail.
+- **Sabé si te están mirando** — Con tu vuelo compartido, la pantalla de vuelo te dice si alguien lo está mirando ahora o cuándo lo vieron por última vez.
+
 ## v3.21.0 — Tu vuelo, en detalle para quien te sigue
 
 _11 de noviembre de 2026_

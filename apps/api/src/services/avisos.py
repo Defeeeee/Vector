@@ -161,3 +161,38 @@ def enviar_aviso(user_id: Optional[str], aviso: Dict[str, str]) -> None:
 
 def admins() -> List[str]:
     return [a.strip() for a in (_settings().admins_red or "").split(",") if a.strip()]
+
+
+#: Cómo se nombra cada clasificación en el título del aviso de una respuesta del plan.
+_ESTADO_RESPUESTA = {
+    "recibido": "recibido",
+    "aceptado": "aceptado",
+    "rechazado": "rechazado",
+    "corregir": "piden corregir",
+    "otra": "respuesta de la oficina",
+}
+
+
+def armar_aviso_respuesta_plan(
+    plan_id: str,
+    *,
+    matricula: Optional[str],
+    salida: Optional[str],
+    destino: Optional[str],
+    clasificacion: str,
+    oficina: Optional[str],
+    resumen: Optional[str],
+) -> Dict[str, str]:
+    """
+    El aviso de que la oficina contestó un plan: "Plan LV-ABC SADF→SADM: aceptado", con la
+    oficina y el principio de lo que escribió, y al tocarlo abre el plan. Puro y testeado.
+    """
+    ruta = f"{salida or '????'}→{destino or '????'}"
+    plan = " ".join(p for p in ("Plan", _recortar(matricula, 12), ruta) if p)
+    cuerpo = " · ".join(p for p in (_recortar(oficina, 60), _recortar(resumen, 110)) if p)
+    return {
+        "titulo": f"{plan}: {_ESTADO_RESPUESTA.get(clasificacion, _ESTADO_RESPUESTA['otra'])}",
+        "cuerpo": cuerpo or "Mirá la respuesta en tu plan.",
+        "url": f"/dashboard/plan-de-vuelo/{plan_id}",
+        "etiqueta": f"vector-plan-{plan_id}",
+    }

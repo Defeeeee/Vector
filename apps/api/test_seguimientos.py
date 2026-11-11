@@ -17,14 +17,20 @@ from src.services.seguimientos import (
     MatriculaVisible,
     PosicionEnVivo,
     SeguimientoCrear,
+    SEGUNDOS_ENTRE_VISTAS,
     TOPE_RECORRIDO,
+    TOPE_VISITANTES,
+    VENTANA_MIRANDO_S,
     agregar_al_recorrido,
+    anotar_vista,
     estado_de,
+    id_de_visitante_valido,
     esta_activo,
     limite_de_retencion,
     nombre_de_pila,
     nuevo_token,
     puede_aceptar_posicion,
+    resumen_de_vistas,
     vence_en,
     visible,
     vista_publica,
@@ -167,6 +173,40 @@ check("sin posición todavía: ultima es null", vista_publica({**fila, "ultima_l
 check("un campo nuevo en la fila no sale solo", "secreto" not in vista_publica({**fila, "secreto": "x"}, T0))
 check("terminada: lo dice", vista_publica({**fila, "terminado_at": T0.isoformat()}, T0)["estado"] == "terminado")
 check("puntos con basura se descartan", vista_publica({**fila, "puntos": [["a", "b"], None, [1, 2]]}, T0)["puntos"] == [[1, 2, "", ""]])
+
+# --- quién mira (migración 044) ---
+check("un id de 16 caracteres sirve", id_de_visitante_valido("aB3_-xYz09kLmNoP"))
+check("mal formados no sirven", not any(id_de_visitante_valido(x) for x in (None, "", "corto", "a" * 33, "con espacios 123456", "ñandú" * 4, 12345, "<script>alert(1)</script>")))
+
+A, B, C = "aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb", "cccccccccccccccc"
+check("un id mal formado no se anota", anotar_vista({}, 0, "x", T0) is None and anotar_vista({}, 0, None, T0) is None)
+w = anotar_vista({}, 0, A, T0)
+check("el primer id se anota con su hora y suma uno", w["vistas"] == {A: int(T0.timestamp())} and w["vistos_total"] == 1 and w["ultima_vista_at"] == T0.isoformat())
+check("se guarda el id y la hora, nada más", set(w) == {"vistas", "vistos_total", "ultima_vista_at"})
+check("el mismo id antes de 30 s no escribe", anotar_vista(w["vistas"], 1, A, T0 + timedelta(seconds=SEGUNDOS_ENTRE_VISTAS - 1)) is None)
+w2 = anotar_vista(w["vistas"], 1, A, T0 + timedelta(seconds=SEGUNDOS_ENTRE_VISTAS))
+check("el mismo id pasados 30 s se actualiza y no suma otro visitante", w2["vistos_total"] == 1 and w2["vistas"][A] == int(T0.timestamp()) + SEGUNDOS_ENTRE_VISTAS)
+w3 = anotar_vista(w2["vistas"], 1, B, T0 + timedelta(seconds=31))
+check("otro id suma un visitante", w3["vistos_total"] == 2 and set(w3["vistas"]) == {A, B})
+muchos = {f"{i:016d}": int(T0.timestamp()) + i for i in range(TOPE_VISITANTES)}
+w4 = anotar_vista(muchos, TOPE_VISITANTES, C, T0 + timedelta(seconds=100))
+check("el tope de 20 deja a los más recientes", len(w4["vistas"]) == TOPE_VISITANTES and C in w4["vistas"] and f"{0:016d}" not in w4["vistas"] and w4["vistos_total"] == TOPE_VISITANTES + 1)
+check("vistas con basura no rompen", anotar_vista("raro", None, A, T0)["vistos_total"] == 1)
+
+def fila_con(vistas, total, ultima=None):
+    return {"vistas": vistas, "vistos_total": total, "ultima_vista_at": ultima}
+
+ep = int(T0.timestamp())
+r = resumen_de_vistas(fila_con({A: ep - 10, B: ep - VENTANA_MIRANDO_S, C: ep - VENTANA_MIRANDO_S - 1}, 3, T0.isoformat()), T0)
+check("mirando ahora: los de los últimos 45 s (el borde entra)", r["mirando_ahora"] == 2 and VENTANA_MIRANDO_S == 45)
+check("vistos en total y última vista", r["vistos_total"] == 3 and r["ultima_vista_at"] == T0.isoformat() and r["ahora"] == T0.isoformat())
+check("nadie vio: ceros y sin fecha", resumen_de_vistas({}, T0) == {"mirando_ahora": 0, "vistos_total": 0, "ultima_vista_at": None, "ahora": T0.isoformat()})
+check("el total nunca es menor que los que miran", resumen_de_vistas(fila_con({A: ep, B: ep}, 0), T0)["vistos_total"] == 2)
+# Lo terminado o vencido no anota: el controlador lo decide con `esta_activo`.
+check("lo terminado no está activo (no anota)", not esta_activo({"terminado_at": T0.isoformat(), "vence_at": (T0 + timedelta(hours=5)).isoformat()}, T0))
+check("lo vencido no está activo (no anota)", not esta_activo({"vence_at": (T0 - timedelta(minutes=1)).isoformat()}, T0))
+vp = vista_publica({**fila, "vistas": {A: ep}, "vistos_total": 7, "ultima_vista_at": T0.isoformat()}, T0)
+check("la vista pública no ganó claves ni cuenta vistas", set(vp) == {"nombre", "ruta", "puntos", "avion", "inicio", "estado", "ultima", "recorrido", "ahora"} and A not in repr(vp))
 
 # --- el borrado ---
 check("se borra a los 30 días", limite_de_retencion(T0).startswith("2026-10-12T12:00:00") and DIAS_DE_RETENCION == 30)

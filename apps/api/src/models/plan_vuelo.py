@@ -106,6 +106,39 @@ class Envio(BaseModel):
     at: Optional[dt.datetime] = None
 
 
+#: Qué dijo la oficina, como lo clasifica la web (`lib/respuesta-plan.ts`).
+Clasificacion = Literal["recibido", "aceptado", "rechazado", "corregir", "otra"]
+
+#: Tope del texto guardado de una respuesta.
+MAX_TEXTO_RESPUESTA = 4000
+
+
+class RespuestaPlan(BaseModel):
+    """Una respuesta de la oficina, como la lee el editor del plan."""
+
+    id: UUID
+    plan_id: UUID
+    de: str
+    asunto: str = ""
+    texto: str = ""
+    clasificacion: Clasificacion
+    de_oficina: bool = True
+    recibido_at: dt.datetime
+
+
+class RespuestaEntrante(BaseModel):
+    """Lo que la web le pasa al backend cuando Resend avisa de un mail recibido."""
+
+    email_id: str = Field(min_length=1, max_length=200)
+    de: str = Field(max_length=320)
+    asunto: str = Field(default="", max_length=300)
+    texto: str = Field(default="", max_length=MAX_TEXTO_RESPUESTA)
+    resumen: str = Field(default="", max_length=400)
+    clasificacion: Clasificacion = "otra"
+    #: `false` = no es de la oficina del plan: se guarda, sin estado ni aviso.
+    avisar: bool = True
+
+
 class PlanVueloResumen(BaseModel):
     """Lo que muestra la lista: sin el formulario."""
 
@@ -123,6 +156,9 @@ class PlanVueloResumen(BaseModel):
     vuelo_id: Optional[UUID] = None
     cancelado_at: Optional[dt.datetime] = None
     descartado_at: Optional[dt.datetime] = None
+    #: Cómo contestó la oficina la última vez (migración 043), para la lista.
+    respuesta_estado: Optional[Clasificacion] = None
+    respuesta_at: Optional[dt.datetime] = None
     created_at: dt.datetime
     updated_at: dt.datetime
 
