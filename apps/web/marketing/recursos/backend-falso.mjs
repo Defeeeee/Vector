@@ -291,6 +291,17 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     let r = { detail: "Ese seguimiento no existe." }, estado = 404;
     if (seguimiento && seguimiento.id === id) {
       if (accion === "terminar") { seguimiento.terminado ??= new Date(); r = { terminado: true }; estado = 200; }
+      else if (accion === "ruta") {
+        // Como el real: sólo en vuelo (410 si terminó) y mismos topes que al crear.
+        if (seguimiento.terminado || new Date() >= seguimiento.vence) { r = { detail: "Este seguimiento ya terminó." }; estado = 410; }
+        else if ((json.puntos ?? []).length > 60 || String(json.ruta ?? "").length > 600) { r = { detail: "La ruta es demasiado larga." }; estado = 422; }
+        else {
+          seguimiento.ruta = String(json.ruta ?? "").split(/\s+/).filter(Boolean).join(" ");
+          seguimiento.puntos = (json.puntos ?? []).map((p) => [p.lat, p.lon, p.codigo ?? "", p.nombre ?? ""]);
+          seguimiento.demo = false;
+          r = { ok: true }; estado = 200;
+        }
+      }
       else if (accion === "matricula") {
         // Apagada, la matrícula se borra; prenderla pide mandarla (como el real).
         if (json.mostrar && !json.matricula) { r = { detail: "Falta la matrícula para mostrarla." }; estado = 400; }

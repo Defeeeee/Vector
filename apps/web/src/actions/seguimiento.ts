@@ -78,6 +78,31 @@ export async function terminarSeguimiento(id: string): Promise<{ ok: true } | { 
   }
 }
 
+/**
+ * Cambia la ruta del seguimiento en marcha ("directo a…", otra ruta). `terminado` es que el
+ * backend ya no lo tiene en vuelo (410 o 404): el teléfono deja de insistir. Mismos topes que al crear.
+ */
+export async function cambiarRutaSeguimiento(
+  id: string,
+  datos: { ruta: string; puntos: { lat: number; lon: number; codigo: string; nombre?: string }[] }
+): Promise<{ ok: true } | { error: string; terminado?: boolean }> {
+  try {
+    const res = await apiFetch(`/seguimientos/${encodeURIComponent(id)}/ruta`, {
+      method: "POST",
+      body: JSON.stringify({
+        ruta: datos.ruta.slice(0, 600),
+        puntos: datos.puntos.slice(0, 60).map((p) => ({ lat: p.lat, lon: p.lon, codigo: p.codigo.slice(0, 20), nombre: (p.nombre ?? "").slice(0, 60) })),
+      }),
+      cache: "no-store",
+    });
+    if (!res.ok) return { error: await detalle(res, "No se pudo cambiar la ruta del vuelo compartido."), terminado: res.status === 410 || res.status === 404 };
+    return { ok: true };
+  } catch (e) {
+    if (esErrorDeRedirect(e)) throw e;
+    return { error: "Error de conexión con el servidor." };
+  }
+}
+
 /** Prende o apaga la matrícula del link mientras se comparte. Apagada, el backend la borra. */
 export async function cambiarMatriculaVisible(id: string, mostrar: boolean, matricula: string): Promise<{ ok: true } | { error: string }> {
   try {

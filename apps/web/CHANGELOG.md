@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.23.0 — Cambiá la ruta sin aterrizar
+
+_11 de noviembre de 2026_
+
+- **Directo a, en vuelo** — En vuelo, "Directo a" te muestra lo que queda de la ruta y los aeródromos más cercanos con distancia y rumbo. Tocá un aeródromo del mapa para ir directo o sumarlo, o editá la ruta entera, con deshacer. El track sigue y tu familia ve la ruta nueva.
+
 ## v3.22.0 — Te avisamos cuando contesta la oficina
 
 _11 de noviembre de 2026_

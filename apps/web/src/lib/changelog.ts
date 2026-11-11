@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.23.0",
+    fecha: "2026-11-11",
+    titulo: "Cambiá la ruta sin aterrizar",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Directo a, en vuelo",
+        texto: "En vuelo, \"Directo a\" te muestra lo que queda de la ruta y los aeródromos más cercanos con distancia y rumbo. Tocá un aeródromo del mapa para ir directo o sumarlo, o editá la ruta entera, con deshacer. El track sigue y tu familia ve la ruta nueva.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+    ],
+  },
+  {
     version: "3.22.0",
     fecha: "2026-11-11",
     titulo: "Te avisamos cuando contesta la oficina",

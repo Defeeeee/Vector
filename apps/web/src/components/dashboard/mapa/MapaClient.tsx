@@ -36,8 +36,21 @@ import type { PilotoParaPlan } from "@/lib/formulario-plan";
 import type { RutaGuardada } from "@/lib/rutas-guardadas";
 import RutaAcciones from "./RutaAcciones";
 import { textoDeVistas } from "@/lib/seguimiento";
+import { distanciaNmPrecisa } from "@/lib/distance";
 import { useSeguimientoEnVivo, type SeguimientoEnVivo } from "./useSeguimientoEnVivo";
 import CompartirSeguimiento from "./CompartirSeguimiento";
+import HojaDirectoA, { type PuntoRestante } from "./HojaDirectoA";
+import {
+  aerodromosMasCercanos,
+  deshacerCambio,
+  esTokenDeCoordenada,
+  historiaCon,
+  proximoTrasCambio,
+  rutaConAlFinal,
+  rutaDelTrack,
+  rutaDirectoA,
+  tokenDelProximo,
+} from "@/lib/ruta-en-vuelo";
 
 /**
  * **El Mapa** (3.0.0): todo es mapa, con la tarjeta de la ruta flotando arriba a la izquierda.
@@ -254,7 +267,7 @@ export default function MapaClient({
   const puedeGps = montado && typeof navigator !== "undefined" && "geolocation" in navigator;
   // Que la familia siga el vuelo (3.20.0): vive acá y no en la pantalla de vuelo, porque al
   // terminar (`volando` en false) es el hook el que cierra el link.
-  const seguimiento = useSeguimientoEnVivo({ lectura, volando, ruta: tokens.join(" "), puntos, aeronave });
+  const seguimiento = useSeguimientoEnVivo({ lectura, volando, ruta: tokens.join(" "), puntos, rutaLista: !buscando, aeronave });
 
   // El track (`lib/track-vuelo.ts`): en el teléfono. Se lee al montar (para mostrar el último
   // vuelo grabado) y se guarda cada 10 s mientras se vuela, al esconder la app y al terminar.
@@ -330,10 +343,70 @@ export default function MapaClient({
     };
   }, [volando]);
 
+  // Cambiar la ruta en vuelo (3.23.0). `recalcular` pide elegir el próximo punto con la ruta nueva
+  // cuando termine de resolverse (`proximoTrasCambio`): un índice viejo no vale en otra ruta.
+  const recalcular = useRef(false);
   useEffect(() => {
-    if (!volando || !lectura || puntos.length === 0) return;
+    // Con puntos todavía sin resolver la ruta está a medias: elegir el próximo ahora saltearía alguno.
+    if (!volando || !lectura || puntos.length === 0 || buscando) return;
+    if (recalcular.current) {
+      recalcular.current = false;
+      setProximo(proximoPunto(puntos, lectura, proximoTrasCambio(puntos, lectura)));
+      return;
+    }
     setProximo((prev) => proximoPunto(puntos, lectura, prev));
-  }, [volando, lectura, puntos]);
+  }, [volando, lectura, puntos, buscando]);
+
+  const [historia, setHistoria] = useState<string[]>([]);
+  const [hoja, setHoja] = useState<{ toque: { codigo: string; nombre: string } | null } | null>(null);
+  /**
+   * Pone la ruta nueva en vuelo: la guarda para deshacer, la escribe (y firme, sin esperar el
+   * debounce), recalcula el próximo punto y le cambia la ruta al track. **El track sigue**: no se
+   * corta ni se reinicia, es el mismo vuelo; sólo su `ruta` pasa a ser la salida original más el
+   * destino de ahora (`rutaDelTrack`), que es lo que lee el nombre del GPX y "Registrar el vuelo".
+   */
+  const cambiarRutaEnVuelo = (nuevos: string[], opciones: { guardar?: boolean; recalcularProximo?: boolean } = {}) => {
+    const { guardar = true, recalcularProximo = true } = opciones;
+    const nuevoTexto = nuevos.join(" ");
+    if (nuevoTexto === tokens.join(" ")) return;
+    if (guardar) setHistoria((h) => historiaCon(h, tokens.join(" "), nuevoTexto));
+    setTexto(nuevoTexto);
+    setTextoFirme(nuevoTexto);
+    if (recalcularProximo) recalcular.current = true;
+    setTrack((t) => (t ? { ...t, ruta: rutaDelTrack(t.ruta, nuevos) } : t));
+    setHoja(null);
+  };
+  const directoA = (codigo: string) => {
+    if (!lectura) return;
+    const desde = Math.max(0, tokenDelProximo(tokens, puntos.map((x) => x.codigo), proximo));
+    cambiarRutaEnVuelo(rutaDirectoA(tokens, lectura, codigo, desde));
+  };
+  const deshacerEnVuelo = () => {
+    const d = deshacerCambio(historia);
+    if (!d) return;
+    setHistoria(d.historia);
+    cambiarRutaEnVuelo(tokensDeRuta(d.ruta), { guardar: false });
+  };
+  // Un toque en un aeródromo o una radioayuda del mapa: planificando lo suma a la ruta; volando
+  // ya no, en silencio: abre la hoja con "Directo a" y "Agregar al final".
+  const alTocar = (codigo: string) => {
+    const a = capas?.aerodromos.find((x) => x[0] === codigo || x[1] === codigo);
+    const r = a ? null : capas?.radioayudas.find((x) => x[0] === codigo);
+    setHoja({ toque: { codigo, nombre: a ? a[2] : r ? `${r[1]} ${r[2]}` : "" } });
+  };
+  const cercanos = useMemo(
+    () => (hoja && lectura && capas ? aerodromosMasCercanos(lectura, capas.aerodromos, 6, variacion) : []),
+    // La hoja se arma al abrirla y con cada lectura mientras está abierta (la distancia cambia).
+    [hoja, lectura, capas, variacion]
+  );
+  const restantes = useMemo((): PuntoRestante[] => {
+    if (!hoja) return [];
+    const desde = Math.max(0, tokenDelProximo(tokens, puntos.map((x) => x.codigo), proximo));
+    return tokens.slice(desde).flatMap((t) => {
+      const x = puntos.find((q) => q.codigo === t && q.clase !== "aerovia");
+      return x ? [{ codigo: t, label: x.label, distanciaNm: lectura ? distanciaNmPrecisa(lectura.lat, lectura.lon, x.lat, x.lon) : null }] : [];
+    });
+  }, [hoja, tokens, puntos, proximo, lectura]);
 
   const posicion: Posicion | null = volando && lectura ? { lat: lectura.lat, lon: lectura.lon, trackT: lectura.gsKt && lectura.gsKt > 15 ? lectura.trackT : null } : null;
   const destino = volando && puntos.length ? puntos[Math.min(proximo, puntos.length - 1)] : null;
@@ -442,6 +515,8 @@ export default function MapaClient({
   const apiMapa = useRef<ApiMapa | null>(null);
 
   const empezar = () => {
+    setHistoria([]);
+    setHoja(null);
     setProximo(0);
     setSeguir(true);
     setLectura(null);
@@ -455,6 +530,7 @@ export default function MapaClient({
 
   const terminar = () => {
     setVolando(false);
+    setHoja(null);
     setDetallesVuelo(false);
     const t = trackRef.current;
     if (!t) return;
@@ -791,7 +867,7 @@ export default function MapaClient({
         posicion={posicion}
         seguir={volando && seguir}
         volando={volando}
-        onAgregar={agregar}
+        onAgregar={volando ? alTocar : agregar}
         onArrastre={() => setSeguir(false)}
         agregando={agregando && !volando}
         onPuntoLibre={agregarCoordenada}
@@ -836,9 +912,27 @@ export default function MapaClient({
           onDetalles={() => setDetallesVuelo((v) => !v)}
           onTerminar={terminar}
           onMargenes={setMargenes}
+          rutaTexto={tokens.join(" ")}
+          sinUbicar={sinUbicar}
+          buscandoRuta={buscando}
+          onAplicarRuta={(t) => cambiarRutaEnVuelo(tokensDeRuta(t))}
+          puedeDeshacer={historia.length > 0}
+          onDeshacer={deshacerEnVuelo}
+          onDirecto={() => setHoja({ toque: null })}
         />
       ) : (
         tarjeta
+      )}
+      {volando && hoja && (
+        <HojaDirectoA
+          toque={hoja.toque}
+          restantes={restantes}
+          cercanos={cercanos}
+          hayPosicion={Boolean(lectura)}
+          onDirecto={directoA}
+          onAlFinal={(c) => cambiarRutaEnVuelo(rutaConAlFinal(tokens, c), { recalcularProximo: false })}
+          onCancelar={() => setHoja(null)}
+        />
       )}
       {/*
         Las pestañas de Preparar vuelo (3.12.0). Desde que el Mapa es la primera, el ícono de la
@@ -972,7 +1066,18 @@ function PantallaDeVuelo(p: {
   onDetalles: () => void;
   onTerminar: () => void;
   onMargenes: (m: { arriba: number; abajo: number }) => void;
+  /** La ruta como texto, para editarla en los detalles. */
+  rutaTexto: string;
+  sinUbicar: string[];
+  buscandoRuta: boolean;
+  onAplicarRuta: (texto: string) => void;
+  puedeDeshacer: boolean;
+  onDeshacer: () => void;
+  onDirecto: () => void;
 }) {
+  // Lo que se está escribiendo en la ruta; `null` es "nada pendiente" y se muestra la ruta de ahora
+  // (así un directo o un deshacer actualiza el campo, y lo escrito a medias no se pisa).
+  const [borrador, setBorrador] = useState<string | null>(null);
   const arriba = useRef<HTMLDivElement>(null);
   const abajo = useRef<HTMLDivElement>(null);
   const { onMargenes } = p;
@@ -1121,6 +1226,16 @@ function PantallaDeVuelo(p: {
             <Layers className="w-5 h-5" />
           </button>
         </div>
+        {!p.detalles && (
+          <button
+            onClick={p.onDirecto}
+            disabled={!p.lectura}
+            aria-label="Directo a…: cambiar la ruta sin terminar el vuelo"
+            className="pointer-events-auto absolute left-3 bottom-[5.25rem] h-12 pl-3.5 pr-5 rounded-full bg-aviation-cyan text-noche text-base font-bold inline-flex items-center gap-2 shadow-lg shadow-black/50 disabled:opacity-40"
+          >
+            <Navigation className="w-5 h-5" /> Directo a
+          </button>
+        )}
         {p.track && (
           <p className="absolute left-3 bottom-8 rounded-full bg-noche/80 backdrop-blur px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Grabando
@@ -1150,21 +1265,68 @@ function PantallaDeVuelo(p: {
               <p className={`${ROTULO} mb-1.5`}>Estás dentro de</p>
               {p.dentro.length ? <ListaEspacios espacios={p.dentro} /> : <p className="text-sm text-zinc-400">Ningún espacio controlado de los que dibuja el mapa.</p>}
             </div>
-            {p.puntos.length > 0 && (
-              <div>
-                <p className={`${ROTULO} mb-1.5`}>La ruta</p>
-                <ol className="space-y-1">
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <p className={ROTULO}>La ruta</p>
+                <button onClick={p.onDirecto} disabled={!p.lectura} className="h-10 px-4 rounded-full bg-aviation-cyan text-noche text-sm font-bold inline-flex items-center gap-1.5 disabled:opacity-40">
+                  <Navigation className="w-4 h-4" /> Directo a…
+                </button>
+              </div>
+              {p.puntos.length > 0 && (
+                <ol className="space-y-1 mb-3">
                   {p.puntos.map((x, i) => (
                     <li key={`${x.codigo}-${i}`}>
                       <button onClick={() => p.onProximo(i)} className={`w-full text-left flex items-center gap-2.5 py-1 text-sm ${i === p.proximo ? "text-aviation-cyan font-semibold" : "text-zinc-300"}`}>
                         <span className="w-5 font-mono text-[11px] text-zinc-500">{i + 1}</span>
-                        {x.codigo} <span className="truncate text-zinc-500 font-normal">{x.label !== x.codigo ? x.label : ""}</span>
+                        {x.codigo} <span className="truncate text-zinc-500 font-normal">{x.label !== x.codigo && !esTokenDeCoordenada(x.codigo) ? x.label : ""}</span>
                       </button>
                     </li>
                   ))}
                 </ol>
+              )}
+              <label htmlFor="ruta-en-vuelo" className={`${ROTULO} block mb-1`}>
+                Escribir la ruta
+              </label>
+              <textarea
+                id="ruta-en-vuelo"
+                value={borrador ?? p.rutaTexto}
+                onChange={(e) => setBorrador(e.target.value.toUpperCase())}
+                rows={2}
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder="SADF BENAVIDEZ SADM"
+                className="w-full resize-none rounded-xl bg-white/5 border border-white/15 px-3 py-2 text-base font-semibold tracking-wide text-white placeholder:text-zinc-600 focus:outline-none focus:border-aviation-cyan"
+              />
+              {p.sinUbicar.length > 0 && borrador === null && <p className="mt-1 text-xs text-amber-400">No ubiqué: {p.sinUbicar.join(", ")}.</p>}
+              {p.buscandoRuta && borrador === null && <p className="mt-1 text-xs text-zinc-500">Buscando los puntos…</p>}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {borrador !== null && (
+                  <>
+                    <button
+                      onClick={() => {
+                        p.onAplicarRuta(borrador);
+                        setBorrador(null);
+                      }}
+                      className="h-11 px-6 rounded-full bg-aviation-cyan text-noche text-sm font-bold"
+                    >
+                      Listo
+                    </button>
+                    <button onClick={() => setBorrador(null)} className="h-11 px-4 rounded-full border border-white/15 text-sm font-semibold text-zinc-200">
+                      Descartar
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={p.onDeshacer}
+                  disabled={!p.puedeDeshacer}
+                  className="h-11 px-4 rounded-full border border-white/15 text-sm font-semibold text-zinc-200 inline-flex items-center gap-1.5 disabled:opacity-35"
+                >
+                  <Undo2 className="w-4 h-4" /> Deshacer el último cambio
+                </button>
               </div>
-            )}
+              <p className="mt-2 text-[11px] leading-snug text-zinc-500">Cambiar la ruta no corta el vuelo: el track sigue grabando y, si compartís el vuelo, la familia ve la ruta nueva.</p>
+            </div>
             <button
               onClick={p.onSonidoAviso}
               role="switch"

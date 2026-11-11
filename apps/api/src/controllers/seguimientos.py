@@ -1,7 +1,7 @@
 """
 Seguir el vuelo en vivo (migración 041, `services/seguimientos.py`).
 
-- `POST /seguimientos`, `POST /seguimientos/{id}/posicion`, `.../matricula` y `.../terminar`: con sesión, del
+- `POST /seguimientos`, `POST /seguimientos/{id}/posicion`, `.../ruta`, `.../matricula` y `.../terminar`: con sesión, del
   piloto, contra su RLS. Lo llama el Mapa en modo vuelo ("Compartir mi vuelo").
 - `GET /publico/seguimientos/{token}`: **sin guard**, lo que abre el link que se manda por
   WhatsApp. Lee con el service role y devuelve `vista_publica`, una lista fija de campos.
@@ -27,6 +27,7 @@ from src.auth.guards import auth_guard
 from src.services.seguimientos import (
     MatriculaVisible,
     PosicionEnVivo,
+    RutaNueva,
     SeguimientoCrear,
     agregar_al_recorrido,
     anotar_vista,
@@ -181,6 +182,31 @@ class SeguimientosController(Controller):
             return PosicionAceptada(aceptada=True, vence_at=fila["vence_at"], **resumen_de_vistas(fila, ahora))
 
         return await asyncio.to_thread(_agregar)
+
+    @post("/{seguimiento_id:uuid}/ruta", status_code=200)
+    async def ruta(self, request: Request, supabase_client: Client, seguimiento_id: UUID, data: RutaNueva) -> Dict[str, bool]:
+        """
+        Cambia la ruta y los puntos mientras se vuela ("directo a…"). Sólo el dueño (RLS más el
+        `user_id`), y sólo si sigue en vuelo: terminado o vencido es un 410, como la posición.
+        """
+        user_id = str(request.state.user.id)
+        ahora = _ahora()
+
+        def _cambiar() -> None:
+            tabla = supabase_client.table("seguimientos_en_vivo")
+            filas = (
+                tabla.select("vence_at,terminado_at").eq("id", str(seguimiento_id)).eq("user_id", user_id).limit(1).execute().data or []
+            )
+            if not filas:
+                raise NotFoundException(_NO_EXISTE)
+            if not esta_activo(filas[0], ahora):
+                raise ClientException(detail="Este seguimiento ya terminó.", status_code=410)
+            tabla.update(
+                {"ruta": data.ruta, "puntos": [[p.lat, p.lon, p.codigo, p.nombre] for p in data.puntos]}
+            ).eq("id", str(seguimiento_id)).eq("user_id", user_id).execute()
+
+        await asyncio.to_thread(_cambiar)
+        return {"ok": True}
 
     @post("/{seguimiento_id:uuid}/matricula", status_code=200)
     async def matricula(

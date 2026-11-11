@@ -118,6 +118,22 @@ class SeguimientoCrear(BaseModel):
         return " ".join(v.split())
 
 
+class RutaNueva(BaseModel):
+    """
+    La ruta cambiada en vuelo (directo a…, otra ruta): reemplaza `ruta` y `puntos` del seguimiento
+    que ya está en marcha. Los mismos topes que al empezar (`SeguimientoCrear`). No toca el
+    recorrido: lo ya volado queda como está.
+    """
+
+    ruta: str = Field(default="", max_length=600)
+    puntos: List[PuntoRuta] = Field(default_factory=list, max_length=TOPE_PUNTOS_RUTA)
+
+    @field_validator("ruta")
+    @classmethod
+    def _sin_espacios_de_mas(cls, v: str) -> str:
+        return " ".join(v.split())
+
+
 class MatriculaVisible(BaseModel):
     """Prender o apagar la matrícula mientras se comparte. Para prenderla hay que mandarla."""
 

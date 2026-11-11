@@ -16,6 +16,7 @@ from src.services.seguimientos import (
     GRACIA_DESPUES_DE_TERMINAR,
     MatriculaVisible,
     PosicionEnVivo,
+    RutaNueva,
     SeguimientoCrear,
     SEGUNDOS_ENTRE_VISTAS,
     TOPE_RECORRIDO,
@@ -101,6 +102,18 @@ check("y después es un 404", not visible(terminada, T0 + timedelta(hours=1) + G
 check("vencida sin terminar: la misma gracia desde que venció", visible(viva, T0 + timedelta(hours=13)) and not visible(viva, T0 + timedelta(hours=14, seconds=1)))
 check("con la hora tal como la devuelve Supabase", estado_de({"vence_at": "2026-11-11T20:00:00.5+00:00", "terminado_at": None}, T0) == "en_vuelo")
 check("sin fecha de vencimiento: vencido", estado_de({"vence_at": None, "terminado_at": None}, T0) == "vencido")
+
+# --- la ruta cambiada en vuelo ---
+rn = RutaNueva(ruta="  S34.4091/W58.6847   SADM ", puntos=[{"lat": -34.4091, "lon": -58.6847, "codigo": "S34.4091/W58.6847"}, {"lat": -34.56, "lon": -58.96, "codigo": "SADM", "nombre": " Morón "}])
+check("la ruta nueva se limpia", rn.ruta == "S34.4091/W58.6847 SADM" and rn.puntos[1].nombre == "Morón")
+check("la ruta nueva no pasa de 600", falla(lambda: RutaNueva(ruta="X" * 601)))
+check("ni más de 60 puntos", falla(lambda: RutaNueva(puntos=[{"lat": 0, "lon": 0}] * 61)) and len(RutaNueva(puntos=[{"lat": 0, "lon": 0}] * 60).puntos) == 60)
+check("ni coordenadas imposibles", falla(lambda: RutaNueva(puntos=[{"lat": 0, "lon": 181}])))
+check("sin nada es una ruta vacía (se puede borrar la ruta)", RutaNueva().ruta == "" and RutaNueva().puntos == [])
+check("el código de un punto no pasa de 20", falla(lambda: RutaNueva(puntos=[{"lat": 0, "lon": 0, "codigo": "C" * 21}])))
+# Cambiar la ruta sólo vale mientras se vuela: el controlador usa `esta_activo` (410 si no).
+check("sólo en vuelo acepta una ruta nueva", esta_activo(viva, T0) and not esta_activo(terminada, T0 + timedelta(hours=2)) and not esta_activo(viva, T0 + timedelta(hours=13)))
+check("la ruta nueva se ve en el link (vista_publica lee ruta y puntos de la fila)", vista_publica({"nombre": "L", "vence_at": vence_en(T0).isoformat(), "terminado_at": None, "ruta": rn.ruta, "puntos": [[p.lat, p.lon, p.codigo, p.nombre] for p in rn.puntos]}, T0)["puntos"][1] == [-34.56, -58.96, "SADM", "Morón"])
 
 # --- el raleo del servidor ---
 check("la primera posición entra", puede_aceptar_posicion(None, T0))

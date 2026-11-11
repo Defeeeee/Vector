@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cambiarMatriculaVisible, crearSeguimiento, terminarSeguimiento } from "@/actions/seguimiento";
+import { cambiarMatriculaVisible, cambiarRutaSeguimiento, crearSeguimiento, terminarSeguimiento } from "@/actions/seguimiento";
 import {
   CLAVE_SEGUIMIENTO,
   leerSeguimientoGuardado,
@@ -31,6 +31,11 @@ import {
  *   (el link pasa a "El vuelo terminó"). También si el backend contesta 410/404.
  * - **Se retoma** si se recarga la app con un seguimiento vigente (`localStorage`, con try/catch:
  *   puede no estar). Con `volando` en false no manda, pero el piloto puede dejar de compartir.
+ * - **Si la ruta cambia en vuelo** (3.23.0, "Directo a…"), la nueva ruta y sus puntos se mandan al
+ *   backend (`POST /seguimientos/{id}/ruta`) y el link muestra la ruta y el destino nuevos. Se
+ *   espera a que todos los puntos de la ruta estén resueltos (`rutaLista`: si no, la familia vería
+ *   una ruta a medias) y un instante a que termine de cambiar; si falla por falta de señal se
+ *   reintenta. El recorrido ya volado no se toca.
  * - Una lectura con más de 150 m de error no se manda (`posicionDeLectura`).
  */
 
@@ -66,6 +71,8 @@ interface Opciones {
   ruta: string;
   /** Los puntos de la ruta (`PuntoMapa[]` sirve tal cual). */
   puntos: { lat: number; lon: number; codigo: string; label?: string }[];
+  /** Los puntos de la ruta ya están todos resueltos (el Mapa no está buscando ninguno). */
+  rutaLista?: boolean;
   /** El avión elegido en el Mapa (`Aircraft` sirve tal cual). Su tipo y designador salen en el link; la matrícula sólo si el piloto lo prende. */
   aeronave?: { registration: string; type: string; icao: string } | null;
 }
@@ -79,7 +86,11 @@ function guardar(s: SeguimientoGuardado | null) {
   }
 }
 
-export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, aeronave = null }: Opciones): SeguimientoEnVivo {
+/** Lo que identifica una ruta para saber si cambió: el texto y los puntos (a ~10 m). */
+const firmaDeRuta = (ruta: string, puntos: Opciones["puntos"]) =>
+  `${ruta}|${puntos.map((p) => `${p.codigo}@${p.lat.toFixed(4)},${p.lon.toFixed(4)}`).join(";")}`;
+
+export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, rutaLista = true, aeronave = null }: Opciones): SeguimientoEnVivo {
   const [activo, setActivo] = useState<SeguimientoGuardado | null>(null);
   const [creando, setCreando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +108,9 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, aeronave 
   const enviando = useRef(false);
   const ultimaEnviada = useRef<LecturaParaCompartir | null>(null);
   const ultimoIntento = useRef<number | null>(null);
+  // La firma de la ruta que el backend ya tiene (`null`: no se sabe, se manda la primera vez que esté lista).
+  const rutaEnviada = useRef<string | null>(null);
+  const [reintentoRuta, setReintentoRuta] = useState(0);
 
   useEffect(() => {
     lecturaRef.current = lectura;
@@ -124,6 +138,7 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, aeronave 
     setVistas(null);
     ultimaEnviada.current = null;
     ultimoIntento.current = null;
+    rutaEnviada.current = null;
   }, []);
 
   const mandar = useCallback(async () => {
@@ -180,6 +195,38 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, aeronave 
     };
   }, [volando, id, mandar]);
 
+  // La ruta cambió en vuelo: se le avisa al backend, así la familia ve la ruta y el destino nuevos.
+  const firmaRuta = firmaDeRuta(ruta, puntos);
+  useEffect(() => {
+    if (!volando || !id || !rutaLista || puntos.length === 0 || rutaEnviada.current === firmaRuta) return;
+    const t = window.setTimeout(async () => {
+      const { ruta: texto, puntos: pts } = rutaRef.current;
+      const firma = firmaDeRuta(texto, pts);
+      if (!pts.length || rutaEnviada.current === firma) return;
+      const r = await cambiarRutaSeguimiento(id, {
+        ruta: texto,
+        puntos: pts.map((p) => ({ lat: p.lat, lon: p.lon, codigo: p.codigo, nombre: p.label ?? "" })),
+      });
+      if ("ok" in r) {
+        rutaEnviada.current = firma;
+        setSinSenal(false);
+      } else if (r.terminado) {
+        cerrar();
+      } else {
+        // Sin señal: se vuelve a intentar enseguida (y al volver la red).
+        window.setTimeout(() => setReintentoRuta((n) => n + 1), 8000);
+      }
+    }, 1200);
+    return () => window.clearTimeout(t);
+    // `puntos` entra por la firma: el arreglo se arma de nuevo en cada render del Mapa.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [volando, id, rutaLista, firmaRuta, reintentoRuta, cerrar]);
+  useEffect(() => {
+    const alVolverLaRed = () => setReintentoRuta((n) => n + 1);
+    window.addEventListener("online", alVolverLaRed);
+    return () => window.removeEventListener("online", alVolverLaRed);
+  }, []);
+
   // Terminar el vuelo (el Mapa deja de volar) termina el seguimiento.
   useEffect(() => {
     const estabaVolando = volandoAntes.current;
@@ -215,6 +262,8 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, aeronave 
       ultimaEnviada.current = null;
       ultimoIntento.current = null;
       activoRef.current = s;
+      // Recién creado (o retomado): el backend tiene la ruta con la que se pidió.
+      rutaEnviada.current = r.seguimiento.yaExistia ? null : firmaDeRuta(texto, pts);
       setActivo(s);
       return urlDeSeguimiento(window.location.origin, s.token);
     } finally {
