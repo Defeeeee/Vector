@@ -11,10 +11,32 @@ import type { SeguimientoEnVivo } from "./useSeguimientoEnVivo";
  * El estado es del hook (`useSeguimientoEnVivo`), que vive arriba, en el Mapa, junto al GPS: acá
  * sólo se dibuja. Estética de la pantalla de vuelo: rótulos en mono y cian, sin caja.
  *
- * Qué ve la familia está dicho antes de compartir: ahí mismo, en una línea.
+ * Qué ve la familia está dicho antes de compartir: ahí mismo, en una línea. **La matrícula no sale a
+ * menos que el piloto prenda "Mostrar la matrícula"**: apagado por defecto, y se puede cambiar
+ * mientras se comparte.
  */
 
 type Aviso = "copiado" | "manual" | null;
+
+function InterruptorMatricula({ seguimiento }: { seguimiento: SeguimientoEnVivo }) {
+  const { mostrarMatricula, sinMatricula, cambiarMostrarMatricula } = seguimiento;
+  return (
+    <label className={`mt-2 flex items-center justify-between gap-3 text-xs ${sinMatricula ? "opacity-50" : "cursor-pointer"}`}>
+      <span className="text-white/80">
+        Mostrar la matrícula
+        <span className="block text-[11px] text-white/50">{sinMatricula ? "Elegí un avión para poder mostrarla." : mostrarMatricula ? "Prendido: el link muestra la matrícula." : "Apagado: el link dice el modelo, no la matrícula."}</span>
+      </span>
+      <input
+        type="checkbox"
+        role="switch"
+        checked={mostrarMatricula}
+        disabled={sinMatricula}
+        onChange={(e) => void cambiarMostrarMatricula(e.target.checked)}
+        className="h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full bg-white/20 transition-colors checked:bg-aviation-cyan disabled:cursor-not-allowed relative after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform checked:after:translate-x-4"
+      />
+    </label>
+  );
+}
 
 async function mandarLink(url: string): Promise<"compartido" | "cancelado" | Aviso> {
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
@@ -67,8 +89,9 @@ export default function CompartirSeguimiento({ seguimiento, className = "" }: { 
           {estado === "creando" ? "Creando el link…" : "Compartir mi vuelo"}
         </button>
         <p className="mt-1.5 text-center text-[11px] leading-snug text-white/50">
-          Quien tenga el link ve dónde vas, sin cuenta, hasta que toques Terminar.
+          Quien tenga el link ve dónde vas, tu ruta, el modelo del avión y el clima del destino, sin cuenta, hasta que toques Terminar.
         </p>
+        <InterruptorMatricula seguimiento={seguimiento} />
         {error && <p className="mt-1.5 text-center text-xs font-semibold text-red-400">{error}</p>}
       </div>
     );
@@ -90,6 +113,7 @@ export default function CompartirSeguimiento({ seguimiento, className = "" }: { 
           </button>
         </div>
       </div>
+      <InterruptorMatricula seguimiento={seguimiento} />
       {sinSenal && <p className="mt-1.5 text-xs text-amber-300">Sin señal: el link muestra la última posición que llegó.</p>}
       {aviso === "copiado" && <p className="mt-1.5 text-xs text-white/60">Link copiado.</p>}
       {aviso === "manual" && url && (

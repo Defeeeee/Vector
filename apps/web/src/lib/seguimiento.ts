@@ -6,8 +6,10 @@
  *
  * - **Del piloto al backend:** una posición cada ~15 s (`CADA_MS`), sólo la última lectura, sin
  *   acumular lo que se perdió sin señal. El backend ralea de nuevo (una cada 10 s).
- * - **Qué sale:** nombre de pila, ruta, estado, última posición y recorrido (`SeguimientoPublico`).
- *   Nunca la matrícula ni nada de la bitácora; lo impone el backend (`vista_publica`).
+ * - **Qué sale:** nombre de pila, ruta con nombres, tipo de avión, estado, última posición y recorrido
+ *   con altura y hora (`SeguimientoPublico`). **La matrícula sólo si el piloto la prendió** (migración
+ *   042) y nada de la bitácora; lo impone el backend (`vista_publica`). Los cálculos que arma la
+ *   página con eso están en `seguimiento-calculos.ts`.
  * - **"Hace 40 s" se calcula con diferencias** de la hora del servidor (`ahora` del pedido) y la de
  *   la posición, sin `toLocaleString` (invariante 1): ni el reloj de quien mira ni el del piloto
  *   entran en la cuenta.
@@ -24,15 +26,28 @@ export const CLAVE_SEGUIMIENTO = "vector-seguimiento-en-vivo";
 
 export type EstadoSeguimiento = "en_vuelo" | "terminado" | "vencido";
 
+/** [lat, lon, código, nombre] de la ruta prevista (los viejos no traen el nombre). */
+export type PuntoPublico = [number, number, string, string];
+/** [lat, lon, alt_ft, epoch_s]: la altura y la hora (del servidor) pueden faltar en los viejos. */
+export type PuntoRecorrido = [number, number, number | null, number | null];
+
+export interface AvionPublico {
+  tipo?: string;
+  icao?: string;
+  /** Sólo está si el piloto prendió "Mostrar la matrícula". */
+  matricula?: string;
+}
+
 export interface SeguimientoPublico {
   nombre: string;
   ruta: string;
-  /** [lat, lon, código] de la ruta prevista. */
-  puntos: [number, number, string][];
+  puntos: PuntoPublico[];
+  avion: AvionPublico | null;
+  /** ISO: cuándo empezó a compartir. */
+  inicio: string | null;
   estado: EstadoSeguimiento;
   ultima: { lat: number; lon: number; alt_ft: number | null; gs_kt: number | null; track: number | null; hora: string | null } | null;
-  /** [lat, lon] de lo volado. */
-  recorrido: [number, number][];
+  recorrido: PuntoRecorrido[];
   /** La hora del servidor al contestar. */
   ahora: string;
 }
@@ -110,6 +125,8 @@ export interface SeguimientoGuardado {
   token: string;
   /** ISO, de la respuesta del backend. */
   venceAt: string;
+  /** Si la matrícula se está mostrando (migración 042). Lo viejo no lo trae: apagado. */
+  mostrarMatricula: boolean;
 }
 
 /** Lo guardado en el teléfono, validado y no vencido: cualquier cosa rara es "no hay". */
@@ -121,7 +138,7 @@ export function leerSeguimientoGuardado(texto: string | null, ahoraMs: number): 
     if (!tokenValido(d.token) || !/^[0-9a-f-]{36}$/i.test(d.id)) return null;
     const vence = Date.parse(d.venceAt);
     if (Number.isNaN(vence) || vence <= ahoraMs) return null;
-    return { id: d.id, token: d.token, venceAt: d.venceAt };
+    return { id: d.id, token: d.token, venceAt: d.venceAt, mostrarMatricula: d.mostrarMatricula === true };
   } catch {
     return null;
   }

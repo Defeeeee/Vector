@@ -120,21 +120,43 @@ function rutaCad(req, res, ruta, json) {
 export const DATOS = { perfil, aviones, vuelos };
 // Planes de vuelo (migración 024), en memoria: se pierden al reiniciar.
 const planes = new Map();
-// El seguimiento en vivo (migración 041), en memoria: un avión que sale de San Fernando hacia Santa Fe.
-// `token` fijo para abrir /seguir/<token> a mano; cada GET avanza un punto sobre la ruta.
+// El seguimiento en vivo (migraciones 041 y 042), en memoria: un avión que sale de San Fernando hacia Sauce Viejo.
+// `token` fijo para abrir /seguir/<token> a mano; con el token de prueba y sin vuelo creado desde el Mapa, el avión
+// ya trae unos minutos de recorrido (sube a 2.400 ft y cruza) y cada GET avanza un punto sobre la ruta.
+// El avión es un Cessna 152 y la matrícula está apagada, como en el real (se prende con POST .../matricula).
+// El clima del destino NO sale de acá: la ruta pública de la web le pide el METAR a aviationweather.gov.
 const TOKEN_SEGUIMIENTO = "tokenDePruebaDeSeguimiento000001";
-const seguimientoRuta = [[-34.4532, -58.5896], [-34.5, -58.9], [-34.55, -59.3], [-34.45, -59.9], [-34.2, -60.4], [-34.0, -61.0], [-33.7, -61.6]];
+const SADF = [-34.4532, -58.5896];
+const SAAV = [-31.7117, -60.8117];
+const enLinea = (f) => [SADF[0] + (SAAV[0] - SADF[0]) * f, SADF[1] + (SAAV[1] - SADF[1]) * f];
+const PASOS_DEMO = 30;
+const puntosDemo = [[SADF[0], SADF[1], "SADF", "San Fernando"], [...enLinea(0.5), "VM", "Punto medio"], [SAAV[0], SAAV[1], "SAAV", "Sauce Viejo"]];
 let seguimiento = null;
 function nuevoSeguimiento(json) {
   const ahora = new Date();
-  seguimiento = { id: crypto.randomUUID(), token: TOKEN_SEGUIMIENTO, nombre: "Lucía", ruta: json.ruta ?? "SADF SAAV", puntos: (json.puntos ?? []).map((p) => [p.lat, p.lon, p.codigo ?? ""]), creado: ahora, vence: new Date(+ahora + 12 * 3600e3), terminado: null, recorrido: [], ultima: null, paso: 0 };
+  seguimiento = {
+    id: crypto.randomUUID(), token: TOKEN_SEGUIMIENTO, nombre: "Lucía", ruta: json.ruta ?? "SADF SAAV",
+    puntos: (json.puntos ?? []).map((p) => [p.lat, p.lon, p.codigo ?? "", p.nombre ?? ""]),
+    avion: { tipo: json.avion?.tipo || "Cessna 152", icao: json.avion?.icao || "C152", matricula: json.mostrar_matricula ? json.avion?.matricula || null : null },
+    mostrarMatricula: Boolean(json.mostrar_matricula && json.avion?.matricula),
+    creado: ahora, vence: new Date(+ahora + 12 * 3600e3), terminado: null, recorrido: [], ultima: null, paso: 0,
+  };
   return seguimiento;
 }
 function vistaSeguimiento(sg) {
   const ahora = new Date();
   const estado = sg.terminado ? "terminado" : ahora >= sg.vence ? "vencido" : "en_vuelo";
-  const puntos = sg.puntos.length ? sg.puntos : seguimientoRuta.map(([la, lo], i) => [la, lo, i === 0 ? "SADF" : i === seguimientoRuta.length - 1 ? "SAAV" : ""]);
-  return { nombre: sg.nombre, ruta: sg.ruta, puntos, estado, ultima: sg.ultima, recorrido: sg.recorrido, ahora: ahora.toISOString() };
+  const puntos = sg.puntos.length ? sg.puntos : puntosDemo;
+  const avion = { tipo: sg.avion.tipo, icao: sg.avion.icao, ...(sg.mostrarMatricula && sg.avion.matricula ? { matricula: sg.avion.matricula } : {}) };
+  return { nombre: sg.nombre, ruta: sg.ruta, puntos, avion, inicio: sg.creado.toISOString(), estado, ultima: sg.ultima, recorrido: sg.recorrido, ahora: ahora.toISOString() };
+}
+// Un punto del demo: avanza por la línea, sube hasta 2.400 ft en los primeros pasos y cruza.
+function puntoDemo(i, cuando) {
+  const [la, lo] = enLinea(Math.min(i, PASOS_DEMO) / PASOS_DEMO);
+  const [pla, plo] = enLinea(Math.max(0, i - 1) / PASOS_DEMO);
+  const alt = Math.min(2400, 700 + i * 350) + (i % 2) * 20;
+  const track = Math.round((Math.atan2((lo - plo) * Math.cos((la * Math.PI) / 180), la - pla) * 180) / Math.PI + 360) % 360 || 330;
+  return { la: Math.round(la * 1e5) / 1e5, lo: Math.round(lo * 1e5) / 1e5, alt, track, epoch: Math.floor(+cuando / 1000), hora: cuando.toISOString() };
 }
 const rutasGuardadas = [{ id: "r1", nombre: "SADF → SAAK por BENAVIDEZ", ruta: "SADF BENAVIDEZ SAAK", aircraft_id: null, created_at: "2026-11-09T12:00:00Z", updated_at: "2026-11-09T12:00:00Z" }];
 let firma = null;
@@ -261,13 +283,18 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
   if (ruta === "/api/seguimientos" && req.method === "POST") {
     const sg = seguimiento && !seguimiento.terminado && new Date() < seguimiento.vence ? seguimiento : nuevoSeguimiento(json);
     res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ id: sg.id, token: sg.token, vence_at: sg.vence.toISOString(), ya_existia: sg === seguimiento && sg.recorrido.length > 0 }));
+    return res.end(JSON.stringify({ id: sg.id, token: sg.token, vence_at: sg.vence.toISOString(), ya_existia: sg === seguimiento && sg.recorrido.length > 0, mostrar_matricula: sg.mostrarMatricula }));
   }
   if (ruta.startsWith("/api/seguimientos/") && req.method === "POST") {
     const [, , , id, accion] = ruta.split("/");
     let r = { detail: "Ese seguimiento no existe." }, estado = 404;
     if (seguimiento && seguimiento.id === id) {
       if (accion === "terminar") { seguimiento.terminado ??= new Date(); r = { terminado: true }; estado = 200; }
+      else if (accion === "matricula") {
+        // Apagada, la matrícula se borra; prenderla pide mandarla (como el real).
+        if (json.mostrar && !json.matricula) { r = { detail: "Falta la matrícula para mostrarla." }; estado = 400; }
+        else { seguimiento.mostrarMatricula = Boolean(json.mostrar); seguimiento.avion.matricula = json.mostrar ? json.matricula : null; r = { mostrar_matricula: seguimiento.mostrarMatricula }; estado = 200; }
+      }
       else if (accion === "posicion") {
         if (seguimiento.terminado) { r = { detail: "Este seguimiento ya terminó." }; estado = 410; }
         else {
@@ -275,7 +302,7 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
           const aceptada = !seguimiento.ultima || ahora - new Date(seguimiento.ultima.hora) >= 10000;
           if (aceptada) {
             seguimiento.ultima = { lat: json.lat, lon: json.lon, alt_ft: json.alt_ft ?? null, gs_kt: json.gs_kt ?? null, track: json.track ?? null, hora: ahora.toISOString() };
-            seguimiento.recorrido.push([Math.round(json.lat * 1e5) / 1e5, Math.round(json.lon * 1e5) / 1e5]);
+            seguimiento.recorrido.push([Math.round(json.lat * 1e5) / 1e5, Math.round(json.lon * 1e5) / 1e5, json.alt_ft ?? null, Math.floor(+ahora / 1000)]);
           }
           r = { aceptada, vence_at: seguimiento.vence.toISOString() }; estado = 200;
         }
@@ -288,15 +315,23 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     const token = ruta.split("/").pop();
     // Sin ningún vuelo creado, el token de prueba muestra uno que avanza solo (para ver la página sin el Mapa).
     if (token === TOKEN_SEGUIMIENTO && !seguimiento) {
-      const sg = nuevoSeguimiento({ ruta: "SADF SAAV" });
+      const sg = nuevoSeguimiento({ ruta: "SADF VM SAAV", avion: { tipo: "Cessna 152", icao: "C152", matricula: "LV-ABC" } });
       sg.demo = true;
+      sg.puntos = puntosDemo;
+      // Unos minutos de recorrido ya hechos: un punto por minuto hacia atrás.
+      const ahoraDemo = Date.now();
+      for (let i = 0; i < 6; i++) {
+        const p = puntoDemo(i, new Date(ahoraDemo - (5 - i) * 60_000));
+        sg.recorrido.push([p.la, p.lo, p.alt, p.epoch]);
+        sg.ultima = { lat: p.la, lon: p.lo, alt_ft: p.alt, gs_kt: 96, track: p.track, hora: p.hora };
+      }
+      sg.paso = 6;
+      sg.creado = new Date(ahoraDemo - 6 * 60_000);
     }
     if (token === TOKEN_SEGUIMIENTO && seguimiento?.demo && !seguimiento.terminado) {
-      const i = Math.min(seguimiento.paso++, seguimientoRuta.length - 1);
-      const [la, lo] = seguimientoRuta[i];
-      const [pla, plo] = seguimientoRuta[Math.max(0, i - 1)];
-      seguimiento.recorrido.push([la, lo]);
-      seguimiento.ultima = { lat: la, lon: lo, alt_ft: 2400 + i * 50, gs_kt: 96, track: Math.round((Math.atan2(lo - plo, la - pla) * 180 / Math.PI + 360) % 360) || 270, hora: new Date().toISOString() };
+      const p = puntoDemo(seguimiento.paso++, new Date());
+      seguimiento.recorrido.push([p.la, p.lo, p.alt, p.epoch]);
+      seguimiento.ultima = { lat: p.la, lon: p.lo, alt_ft: p.alt, gs_kt: 96, track: p.track, hora: p.hora };
     }
     const ok = token === TOKEN_SEGUIMIENTO && seguimiento;
     res.writeHead(ok ? 200 : 404, { "Content-Type": "application/json", "Cache-Control": "no-store" });

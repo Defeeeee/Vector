@@ -31,7 +31,9 @@ export const metadata: Metadata = {
  * (`/api/cron/plan-por-registrar`).
  *
  * La sección #seguimiento (migración 041) describe lo que devuelve `GET /publico/seguimientos/{token}`
- * (`services/seguimientos.py`, `vista_publica`): una lista fija de campos, sin matrícula ni `user_id`; el plazo
+ * (`services/seguimientos.py`, `vista_publica`): una lista fija de campos, sin `user_id` y con la matrícula sólo si el
+ * piloto la prendió (migración 042; también agrega el tipo de avión, los nombres de los puntos, la altura y hora del
+ * recorrido y el METAR del destino, de `/api/seguimiento/clima/[token]`); el plazo
  * de los dos tiempos (12 h, 2 h de gracia) y el borrado a los 30 días (`grabador_adsb.py`) salen de ahí.
  *
  * Desde la 2.21.0 (migraciones 020 y 021): el número de licencia y el legajo del libro
@@ -353,10 +355,17 @@ export default function PrivacidadPage() {
         </p>
         <ul>
           <li>
-            <strong>Qué se comparte:</strong> tu nombre de pila, la ruta que tenías escrita en el Mapa,
-            la posición del GPS de tu teléfono (latitud, longitud, altura, velocidad y rumbo) mientras
-            vas volando, por dónde pasaste y hace cuánto se actualizó. <strong>Nunca</strong> la
-            matrícula, tu correo, tu apellido ni nada de tu bitácora.
+            <strong>Qué se comparte:</strong> tu nombre de pila, la ruta que tenías escrita en el Mapa
+            (con el nombre de cada punto), el avión que elegiste (marca, modelo y designador, por
+            ejemplo &ldquo;Cessna 152&rdquo;), la posición del GPS de tu teléfono (latitud, longitud,
+            altura, velocidad y rumbo) mientras vas volando, por dónde pasaste con su altura y su hora,
+            cuándo empezaste a compartir y hace cuánto se actualizó. Con eso, la página del link calcula
+            lo que falta, la hora estimada de llegada y si subís o bajás, y muestra el informe
+            meteorológico (METAR) del aeródromo de destino, que no sale de tu teléfono sino de
+            aviationweather.gov. <strong>La matrícula sólo se muestra si vos prendés &ldquo;Mostrar la
+            matrícula&rdquo;</strong> antes o mientras compartís: viene apagado, y mientras está apagado
+            ni se guarda; si la apagás, se borra. <strong>Nunca</strong> tu correo, tu apellido ni nada de
+            tu bitácora.
           </li>
           <li>
             <strong>Con quién:</strong> con cualquiera que tenga el link. No pide cuenta ni contraseña,

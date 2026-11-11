@@ -11,8 +11,10 @@ from datetime import datetime, timedelta, timezone
 from pydantic import ValidationError
 
 from src.services.seguimientos import (
+    AvionCompartido,
     DIAS_DE_RETENCION,
     GRACIA_DESPUES_DE_TERMINAR,
+    MatriculaVisible,
     PosicionEnVivo,
     SeguimientoCrear,
     TOPE_RECORRIDO,
@@ -70,6 +72,12 @@ c = SeguimientoCrear(ruta="  SADF   SADM ", puntos=[{"lat": -34.45, "lon": -58.5
 check("la ruta se limpia", c.ruta == "SADF SADM" and c.puntos[0].codigo == "SADF")
 check("la ruta no pasa de 600", falla(lambda: SeguimientoCrear(ruta="X" * 601)))
 check("no más de 60 puntos", falla(lambda: SeguimientoCrear(puntos=[{"lat": 0, "lon": 0}] * 61)))
+check("el punto lleva su nombre, limpio", SeguimientoCrear(puntos=[{"lat": 0, "lon": 0, "codigo": "SADF", "nombre": " San   Fernando "}]).puntos[0].nombre == "San Fernando")
+check("el nombre de un punto no pasa de 60", falla(lambda: SeguimientoCrear(puntos=[{"lat": 0, "lon": 0, "nombre": "N" * 61}])))
+check("la matrícula se pide apagada por defecto", SeguimientoCrear().mostrar_matricula is False)
+check("el avión se limpia", AvionCompartido(tipo=" Cessna  152 ", icao="C152", matricula="LV-ABC").tipo == "Cessna 152")
+check("la matrícula no pasa de 12", falla(lambda: AvionCompartido(matricula="X" * 13)))
+check("prender la matrícula la lleva", MatriculaVisible(mostrar=True, matricula="LV-ABC").matricula == "LV-ABC")
 check("un punto de la ruta con coordenada imposible", falla(lambda: SeguimientoCrear(puntos=[{"lat": 100, "lon": 0}])))
 
 # --- el estado y cuánto se ve ---
@@ -96,6 +104,9 @@ check("a los 10 s sí", puede_aceptar_posicion(T0.isoformat(), T0 + timedelta(se
 # --- el recorrido ---
 r = agregar_al_recorrido([], -34.45, -58.59)
 check("el primer punto", r == [[-34.45, -58.59]])
+rc = agregar_al_recorrido([], -34.45, -58.59, 1523.4, 1_800_000_000)
+check("con altura y hora: [lat, lon, alt_ft, epoch_s]", rc == [[-34.45, -58.59, 1523, 1_800_000_000]])
+check("un recorrido viejo de dos elementos sigue valiendo y suma al nuevo formato", agregar_al_recorrido(r, -34.46, -58.59, 900, 5) == [[-34.45, -58.59], [-34.46, -58.59, 900, 5]])
 check("quieto no suma", agregar_al_recorrido(r, -34.450001, -58.590001) == r)
 check("movido suma", len(agregar_al_recorrido(r, -34.46, -58.59)) == 2)
 check("no modifica el arreglo que recibe", r == [[-34.45, -58.59]])
@@ -125,20 +136,37 @@ fila = {
     "ultima_gs_kt": 92.0,
     "ultima_track": 250.0,
     "ultima_at": (T0 + timedelta(minutes=20)).isoformat(),
-    "recorrido": [[-34.45, -58.59], [-34.5, -58.7]],
+    "recorrido": [[-34.45, -58.59], [-34.5, -58.7, 1800, 1_800_000_900]],
+    "created_at": T0.isoformat(),
+    "avion_tipo": "Cessna 152",
+    "avion_icao": "C152",
+    "avion_matricula": None,
+    "mostrar_matricula": False,
 }
 v = vista_publica(fila, T0 + timedelta(minutes=21))
 check("estado, nombre y ruta", (v["estado"], v["nombre"], v["ruta"]) == ("en_vuelo", "Lucía", "SADF SADM"))
 check("la última posición, con su hora", v["ultima"]["lat"] == -34.5 and v["ultima"]["hora"] == fila["ultima_at"] and v["ultima"]["alt_ft"] == 1800)
-check("el recorrido y los puntos de la ruta", len(v["recorrido"]) == 2 and v["puntos"][0] == [-34.45, -58.59, "SADF"])
-check("las claves son exactamente las permitidas", set(v) == {"nombre", "ruta", "puntos", "estado", "ultima", "recorrido", "ahora"})
+check("el recorrido y los puntos de la ruta", len(v["recorrido"]) == 2 and v["puntos"][0] == [-34.45, -58.59, "SADF", ""])
+check("el recorrido viejo se lee, con altura y hora en null", v["recorrido"][0] == [-34.45, -58.59, None, None] and v["recorrido"][1] == [-34.5, -58.7, 1800, 1_800_000_900])
+check("los puntos con nombre", vista_publica({**fila, "puntos": [[-34.45, -58.59, "SADF", "San Fernando"]]}, T0)["puntos"] == [[-34.45, -58.59, "SADF", "San Fernando"]])
+check("la hora de inicio", v["inicio"] == T0.isoformat())
+check("el avión, sin matrícula", v["avion"] == {"tipo": "Cessna 152", "icao": "C152"})
+check("las claves son exactamente las permitidas", set(v) == {"nombre", "ruta", "puntos", "avion", "inicio", "estado", "ultima", "recorrido", "ahora"})
+# La matrícula: sólo con el interruptor prendido. Apagado no sale aunque la fila la tuviera.
+apagado_con_dato = vista_publica({**fila, "avion_matricula": "LV-ABC", "mostrar_matricula": False}, T0)
+check("interruptor apagado: la matrícula NO sale, aunque esté en la fila", "LV-ABC" not in repr(apagado_con_dato) and "matricula" not in apagado_con_dato["avion"])
+check("interruptor sin definir: tampoco", "LV-ABC" not in repr(vista_publica({k: x for k, x in {**fila, "avion_matricula": "LV-ABC"}.items() if k != "mostrar_matricula"}, T0)))
+prendido = vista_publica({**fila, "avion_matricula": "LV-ABC", "mostrar_matricula": True}, T0)
+check("interruptor prendido: sale", prendido["avion"] == {"tipo": "Cessna 152", "icao": "C152", "matricula": "LV-ABC"})
+check("prendido pero sin matrícula guardada: no inventa una", "matricula" not in vista_publica({**fila, "mostrar_matricula": True}, T0)["avion"])
+check("sin datos del avión: null", vista_publica({**fila, "avion_tipo": None, "avion_icao": None}, T0)["avion"] is None)
 texto = repr(v)
 for secreto in ("LV-ABC", "piloto@example.com", fila["user_id"], fila["id"], fila["token"], fila["aircraft_id"]):
     check(f"no sale {secreto[:12]}…", secreto not in texto)
 check("sin posición todavía: ultima es null", vista_publica({**fila, "ultima_lat": None, "ultima_lon": None}, T0)["ultima"] is None)
 check("un campo nuevo en la fila no sale solo", "secreto" not in vista_publica({**fila, "secreto": "x"}, T0))
 check("terminada: lo dice", vista_publica({**fila, "terminado_at": T0.isoformat()}, T0)["estado"] == "terminado")
-check("puntos con basura se descartan", vista_publica({**fila, "puntos": [["a", "b"], None, [1, 2]]}, T0)["puntos"] == [[1, 2, ""]])
+check("puntos con basura se descartan", vista_publica({**fila, "puntos": [["a", "b"], None, [1, 2]]}, T0)["puntos"] == [[1, 2, "", ""]])
 
 # --- el borrado ---
 check("se borra a los 30 días", limite_de_retencion(T0).startswith("2026-10-12T12:00:00") and DIAS_DE_RETENCION == 30)

@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.21.0 — Tu vuelo, en detalle para quien te sigue
+
+_11 de noviembre de 2026_
+
+- **El link de tu vuelo muestra mucho más** — Quien te sigue ve el avión, la ruta con sus nombres, cuánto falta y a qué hora llegás, si subís o bajás, el perfil de altura y el clima en tu destino explicado fácil. Se ve bien en el teléfono y en la compu. La matrícula sólo aparece si la prendés.
+
 ## v3.20.0 — Para volar acompañado
 
 _11 de noviembre de 2026_

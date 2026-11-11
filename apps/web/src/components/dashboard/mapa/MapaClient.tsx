@@ -253,7 +253,7 @@ export default function MapaClient({
   const puedeGps = montado && typeof navigator !== "undefined" && "geolocation" in navigator;
   // Que la familia siga el vuelo (3.20.0): vive acá y no en la pantalla de vuelo, porque al
   // terminar (`volando` en false) es el hook el que cierra el link.
-  const seguimiento = useSeguimientoEnVivo({ lectura, volando, ruta: tokens.join(" "), puntos });
+  const seguimiento = useSeguimientoEnVivo({ lectura, volando, ruta: tokens.join(" "), puntos, aeronave });
 
   // El track (`lib/track-vuelo.ts`): en el teléfono. Se lee al montar (para mostrar el último
   // vuelo grabado) y se guarda cada 10 s mientras se vuela, al esconder la app y al terminar.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { crearSeguimiento, terminarSeguimiento } from "@/actions/seguimiento";
+import { cambiarMatriculaVisible, crearSeguimiento, terminarSeguimiento } from "@/actions/seguimiento";
 import {
   CLAVE_SEGUIMIENTO,
   leerSeguimientoGuardado,
@@ -19,7 +19,7 @@ import {
  * Lo usa el Mapa en modo vuelo, **una sola vez, arriba** (donde vive la lectura del GPS), y le pasa
  * el resultado a `CompartirSeguimiento`:
  *
- *   const seguimiento = useSeguimientoEnVivo({ lectura, volando, ruta, puntos });
+ *   const seguimiento = useSeguimientoEnVivo({ lectura, volando, ruta, puntos, aeronave });
  *
  * - **Manda sólo la última lectura**, cada ~15 s y sólo con `volando`. Sin señal el pedido falla y
  *   se reintenta en el próximo ciclo con la lectura más nueva: nada se acumula (el link muestra
@@ -40,6 +40,11 @@ export interface SeguimientoEnVivo {
   url: string | null;
   /** El último error de crear o terminar, para mostrar. */
   error: string | null;
+  /** "Mostrar la matrícula": apagado por defecto. Antes de compartir es una elección; después se puede cambiar. */
+  mostrarMatricula: boolean;
+  /** No hay avión elegido (o sin matrícula): el interruptor no tiene qué mostrar. */
+  sinMatricula: boolean;
+  cambiarMostrarMatricula: (mostrar: boolean) => Promise<void>;
   /** El último intento de mandar falló (sin señal): el link muestra una posición vieja. */
   sinSenal: boolean;
   /** Empieza (o retoma el activo) y devuelve el link, o `null` si falló (el motivo queda en `error`). */
@@ -56,7 +61,9 @@ interface Opciones {
   /** La ruta como se escribe en el Mapa ("SADF SADM"). */
   ruta: string;
   /** Los puntos de la ruta (`PuntoMapa[]` sirve tal cual). */
-  puntos: { lat: number; lon: number; codigo: string }[];
+  puntos: { lat: number; lon: number; codigo: string; label?: string }[];
+  /** El avión elegido en el Mapa (`Aircraft` sirve tal cual). Su tipo y designador salen en el link; la matrícula sólo si el piloto lo prende. */
+  aeronave?: { registration: string; type: string; icao: string } | null;
 }
 
 function guardar(s: SeguimientoGuardado | null) {
@@ -68,16 +75,19 @@ function guardar(s: SeguimientoGuardado | null) {
   }
 }
 
-export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos }: Opciones): SeguimientoEnVivo {
+export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, aeronave = null }: Opciones): SeguimientoEnVivo {
   const [activo, setActivo] = useState<SeguimientoGuardado | null>(null);
   const [creando, setCreando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sinSenal, setSinSenal] = useState(false);
+  // Apagado por defecto (invariante 14, en espíritu): lo público lleva sólo lo que el piloto eligió.
+  const [mostrarMatricula, setMostrarMatricula] = useState(false);
 
   // Lo último que se sabe, sin volver a armar el intervalo en cada lectura del GPS.
   const lecturaRef = useRef(lectura);
-  const rutaRef = useRef({ ruta, puntos });
+  const rutaRef = useRef({ ruta, puntos, aeronave });
   const activoRef = useRef(activo);
+  const mostrarRef = useRef(mostrarMatricula);
   const volandoAntes = useRef(volando);
   const enviando = useRef(false);
   const ultimaEnviada = useRef<LecturaParaCompartir | null>(null);
@@ -85,14 +95,17 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos }: Opcione
 
   useEffect(() => {
     lecturaRef.current = lectura;
-    rutaRef.current = { ruta, puntos };
+    rutaRef.current = { ruta, puntos, aeronave };
     activoRef.current = activo;
+    mostrarRef.current = mostrarMatricula;
   });
 
   // Retomar un seguimiento vigente al montar.
   useEffect(() => {
     try {
-      setActivo(leerSeguimientoGuardado(localStorage.getItem(CLAVE_SEGUIMIENTO), Date.now()));
+      const g = leerSeguimientoGuardado(localStorage.getItem(CLAVE_SEGUIMIENTO), Date.now());
+      setActivo(g);
+      setMostrarMatricula(g?.mostrarMatricula ?? false);
     } catch {
       /* nada */
     }
@@ -101,6 +114,7 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos }: Opcione
   const cerrar = useCallback(() => {
     guardar(null);
     setActivo(null);
+    setMostrarMatricula(false); // el próximo vuelo vuelve a empezar apagado
     setSinSenal(false);
     ultimaEnviada.current = null;
     ultimoIntento.current = null;
@@ -173,12 +187,21 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos }: Opcione
     if (activoRef.current) return urlDeSeguimiento(window.location.origin, activoRef.current.token);
     setCreando(true);
     try {
-      const r = await crearSeguimiento({ ruta: rutaRef.current.ruta, puntos: rutaRef.current.puntos });
+      const { ruta: texto, puntos: pts, aeronave: av } = rutaRef.current;
+      const r = await crearSeguimiento({
+        ruta: texto,
+        puntos: pts.map((p) => ({ lat: p.lat, lon: p.lon, codigo: p.codigo, nombre: p.label ?? "" })),
+        avion: av ? { tipo: av.type ?? "", icao: av.icao ?? "", matricula: av.registration ?? "" } : null,
+        mostrarMatricula: mostrarRef.current,
+      });
       if ("error" in r) {
         setError(r.error);
         return null;
       }
-      const s = { id: r.seguimiento.id, token: r.seguimiento.token, venceAt: r.seguimiento.venceAt };
+      // Si ya existía, manda lo que el backend tiene; si es nuevo, lo que el piloto eligió.
+      const mostrar = r.seguimiento.yaExistia ? r.seguimiento.mostrarMatricula : mostrarRef.current;
+      const s = { id: r.seguimiento.id, token: r.seguimiento.token, venceAt: r.seguimiento.venceAt, mostrarMatricula: mostrar };
+      setMostrarMatricula(mostrar);
       guardar(s);
       ultimaEnviada.current = null;
       ultimoIntento.current = null;
@@ -188,6 +211,27 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos }: Opcione
     } finally {
       setCreando(false);
     }
+  }, []);
+
+  const cambiarMostrarMatricula = useCallback(async (mostrar: boolean) => {
+    const seg = activoRef.current;
+    const matricula = rutaRef.current.aeronave?.registration ?? "";
+    if (!seg) {
+      setMostrarMatricula(mostrar);
+      return;
+    }
+    if (mostrar && !matricula) return;
+    setError(null);
+    const r = await cambiarMatriculaVisible(seg.id, mostrar, matricula);
+    if ("error" in r) {
+      setError(r.error);
+      return; // el interruptor queda como estaba: el link sigue mostrando lo de antes
+    }
+    setMostrarMatricula(mostrar);
+    const nuevo = { ...seg, mostrarMatricula: mostrar };
+    activoRef.current = nuevo;
+    setActivo(nuevo);
+    guardar(nuevo);
   }, []);
 
   const dejarDeCompartir = useCallback(async () => {
@@ -202,6 +246,9 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos }: Opcione
     estado: creando ? "creando" : activo ? "compartiendo" : "apagado",
     url: activo ? urlDeSeguimiento(typeof window === "undefined" ? "" : window.location.origin, activo.token) : null,
     error,
+    mostrarMatricula,
+    sinMatricula: !aeronave?.registration,
+    cambiarMostrarMatricula,
     sinSenal,
     compartir,
     dejarDeCompartir,

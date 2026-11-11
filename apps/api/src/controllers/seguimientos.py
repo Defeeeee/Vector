@@ -1,7 +1,7 @@
 """
 Seguir el vuelo en vivo (migración 041, `services/seguimientos.py`).
 
-- `POST /seguimientos`, `POST /seguimientos/{id}/posicion` y `.../terminar`: con sesión, del
+- `POST /seguimientos`, `POST /seguimientos/{id}/posicion`, `.../matricula` y `.../terminar`: con sesión, del
   piloto, contra su RLS. Lo llama el Mapa en modo vuelo ("Compartir mi vuelo").
 - `GET /publico/seguimientos/{token}`: **sin guard**, lo que abre el link que se manda por
   WhatsApp. Lee con el service role y devuelve `vista_publica`, una lista fija de campos.
@@ -25,6 +25,7 @@ from supabase import Client
 
 from src.auth.guards import auth_guard
 from src.services.seguimientos import (
+    MatriculaVisible,
     PosicionEnVivo,
     SeguimientoCrear,
     agregar_al_recorrido,
@@ -50,6 +51,8 @@ class SeguimientoCreado(BaseModel):
     token: str
     vence_at: str
     ya_existia: bool = False
+    #: Si la matrícula se está mostrando (un seguimiento retomado puede tenerla prendida).
+    mostrar_matricula: bool = False
 
 
 class PosicionAceptada(BaseModel):
@@ -77,22 +80,33 @@ class SeguimientosController(Controller):
 
             def _activo() -> List[Dict[str, Any]]:
                 return (
-                    tabla().select("id,token,vence_at").eq("user_id", user_id).is_("terminado_at", "null").limit(1).execute().data
+                    tabla().select("id,token,vence_at,mostrar_matricula").eq("user_id", user_id).is_("terminado_at", "null").limit(1).execute().data
                     or []
                 )
 
             existente = _activo()
             if existente:
                 f = existente[0]
-                return SeguimientoCreado(id=f["id"], token=f["token"], vence_at=f["vence_at"], ya_existia=True)
+                return SeguimientoCreado(
+                    id=f["id"], token=f["token"], vence_at=f["vence_at"], ya_existia=True, mostrar_matricula=bool(f.get("mostrar_matricula"))
+                )
 
+            matricula = (data.avion.matricula if data.avion else "") or None
+            mostrar = bool(data.mostrar_matricula and matricula)
+            if not mostrar:
+                matricula = None
             perfil = supabase_client.table("profiles").select("first_name").eq("id", user_id).limit(1).execute().data or []
             fila = {
                 "user_id": user_id,
                 "token": nuevo_token(),
                 "nombre": nombre_de_pila(perfil[0].get("first_name") if perfil else None),
                 "ruta": data.ruta,
-                "puntos": [[p.lat, p.lon, p.codigo] for p in data.puntos],
+                "puntos": [[p.lat, p.lon, p.codigo, p.nombre] for p in data.puntos],
+                "avion_tipo": (data.avion.tipo if data.avion else "") or None,
+                "avion_icao": (data.avion.icao if data.avion else "") or None,
+                # La matrícula se guarda sólo si el piloto la prendió (migración 042).
+                "mostrar_matricula": mostrar,
+                "avion_matricula": matricula,
                 "vence_at": vence_en(ahora).isoformat(),
             }
             try:
@@ -101,7 +115,13 @@ class SeguimientosController(Controller):
                 # Dos pedidos a la vez: ganó el otro (índice único). Se devuelve el suyo.
                 otra = _activo()
                 if otra:
-                    return SeguimientoCreado(id=otra[0]["id"], token=otra[0]["token"], vence_at=otra[0]["vence_at"], ya_existia=True)
+                    return SeguimientoCreado(
+                        id=otra[0]["id"],
+                        token=otra[0]["token"],
+                        vence_at=otra[0]["vence_at"],
+                        ya_existia=True,
+                        mostrar_matricula=bool(otra[0].get("mostrar_matricula")),
+                    )
                 raise
             if not r.data:
                 raise ClientException(detail="No se pudo empezar a compartir el vuelo.")
@@ -144,12 +164,42 @@ class SeguimientosController(Controller):
                     "ultima_gs_kt": data.gs_kt,
                     "ultima_track": data.track,
                     "ultima_at": ahora.isoformat(),
-                    "recorrido": agregar_al_recorrido(fila.get("recorrido") or [], data.lat, data.lon),
+                    "recorrido": agregar_al_recorrido(
+                        fila.get("recorrido") or [], data.lat, data.lon, data.alt_ft, int(ahora.timestamp())
+                    ),
                 }
             ).eq("id", str(seguimiento_id)).eq("user_id", user_id).execute()
             return PosicionAceptada(aceptada=True, vence_at=fila["vence_at"])
 
         return await asyncio.to_thread(_agregar)
+
+    @post("/{seguimiento_id:uuid}/matricula", status_code=200)
+    async def matricula(
+        self, request: Request, supabase_client: Client, seguimiento_id: UUID, data: MatriculaVisible
+    ) -> Dict[str, bool]:
+        """Prende o apaga la matrícula del link. Apagada, se borra de la base; prenderla pide mandarla."""
+        user_id = str(request.state.user.id)
+        if data.mostrar and not data.matricula:
+            raise ClientException(detail="Falta la matrícula para mostrarla.", status_code=400)
+
+        def _cambiar() -> None:
+            r = (
+                supabase_client.table("seguimientos_en_vivo")
+                .update(
+                    {
+                        "mostrar_matricula": data.mostrar,
+                        "avion_matricula": data.matricula if data.mostrar else None,
+                    }
+                )
+                .eq("id", str(seguimiento_id))
+                .eq("user_id", user_id)
+                .execute()
+            )
+            if not r.data:
+                raise NotFoundException(_NO_EXISTE)
+
+        await asyncio.to_thread(_cambiar)
+        return {"mostrar_matricula": data.mostrar}
 
     @post("/{seguimiento_id:uuid}/terminar", status_code=200)
     async def terminar(self, request: Request, supabase_client: Client, seguimiento_id: UUID) -> Dict[str, bool]:
@@ -199,7 +249,7 @@ class SeguimientosPublicosController(Controller):
             filas = (
                 SupabaseManager.get_service_client()
                 .table("seguimientos_en_vivo")
-                .select("nombre,ruta,puntos,vence_at,terminado_at,ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido")
+                .select("nombre,ruta,puntos,created_at,avion_tipo,avion_icao,avion_matricula,mostrar_matricula,vence_at,terminado_at,ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido")
                 .eq("token", token)
                 .limit(1)
                 .execute()

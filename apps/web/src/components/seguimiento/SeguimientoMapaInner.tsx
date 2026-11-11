@@ -13,11 +13,15 @@ import type { SeguimientoPublico } from "@/lib/seguimiento";
  *
  * Se dibuja una vez y se actualiza en el lugar (no se recrea el mapa cada 15 s: perdería el zoom
  * que haya puesto quien mira). Se encuadra todo la primera vez; después el mapa acompaña al avión
- * sólo hasta que quien mira lo mueve con la mano (`centrar` lo vuelve a enganchar).
+ * sólo hasta que quien mira lo mueve con la mano (`centrar` lo vuelve a enganchar). `encuadrar`
+ * vuelve a mostrar la ruta entera. Lleva los nombres de los puntos, la salida y el destino marcados,
+ * y el avión orientado por el rumbo. Se adapta solo al tamaño del contenedor (`ResizeObserver`):
+ * en el teléfono la hoja de datos y la rotación cambian el alto.
  */
 
 const CIAN = "#38bdf8";
 
+const SOMBRA = "text-shadow:0 0 3px #000,0 0 3px #000,0 0 6px #000";
 const escapar = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 function iconoAvion(track: number | null): L.DivIcon {
@@ -36,9 +40,12 @@ function iconoAvion(track: number | null): L.DivIcon {
 export default function SeguimientoMapaInner({
   datos,
   centrar,
+  encuadrar,
   onSuelto,
 }: {
   datos: SeguimientoPublico;
+  /** Sube cada vez que quien mira toca "Ver la ruta": vuelve a encuadrar todo. */
+  encuadrar: number;
   /** Sube cada vez que quien mira toca "Centrar": vuelve a acompañar al avión. */
   centrar: number;
   /** Quien mira movió el mapa. */
@@ -71,7 +78,11 @@ export default function SeguimientoMapaInner({
       alSoltar.current();
     });
     mapaRef.current = mapa;
+    // El contenedor cambia de alto (hoja del teléfono, rotación, barra del navegador): Leaflet no se entera solo.
+    const observador = new ResizeObserver(() => mapa.invalidateSize({ pan: false }));
+    observador.observe(el);
     return () => {
+      observador.disconnect();
       mapa.remove();
       mapaRef.current = null;
       capas.current = null;
@@ -87,12 +98,28 @@ export default function SeguimientoMapaInner({
     c.ruta.clearLayers();
     const prevista = datos.puntos.map(([la, lo]) => [la, lo] as L.LatLngTuple);
     if (prevista.length > 1) L.polyline(prevista, { color: "#ffffff", weight: 2, opacity: 0.55, dashArray: "6 6", interactive: false }).addTo(c.ruta);
-    for (const [la, lo, codigo] of datos.puntos) {
-      const punto = L.circleMarker([la, lo], { radius: 4, color: "#0b0d10", weight: 1.5, fillColor: "#ffffff", fillOpacity: 0.95, interactive: false }).addTo(c.ruta);
-      if (codigo) punto.bindTooltip(escapar(codigo), { permanent: true, direction: "top", offset: [0, -4], className: "!bg-transparent !border-0 !shadow-none !text-white !font-mono !text-[10px] !font-bold" });
-    }
+    datos.puntos.forEach(([la, lo, codigo, nombre], i) => {
+      const extremo = i === 0 || i === datos.puntos.length - 1;
+      const punto = L.circleMarker([la, lo], {
+        radius: extremo ? 7 : 4,
+        color: extremo ? CIAN : "#0b0d10",
+        weight: extremo ? 3 : 1.5,
+        fillColor: "#ffffff",
+        fillOpacity: 0.95,
+        interactive: false,
+      }).addTo(c.ruta);
+      if (!codigo && !extremo) return;
+      const rol = i === 0 ? "SALIDA" : i === datos.puntos.length - 1 && datos.puntos.length > 1 ? "DESTINO" : "";
+      const html =
+        `<span style="${SOMBRA}">` +
+        (rol ? `<span style="color:${CIAN}">${rol}</span> ` : "") +
+        `${escapar(codigo)}` +
+        (extremo && nombre ? `<br><span style="font-weight:500;opacity:.85">${escapar(nombre)}</span>` : "") +
+        `</span>`;
+      punto.bindTooltip(html, { permanent: true, direction: "top", offset: [0, -6], className: "!bg-transparent !border-0 !shadow-none !text-white !font-mono !text-[10px] !font-bold !text-center" });
+    });
 
-    const volado = datos.recorrido.map(([la, lo]) => [la, lo] as L.LatLngTuple);
+    const volado = datos.recorrido.map((p) => [p[0], p[1]] as L.LatLngTuple);
     const u = datos.ultima;
     if (u) volado.push([u.lat, u.lon]);
     c.estela.setLatLngs(volado);
@@ -117,6 +144,16 @@ export default function SeguimientoMapaInner({
       mapa.panTo([u.lat, u.lon], { animate: true });
     }
   }, [datos]);
+
+  // "Ver la ruta": encuadra todo otra vez.
+  useEffect(() => {
+    if (encuadrar === 0) return;
+    const mapa = mapaRef.current;
+    const todo = [...datos.puntos.map(([la, lo]) => [la, lo] as L.LatLngTuple), ...datos.recorrido.map((p) => [p[0], p[1]] as L.LatLngTuple)];
+    if (datos.ultima) todo.push([datos.ultima.lat, datos.ultima.lon]);
+    if (mapa && todo.length > 0) mapa.fitBounds(L.latLngBounds(todo), { padding: [48, 48], maxZoom: 12, animate: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [encuadrar]);
 
   // "Centrar": vuelve a acompañar al avión.
   useEffect(() => {

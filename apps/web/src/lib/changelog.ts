@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.21.0",
+    fecha: "2026-11-11",
+    titulo: "Tu vuelo, en detalle para quien te sigue",
+    novedades: [
+      {
+        icono: "compartir",
+        titulo: "El link de tu vuelo muestra mucho más",
+        texto: "Quien te sigue ve el avión, la ruta con sus nombres, cuánto falta y a qué hora llegás, si subís o bajás, el perfil de altura y el clima en tu destino explicado fácil. Se ve bien en el teléfono y en la compu. La matrícula sólo aparece si la prendés.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+    ],
+  },
+  {
     version: "3.20.0",
     fecha: "2026-11-11",
     titulo: "Para volar acompañado",

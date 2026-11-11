@@ -81,7 +81,11 @@ describe("lo que el teléfono recuerda", () => {
   const ahora = Date.parse("2026-11-11T15:00:00Z");
   it("un seguimiento vigente se retoma", () => {
     const t = JSON.stringify({ id, token, venceAt: "2026-11-12T00:00:00Z" });
-    expect(leerSeguimientoGuardado(t, ahora)).toEqual({ id, token, venceAt: "2026-11-12T00:00:00Z" });
+    expect(leerSeguimientoGuardado(t, ahora)).toEqual({ id, token, venceAt: "2026-11-12T00:00:00Z", mostrarMatricula: false });
+  });
+  it("recuerda si la matrícula estaba prendida", () => {
+    const t = JSON.stringify({ id, token, venceAt: "2026-11-12T00:00:00Z", mostrarMatricula: true });
+    expect(leerSeguimientoGuardado(t, ahora)?.mostrarMatricula).toBe(true);
   });
   it("uno vencido, roto o ajeno es 'no hay'", () => {
     expect(leerSeguimientoGuardado(JSON.stringify({ id, token, venceAt: "2026-11-11T14:00:00Z" }), ahora)).toBeNull();
