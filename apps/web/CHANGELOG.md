@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.17.1 — Todos los que cambiaste
+
+_11 de noviembre de 2026_
+
+- **Pasar al CAD revisa todos los vuelos que cambiaste** — Si cambiaste la autoridad de muchos vuelos, ahora se revisan todos en la misma conexión, no de a doce.
+
 ## v3.17.0 — Quién certifica, de una vez
 
 _10 de noviembre de 2026_

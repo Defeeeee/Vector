@@ -1443,6 +1443,8 @@ export function anomaliasConElCad(
  * otra vez sólo si algo cambió (`lib/anac-vigencia.ts`: se le pregunta lo menos posible).
  */
 export const TOPE_DETALLES_POR_CONEXION = 12;
+/** Los que cambiaron de un lado se leen todos en la misma conexión, con este techo. */
+export const TOPE_CAMBIADOS = 80;
 export const DIAS_REVISION = 30;
 
 export interface RevisionGuardada {
@@ -1472,18 +1474,22 @@ export function paraLeerEnDetalle(
   tope = TOPE_DETALLES_POR_CONEXION
 ): number[] {
   const porId = new Map(enElCad.map((v) => [Number(v.vueloTripulanteID), v]));
-  // Primero los que cambiaron o nunca se leyeron, después los vencidos: si el piloto cambió la
-  // autoridad de 30 vuelos, esos van antes que un repaso de rutina (3.17.0).
-  const prioridad = (b: BorradorCad & { cadId: number }): number | null => {
+  // Tres clases (3.17.1): los que cambiaron desde la última lectura (0) se leen **todos**, hasta
+  // `TOPE_CAMBIADOS`: si el piloto cambió la autoridad de 24 vuelos, los 24 tienen que saltar en
+  // esta conexión, no de a 12 (Federico: "me tira sólo 10 y batcheé como 24"). Los que nunca se
+  // leyeron (1) y los vencidos (2) son rutina y llevan el tope de siempre.
+  const clase = (b: BorradorCad & { cadId: number }): number | null => {
     const g = guardadas[String(b.cadId)];
-    if (!g || g.firma !== firmaDeRevision(b, porId.get(b.cadId))) return 0;
-    return ahora.getTime() - Date.parse(g.cuando) > DIAS_REVISION * 864e5 ? 1 : null;
+    if (!g) return 1;
+    if (g.firma !== firmaDeRevision(b, porId.get(b.cadId))) return 0;
+    return ahora.getTime() - Date.parse(g.cuando) > DIAS_REVISION * 864e5 ? 2 : null;
   };
-  return marcados
+  const ordenados = marcados
     .filter((b) => porId.has(b.cadId))
-    .map((b) => ({ b, p: prioridad(b) }))
-    .filter((x): x is { b: BorradorCad & { cadId: number }; p: number } => x.p !== null)
-    .sort((x, y) => x.p - y.p || y.b.fechaHoraSalida.localeCompare(x.b.fechaHoraSalida))
-    .slice(0, tope)
-    .map((x) => x.b.cadId);
+    .map((b) => ({ b, c: clase(b) }))
+    .filter((x): x is { b: BorradorCad & { cadId: number }; c: number } => x.c !== null)
+    .sort((x, y) => x.c - y.c || y.b.fechaHoraSalida.localeCompare(x.b.fechaHoraSalida));
+  const cambiados = ordenados.filter((x) => x.c === 0).slice(0, TOPE_CAMBIADOS);
+  const rutina = ordenados.filter((x) => x.c !== 0).slice(0, tope);
+  return [...cambiados, ...rutina].map((x) => x.b.cadId);
 }

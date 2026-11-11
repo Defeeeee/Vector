@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.17.1",
+    fecha: "2026-11-11",
+    titulo: "Todos los que cambiaste",
+    novedades: [
+      {
+        icono: "campana",
+        titulo: "Pasar al CAD revisa todos los vuelos que cambiaste",
+        texto: "Si cambiaste la autoridad de muchos vuelos, ahora se revisan todos en la misma conexión, no de a doce.",
+        href: "/dashboard/history/cad",
+        cta: "Pasar al CAD",
+      },
+    ],
+  },
+  {
     version: "3.17.0",
     fecha: "2026-11-10",
     titulo: "Quién certifica, de una vez",

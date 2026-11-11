@@ -539,8 +539,9 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     (3.17.0, "Elegir", `AutoridadEnLoteBitacora`): se eligen vuelos, con los filtros, estén o no en el
     CAD. Un vuelo ya pasado con otra autoridad **salta en "Pasar al CAD"** como que no coincide
     (`diferenciasConElCad`, campo `autoridad`, contra `autoridadCertificanteID` y `observaciones` del
-    detalle; la firma de revisión incluye la autoridad y los que cambiaron se leen primero) hasta que
-    se actualice en el CAD.
+    detalle; la firma de revisión incluye la autoridad) hasta que se actualice en el CAD. Los vuelos
+    que cambiaron se leen **todos** en la conexión (3.17.1, `TOPE_CAMBIADOS` = 80); el tope de 12
+    queda para la rutina.
   - "Corregir" lleva a `/dashboard/history?editar=<id>`, que abre ese vuelo en edición.
   - **Probado contra el CAD real** (Federico, 2026-10-21): borró un vuelo en el CAD y lo
     volvió a cargar desde el panel. Las listas del CAD son públicas (sin sesión). Los

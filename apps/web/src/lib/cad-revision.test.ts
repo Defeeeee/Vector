@@ -175,4 +175,12 @@ describe("la autoridad certificante contra el CAD (3.17.0)", () => {
     };
     expect(paraLeerEnDetalle([viejo, cambiado], enElCad, guardadas, ahora)).toEqual([2, 1]);
   });
+
+  it("los cambiados se leen todos, aunque sean más que el tope de rutina", () => {
+    const ahora = new Date("2026-11-10T12:00:00Z");
+    const muchos = Array.from({ length: 24 }, (_, i) => ({ ...conAutoridad, vectorId: `v${i}`, cadId: 1000 + i, fechaHoraSalida: `2026-10-${String(i + 1).padStart(2, "0")}T10:00:00Z` }));
+    const enElCad = muchos.map((m) => ({ ...fila, vueloTripulanteID: m.cadId })) as unknown as VueloEnElCad[];
+    const guardadas = Object.fromEntries(muchos.map((m) => [String(m.cadId), { firma: "la de antes", cuando: "2026-11-09T00:00:00Z", diferencias: [] }]));
+    expect(paraLeerEnDetalle(muchos, enElCad, guardadas, ahora)).toHaveLength(24);
+  });
 });
