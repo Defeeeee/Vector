@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.29.0",
+    fecha: "2026-11-12",
+    titulo: "Niveles VFR según tu derrota",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "¿Esa altitud te corresponde?",
+        texto: "En \"Vientos en altura\", cada altitud dice si es nivel de crucero VFR para tu derrota magnética (RAAC 91.159 y AIP ENR 1.7) y, desde 3.000 ft sobre el terreno, el nivel de vuelo. Si la ruta cambia de semicírculo, te dice en cuántos tramos corresponde.",
+        href: "/dashboard/plan-de-vuelo",
+        cta: "Ver tus planes",
+      },
+    ],
+  },
+  {
     version: "3.28.0",
     fecha: "2026-11-12",
     titulo: "Vientos en altura para tu plan",

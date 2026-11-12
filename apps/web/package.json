@@ -1,6 +1,6 @@
 {
   "name": "FlightLog-FrontEnd",
-  "version": "3.28.0",
+  "version": "3.29.0",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -13,6 +13,7 @@
     "build:runways": "node scripts/build-runways.mjs",
     "build:navaids": "node scripts/build-navaids.mjs",
     "build:aip": "node scripts/build-aip.mjs",
+    "build:niveles-vfr": "node scripts/build-niveles-vfr.mjs",
     "build:horarios-aro": "node scripts/build-horarios-aro.mjs",
     "build:fixes": "node scripts/build-fixes.mjs",
     "build:aerovias": "node scripts/build-aerovias.mjs",

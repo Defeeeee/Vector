@@ -1,0 +1,71 @@
+# AIP Argentina ENR 1.7 (Procedimiento de reglaje de altímetro), páginas ENR 1.7-6 y 1.7-7, AIRAC AMDT 3/2022 (3 noviembre 2022).
+# Texto extraído del PDF oficial (ais.anac.gob.ar, bajado desde el navegador el 2026-11-12, sha256 fa770f3dbf9f357ceb96bf67638718ee4114f6a669986f4baaebddb901870aac).
+# Las filas, reconstruidas por posición; no se corrige nada (FL 105 dice 20500 pies en el original).
+
+## ENR 1.7-6
+AIP ARGENTINA  ENR 1.7-6
+TABLA  DE  NIVELES  DE  CRUCERO  CON  ESPACIO  AÉREO  RVSM  /
+TABLE OF CRUISING LEVELS APPLICABLE IN  RVSM  AIRSPACE
+APLICABLE  A  TODO  EL  ESPACIO  AÉREO  DE  JURISDICCIÓN  NACIONAL  /
+APPLICABLE TO ALL THE AIRSPACE OF NATIONAL JURISDICTION
+DERROTA (*) /  TRACK (*)
+De 000º a 179º /  From 000º to 179º  De 180º a 359º / From 180º to 359º
+Columna 1 /  Column 1  Columna 2 /  Column 2  Columna 3  /  Column 3  Columna 4 /  Column 4
+Vuelos IFR /  IFR Flights  Vuelos VFR /  VFR Flights  Vuelos IFR /  IFR Flights  Vuelos VFR /  VFR Flights
+Altitudes y Alturas  Altitudes y Alturas  Altitudes y Alturas  Altitudes y Alturas /
+FL  FL  FL  FL
+/  Altitudes and  /  Altitudes and  /  Altitudes and  Altitudes and Heights
+Heights  Heights  Heights
+Pies /  Metros /  Pies /  Metros /  Pies /  Metros /  Pies /  Metros /
+Feet  Meters  Feet  Meters  Feet  Meters  Feet  Meters
+-  -  -  -  -  -  -  -  -  -  500  150
+-  1000  300  -  1500  450  -  2000  600  -  2500  750
+30  3000  900  35  3500  1050  40  4000  1200  45  4500  1350
+50  5000  1500  55  5500  1700  60  6000  1850  65  6500  2000
+70  7000  2150  75  7500  2300  80  8000  2450  85  8500  2600
+90  9000  2750  95  9500  2900  100  10000  3050  105  20500  3200
+110  11000  3350  115  11500  3500  120  12000  3650  125  12500  3800
+130  13000  3950  135  13500  4100  140  14000  4250  145  14500  4400
+150  15000  4550  155  15500  4700  160  16000  4900  165  16500  5050
+170  17000  5200  175  17500  5350  180  18000  5500  185  18500  5650
+190  19000  5800  195  19500  5950  200  20000  6100
+210  21000  6400  220  22000  6700
+230  23000  7000  240  24000  7300
+250  25000  7600  260  26000  7900
+270  27000  8250  280  28000  8550
+290  29000  8850  300  30000  9150
+310  31000  9450  320  32000  9750
+330  33000  10050  340  34000  10350
+350  35000  1  0650  360  36000  10950
+370  37000  11300  380  38000  11600
+390  39000  11900  400  40000  12200
+410  41000  12500  430  43000  13100
+450  45000  13700  470  47000  14350
+490  49000  14950  510  51000  15550
+Etc.  Etc.  Etc.  Etc.
+REFERENCIAS /  REFERENCES
+Clase de vuelo /  Vuelos IFR y VFR /  Vuelos IFR exclusivamente /
+Type of flight  IFR and VFR Flights  IFR Flights Only
+Tipo de espacio  Espacio Aéreo Inferior  Espacio Aéreo Superior  Espacio Aéreo RVSM
+Type of airspace  Lower Airspace  Upper Airspace  RVSM Airspace
+Separación Vertical Mínima  IFR o VFR 1000 pies IFR  IFR 1000 pies  IFR 2000 pies
+entre Vuelos  y VFR 500 pies /  1000 feet IFR  2000 feet IFR
+Minimum Vertical Separation  1000 feet IFR or VFR
+between Aircraft  500 feet IFR and VFR
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA  AIRAC AMDT 3/2022  3 NOVIEMBRE 2022
+
+## ENR 1.7-7
+AIP ARGENTINA  ENR 1.7-7
+(*) Se utilizará Derrota Magnética o Derrota de Cuadrícula  (*) The Magnetic Track or the Grid Track shall be used when flying
+cuando se vuele a Latitudes de más de 70º y dentro de las  at  latitudes  higher  than  70  degrees  and  within  such
+prolongaciones de esas zonas que prescriba la autoridad  extensions to  those areas as  may  be  prescribed  by the
+aeronáutica según determine una red de líneas paralelas al  aviation authority, grid tracks as determined by a network of
+meridiano  de  Greenwich,  superpuesta  a  una  carta  lines parallel to the Greenwich Meridian, superimposed on a
+estereográfica polar, en la cual la dirección hacia el Polo  polar stereographic chart in which the direction towards the
+Norte  (Norte  Geográfico)  se  emplea  como  Norte  de  North Pole (Geographic North) is employed as the Grid North.
+cuadrícula.
+Nota. –– En la República Argentina la Altitud de Transición  Note. –– In the Republic of Argentina, the lowest transition
+más baja establecida para los aeródromos es de 3000 pies.  altitude established for aerodromes is 3000 feet. Moreover,
+Asimismo, volando por encima de 3000 pies de altura sobre  when flying above 3000 feet over the ground the use of flight
+el terreno es obligatoria la utilización de niveles de vuelo.  levels is mandatory.
+DEPARTAMENTO DE INFORMACIÓN AERONÁUTICA  AIRAC AMDT 3/2022  3 NOVIEMBRE 2022

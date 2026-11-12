@@ -42,6 +42,7 @@
 import { windComponents, windTriangle } from "./aviation";
 import { rumboVerdadero } from "./navegacion";
 import { vientoPromedioPonderado } from "./viento-ruta";
+import { marcaVfr, type MarcaVfr } from "./niveles-vfr";
 import type { Viento } from "./navegacion";
 
 /** Un tramo de la ruta, de un nodo ubicado al siguiente. */
@@ -98,6 +99,11 @@ export interface FilaAltitud {
   } | null;
   motivo: MotivoSinDato | null;
   esMejor: boolean;
+  /**
+   * Si es un nivel de crucero VFR para la derrota (`lib/niveles-vfr.ts`). Información: no
+   * entra en `esMejor`, que sólo mira el tiempo.
+   */
+  vfr?: MarcaVfr;
 }
 
 export interface EntradaVientos {
@@ -108,6 +114,10 @@ export interface EntradaVientos {
   vientos: (Viento | null)[][];
   ascenso?: ParametrosAscenso;
   consumoLh?: number | null;
+  /** Variación magnética de la ruta (W positiva), para los niveles VFR; sin ella no hay marca. */
+  variacionW?: number | null;
+  /** La elevación más alta entre la salida y el destino, ft, para los 3.000 ft sobre el terreno. */
+  elevacionMaxFt?: number | null;
 }
 
 /** Las altitudes de crucero VFR de la tabla: 1.500 a 9.500 ft cada 1.000. */
@@ -136,7 +146,7 @@ function filaVacia(altitudFt: number, motivo: MotivoSinDato): FilaAltitud {
 }
 
 export function vientosPorAltitud(e: EntradaVientos): FilaAltitud[] {
-  const { tramos, tasKt, altitudesFt, vientos, ascenso, consumoLh } = e;
+  const { tramos, tasKt, altitudesFt, vientos, ascenso, consumoLh, variacionW, elevacionMaxFt } = e;
   const total = tramos.reduce((s, t) => s + t.distanciaNm, 0);
 
   const filas = altitudesFt.map((altitudFt, a): FilaAltitud => {
@@ -232,6 +242,9 @@ export function vientosPorAltitud(e: EntradaVientos): FilaAltitud[] {
     }
   });
   if (mejor >= 0) filas[mejor].esMejor = true;
+  // Los niveles VFR se marcan aparte del tiempo: no cambian cuál es la mejor.
+  const cursos = tramos.map((t) => t.cursoT);
+  for (const f of filas) f.vfr = marcaVfr(f.altitudFt, cursos, variacionW, elevacionMaxFt);
   return filas;
 }
 

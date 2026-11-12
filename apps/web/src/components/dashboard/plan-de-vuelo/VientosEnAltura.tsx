@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Loader2, Sparkles, Wind } from "lucide-react";
 import { distanciaNmPrecisa } from "@/lib/distance";
 import type { Viento } from "@/lib/navegacion";
+import { nivelDeVuelo } from "@/lib/niveles-vfr";
 import { horasDeMitadDeTramo, horaUtcDeTextos, textoHoraUtc } from "@/lib/viento-ruta";
 import {
   IAS_ASCENSO_KT,
@@ -38,6 +39,10 @@ interface Traido {
   horaModeloMin: number | null;
   horaModeloMax: number | null;
   elevacionFt: number | null;
+  /** La más alta entre la salida y el destino (para los 3.000 ft sobre el terreno). */
+  elevacionMaxFt: number | null;
+  /** Variación magnética W de la salida (o del destino si la salida no la tiene). */
+  variacionW: number | null;
 }
 
 const MOTIVOS: Record<MotivoSinDato, string> = {
@@ -145,7 +150,13 @@ export default function VientosEnAltura({
     const pedida = clave;
     try {
       const horas = horasDeMitadDeTramo(salidaMs, tramos.map((t) => t.distanciaNm), tasKt);
-      const [res, elev] = await Promise.all([
+      const ficha = (codigo?: string) =>
+        codigo
+          ? fetch(`/api/airports/search?icao=${encodeURIComponent(codigo)}`)
+              .then((r) => (r.ok ? (r.json() as Promise<{ elevation?: number; variacionW?: number }>) : null))
+              .catch(() => null)
+          : Promise.resolve(null);
+      const [res, elev, elevDestino] = await Promise.all([
         fetch("/api/viento", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -154,11 +165,8 @@ export default function VientosEnAltura({
             altitudesFt: altitudes,
           }),
         }),
-        salida?.codigo
-          ? fetch(`/api/airports/search?icao=${encodeURIComponent(salida.codigo)}`)
-              .then((r) => (r.ok ? (r.json() as Promise<{ elevation?: number }>) : null))
-              .catch(() => null)
-          : Promise.resolve(null),
+        ficha(salida?.codigo),
+        ficha(destino?.codigo),
       ]);
       if (!res.ok) {
         const m = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -175,6 +183,13 @@ export default function VientosEnAltura({
         horaModeloMin: todos.length ? Math.min(...todos) : null,
         horaModeloMax: todos.length ? Math.max(...todos) : null,
         elevacionFt: typeof elev?.elevation === "number" ? elev.elevation : null,
+        // Las dos elevaciones tienen que saberse: con una sola, "3.000 ft sobre el terreno" sería adivinar.
+        elevacionMaxFt:
+          typeof elev?.elevation === "number" && typeof elevDestino?.elevation === "number"
+            ? Math.max(elev.elevation, elevDestino.elevation)
+            : null,
+        variacionW:
+          typeof elev?.variacionW === "number" ? elev.variacionW : typeof elevDestino?.variacionW === "number" ? elevDestino.variacionW : null,
       });
       setElegida(null);
       setEstado("quieto");
@@ -196,6 +211,8 @@ export default function VientosEnAltura({
             vientos: vigente.vientos,
             ascenso: { iasKt: iasN, regimenFpm: regN, elevacionFt: vigente.elevacionFt ?? 0 },
             consumoLh,
+            variacionW: vigente.variacionW,
+            elevacionMaxFt: vigente.elevacionMaxFt,
           })
         : [],
     [vigente, tasKt, tramos, altitudes, iasN, regN, consumoLh]
@@ -282,16 +299,28 @@ export default function VientosEnAltura({
                   const d = f.datos;
                   const abierta = elegida === f.altitudFt;
                   const cols = conLitros ? 7 : 6;
+                  const v = f.vfr;
+                  const obligatorio = v?.obligatorio === true;
+                  const coincide = v && v.coinciden !== null && v.tramos > 0 ? v.coinciden : 0;
+                  const textoVfr =
+                    v && v.coinciden !== null && coincide > 0
+                      ? coincide === v.tramos
+                        ? "VFR"
+                        : `VFR en ${coincide} de ${v.tramos} tramos`
+                      : null;
+                  const textoBajo = v?.obligatorio === false ? "debajo de 3.000 ft s/terreno: recomendado, no obligatorio" : null;
+                  const alClick = d ? () => setElegida(abierta ? null : f.altitudFt) : undefined;
+                  const fondo = f.esMejor ? "bg-aviation-cyan/10" : abierta ? "bg-white/[0.03]" : "";
+                  const hayAviso = !!(textoVfr || textoBajo);
                   return (
+                    <Fragment key={f.altitudFt}>
                     <tr
-                      key={f.altitudFt}
-                      onClick={d ? () => setElegida(abierta ? null : f.altitudFt) : undefined}
-                      className={`border-b border-zinc-100 dark:border-white/5 ${d ? "cursor-pointer" : "opacity-60"} ${
-                        f.esMejor ? "bg-aviation-cyan/10" : abierta ? "bg-white/[0.03]" : ""
-                      }`}
+                      onClick={alClick}
+                      className={`${hayAviso ? "" : "border-b border-zinc-100 dark:border-white/5"} ${d ? "cursor-pointer" : "opacity-60"} ${fondo}`}
                     >
                       <td className="py-2 px-1 text-left data text-[12px] whitespace-nowrap font-bold text-zinc-900 dark:text-white">
                         {miles(f.altitudFt)}
+                        {obligatorio && <span className="block font-mono text-[9px] tracking-wider text-zinc-400 dark:text-zinc-500">{nivelDeVuelo(f.altitudFt)}</span>}
                         {f.esMejor && <span className="block font-mono text-[8px] uppercase tracking-wider text-aviation-cyan">Menos tiempo</span>}
                       </td>
                       {d ? (
@@ -317,6 +346,16 @@ export default function VientosEnAltura({
                         </td>
                       )}
                     </tr>
+                    {hayAviso && (
+                      <tr onClick={alClick} className={`border-b border-zinc-100 dark:border-white/5 ${d ? "cursor-pointer" : "opacity-60"} ${fondo}`}>
+                        <td colSpan={cols} className="px-1 pb-1.5 -mt-1 text-left text-[10px] text-zinc-500 dark:text-zinc-400">
+                          {textoVfr && <span className="font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-200">{textoVfr}</span>}
+                          {textoVfr && textoBajo && " · "}
+                          {textoBajo}
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   );
                 })}
               </tbody>
@@ -363,6 +402,14 @@ export default function VientosEnAltura({
               Open-Meteo, pronóstico; no reemplaza el briefing.
               {sinUbicar.length > 0 && ` La ruta no cuenta lo que no se ubicó (${sinUbicar.join(", ")}).`}
               {sinDatoN > 0 && ` ${sinDatoN} ${sinDatoN === 1 ? "altitud sin dato" : "altitudes sin dato"}: no se completan con otras.`}
+            </p>
+            <p>
+              Niveles VFR: RAAC 91.159 y AIP ENR 1.7 (columnas 2 y 4), derrota magnética. Es información: no cambia cuál es la de menos
+              tiempo ni lo que ponés en la casilla 15. Desde 3.000 ft sobre el terreno son obligatorios (y se usan niveles de vuelo);
+              debajo, recomendados. La altura se mide sobre el aeródromo más alto de la ruta, pero el terreno puede ser más alto
+              que los aeródromos.
+              {vigente.variacionW === null && " No se sabe la variación magnética de la zona: sin marca de nivel VFR."}
+              {vigente.elevacionMaxFt === null && " No se sabe la elevación de la salida o del destino: sin la distinción de los 3.000 ft ni los niveles de vuelo."}
             </p>
           </div>
         </>

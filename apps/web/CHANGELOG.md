@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.29.0 — Niveles VFR según tu derrota
+
+_12 de noviembre de 2026_
+
+- **¿Esa altitud te corresponde?** — En "Vientos en altura", cada altitud dice si es nivel de crucero VFR para tu derrota magnética (RAAC 91.159 y AIP ENR 1.7) y, desde 3.000 ft sobre el terreno, el nivel de vuelo. Si la ruta cambia de semicírculo, te dice en cuántos tramos corresponde.
+
 ## v3.28.0 — Vientos en altura para tu plan
 
 _12 de noviembre de 2026_
