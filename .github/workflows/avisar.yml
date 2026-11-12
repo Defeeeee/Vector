@@ -1,0 +1,34 @@
+# Manda un aviso por ntfy (secreto `NTFY_TOPIC`, el mismo de los workflows del AIP, MADHEL y
+# NOTAM). Se dispara a mano o desde una sesión de trabajo (`gh workflow run avisar.yml -f
+# titulo=… -f mensaje=…`) cuando hay que avisarle algo a Federico en el teléfono y el tópico no
+# se puede leer desde afuera de Actions. Creado el 2026-11-12 para avisar que `.ar` publicó la
+# delegación de vectoraero.ar.
+name: Avisar por ntfy
+
+on:
+  workflow_dispatch:
+    inputs:
+      titulo:
+        description: Título del aviso
+        required: true
+      mensaje:
+        description: Texto del aviso
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  avisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: ntfy
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TITULO: ${{ inputs.titulo }}
+          MENSAJE: ${{ inputs.mensaje }}
+        run: |
+          [ -n "$NTFY_TOPIC" ] || { echo "Falta el secreto NTFY_TOPIC"; exit 1; }
+          curl -sf -H "Title: $TITULO" -d "$MENSAJE" "https://ntfy.sh/$NTFY_TOPIC" > /dev/null
+          echo "Aviso mandado."
