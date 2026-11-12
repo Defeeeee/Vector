@@ -29,6 +29,9 @@ from src.services.seguimientos import (
     GPS_VIGENTE_S,
     MARGEN_DE_VENCIMIENTO,
     SEGUNDOS_PARA_ATERRIZAR,
+    SILENCIO_ATERRIZAJE_S,
+    HUECO_ENTRE_VUELOS_S,
+    EN_CURSO_AL_ABRIR_S,
     TOPE_RECORRIDO_PUBLICO,
     agregar_al_recorrido,
     anotar_vista,
@@ -344,15 +347,87 @@ check("un avión que desaparece en el aire no 'aterrizó': sin datos", evaluar_v
 check("un salto suelto de velocidad no es un vuelo", not hubo_vuelo(muestras_de_adsb([adsb(20, 1, 1, None, 0, True), adsb(21, 1, 1, 100, 60), adsb(22, 1, 1, None, 0, True)])) and evaluar_vuelo(fila_plan, [adsb(20, 1, 1, None, 0, True), adsb(21, 1, 1, 100, 60), adsb(22, 1, 1, None, 0, True)], T0 + timedelta(minutes=40))["aterrizo_at"] is None)
 check("30 a 40 kt no afirma ni aire ni tierra", not hubo_vuelo(muestras_de_adsb([adsb(m, 1, 1, 200, 35) for m in range(30, 40)])))
 # El vuelo de otro piloto con el mismo avión, antes del tuyo.
-anterior = [adsb(15, -34.7, -58.9, 1200, 90), adsb(16, -34.7, -58.9, 700, 80), adsb(17, -34.7, -58.9, 50, 55), adsb(18, -34.7, -58.9, None, 15, True), adsb(19, -34.7, -58.9, None, 0, True)]
-check("un vuelo anterior de otro piloto (ya en el aire al empezar la ventana) no cuenta", sin_el_vuelo_anterior(muestras_de_adsb(anterior))[0]["tierra"] is True and len(sin_el_vuelo_anterior(muestras_de_adsb(anterior))) == 2)
+# (Arranca justo al abrirse la ventana, en T0: así es "ya estaba volando".)
+anterior = [adsb(0, -34.7, -58.9, 1200, 90), adsb(1, -34.7, -58.9, 700, 80), adsb(2, -34.7, -58.9, 50, 55), adsb(3, -34.7, -58.9, None, 15, True), adsb(4, -34.7, -58.9, None, 0, True)]
+check("un vuelo anterior de otro piloto (ya en el aire al empezar la ventana) no cuenta", sin_el_vuelo_anterior(muestras_de_adsb(anterior), T0)[0]["tierra"] is True and len(sin_el_vuelo_anterior(muestras_de_adsb(anterior), T0)) == 2)
 vista_ant = vista_publica(fila_plan, T0 + timedelta(minutes=25), anterior)
 check("...ni lo termina antes de que salgas, ni dice 'volando'", vista_ant["fase"] == "antes_de_salir" and vista_ant["estado"] == "en_vuelo" and evaluar_vuelo(fila_plan, anterior, T0 + timedelta(minutes=25))["aterrizo_at"] is None)
-check("siempre en el aire desde el principio de la ventana: no se sabe de quién es, no se muestra", sin_el_vuelo_anterior(muestras_de_adsb(anterior[:3])) == [] and vista_publica(fila_plan, T0 + timedelta(minutes=18), anterior[:3])["ultima"] is None)
+check("siempre en el aire desde el principio de la ventana: no se sabe de quién es, no se muestra", sin_el_vuelo_anterior(muestras_de_adsb(anterior[:3]), T0) == [] and vista_publica(fila_plan, T0 + timedelta(minutes=18), anterior[:3])["ultima"] is None)
 check("la ventana de ADS-B de un plan arranca un rato antes de la salida, no cuando se creó", ventana_adsb(fila_plan, AHORA)[0] == T0 + timedelta(minutes=30) - ADELANTO_ADSB == T0 and ventana_adsb(fila_plan, AHORA)[1] == AHORA and ADELANTO_ADSB == timedelta(minutes=30))
 check("la del Mapa, desde que se creó", ventana_adsb({**base, "salida_prevista": None}, AHORA)[0] == T0 - timedelta(hours=3))
 check("sin matrícula para ADS-B no hay ventana", ventana_adsb({**base, "matricula_adsb": None}, AHORA) is None and vista_publica({**base, "matricula_adsb": None}, AHORA, anterior)["recorrido"] == [] and vista_publica({**base, "matricula_adsb": None}, AHORA, [])["con_adsb"] is False)
 check("lo anterior a la ventana no entra", vista_publica(fila_plan, T0 + timedelta(minutes=40), [adsb(-60, 1, 1, None, 0, True)] + despegue)["recorrido"][0][3] >= int(T0.timestamp()))
+# --- ADS-B real: casi nunca se ve al avión en tierra ---
+# Despegue que arranca en el aire (150 ft, 60 kt) y final que se corta bajo y lento. Altitudes None y negativas.
+LAT0, LON0 = -34.45, -58.59
+DEST = (-34.56, -58.96)  # SADM, el último punto de `base`
+
+
+def tramo(m0, n, lat, lon, alt, gs, paso_s=10):
+    """`n` muestras cada `paso_s` desde el minuto `m0`, siempre en el aire (tierra=False)."""
+    return [adsb(m0, lat + i * 0.0002, lon, alt, gs, seg=i * paso_s) for i in range(n)]
+
+
+def a_t(filas, desde=T0):
+    return sin_el_vuelo_anterior(muestras_de_adsb(filas), desde)
+
+
+# 1. El anterior está en el aire al abrir, aterriza (se corta a 100 ft y 65 kt), 25 minutos sin nada, despega el piloto.
+ant1 = tramo(0, 12, -34.7, -58.9, 1200, 95, 10) + [adsb(2, -34.7, -58.9, 300, 75), adsb(2, -34.7, -58.9, 100, 65, seg=10)]
+ant1.sort(key=lambda f: f["visto_at"])
+mio1 = [adsb(30, LAT0, LON0, 150, 60), adsb(30, LAT0, LON0, 400, 70, seg=10), adsb(30, LAT0, LON0, 700, 85, seg=20)] + tramo(31, 6, -34.46, -58.6, 1500, 95)
+filas1 = ant1 + mio1
+r1 = a_t(filas1)
+check("el anterior aterrizó sin que lo vean en tierra y hay 25 min de silencio: queda sólo el vuelo del piloto", len(r1) == len(mio1) and r1[0]["alt"] == 150 and all(m["t"] >= (T0 + timedelta(minutes=30)).timestamp() for m in r1))
+check("...y la vista pública lo muestra desde el despegue del piloto", vista_publica(base, T0 + timedelta(minutes=33), filas1)["recorrido"][0][3] == int((T0 + timedelta(minutes=30)).timestamp()))
+
+# 2. Hueco de 12 minutos en crucero (1400 ft, 98 kt): no es fin de vuelo.
+cr = tramo(0, 6, -34.7, -58.9, 1400, 98) + tramo(13, 4, -34.8, -58.9, 1400, 98)
+check("un hueco de 12 minutos en crucero no es fin de vuelo: no se sabe de quién es, no se muestra", a_t(cr) == [] and HUECO_ENTRE_VUELOS_S == 600)
+cr2 = tramo(0, 6, -34.7, -58.9, 625, 94) + tramo(13, 4, -34.8, -58.9, 625, 94)
+check("ni a 625 ft y 94 kt (lento para un Cessna, pero más que 85 kt)", a_t(cr2) == [])
+check("un hueco de menos de 10 minutos tras una aproximación tampoco", a_t(tramo(0, 4, -34.7, -58.9, 100, 65) + tramo(8, 4, -34.7, -58.9, 150, 60)) == [])
+check("sin altitud y lento sí es aproximación; con la GS de la anterior si falta", len(a_t([adsb(0, 1, 1, None, 70), adsb(0, 1, 1, None, None, seg=10), adsb(15, 1, 1, 100, 60)])) == 1)
+check("una altitud negativa también es baja", len(a_t([adsb(0, 1, 1, -100, 70), adsb(0, 1, 1, -80, 65, seg=10), adsb(15, 1, 1, 100, 60)])) == 1)
+
+# 3. El anterior aterrizó antes de la ventana: la primera muestra es el despegue del propio piloto, 8 minutos después.
+mio3 = [adsb(8, LAT0, LON0, 150, 60), adsb(8, LAT0, LON0, 500, 75, seg=10)] + tramo(9, 5, -34.46, -58.6, 1500, 95)
+check("el primer dato es el despegue del piloto a 8 min del inicio de la ventana: no se descarta nada", a_t(mio3) == muestras_de_adsb(mio3) and EN_CURSO_AL_ABRIR_S == 180)
+check("a menos de 3 minutos del inicio sí es un vuelo en curso", a_t(tramo(0, 3, 1, 1, 150, 60)) == [])
+check("sin la ventana (epoch) también anda", len(sin_el_vuelo_anterior(muestras_de_adsb(mio3), T0.timestamp())) == len(mio3))
+
+# 4. La señal se corta en la final a 1,5 NM del destino, 120 ft, 65 kt.
+lat_f = DEST[0] + 1.5 / 60  # 1,5 NM al norte
+crucero = tramo(30, 6, -34.46, -58.6, 1500, 95)
+final = [adsb(36, lat_f + 0.01, DEST[1], 400, 70), adsb(36, lat_f, DEST[1], 120, 65, seg=10)]
+ult_t = datetime.fromtimestamp(muestras_de_adsb(final)[-1]["t"], tz=timezone.utc)
+ev2 = evaluar_vuelo(base, crucero + final, ult_t + timedelta(minutes=2))
+check("cortada en la final a 1,5 NM: a los 2 minutos todavía 'volando'", ev2["fase"] == "volando" and ev2["aterrizo_at"] is None)
+ev6 = evaluar_vuelo(base, crucero + final, ult_t + timedelta(minutes=6))
+check("a los 6 minutos 'aterrizo', a la hora de la última muestra", ev6["fase"] == "aterrizo" and ev6["aterrizo_at"] == ult_t and SILENCIO_ATERRIZAJE_S == 300)
+check("justo antes de los 300 s no", evaluar_vuelo(base, crucero + final, ult_t + timedelta(seconds=SILENCIO_ATERRIZAJE_S - 1))["aterrizo_at"] is None and evaluar_vuelo(base, crucero + final, ult_t + timedelta(seconds=SILENCIO_ATERRIZAJE_S))["aterrizo_at"] == ult_t)
+check("la vista pública dice 'aterrizo' (y 'volando' a los 2 minutos)", vista_publica(base, ult_t + timedelta(minutes=2), crucero + final)["fase"] == "volando")
+
+# 5. Se corta bajo y lento pero lejos del destino: nunca 'aterrizó'.
+lejos = [adsb(36, DEST[0] + 15 / 60, DEST[1], 400, 70), adsb(36, DEST[0] + 15 / 60, DEST[1], 120, 65, seg=10)]
+ev_l = evaluar_vuelo(base, crucero + lejos, ult_t + timedelta(minutes=6))
+check("bajo y lento a 15 NM del destino: 'sin_datos', nunca 'aterrizo'", ev_l["fase"] == "sin_datos" and ev_l["aterrizo_at"] is None)
+check("y a las 2 horas, igual", evaluar_vuelo(base, crucero + lejos, ult_t + timedelta(hours=2))["fase"] == "sin_datos")
+# 6. Cerca pero alto.
+alto = [adsb(36, lat_f + 0.01, DEST[1], 2800, 90), adsb(36, lat_f, DEST[1], 2500, 85, seg=10)]
+ev_a = evaluar_vuelo(base, crucero + alto, ult_t + timedelta(minutes=6))
+check("cerca del destino pero a 2500 ft: no aterrizó", ev_a["aterrizo_at"] is None and ev_a["fase"] == "sin_datos")
+# 7. Altitud None en la última.
+sin_alt = [adsb(36, lat_f + 0.01, DEST[1], 400, 70), adsb(36, lat_f, DEST[1], None, 65, seg=10)]
+ev_n = evaluar_vuelo(base, crucero + sin_alt, ult_t + timedelta(minutes=6))
+check("altitud desconocida en la última: no se afirma el aterrizaje", ev_n["aterrizo_at"] is None and ev_n["fase"] == "sin_datos")
+sin_gs = [adsb(36, lat_f + 0.01, DEST[1], 400, 70), adsb(36, lat_f, DEST[1], 120, None, seg=10)]
+check("velocidad desconocida en la última: tampoco", evaluar_vuelo(base, crucero + sin_gs, ult_t + timedelta(minutes=6))["aterrizo_at"] is None)
+check("sin destino en la ruta: tampoco", evaluar_vuelo({**base, "puntos": []}, crucero + final, ult_t + timedelta(minutes=6))["aterrizo_at"] is None)
+check("sin un vuelo de por medio: tampoco", aterrizaje(muestras_de_adsb(final), ult_t + timedelta(minutes=6), {"lat": DEST[0], "lon": DEST[1]}) is None)
+# 8. La regla vieja sigue andando (muestras en tierra), incluso con destino.
+check("la regla vieja (muestras en tierra) sigue: aterrizo en el primer toque", aterrizaje(rod, T0 + timedelta(minutes=56), {"lat": 0.0, "lon": 0.0}) == toque_t and aterrizaje(rod, T0 + timedelta(minutes=56)) == toque_t)
+check("la fase y las claves públicas no cambian", set(vista_publica(base, ult_t + timedelta(minutes=6), crucero + final)) == CLAVES_PUBLICAS)
 # Sin ver al avión.
 check("sin muestras 20 minutos después de la salida: sigue 'antes de salir'", vista_publica(fila_plan, T0 + timedelta(minutes=50), [])["fase"] == "antes_de_salir")
 check("media hora después de la salida sin ver nada: 'sin_datos', nunca un vuelo inventado", (lambda w: w["fase"] == "sin_datos" and w["ultima"] is None and w["recorrido"] == [])(vista_publica(fila_plan, T0 + timedelta(minutes=61), [])))

@@ -70,6 +70,26 @@ SEGUNDOS_MINIMOS_VUELO = 90
 #: última en el aire pasa a ser posterior); un avión que apaga el transpondedor al parar tampoco
 #: se pierde (la espera es desde el primer toque, no desde la última muestra).
 SEGUNDOS_PARA_ATERRIZAR = 180
+#: La cobertura de ADS-B casi nunca ve al avión en tierra (de 68 vuelos grabados del LV-S048, sólo 3
+#: tienen alguna muestra en tierra): arranca en el aire a 50-300 ft y 55-65 kt y se corta en la final
+#: a 0-300 ft y 60-70 kt. Por eso "de aproximación" es una muestra baja y lenta: GS de 85 kt o menos
+#: y altitud de 800 ft o menos (o sin altitud). La altitud de ADS-B es barométrica y puede ser
+#: negativa; en crucero se ve a 90-100 kt y más de 600 ft, y eso no es una aproximación.
+ALT_APROXIMACION_FT = 800
+GS_APROXIMACION_KT = 85
+#: Un silencio de ADS-B de 10 minutos o más entre dos muestras. Después de una aproximación, es el
+#: avión que aterrizó y estuvo parado; después de un crucero, un hueco de cobertura en vuelo.
+HUECO_ENTRE_VUELOS_S = 600
+#: Si la primera muestra de la ventana está a menos de 3 minutos de su inicio, el avión ya estaba
+#: volando cuando se abrió; más tarde es un despegue que empieza dentro de la ventana.
+EN_CURSO_AL_ABRIR_S = 180
+#: Aterrizó sin que nadie lo vea en tierra: la última muestra es baja, lenta y cerca del destino, y
+#: pasaron 5 minutos sin una nueva. Más lejos del destino, o más alto, un avión que desaparece es
+#: "sin datos" (no sé no es no hay).
+RADIO_DESTINO_NM = 3.0
+ALT_LLEGADA_FT = 1000
+GS_LLEGADA_KT = 90
+SILENCIO_ATERRIZAJE_S = 300
 #: Más viejo que esto sin muestras nuevas, el dato es viejo (lo mismo que `DATOS_VIEJOS_S` de la web).
 DATOS_VIEJOS_S = 120
 #: En tierra y sin ver nada nuevo tanto tiempo, pasada la salida, ya no es "antes de salir".
@@ -630,20 +650,52 @@ def hubo_vuelo(muestras: List[Muestra]) -> bool:
     return len(aire) >= MUESTRAS_MINIMAS_VUELO and aire[-1]["t"] - aire[0]["t"] >= SEGUNDOS_MINIMOS_VUELO
 
 
-def aterrizaje(muestras: List[Muestra], ahora: datetime) -> Optional[datetime]:
+def _destino(fila: Dict[str, Any]) -> Optional[Muestra]:
+    """El último punto de la ruta (`[lat, lon, codigo, nombre]`) como muestra, o `None` si no hay."""
+    puntos = fila.get("puntos")
+    if not isinstance(puntos, list) or not puntos:
+        return None
+    p = puntos[-1]
+    if not (isinstance(p, (list, tuple)) and len(p) >= 2 and _es_numero(p[0]) and _es_numero(p[1])):
+        return None
+    return {"lat": float(p[0]), "lon": float(p[1])}
+
+
+def _llegando(m: Muestra, destino: Optional[Muestra]) -> bool:
     """
-    Cuándo tocó tierra, o `None` si no aterrizó (o no hay pruebas todavía). Hubo un vuelo, la última
-    muestra en el aire quedó atrás y la primera en tierra después de ella es de hace
-    `SEGUNDOS_PARA_ATERRIZAR` o más. Sin ninguna muestra en tierra no se afirma nada: un avión que
-    desaparece en el aire (fuera de cobertura) es "sin datos", no "aterrizó".
+    ¿La muestra es de un avión terminando la final? Altitud conocida de `ALT_LLEGADA_FT` o menos,
+    GS conocida de `GS_LLEGADA_KT` o menos y a `RADIO_DESTINO_NM` o menos del destino. Sin altitud,
+    sin velocidad o sin destino no se afirma.
+    """
+    if destino is None or m.get("alt") is None or m.get("gs") is None:
+        return False
+    return m["alt"] <= ALT_LLEGADA_FT and m["gs"] <= GS_LLEGADA_KT and _millas(m, destino) <= RADIO_DESTINO_NM
+
+
+def aterrizaje(muestras: List[Muestra], ahora: datetime, destino: Optional[Muestra] = None) -> Optional[datetime]:
+    """
+    Cuándo tocó tierra, o `None` si no aterrizó (o no hay pruebas todavía). Dos caminos, siempre
+    con un vuelo de por medio (`hubo_vuelo`):
+
+    - Una muestra en tierra después de la última en el aire, de hace `SEGUNDOS_PARA_ATERRIZAR` o más.
+    - La cobertura de ADS-B casi nunca ve al avión en tierra (se corta en la final, a 0-300 ft y
+      60-70 kt), así que también vale que la última muestra sea baja, lenta y a `RADIO_DESTINO_NM`
+      o menos del `destino` (`_llegando`) y lleve `SILENCIO_ATERRIZAJE_S` o más sin muestras nuevas:
+      aterrizó a la hora de esa última muestra.
+
+    Un avión que desaparece lejos del destino, alto o sin altitud no se da por aterrizado: es "sin
+    datos", no "aterrizó".
     """
     if not hubo_vuelo(muestras):
         return None
     ultimo_aire = max(i for i, m in enumerate(muestras) if _en_aire(m))
     toque = next((m for m in muestras[ultimo_aire + 1 :] if _en_tierra(m)), None)
-    if toque is None or ahora.timestamp() - toque["t"] < SEGUNDOS_PARA_ATERRIZAR:
-        return None
-    return datetime.fromtimestamp(toque["t"], tz=timezone.utc)
+    if toque is not None and ahora.timestamp() - toque["t"] >= SEGUNDOS_PARA_ATERRIZAR:
+        return datetime.fromtimestamp(toque["t"], tz=timezone.utc)
+    ultima = muestras[-1]
+    if _llegando(ultima, destino) and ahora.timestamp() - ultima["t"] >= SILENCIO_ATERRIZAJE_S:
+        return datetime.fromtimestamp(ultima["t"], tz=timezone.utc)
+    return None
 
 
 def ventana_adsb(fila: Dict[str, Any], ahora: datetime) -> Optional[Tuple[datetime, datetime]]:
@@ -668,19 +720,47 @@ def ventana_adsb(fila: Dict[str, Any], ahora: datetime) -> Optional[Tuple[dateti
     return desde, min(hasta, ahora)
 
 
-def sin_el_vuelo_anterior(adsb: List[Muestra]) -> List[Muestra]:
+def _de_aproximacion(adsb: List[Muestra], i: int) -> bool:
     """
-    Un avión de escuela vuela con otros pilotos: si a la hora en que empieza la ventana de un plan
-    ya está en el aire, ese vuelo es de otro (o es el tramo anterior) y no se muestra. Se descarta
-    todo hasta la primera muestra en tierra; si nunca toca tierra, no se puede saber de quién es
-    y no se muestra nada (es "sin datos", no un vuelo inventado). Si la primera muestra no está
-    en el aire —en tierra, o sin velocidad— no se descarta nada.
+    ¿La muestra `i` es baja y lenta (`ALT_APROXIMACION_FT`, `GS_APROXIMACION_KT`)? Sin altitud se
+    cuenta como baja; si no trae GS se usa la de la muestra anterior más cercana que la tenga, y
+    sin ninguna no se afirma.
+    """
+    m = adsb[i]
+    if m.get("alt") is not None and m["alt"] > ALT_APROXIMACION_FT:
+        return False
+    for j in range(i, -1, -1):
+        gs = adsb[j].get("gs")
+        if gs is not None:
+            return gs <= GS_APROXIMACION_KT
+    return False
+
+
+def sin_el_vuelo_anterior(adsb: List[Muestra], desde: Any) -> List[Muestra]:
+    """
+    Un avión de escuela vuela con otros pilotos: si cuando se abre la ventana de un plan (`desde`)
+    el avión ya está en el aire, ese vuelo es de otro (o es el tramo anterior) y no se muestra.
+    Sólo cuenta como "ya estaba volando" si la primera muestra está en el aire **y** a
+    `EN_CURSO_AL_ABRIR_S` o menos de `desde`: si el vuelo anterior aterrizó antes de abrirse la
+    ventana, la primera muestra en el aire es el despegue del propio piloto y no se descarta nada.
+
+    La cobertura casi nunca ve al avión en tierra (3 de 68 vuelos), así que el fin del vuelo
+    anterior es lo primero que pase de: una muestra en tierra (se conserva desde ella) o un hueco de
+    `HUECO_ENTRE_VUELOS_S` o más después de una muestra de aproximación (se conserva desde la
+    muestra posterior al hueco). Un hueco después de un crucero (600-1400 ft, 90-100 kt) es
+    cobertura en vuelo, no un fin. Sin fin de vuelo no se puede saber de quién es: no se muestra
+    nada (es "sin datos", no un vuelo inventado).
     """
     if not adsb or not _en_aire(adsb[0]):
+        return adsb
+    desde_t = desde.timestamp() if isinstance(desde, datetime) else float(desde)
+    if adsb[0]["t"] - desde_t > EN_CURSO_AL_ABRIR_S:
         return adsb
     for i, m in enumerate(adsb):
         if _en_tierra(m):
             return adsb[i:]
+        if i + 1 < len(adsb) and adsb[i + 1]["t"] - m["t"] >= HUECO_ENTRE_VUELOS_S and _de_aproximacion(adsb, i):
+            return adsb[i + 1 :]
     return []
 
 
@@ -702,7 +782,7 @@ def _muestras_del_seguimiento(fila: Dict[str, Any], adsb: Any, ahora: datetime) 
     if ventana:
         propias = [m for m in propias if ventana[0].timestamp() <= m["t"] <= ventana[1].timestamp()]
         if fila.get("salida_prevista"):
-            propias = sin_el_vuelo_anterior(propias)
+            propias = sin_el_vuelo_anterior(propias, ventana[0])
     todas = fusionar(telefono, ralear_adsb(propias))
     # Terminado por aterrizaje: el link muestra hasta el rodaje, no lo que haga el avión después.
     if fila.get("aterrizo_at") and ventana:
@@ -721,6 +801,8 @@ def evaluar_vuelo(fila: Dict[str, Any], adsb: Any, ahora: datetime, muestras: Op
       haya receptores cerca).
     - Uno del Mapa no tiene salida: "esperando" sin posiciones, "volando" con una reciente, "sin
       datos" si pasaron más de `DATOS_VIEJOS_S`. El detalle (en tierra, nivelado…) lo calcula la web.
+    - Si la última muestra es de una final cerca del destino (`_llegando`), la fase es "volando"
+      hasta que pasan `SILENCIO_ATERRIZAJE_S` y entonces "aterrizo": ADS-B casi nunca ve el toque.
     - `aterrizo_at` sólo se devuelve para un seguimiento desde un plan que sigue en vuelo; el
       controlador lo guarda y lo termina. Uno ya terminado por aterrizaje dice "aterrizo".
     """
@@ -739,10 +821,15 @@ def evaluar_vuelo(fila: Dict[str, Any], adsb: Any, ahora: datetime, muestras: Op
     edad = ahora.timestamp() - ultima["t"]
     if salida is None:
         return {"fase": "sin_datos" if edad > DATOS_VIEJOS_S else "volando", "aterrizo_at": None}
-    toque = aterrizaje(muestras, ahora)
+    destino = _destino(fila)
+    toque = aterrizaje(muestras, ahora, destino)
     if toque is not None:
         return {"fase": "aterrizo", "aterrizo_at": toque}
     if _en_aire(ultima) and edad <= DATOS_VIEJOS_S:
+        return {"fase": "volando", "aterrizo_at": None}
+    if hubo_vuelo(muestras) and _llegando(ultima, destino):
+        # Terminando la final: la señal se cortó bajo y cerca del destino, y todavía no pasaron los
+        # `SILENCIO_ATERRIZAJE_S` que hacen falta para decir que aterrizó.
         return {"fase": "volando", "aterrizo_at": None}
     if hubo_vuelo(muestras):
         # Hubo vuelo y la última ya no es en el aire: rodando tras tocar (espera de 3 min) o sin datos.

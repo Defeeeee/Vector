@@ -160,7 +160,9 @@ const TOKENS_PLAN = { antes: "tokenPlanAntesDeSalir00000000001", volando: "token
 const iso = (ms) => new Date(ms).toISOString();
 function vistaPlan(tipo) {
   const ahora = Date.now();
-  const base = { nombre: "Federico", ruta: "SADF VM SAAV", puntos: puntosDemo, avion: { tipo: "Cessna 152", icao: "C152" }, con_adsb: true, ahora: iso(ahora) };
+  // `MATRICULA_DEMO=LV-HQG` muestra la matrícula, como con "Mostrar la matrícula" prendido.
+  const matricula = process.env.MATRICULA_DEMO ? { matricula: process.env.MATRICULA_DEMO } : {};
+  const base = { nombre: "Federico", ruta: "SADF VM SAAV", puntos: puntosDemo, avion: { tipo: "Cessna 152", icao: "C152", ...matricula }, con_adsb: true, ahora: iso(ahora) };
   if (tipo === "antes") return { ...base, inicio: iso(ahora - 3600e3), estado: "en_vuelo", fase: "antes_de_salir", salida_prevista: iso(ahora + 40 * 60e3), ultima: null, recorrido: [] };
   const n = tipo === "aterrizo" ? PASOS_DEMO + 1 : Math.min(PASOS_DEMO, 4 + Math.floor((ahora - arranquePlan) / 15000));
   const t0 = ahora - n * 60e3;
@@ -172,6 +174,42 @@ function vistaPlan(tipo) {
   return { ...base, inicio: iso(ahora - 3 * 3600e3), estado: aterrizo ? "terminado" : "en_vuelo", fase: aterrizo ? "aterrizo" : "volando", salida_prevista: iso(t0 - 5 * 60e3), ultima, recorrido };
 }
 const arranquePlan = Date.now();
+// `ADSB_VIVO=LV-HQG`: el token "volando" muestra ese avión con sus posiciones reales de la API abierta de
+// adsb.fi (uso no comercial), pedidas como mucho cada 10 s y sólo mientras alguien mira. Sólo para probar en
+// local: el recorrido vive en memoria y empieza cuando se abre la página. Nada de producción.
+const ADSB_VIVO = process.env.ADSB_VIVO || "";
+const vivo = { pedido: 0, recorrido: [], ultima: null, tipo: null, arranque: Date.now() };
+async function refrescarVivo() {
+  if (Date.now() - vivo.pedido < 10_000) return;
+  vivo.pedido = Date.now();
+  try {
+    const r = await fetch(`https://opendata.adsb.fi/api/v2/registration/${encodeURIComponent(ADSB_VIVO)}`, { headers: { "User-Agent": "Vector (prueba local)" }, signal: AbortSignal.timeout(8000) });
+    const j = await r.json();
+    const a = j.ac?.[0];
+    if (!a || typeof a.lat !== "number") return;
+    const t = Math.floor(((j.now ?? Date.now()) - (a.seen_pos ?? 0) * 1000) / 1000);
+    const alt = typeof a.alt_baro === "number" ? a.alt_baro : null;
+    if (!vivo.recorrido.length || vivo.recorrido.at(-1)[3] !== t) vivo.recorrido.push([a.lat, a.lon, alt, t, "adsb"]);
+    const gs = a.alt_baro === "ground" ? Math.min(a.gs ?? 0, 5) : a.gs ?? null;
+    vivo.ultima = { lat: a.lat, lon: a.lon, alt_ft: alt, gs_kt: gs, track: a.track ?? null, hora: iso(t * 1000), fuente: "adsb" };
+    vivo.tipo = a.t ?? vivo.tipo;
+  } catch (e) {
+    console.log("adsb.fi:", String(e));
+  }
+}
+async function vistaVivo() {
+  await refrescarVivo();
+  const ahora = Date.now();
+  const u = vivo.ultima;
+  const viejo = !u || ahora - Date.parse(u.hora) > 120_000;
+  const fase = !u ? (ahora - vivo.arranque > 30 * 60e3 ? "sin_datos" : "antes_de_salir") : viejo ? "sin_datos" : "volando";
+  return {
+    nombre: "Federico", ruta: "", puntos: [],
+    avion: { tipo: vivo.tipo || "Avión", icao: vivo.tipo || "", matricula: ADSB_VIVO },
+    con_adsb: true, ahora: iso(ahora), inicio: iso(vivo.arranque), estado: "en_vuelo", fase,
+    salida_prevista: iso(vivo.arranque), ultima: u, recorrido: vivo.recorrido.slice(-400),
+  };
+}
 // El seguimiento que se crea desde el editor de un plan (POST /seguimientos/desde-plan), en memoria.
 let seguimientoPlan = null;
 // Un punto del demo: avanza por la línea, sube hasta 2.400 ft en los primeros pasos y cruza.
@@ -369,8 +407,9 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     const token = ruta.split("/").pop();
     const tipoPlan = Object.entries(TOKENS_PLAN).find(([, t]) => t === token)?.[0];
     if (tipoPlan) {
+      const vista = ADSB_VIVO && tipoPlan === "volando" ? await vistaVivo() : vistaPlan(tipoPlan);
       res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
-      return res.end(JSON.stringify(vistaPlan(tipoPlan)));
+      return res.end(JSON.stringify(vista));
     }
     // Sin ningún vuelo creado, el token de prueba muestra uno que avanza solo (para ver la página sin el Mapa).
     if (token === TOKEN_SEGUIMIENTO && !seguimiento) {

@@ -11,6 +11,15 @@
       "port": 7599
     },
     {
+      "name": "backend-falso-hqg",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "MATRICULA_DEMO=LV-HQG ADSB_VIVO=LV-HQG node \"$(git rev-parse --show-toplevel)/apps/web/marketing/recursos/backend-falso.mjs\""
+      ],
+      "port": 7599
+    },
+    {
       "name": "backend-falso-alumno",
       "runtimeExecutable": "sh",
       "runtimeArgs": [
