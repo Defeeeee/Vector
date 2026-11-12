@@ -181,9 +181,7 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
   }
 
   const colorEstado =
-    estado.clave === "sin_datos"
-      ? "text-amber-300"
-      : estado.clave === "terminado" || estado.clave === "esperando" || estado.clave === "antes_de_salir"
+    estado.clave === "sin_datos" || estado.clave === "terminado" || estado.clave === "esperando" || estado.clave === "antes_de_salir"
         ? "text-white/70"
         : "text-aviation-cyan";
 
@@ -225,7 +223,7 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/30 lg:hidden" aria-hidden />
 
         <p className={`${rotulo} flex items-center gap-2 ${colorEstado}`}>
-          <span className={`h-2 w-2 rounded-full ${estado.clave === "volando" || estado.clave === "en_tierra" || estado.clave === "en_seguimiento" ? "bg-aviation-cyan" : estado.clave === "sin_datos" ? "bg-amber-300" : "bg-white/50"}`} />
+          <span className={`h-2 w-2 rounded-full ${estado.clave === "volando" || estado.clave === "en_tierra" || estado.clave === "en_seguimiento" ? "bg-aviation-cyan" : "bg-white/50"}`} />
           {terminado ? "Seguimiento" : "Seguimiento en vivo"}
         </p>
         <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-white">
@@ -242,8 +240,8 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
         )}
 
         <div aria-live="polite">
-          {"aviso" in estado && <p className="mt-3 border-l-2 border-amber-300 pl-3 text-sm font-semibold text-amber-200">{estado.aviso}</p>}
-          {sinConexion && !terminado && <p className="mt-3 text-sm text-amber-200">Sin conexión: se muestra lo último que llegó. Reintentando.</p>}
+          {"aviso" in estado && <p className="mt-3 border-l-2 border-white/20 pl-3 text-sm text-white/75">{estado.aviso}</p>}
+          {sinConexion && !terminado && <p className="mt-3 text-sm text-white/60">Tu conexión se cortó: se muestra lo último que llegó y se vuelve a intentar solo.</p>}
           {terminado && (
             <p className="mt-3 text-base text-white/85">
               {estado.clave === "aterrizo" && "El avión tocó tierra y el seguimiento terminó. "}

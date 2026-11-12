@@ -272,19 +272,24 @@ export function estadoMostrado(
   const s = d.ultima ? segundosSinDatos(d.ultima.hora, ahora) : null;
   const viejo = s !== null && s > DATOS_VIEJOS_S;
   if (conAdsb && (d.fase === "sin_datos" || viejo)) {
-    const motivo = "Puede que el avión no transmita ADS-B o que no haya receptores cerca, y el teléfono no está mandando.";
+    // Lo lee la familia: que diga qué pasa sin alarmar (Federico, 2026-11-12). Perder la señal un rato
+    // es lo normal (bajo, lejos de las antenas, el teléfono con la pantalla apagada), pero no se afirma
+    // que todo esté bien: sólo que no llegó nada nuevo (invariante 2).
     return {
       clave: "sin_datos",
-      titulo: "Sin datos recientes",
-      aviso: d.ultima && s !== null ? `Sin datos hace ${duracion(s)}. ${motivo} Se muestra la última posición que llegó.` : `Todavía no llegó ninguna posición del avión. ${motivo}`,
+      titulo: "Sin señal por ahora",
+      aviso:
+        d.ultima && s !== null
+          ? `La última posición llegó hace ${duracion(s)}. Es común que el avión deje de verse un rato: a baja altura o lejos de las antenas no se lo recibe, y el teléfono del piloto puede tener la pantalla apagada. Cuando llegue una posición nueva, aparece acá sola.`
+          : "Todavía no llegó ninguna posición del avión. No todos los aviones se ven en todos lados: cuando llegue la primera, aparece acá sola.",
     };
   }
   if (!d.ultima) return { clave: "esperando", titulo: "Esperando la primera posición" };
   if (viejo && s !== null) {
     return {
       clave: "sin_datos",
-      titulo: "Sin datos recientes",
-      aviso: `Sin datos hace ${duracion(s)}: puede ser falta de señal en el avión. Se muestra la última posición que llegó.`,
+      titulo: "Sin señal por ahora",
+      aviso: `La última posición llegó hace ${duracion(s)}. Es común que el teléfono del piloto se quede sin señal un rato en vuelo. Cuando llegue una posición nueva, aparece acá sola.`,
     };
   }
   const gs = d.ultima.gs_kt;

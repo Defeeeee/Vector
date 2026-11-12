@@ -49,7 +49,7 @@ export default function ClimaDestino({ token, ahora, activo }: { token: string; 
   return (
     <div>
       {clima.estacion !== clima.destino && (
-        <p className="mb-2 text-sm text-amber-300">
+        <p className="mb-2 text-sm text-white/60">
           {clima.destino} no publica informe: se muestra el de {clima.estacion}
           {clima.distanciaNm !== null ? `, a unas ${Math.round(clima.distanciaNm)} NM` : ""}.
         </p>

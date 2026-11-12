@@ -1462,6 +1462,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.24.1",
+    fecha: "2026-11-12",
+    motivo: "El link de \"Compartir mi vuelo\" deja de usar amarillo y \"Sin datos recientes\" cuando se pierde la señal (\"Sin señal por ahora\", con un texto que no alarma a la familia): retoque de lo que la 3.24.0 ya anunciaba.",
+  },
+  {
     version: "3.13.1",
     fecha: "2026-11-10",
     motivo: "En la app instalada en el teléfono, el Mapa tapaba las pestañas de Preparar vuelo: arreglo de algo que la 3.13.0 ya anunciaba, no una novedad.",

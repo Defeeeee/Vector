@@ -149,7 +149,7 @@ describe("el estado que se muestra", () => {
   it("datos viejos: lo dice claro", () => {
     const e = estadoMostrado({ estado: "en_vuelo", ultima: ultima(90) }, "2026-11-11T15:03:00Z");
     expect(e.clave).toBe("sin_datos");
-    expect("aviso" in e && e.aviso).toBe("Sin datos hace 3 min: puede ser falta de señal en el avión. Se muestra la última posición que llegó.");
+    expect("aviso" in e && e.aviso).toBe("La última posición llegó hace 3 min. Es común que el teléfono del piloto se quede sin señal un rato en vuelo. Cuando llegue una posición nueva, aparece acá sola.");
   });
   it("terminado o vencido", () => {
     expect(estadoMostrado({ estado: "terminado", ultima: ultima(90) }, ahora).clave).toBe("terminado");
@@ -221,17 +221,17 @@ describe("el estado de un vuelo con ADS-B", () => {
   it("sin una sola posición, con respaldo ADS-B: lo dice, no inventa un vuelo", () => {
     const e = estadoMostrado({ estado: "en_vuelo", fase: "sin_datos", con_adsb: true, ultima: null }, ahora);
     expect(e.clave).toBe("sin_datos");
-    expect("aviso" in e && e.aviso).toContain("no transmita ADS-B");
-    expect("aviso" in e && e.aviso).toContain("receptores");
+    expect("aviso" in e && e.aviso).toContain("Todavía no llegó ninguna posición");
+    expect("aviso" in e && e.aviso).not.toMatch(/emergencia|problema|accidente/i);
   });
   it("con una última posición vieja, dice hace cuánto", () => {
     const e = estadoMostrado({ estado: "en_vuelo", fase: "sin_datos", con_adsb: true, ultima: ultima(90) }, "2026-11-11T15:03:00Z");
-    expect("aviso" in e && e.aviso).toContain("Sin datos hace 3 min.");
-    expect("aviso" in e && e.aviso).toContain("la última posición");
+    expect("aviso" in e && e.aviso).toContain("La última posición llegó hace 3 min.");
+    expect("aviso" in e && e.aviso).toContain("aparece acá sola");
   });
   it("sin respaldo ADS-B (el Mapa solo) sigue el aviso de siempre", () => {
     const e = estadoMostrado({ estado: "en_vuelo", ultima: ultima(90) }, "2026-11-11T15:03:00Z");
-    expect("aviso" in e && e.aviso).toContain("falta de señal en el avión");
+    expect("aviso" in e && e.aviso).toContain("teléfono del piloto");
   });
   it("volando y en tierra salen de la velocidad de cualquier fuente", () => {
     expect(estadoMostrado({ estado: "en_vuelo", fase: "volando", con_adsb: true, ultima: ultima(95) }, ahora).clave).toBe("volando");
