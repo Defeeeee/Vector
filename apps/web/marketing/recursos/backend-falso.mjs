@@ -178,14 +178,22 @@ const arranquePlan = Date.now();
 // adsb.fi (uso no comercial), pedidas como mucho cada 10 s y sólo mientras alguien mira. Sólo para probar en
 // local: el recorrido vive en memoria y empieza cuando se abre la página. Nada de producción.
 const ADSB_VIVO = process.env.ADSB_VIVO || "";
-const vivo = { pedido: 0, recorrido: [], ultima: null, tipo: null, arranque: Date.now() };
+const vivo = { pedido: 0, recorrido: [], ultima: null, tipo: null, hex: null, arranque: Date.now() };
 async function refrescarVivo() {
   if (Date.now() - vivo.pedido < 10_000) return;
   vivo.pedido = Date.now();
   try {
-    const r = await fetch(`https://opendata.adsb.fi/api/v2/registration/${encodeURIComponent(ADSB_VIVO)}`, { headers: { "User-Agent": "Vector (prueba local)" }, signal: AbortSignal.timeout(8000) });
-    const j = await r.json();
+    // adsb.fi no tiene todas las matrículas argentinas en su base (LV-HQG no está): se lo busca por matrícula,
+    // si no por el código de llamada (la matrícula sin guión) y, una vez encontrado, por su código hex.
+    const pedir = async (camino) => {
+      const r = await fetch(`https://opendata.adsb.fi/api/v2/${camino}`, { headers: { "User-Agent": "Vector (prueba local)" }, signal: AbortSignal.timeout(8000) });
+      return r.json();
+    };
+    const sinGuion = ADSB_VIVO.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+    let j = await pedir(vivo.hex ? `hex/${vivo.hex}` : `registration/${encodeURIComponent(ADSB_VIVO)}`);
+    if (!j.ac?.length && !vivo.hex) j = await pedir(`callsign/${sinGuion}`);
     const a = j.ac?.[0];
+    if (a?.hex) vivo.hex = a.hex;
     if (!a || typeof a.lat !== "number") return;
     const t = Math.floor(((j.now ?? Date.now()) - (a.seen_pos ?? 0) * 1000) / 1000);
     const alt = typeof a.alt_baro === "number" ? a.alt_baro : null;
