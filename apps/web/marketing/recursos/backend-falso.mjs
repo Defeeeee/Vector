@@ -236,6 +236,32 @@ const resumenPlan = (p) => {
   const f = p.formulario ?? {};
   return { ...p, salida: f.salida?.codigo ?? null, destino: f.destino?.codigo ?? null, matricula: f.matricula ?? null, dof: f.dofUtc || null, eobt: f.eobtUtc || null };
 };
+// GET /planes-de-vuelo/{id}/repaso: un vuelo de ejemplo SADM -> SADL con un desvío al sur y un hueco de
+// señal en crucero. `REPASO=parcial|sin_datos` cambia el estado.
+function repasoDemo(id) {
+  const p = planes.get(id);
+  if (!p) return undefined;
+  if (process.env.REPASO === "sin_datos") return { estado: "sin_datos", motivo: "El ADS-B no vio a ese avión en el horario del plan. Puede que no transmita, que haya volado fuera de la cobertura o que haya salido muy distinto de lo planeado: no quiere decir que no haya volado." };
+  const A = [-34.6763, -58.6428], B = [-34.9611, -57.8941];
+  const pts = [];
+  for (let i = 0; i <= 120; i++) {
+    const f = i / 120;
+    if (f > 0.45 && f < 0.55) continue;
+    const alt = f < 0.1 ? 150 + 18500 * f : f > 0.9 ? 2000 - 19000 * (f - 0.9) : 2000;
+    pts.push([Math.round((A[0] + (B[0] - A[0]) * f - 0.06 * Math.sin(Math.PI * f)) * 1e5) / 1e5, Math.round((A[1] + (B[1] - A[1]) * f) * 1e5) / 1e5, Math.round(alt)]);
+  }
+  const t0 = new Date(Date.parse(`${p.dof}T${p.eobt.slice(0, 2)}:${p.eobt.slice(2)}:00Z`) + 6 * 60e3);
+  const parcial = process.env.REPASO === "parcial";
+  return {
+    estado: parcial ? "parcial" : "completo",
+    motivo: parcial ? "El ADS-B no vio el final: el avión sigue en el aire o se perdió la señal antes de aterrizar. Los números son de lo que se vio." : null,
+    aviso: "Las horas son de cuándo el ADS-B vio al avión en el aire. No son los horarios de la bitácora: el ADS-B casi nunca lo ve en tierra, así que el despegue y el aterrizaje reales son un poco antes y un poco después.",
+    despegue_adsb: t0.toISOString(), aterrizaje_adsb: parcial ? null : new Date(+t0 + 52 * 60e3).toISOString(), ultima_vista: new Date(+t0 + 52 * 60e3).toISOString(),
+    minutos_en_aire: 52, eet_min: 45, diferencia_min: 7, altitud_max_ft: 2400, gs_max_kt: 98, gs_media_kt: 87,
+    millas_voladas: 51.4, millas_planeadas: 49.8, desvio: { max_nm: 3.6, tramo: { indice: 0, desde: "SADM", hasta: "SADL" } },
+    aterrizajes_estimados: 1, minutos_sin_senal: 5, cerca_del_destino: !parcial, recorrido: pts,
+  };
+}
 function planesDeVuelo(req, ruta, json) {
   const ahora = new Date().toISOString();
   if (ruta === "/api/planes-de-vuelo/firma") {
@@ -260,6 +286,7 @@ function planesDeVuelo(req, ruta, json) {
     }
     return [...planes.values()].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).map(({ formulario, demoras, ...r }) => r);
   }
+  if (ruta.endsWith("/repaso")) return repasoDemo(ruta.split("/").at(-2));
   const id = ruta.split("/").pop();
   const p = planes.get(id);
   if (!p) return undefined;
@@ -274,7 +301,8 @@ function planesDeVuelo(req, ruta, json) {
 // Un plan sembrado para probar el Mapa desde el plan (`/dashboard/mapa?plan=<id>`): sale en dos horas,
 // con DCT, un grupo de velocidad y nivel, un VOR, un lugar que el Mapa no conoce y una coordenada.
 {
-  const salida = new Date(Date.now() + 2 * 3600e3);
+  // PLAN_PASADO=1: salió hace dos horas (para ver "Cómo fue el vuelo").
+  const salida = new Date(Date.now() + (process.env.PLAN_PASADO ? -2 : 2) * 3600e3);
   const dos = (n) => String(n).padStart(2, "0");
   const f = {
     version: 1, aircraftId: "a1", matricula: "LV-S048", reglas: "V", tipoVuelo: "G", numero: "1", tipoAeronave: "C152", estela: "L", equipo: "SDGZ", vigilancia: "C",
@@ -450,6 +478,15 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
   }
   if (ruta === "/api/push/suscripcion" || ruta === "/api/push/baja") {
     res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ ok: true }));
+  }
+  // Avisos de quien mira el vuelo (migración 046): la clave pública y alta/baja en memoria. Nunca manda nada.
+  if (ruta === "/api/publico/push/clave") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ clave: CLAVE_PUSH }));
+  }
+  if (/^\/api\/publico\/seguimientos\/[^/]+\/avisos(\/baja)?$/.test(ruta) && req.method === "POST") {
+    res.writeHead(ruta.endsWith("/baja") ? 200 : 201, { "Content-Type": "application/json" });
     return res.end(JSON.stringify({ ok: true }));
   }
   if (ruta.startsWith("/api/publico/seguimientos/") && req.method === "GET") {

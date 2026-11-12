@@ -12,6 +12,9 @@ deploy lo reinicia (`.github/workflows/api-deploy.yml`).
   código, en un solo pedido: así una navegación lejos de Buenos Aires se sigue grabando
   mientras alguna antena la escuche.
 - Cada 10 min relee las matrículas de los Hangares y los códigos ya aprendidos.
+- Cada ~30 s mira los vuelos compartidos que tienen avisos pedidos ("Avisarme cuando despegue y cuando
+  aterrice", migración 046, `services/avisos_seguimiento.py`) y manda el push de despegue y de aterrizaje.
+  Va en un hilo aparte y con su propio try/except: una falla o una demora de ahí no frena la grabación.
 - Una vez por hora borra lo que tiene más de 30 días (también los seguimientos en vivo, migración 041).
 
 Los datos son de adsb.fi (uso no comercial, con cita) o de adsb.lol (ODbL). Si no contestan, espera y sigue: no hay nada que
@@ -23,13 +26,15 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 import time
 from datetime import datetime, timezone
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import httpx
 
 from src.services.adsb import limite_de_retencion, matriculas_del_hangar, nuestros, posicion, vale_guardar
+from src.services.avisos_seguimiento import BARRIDO_CADA_S, barrer as barrer_avisos
 from src.services.seguimientos import limite_de_retencion as limite_seguimientos
 from src.supabase_client import SupabaseManager
 
@@ -70,13 +75,24 @@ def releer(cliente) -> Tuple[set, Dict[str, str]]:
     return matriculas_del_hangar(aviones), {c["hex"]: c["matricula"] for c in conocidos}
 
 
+def barrido_de_avisos(cliente) -> None:
+    """Una vuelta de avisos de vuelo. Nunca levanta: se corre en un hilo aparte y sólo deja log."""
+    try:
+        enviados = barrer_avisos(cliente)
+        if enviados:
+            log.info("avisos de vuelo enviados: %d", enviados)
+    except Exception as exc:  # noqa: BLE001 — los avisos nunca frenan la grabación
+        log.warning("barrido de avisos fallido: %r", exc)
+
+
 def main() -> None:
     cliente = SupabaseManager.get_service_client()
     http = httpx.Client(timeout=8, headers={"User-Agent": UA})
     matriculas, hex_conocidos = releer(cliente)
     log.info("arranco: %d matrículas, %d códigos conocidos, puntos %s", len(matriculas), len(hex_conocidos), puntos())
     ultimas: Dict[str, dict] = {}
-    releido = limpiado = 0.0
+    releido = limpiado = barrido = 0.0
+    hilo_avisos: Optional[threading.Thread] = None
     # Para medir desde `/health` cuántas vueltas salen y por qué fallan las otras.
     cuenta = {"vueltas_ok": 0, "vueltas_fallidas": 0}
     ultimo_error: Dict[str, object] = {}
@@ -96,6 +112,13 @@ def main() -> None:
                 except Exception as exc:  # noqa: BLE001 — la tabla puede no existir todavía; no frena el ADS-B
                     log.warning("no pude limpiar los seguimientos en vivo: %s", exc)
                 limpiado = inicio
+
+            # Los avisos del vuelo compartido, en su hilo: mandar un push puede tardar y la
+            # grabación no espera. Si el barrido anterior no terminó, se saltea esta vuelta.
+            if inicio - barrido > BARRIDO_CADA_S and (hilo_avisos is None or not hilo_avisos.is_alive()):
+                barrido = inicio
+                hilo_avisos = threading.Thread(target=barrido_de_avisos, args=(cliente,), name="avisos-vuelo", daemon=True)
+                hilo_avisos.start()
 
             trafico: Dict[str, dict] = {}
             for lat, lon, radio in puntos():

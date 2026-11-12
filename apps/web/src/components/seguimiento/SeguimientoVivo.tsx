@@ -5,6 +5,7 @@ import Link from "next/link";
 import SeguimientoMapa from "./SeguimientoMapa";
 import ClimaDestino from "./ClimaDestino";
 import PerfilAltura from "./PerfilAltura";
+import AvisarVuelo from "./AvisarVuelo";
 import { LogoVector } from "@/components/Marca";
 import { CADA_MIRANDO_MS, CLAVE_VISITANTE, conMiles, haceCuanto, idDeVisitanteValido, idDesdeBytes, rotuloDeAltura, textoDeFuente, type SeguimientoPublico } from "@/lib/seguimiento";
 import {
@@ -41,6 +42,8 @@ import {
  *   que pasó en esta pestaña desde entonces (`performance.now`), contra la hora de la posición. Ni
  *   el reloj de quien mira ni el del piloto entran en la cuenta. El primer dibujo (server) y la
  *   hidratación coinciden: el contador arranca en 0.
+ * - **"Avisarme cuando despegue y cuando aterrice"** (`AvisarVuelo`): un push web sin cuenta, que manda el
+ *   grabador del VPS aunque la página esté cerrada. Sólo mientras el link sigue en vuelo.
  * - Un corte de red no borra lo que se estaba viendo: queda la última posición y el aviso.
  */
 
@@ -238,6 +241,9 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
             </p>
           </div>
         )}
+
+        {/* Un push cuando despegue y cuando aterrice, sin cuenta (migración 046). Sólo mientras el link sigue en vuelo. */}
+        {enVuelo && <AvisarVuelo token={token} />}
 
         <div aria-live="polite">
           {"aviso" in estado && <p className="mt-3 border-l-2 border-white/20 pl-3 text-sm text-white/75">{estado.aviso}</p>}

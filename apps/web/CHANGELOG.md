@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.30.0 — Tu familia se entera, y vos repasás el vuelo
+
+_12 de noviembre de 2026_
+
+- **"Avisarme cuando despegue y aterrice"** — En el link de tu vuelo compartido, quien te sigue puede pedir un aviso en su teléfono, sin cuenta en Vector: le llega cuando despegás y cuando aterrizás, aunque no tenga la página abierta.
+- **Cómo fue el vuelo** — Después de volar un plan, Vector te muestra lo que vio el ADS-B: tiempo en el aire contra la EET, distancia, altitud y velocidad máximas, cuánto te desviaste de la ruta y el recorrido en un mapa. Y lo cargás en la bitácora con un toque.
+
 ## v3.29.0 — Niveles VFR según tu derrota
 
 _12 de noviembre de 2026_

@@ -111,14 +111,19 @@ def _borrar_suscripcion(suscripcion_id: str) -> None:
     SupabaseManager.get_service_client().table("suscripciones_push").delete().eq("id", suscripcion_id).execute()
 
 
-def enviar_ahora(user_id: str, aviso: Dict[str, str]) -> None:
-    """Manda el aviso a todos los navegadores de `user_id`, en este hilo."""
-    if not avisos_configurados():
-        return
+def mandar_a(suscripciones: List[Dict[str, Any]], aviso: Dict[str, str], borrar: Callable[[str], None]) -> int:
+    """
+    Manda `aviso` a cada suscripción (`id`, `endpoint`, `p256dh`, `auth`), en este hilo, y devuelve
+    cuántas salieron. Las que el servicio de push dice que ya no existen (404/410) se borran con
+    `borrar(id)`. Es lo que comparten los avisos de la red y los de "Compartir mi vuelo".
+    """
+    if not avisos_configurados() or not suscripciones:
+        return 0
     from pywebpush import WebPushException, webpush
 
     datos = json.dumps(aviso, ensure_ascii=False)
-    for s in _suscripciones(user_id):
+    enviados = 0
+    for s in suscripciones:
         try:
             webpush(
                 subscription_info={"endpoint": s["endpoint"], "keys": {"p256dh": s["p256dh"], "auth": s["auth"]}},
@@ -127,12 +132,21 @@ def enviar_ahora(user_id: str, aviso: Dict[str, str]) -> None:
                 vapid_claims={"sub": _settings().vapid_subject},
                 ttl=TTL_SEGUNDOS,
             )
+            enviados += 1
         except WebPushException as exc:
             codigo = getattr(getattr(exc, "response", None), "status_code", None)
             if es_suscripcion_muerta(codigo):
-                _borrar_suscripcion(s["id"])
+                borrar(s["id"])
             else:
                 log.warning("[avisos] no se pudo mandar a %s: %s", s["endpoint"][:60], exc)
+    return enviados
+
+
+def enviar_ahora(user_id: str, aviso: Dict[str, str]) -> None:
+    """Manda el aviso a todos los navegadores de `user_id`, en este hilo."""
+    if not avisos_configurados():
+        return
+    mandar_a(_suscripciones(user_id), aviso, _borrar_suscripcion)
 
 
 def en_segundo_plano(tarea: Callable[[], None]) -> None:

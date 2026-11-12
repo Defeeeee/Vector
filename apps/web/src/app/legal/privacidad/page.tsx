@@ -37,6 +37,9 @@ export const metadata: Metadata = {
  * recorrido y el METAR del destino, de `/api/seguimiento/clima/[token]`); el plazo
  * de los dos tiempos (12 h, 2 h de gracia) y el borrado a los 30 días (`grabador_adsb.py`) salen de ahí.
  *
+ * La sección #seguimiento también cubre los avisos a quien mira (migración 046, `seguimientos_avisos`,
+ * `services/avisos_seguimiento.py`): la suscripción push del navegador, sólo para ese vuelo, sin cuenta.
+ *
  * Desde la 2.21.0 (migraciones 020 y 021): el número de licencia y el legajo del libro
  * en PDF, los bloqueos, los reportes y las suscripciones a los avisos push
  * (`services/avisos.py`: qué dice cada aviso, y que nunca lleva datos de la bitácora).
@@ -423,6 +426,16 @@ export default function PrivacidadPage() {
             único que se anota es ese identificador y la hora. No se guarda su dirección IP ni quién
             es, y quien mira no ve a los demás. Esos datos se borran con el seguimiento, a los 30
             días de empezar a compartir.
+          </li>
+          <li>
+            <strong>Avisos a quien mira:</strong> quien abre el link, sin cuenta, puede tocar
+            &ldquo;Avisarme cuando despegue y cuando aterrice&rdquo;. Si lo hace, su navegador nos da
+            una suscripción de notificaciones (una dirección del servicio de avisos del navegador y
+            dos claves) y la guardamos <strong>sólo para ese vuelo</strong>, sin nombre, mail, IP ni
+            ninguna cuenta. La usamos únicamente para mandar dos avisos: que el avión despegó y que
+            aterrizó (o que terminaste el vuelo). Quien mira puede apagarlos cuando quiera con
+            &ldquo;No avisarme más&rdquo;, y se borran solos con el seguimiento, a los 30 días de
+            empezar a compartir. Nadie más, ni vos, ve esas suscripciones.
           </li>
         </ul>
       </section>

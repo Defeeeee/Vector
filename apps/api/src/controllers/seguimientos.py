@@ -32,8 +32,6 @@ from supabase import Client
 
 from src.auth.guards import auth_guard
 from src.services.seguimientos import (
-    ADSB_PRIMERAS,
-    ADSB_ULTIMAS,
     MatriculaVisible,
     PosicionEnVivo,
     RutaNueva,
@@ -51,13 +49,20 @@ from src.services.seguimientos import (
     resumen_de_vistas,
     salida_aceptable,
     salida_del_plan,
-    unir_filas_adsb,
     vence_en,
     vencimiento_desde_plan,
-    ventana_adsb,
     visible,
     vista_publica,
 )
+from src.services.avisos import avisos_configurados, en_segundo_plano
+from src.services.avisos_seguimiento import (
+    TOPE_SUSCRIPCIONES,
+    BajaAvisoIn,
+    SuscripcionAvisoIn,
+    avisar_fin_manual,
+    leer_adsb,
+)
+from src.config import settings
 from src.supabase_client import SupabaseManager
 
 _NO_EXISTE = "Ese seguimiento no existe."
@@ -431,6 +436,11 @@ class SeguimientosController(Controller):
                 .execute()
             )
             if r.data:
+                # Quien pidió avisos se entera de que el vuelo terminó (migración 046). En segundo
+                # plano y con el service role: las suscripciones no tienen política de lectura, y
+                # nada de esto puede demorar ni tirar abajo el "Terminar" del piloto.
+                fila = r.data[0]
+                en_segundo_plano(lambda: avisar_fin_manual(SupabaseManager.get_service_client(), fila))
                 return
             # Ya estaba terminado: terminar dos veces es lo mismo. Sólo un id ajeno es un 404.
             ya = (
@@ -449,33 +459,23 @@ class SeguimientosController(Controller):
         return {"terminado": True}
 
 
-def _leer_adsb(cliente: Client, fila: Dict[str, Any], ahora: datetime) -> List[Dict[str, Any]]:
-    """
-    Las posiciones ADS-B del avión en la ventana del seguimiento (`ventana_adsb`): las primeras y las
-    últimas, para que un vuelo largo no pierda ni el principio ni lo más nuevo (PostgREST corta en
-    1.000 filas). Es un respaldo: si la lectura falla, el link sigue con lo del teléfono.
-    """
-    ventana = ventana_adsb(fila, ahora)
-    if ventana is None:
-        return []
-    matricula = matricula_para_adsb(fila.get("matricula_adsb"))
-    columnas = "visto_at,lat,lon,altitud,velocidad,en_tierra"
+_leer_adsb = leer_adsb
 
-    def _base():
-        return (
-            cliente.table("adsb_posiciones")
-            .select(columnas)
-            .eq("matricula", matricula)
-            .gte("visto_at", ventana[0].isoformat())
-            .lte("visto_at", ventana[1].isoformat())
-        )
 
-    try:
-        primeras = _base().order("visto_at").limit(ADSB_PRIMERAS).execute().data or []
-        ultimas = _base().order("visto_at", desc=True).limit(ADSB_ULTIMAS).execute().data or []
-    except Exception:  # noqa: BLE001
-        return []
-    return unir_filas_adsb(primeras, ultimas)
+def _token_con_forma(token: str) -> bool:
+    return 32 <= len(token) <= 64 and all(c.isalnum() or c in "-_" for c in token)
+
+
+class PushPublicoController(Controller):
+    """`GET /publico/push/clave`, sin guard: la clave pública VAPID para quien mira un vuelo sin cuenta."""
+
+    path = "/publico/push"
+
+    @get("/clave")
+    async def clave(self) -> Response[Dict[str, Optional[str]]]:
+        # Sin las claves configuradas la página no ofrece avisos (como la red).
+        valor = settings.vapid_public_key if avisos_configurados() else None
+        return Response({"clave": valor}, headers={"Cache-Control": "no-store"})
 
 
 class SeguimientosPublicosController(Controller):
@@ -533,3 +533,53 @@ class SeguimientosPublicosController(Controller):
 
         cuerpo = await asyncio.to_thread(_leer)
         return Response(cuerpo, headers={"Cache-Control": "no-store"})
+
+    @post("/{token:str}/avisos", status_code=201)
+    async def pedir_avisos(self, token: str, data: SuscripcionAvisoIn) -> Dict[str, bool]:
+        """
+        Quien mira pide un push cuando el avión despegue y cuando aterrice (migración 046). Sin cuenta:
+        se guarda sólo la suscripción del navegador para este seguimiento. Sólo mientras sigue en
+        vuelo; un token que no existe, vencido o terminado da el mismo 404 de siempre. Hay un tope de
+        navegadores por vuelo, y pedirlo dos veces desde el mismo es lo mismo que una.
+        """
+        if not _token_con_forma(token):
+            raise NotFoundException(_NO_EXISTE)
+        if not avisos_configurados():
+            raise ClientException(detail="Los avisos no están disponibles.", status_code=503)
+        ahora = _ahora()
+
+        def _guardar() -> None:
+            cliente = SupabaseManager.get_service_client()
+            filas = cliente.table("seguimientos_en_vivo").select("id,vence_at,terminado_at").eq("token", token).limit(1).execute().data or []
+            if not filas or not esta_activo(filas[0], ahora):
+                raise NotFoundException(_NO_EXISTE)
+            sid = filas[0]["id"]
+            tabla = lambda: cliente.table("seguimientos_avisos")  # noqa: E731
+            ya = tabla().select("id").eq("seguimiento_id", sid).eq("endpoint", data.endpoint).limit(1).execute().data or []
+            if not ya:
+                cuenta = tabla().select("id", count="exact", head=True).eq("seguimiento_id", sid).execute()
+                if (cuenta.count or 0) >= TOPE_SUSCRIPCIONES:
+                    raise ClientException(detail="Este vuelo ya tiene todos los avisos que admite.", status_code=409)
+            tabla().upsert(
+                {"seguimiento_id": sid, "endpoint": data.endpoint, "p256dh": data.keys.p256dh, "auth": data.keys.auth},
+                on_conflict="seguimiento_id,endpoint",
+            ).execute()
+
+        await asyncio.to_thread(_guardar)
+        return {"ok": True}
+
+    @post("/{token:str}/avisos/baja", status_code=200)
+    async def dar_de_baja_avisos(self, token: str, data: BajaAvisoIn) -> Dict[str, bool]:
+        """Darse de baja de los avisos de este vuelo. Borra sólo la suscripción de ese navegador; nunca devuelve otras."""
+        if not _token_con_forma(token):
+            raise NotFoundException(_NO_EXISTE)
+
+        def _borrar() -> None:
+            cliente = SupabaseManager.get_service_client()
+            filas = cliente.table("seguimientos_en_vivo").select("id").eq("token", token).limit(1).execute().data or []
+            if not filas:
+                raise NotFoundException(_NO_EXISTE)
+            cliente.table("seguimientos_avisos").delete().eq("seguimiento_id", filas[0]["id"]).eq("endpoint", data.endpoint).execute()
+
+        await asyncio.to_thread(_borrar)
+        return {"ok": True}

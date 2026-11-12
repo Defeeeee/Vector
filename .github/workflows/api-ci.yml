@@ -92,6 +92,16 @@ jobs:
       - name: Seguir el vuelo en vivo (token, raleo, lo que ve el link público)
         run: python test_seguimientos.py
 
+      - name: Avisos a quien mira el vuelo (despegó, aterrizó, endpoints de push)
+        run: python test_avisos_seguimiento.py
+
+      # Importa el servicio de seguimientos (muestras, aterrizaje): pide las variables de mentira.
+      - name: Repaso del vuelo (ADS-B contra el plan)
+        env:
+          SUPABASE_URL: "https://dummy.supabase.co"
+          SUPABASE_PUBLISHABLE_KEY: "dummy-key"
+        run: python test_repaso_vuelo.py
+
       - name: Pasar al CAD desde Vector (login de ANAC falso, cifrado, Crear)
         env:
           SUPABASE_URL: "https://dummy.supabase.co"

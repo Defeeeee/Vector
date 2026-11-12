@@ -13,6 +13,8 @@ from src.auth.guards import auth_guard
 from src.config import settings
 from src.services.avisos import armar_aviso_respuesta_plan, enviar_aviso
 from src.services.recordatorio_plan import armar_pendientes
+from src.services.repaso_vuelo import parsear_puntos, puntos_del_seguimiento, repasar, ventana_del_repaso
+from src.services.seguimientos import _fecha as fecha_de_seguimiento
 from src.supabase_client import SupabaseManager
 from src.models.plan_vuelo import (
     FirmaPlanVuelo,
@@ -83,6 +85,66 @@ class PlanesDeVueloController(Controller):
     @get("/{plan_id:uuid}")
     async def leer(self, request: Request, supabase_client: Client, plan_id: UUID) -> PlanVuelo:
         return _leer_plan(supabase_client, str(request.state.user.id), plan_id)
+
+    @get("/{plan_id:uuid}/repaso")
+    async def repaso(
+        self, request: Request, supabase_client: Client, plan_id: UUID, puntos: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Cómo fue el vuelo de este plan, según el ADS-B del avión (`services/repaso_vuelo.py`).
+        Sólo el dueño. `puntos` es la ruta ubicada que arma la web (`lat,lon,COD;…`); sin ella se
+        usa la del link que se compartió, si hay. Nunca escribe: mirar no cambia nada
+        (invariante 15). Sin ADS-B del vuelo devuelve `estado: sin_datos` con el motivo, no un error.
+        """
+        user_id = str(request.state.user.id)
+        plan = _leer_plan(supabase_client, user_id, plan_id)
+        ahora = dt.datetime.now(dt.timezone.utc)
+
+        def _leer() -> Dict[str, Any]:
+            datos = plan.model_dump(mode="json")
+            segui = (
+                supabase_client.table("seguimientos_en_vivo")
+                .select("aterrizo_at,puntos")
+                .eq("plan_id", str(plan_id))
+                .eq("user_id", user_id)
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
+                .data
+                or [{}]
+            )[0]
+            ruta = parsear_puntos(puntos) or puntos_del_seguimiento(segui.get("puntos"))
+            aterrizo_at = fecha_de_seguimiento(segui.get("aterrizo_at"))
+            ventana = ventana_del_repaso(datos, aterrizo_at, ahora)
+            filas: List[Dict[str, Any]] = []
+            matricula = datos.get("matricula") or (datos.get("formulario") or {}).get("matricula")
+            if ventana is not None and ventana[1] > ventana[0] and matricula:
+                from src.services.adsb import normalizar_matricula
+
+                sin_guion = normalizar_matricula(matricula)
+                cliente = SupabaseManager.get_service_client()
+                for pagina in range(3):
+                    try:
+                        trozo = (
+                            cliente.table("adsb_posiciones")
+                            .select("visto_at,lat,lon,altitud,velocidad,en_tierra")
+                            .eq("matricula", sin_guion)
+                            .gte("visto_at", ventana[0].isoformat())
+                            .lte("visto_at", ventana[1].isoformat())
+                            .order("visto_at")
+                            .range(pagina * 1000, pagina * 1000 + 999)
+                            .execute()
+                            .data
+                            or []
+                        )
+                    except Exception:  # noqa: BLE001 — sin lectura es "sin datos", no un 500
+                        break
+                    filas.extend(trozo)
+                    if len(trozo) < 1000:
+                        break
+            return repasar(datos, filas, ruta, ahora, aterrizo_at)
+
+        return await asyncio.to_thread(_leer)
 
     @get("/{plan_id:uuid}/respuestas")
     async def respuestas(self, request: Request, supabase_client: Client, plan_id: UUID) -> List[RespuestaPlan]:

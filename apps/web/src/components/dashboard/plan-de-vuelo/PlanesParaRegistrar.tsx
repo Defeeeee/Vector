@@ -84,6 +84,13 @@ export default async function PlanesParaRegistrar({ vuelos }: { vuelos: { date?:
               <Link href={p.href} className="px-5 py-2.5 rounded-full bg-aviation-blue text-white text-sm font-bold whitespace-nowrap">
                 Registrar el vuelo
               </Link>
+              {/* El repaso con el ADS-B vive en el plan (`#repaso`); acá es sólo el camino. */}
+              <Link
+                href={`/dashboard/plan-de-vuelo/${p.id}#repaso`}
+                className="px-3 py-2.5 text-sm font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors whitespace-nowrap"
+              >
+                Ver cómo fue
+              </Link>
               <form action={descartarPlanForm.bind(null, p.id)}>
                 <BotonPendiente
                   pendiente="Guardando…"

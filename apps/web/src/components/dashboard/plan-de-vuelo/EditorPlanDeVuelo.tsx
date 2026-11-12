@@ -4,6 +4,8 @@ import RespuestasOficina, { type RespuestaConFecha } from "./RespuestasOficina";
 import CompartirVuelo from "./CompartirVuelo";
 import AvisosPush from "@/components/social/AvisosPush";
 import type { SeguimientoDelPlan } from "@/actions/seguimiento";
+import { puedeRepasar } from "@/lib/repaso-vuelo";
+import RepasoDelVuelo from "./RepasoDelVuelo";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -101,6 +103,8 @@ interface Props {
   respuestas: RespuestaConFecha[];
   /** El último link de "Compartir este vuelo" de este plan (migración 045), si hay. */
   seguimientoInicial: SeguimientoDelPlan | null;
+  /** El vuelo de la bitácora que salió de este plan (migración 026), si hay. */
+  vueloId: string | null;
   /** La clave de los avisos push (`/push/clave`): `null` si el backend no los tiene. */
   clavePush: string | null;
 }
@@ -271,6 +275,7 @@ export default function EditorPlanDeVuelo({
   actualizadoInicial,
   respuestas,
   seguimientoInicial,
+  vueloId,
   clavePush,
 }: Props) {
   const [f, setF] = useState<FormularioPlan>(() => leerFormulario(formularioInicial));
@@ -1269,6 +1274,15 @@ export default function EditorPlanDeVuelo({
               <Copy className="w-3.5 h-3.5" /> Duplicar para otro día
             </button>
           </Seccion>
+
+          {puedeRepasar(f, demoras, Boolean(cancelado), seguimientoInicial?.aterrizoAt ?? null, ahoraIso) && (
+            // `#repaso`: el "Ver cómo fue" del inicio llega acá.
+            <div id="repaso" className="scroll-mt-24">
+              <Seccion titulo="Cómo fue el vuelo">
+                <RepasoDelVuelo planId={id} f={f} demoras={demoras} nodos={rutaResuelta.nodos} vueloId={vueloId} ahoraIso={ahoraIso} esperarGuardado={esperarGuardado} />
+              </Seccion>
+            </div>
+          )}
 
           <Seccion titulo="Compartir este vuelo">
             <CompartirVuelo

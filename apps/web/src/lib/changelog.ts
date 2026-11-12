@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.30.0",
+    fecha: "2026-11-12",
+    titulo: "Tu familia se entera, y vos repasás el vuelo",
+    novedades: [
+      {
+        icono: "compartir",
+        titulo: "\"Avisarme cuando despegue y aterrice\"",
+        texto: "En el link de tu vuelo compartido, quien te sigue puede pedir un aviso en su teléfono, sin cuenta en Vector: le llega cuando despegás y cuando aterrizás, aunque no tenga la página abierta.",
+        href: "/dashboard/plan-de-vuelo",
+        cta: "Ver tus planes",
+      },
+      {
+        icono: "grafico",
+        titulo: "Cómo fue el vuelo",
+        texto: "Después de volar un plan, Vector te muestra lo que vio el ADS-B: tiempo en el aire contra la EET, distancia, altitud y velocidad máximas, cuánto te desviaste de la ruta y el recorrido en un mapa. Y lo cargás en la bitácora con un toque.",
+        href: "/dashboard/plan-de-vuelo",
+        cta: "Ver tus planes",
+      },
+    ],
+  },
+  {
     version: "3.29.0",
     fecha: "2026-11-12",
     titulo: "Niveles VFR según tu derrota",
