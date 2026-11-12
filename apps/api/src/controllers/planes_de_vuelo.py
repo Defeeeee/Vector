@@ -36,6 +36,24 @@ COLUMNAS_LISTA = (
 )
 
 
+def _leer_plan(supabase_client: Client, user_id: str, plan_id: UUID) -> PlanVuelo:
+    """
+    El plan del piloto. Función aparte porque un route handler de Litestar no se puede llamar
+    desde otro (`self.leer(...)` es el handler, no el método): así el PATCH de un envío daba 500
+    y ningún envío quedaba anotado, aunque el mail saliera (arreglado el 2026-11-12).
+    """
+    resp = (
+        supabase_client.table("planes_de_vuelo")
+        .select("*")
+        .eq("id", str(plan_id))
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if not resp.data:
+        raise NotFoundException("Ese plan de vuelo no existe.")
+    return PlanVuelo(**resp.data[0])
+
+
 class PlanesDeVueloController(Controller):
     """
     Los planes de vuelo (FPL) guardados del piloto, y su firma.
@@ -64,17 +82,7 @@ class PlanesDeVueloController(Controller):
 
     @get("/{plan_id:uuid}")
     async def leer(self, request: Request, supabase_client: Client, plan_id: UUID) -> PlanVuelo:
-        user_id = str(request.state.user.id)
-        resp = (
-            supabase_client.table("planes_de_vuelo")
-            .select("*")
-            .eq("id", str(plan_id))
-            .eq("user_id", user_id)
-            .execute()
-        )
-        if not resp.data:
-            raise NotFoundException("Ese plan de vuelo no existe.")
-        return PlanVuelo(**resp.data[0])
+        return _leer_plan(supabase_client, str(request.state.user.id), plan_id)
 
     @get("/{plan_id:uuid}/respuestas")
     async def respuestas(self, request: Request, supabase_client: Client, plan_id: UUID) -> List[RespuestaPlan]:
@@ -142,7 +150,7 @@ class PlanesDeVueloController(Controller):
         if "demoras" in enviados and data.demoras is not None:
             cambios["demoras"] = enviados["demoras"]
         if data.envio is not None:
-            actual = await self.leer(request, supabase_client, plan_id)
+            actual = _leer_plan(supabase_client, user_id, plan_id)
             if len(actual.envios) >= MAX_ENVIOS:
                 raise ClientException(detail=f"Este plan ya se mandó {MAX_ENVIOS} veces.")
             ahora = dt.datetime.now(dt.timezone.utc).isoformat()
@@ -151,7 +159,7 @@ class PlanesDeVueloController(Controller):
             if data.envio.modo == "aro":
                 cambios["enviado_at"] = ahora
         if not cambios:
-            return await self.leer(request, supabase_client, plan_id)
+            return _leer_plan(supabase_client, user_id, plan_id)
 
         resp = (
             supabase_client.table("planes_de_vuelo")

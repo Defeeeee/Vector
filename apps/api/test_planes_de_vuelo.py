@@ -120,6 +120,114 @@ check(
 )
 check("sin oficina ni texto, el cuerpo manda a mirar el plan", "plan" in armar_aviso_respuesta_plan("p", matricula=None, salida=None, destino=None, clasificacion="otra", oficina=None, resumen=None)["cuerpo"])
 
+# --- El PATCH que anota un envío (2026-11-12) -------------------------------------------------
+# `self.leer(...)` adentro del PATCH era el route handler de Litestar, no el método: tiraba
+# TypeError y ningún envío quedó anotado nunca, aunque el mail saliera.
+import ast as _ast
+import asyncio as _asyncio
+import pathlib as _pathlib
+import types as _types
+import uuid as _uuid
+
+from src.controllers.planes_de_vuelo import PlanesDeVueloController
+from src.models.plan_vuelo import PlanVueloUpdate
+
+
+def _llamadas_a_handlers(ruta: _pathlib.Path) -> list:
+    """`self.<handler>(…)` donde <handler> es un método decorado con @get/@post/@patch/…"""
+    arbol = _ast.parse(ruta.read_text())
+    malas = []
+    for clase in [n for n in arbol.body if isinstance(n, _ast.ClassDef)]:
+        handlers = {
+            m.name
+            for m in clase.body
+            if isinstance(m, (_ast.FunctionDef, _ast.AsyncFunctionDef))
+            and any(
+                isinstance(d, _ast.Call) and getattr(d.func, "id", "") in {"get", "post", "put", "patch", "delete", "route"}
+                or getattr(d, "id", "") in {"get", "post", "put", "patch", "delete"}
+                for d in m.decorator_list
+            )
+        }
+        for nodo in _ast.walk(clase):
+            if (
+                isinstance(nodo, _ast.Call)
+                and isinstance(nodo.func, _ast.Attribute)
+                and isinstance(nodo.func.value, _ast.Name)
+                and nodo.func.value.id == "self"
+                and nodo.func.attr in handlers
+            ):
+                malas.append(f"{ruta.name}:{nodo.lineno} self.{nodo.func.attr}")
+    return malas
+
+
+_malas = [m for f in sorted(_pathlib.Path("src/controllers").glob("*.py")) for m in _llamadas_a_handlers(f)]
+check(f"ningún controlador llama a un route handler como método ({_malas})", _malas == [])
+
+
+class _Resp:
+    def __init__(self, data):
+        self.data = data
+
+
+class _Consulta:
+    def __init__(self, base, filas):
+        self.base, self.filas, self.cambios = base, filas, None
+
+    def select(self, *_a, **_k):
+        return self
+
+    def eq(self, *_a, **_k):
+        return self
+
+    def update(self, cambios):
+        self.cambios = cambios
+        self.base.updates.append(cambios)
+        return self
+
+    def execute(self):
+        if self.cambios is not None:
+            return _Resp([{**self.filas[0], **self.cambios}])
+        return _Resp(self.filas)
+
+
+class _Cliente:
+    def __init__(self, fila):
+        self.fila, self.updates = fila, []
+
+    def table(self, _nombre):
+        return _Consulta(self, [self.fila])
+
+
+_pid = _uuid.uuid4()
+_uid = str(_uuid.uuid4())
+_fila = {
+    "id": str(_pid), "user_id": _uid, "aircraft_id": None, "formulario": {}, "completo": True,
+    "salida": "SADM", "destino": "SRDL", "matricula": "LV-S048", "dof": "2026-11-12", "eobt": "1930",
+    "descargado_at": None, "demoras": [], "created_at": "2026-11-12T10:00:00+00:00",
+    "updated_at": "2026-11-12T10:00:00+00:00", "envios": [], "enviado_at": None, "vuelo_id": None,
+    "cancelado_at": None, "descartado_at": None, "recordatorio_at": None,
+    "respuesta_estado": None, "respuesta_at": None,
+}
+_cli = _Cliente(_fila)
+_req = _types.SimpleNamespace(state=_types.SimpleNamespace(user=_types.SimpleNamespace(id=_uid)))
+_ctrl = PlanesDeVueloController.__new__(PlanesDeVueloController)
+try:
+    _plan = _asyncio.run(
+        PlanesDeVueloController.actualizar.fn(
+            _ctrl, _req, _cli, _pid, PlanVueloUpdate(envio={"modo": "aro", "tipo": "fpl", "a": "acmor@eana.com.ar"})
+        )
+    )
+    _ok = True
+except Exception as e:  # noqa: BLE001
+    print("  ", type(e).__name__, e)
+    _ok, _plan = False, None
+check("el PATCH con un envío no se rompe", _ok)
+check(
+    "y anota el envío a la oficina con enviado_at",
+    _ok and len(_cli.updates) == 1 and len(_cli.updates[0]["envios"]) == 1
+    and _cli.updates[0]["envios"][0]["a"] == "acmor@eana.com.ar" and bool(_cli.updates[0].get("enviado_at")),
+)
+
 if not all(resultados):
     print(f"\n{resultados.count(False)} check(s) fallaron")
     sys.exit(1)
