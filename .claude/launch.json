@@ -11,11 +11,11 @@
       "port": 7599
     },
     {
-      "name": "backend-falso-hqg",
+      "name": "backend-falso-vivo",
       "runtimeExecutable": "sh",
       "runtimeArgs": [
         "-c",
-        "MATRICULA_DEMO=LV-HQG ADSB_VIVO=LV-HQG node \"$(git rev-parse --show-toplevel)/apps/web/marketing/recursos/backend-falso.mjs\""
+        "MATRICULA_DEMO=LV-S050 ADSB_VIVO=LV-S050 node \"$(git rev-parse --show-toplevel)/apps/web/marketing/recursos/backend-falso.mjs\""
       ],
       "port": 7599
     },
