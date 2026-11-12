@@ -170,9 +170,28 @@ export function quienEscribe(de: string, enviosAOficina: string[], correoPiloto:
 }
 
 /** ¿El piloto ya recibió esta respuesta? Si no estaba en `to` ni en `cc`, se la reenviamos. */
-export function pilotoYaLaRecibio(correoPiloto: string, para: string[], cc: string[]): boolean {
+/** Las direcciones de un encabezado To o Cc (`"Lucía <a@b.com>, c@d.com"`, o una lista). Sin encabezado, `null`. */
+export function direccionesDeEncabezado(valor: unknown): string[] | null {
+  const textos = typeof valor === "string" ? [valor] : Array.isArray(valor) ? valor.filter((v): v is string => typeof v === "string") : null;
+  if (!textos || !textos.length) return null;
+  return textos.flatMap((t) => t.match(/[^\s<>,;"']+@[^\s<>,;"']+/g) ?? []).map((d) => d.toLowerCase());
+}
+
+/**
+ * ¿Hay que reenviarle al piloto la respuesta de la oficina? **Sólo si se sabe que no la recibió**: los
+ * encabezados To y Cc del mail (los que trae `GET /emails/receiving/{id}` de Resend) no lo nombran.
+ *
+ * Hasta el 2026-11-12 se miraban el `to` y el `cc` del aviso del webhook, y a Federico le llegó la
+ * respuesta de la oficina **y** el reenvío "contestó sólo a Vector": el aviso de Resend trae los
+ * destinatarios de su dominio, no los del mail (su documentación no lo dice; su ejemplo lo sugiere).
+ * Sin encabezados no se reenvía: el plan sale con el piloto en `reply_to`, así que "responder" ya le
+ * llega, y la respuesta igual queda en el plan y en el push.
+ */
+export function reenviarAlPiloto(correoPiloto: string, encabezados: { to?: unknown; cc?: unknown } | null | undefined): boolean {
   const mio = direccionDe(correoPiloto);
-  return [...para, ...cc].some((d) => direccionDe(d) === mio);
+  const para = direccionesDeEncabezado(encabezados?.to);
+  if (!mio || para === null) return false;
+  return ![...para, ...(direccionesDeEncabezado(encabezados?.cc) ?? [])].includes(mio);
 }
 
 /* -------------------------------------------------------------------------- */

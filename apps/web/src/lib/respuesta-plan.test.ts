@@ -3,7 +3,8 @@ import {
   clasificarPorReglas,
   cuandoRespuesta,
   direccionDe,
-  pilotoYaLaRecibio,
+  direccionesDeEncabezado,
+  reenviarAlPiloto,
   quienEscribe,
   resumir,
   sinLoCitado,
@@ -120,10 +121,22 @@ describe("quién escribe", () => {
   it("el dominio del piloto no vuelve oficina a todo el mundo (las pruebas van al piloto)", () => {
     expect(quienEscribe("otro@example.com", [piloto], piloto)).toBe("otro");
   });
-  it("direccionDe y pilotoYaLaRecibio", () => {
+  it("direccionDe y las direcciones de un encabezado", () => {
     expect(direccionDe(" Nombre <A@B.com> ")).toBe("a@b.com");
-    expect(pilotoYaLaRecibio(piloto, ["x@y.z"], ["Lucía <LUCIA@example.com>"])).toBe(true);
-    expect(pilotoYaLaRecibio(piloto, ["plan-x@respuestas.vector.fdiaznem.com.ar"], [])).toBe(false);
+    expect(direccionesDeEncabezado('"Díaz, Lucía" <LUCIA@example.com>, plan-x@respuestas.vector.fdiaznem.com.ar')).toEqual([
+      "lucia@example.com",
+      "plan-x@respuestas.vector.fdiaznem.com.ar",
+    ]);
+    expect(direccionesDeEncabezado(["a@b.c", "D <d@e.f>"])).toEqual(["a@b.c", "d@e.f"]);
+    expect(direccionesDeEncabezado(undefined)).toBeNull();
+  });
+  it("reenvía sólo si los encabezados dicen que el piloto no la recibió", () => {
+    expect(reenviarAlPiloto(piloto, { to: "plan-x@respuestas.vector.fdiaznem.com.ar", cc: "Lucía <LUCIA@example.com>" })).toBe(false);
+    expect(reenviarAlPiloto(piloto, { to: "Lucía <lucia@example.com>, plan-x@respuestas.vector.fdiaznem.com.ar" })).toBe(false);
+    expect(reenviarAlPiloto(piloto, { to: "plan-x@respuestas.vector.fdiaznem.com.ar" })).toBe(true);
+    // Sin encabezados no se sabe: no se reenvía (el caso del 2026-11-12, con el piloto en la respuesta).
+    expect(reenviarAlPiloto(piloto, null)).toBe(false);
+    expect(reenviarAlPiloto(piloto, { cc: "otro@x.com" })).toBe(false);
   });
 });
 

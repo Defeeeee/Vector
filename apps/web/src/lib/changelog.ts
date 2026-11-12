@@ -1462,6 +1462,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.24.2",
+    fecha: "2026-11-12",
+    motivo: "La respuesta de la oficina al plan se le reenviaba al piloto aunque la oficina ya lo había copiado (\"contestó sólo a Vector\"): arreglo de la 3.22.0.",
+  },
+  {
     version: "3.24.1",
     fecha: "2026-11-12",
     motivo: "El link de \"Compartir mi vuelo\" deja de usar amarillo y \"Sin datos recientes\" cuando se pierde la señal (\"Sin señal por ahora\", con un texto que no alarma a la familia): retoque de lo que la 3.24.0 ya anunciaba.",

@@ -27,6 +27,7 @@ const evento = (data: Record<string, unknown> = {}) => ({
 
 let registrado: Record<string, unknown> | null;
 let duplicada: boolean;
+let encabezadosMail: Record<string, unknown> | undefined;
 
 beforeEach(() => {
   process.env.RESEND_WEBHOOK_SECRET = SVIX;
@@ -34,6 +35,7 @@ beforeEach(() => {
   process.env.RESEND_API_KEY = "re_test";
   registrado = null;
   duplicada = false;
+  encabezadosMail = { From: "ARO Morón <acmor@eana.com.ar>", To: `Lucía <lucia@example.com>, ${DIR}` };
   vi.mocked(enviarMail).mockClear();
   vi.stubGlobal(
     "fetch",
@@ -46,7 +48,10 @@ beforeEach(() => {
         return new Response(JSON.stringify({ email: "lucia@example.com", envios_a_oficina: ["acmor@eana.com.ar"] }), { status: 200 });
       }
       if (url.includes("/emails/receiving/")) {
-        return new Response(JSON.stringify({ text: "Plan ACEPTADO. Buen vuelo.\n\nEl mar, 17 nov 2026, Lucía <lucia@example.com> escribió:\n> hola", html: null }), { status: 200 });
+        return new Response(
+          JSON.stringify({ text: "Plan ACEPTADO. Buen vuelo.\n\nEl mar, 17 nov 2026, Lucía <lucia@example.com> escribió:\n> hola", html: null, headers: encabezadosMail }),
+          { status: 200 },
+        );
       }
       throw new Error(`fetch inesperado: ${url}`);
     }),
@@ -66,14 +71,26 @@ describe("POST /api/mail/entrante", () => {
     expect(registrado).toMatchObject({ email_id: "re_1", de: "acmor@eana.com.ar", clasificacion: "aceptado", avisar: true, texto: "Plan ACEPTADO. Buen vuelo." });
     expect(enviarMail).not.toHaveBeenCalled(); // el piloto estaba en cc
   });
-  it("si el piloto no estaba en to ni cc, le reenvía el texto entero", async () => {
+  it("si los encabezados del mail no nombran al piloto, le reenvía el texto entero", async () => {
+    encabezadosMail = { to: DIR };
     await POST(pedido(evento({ cc: [] })));
     expect(enviarMail).toHaveBeenCalledOnce();
     const mail = vi.mocked(enviarMail).mock.calls[0][0];
     expect(mail.para).toBe("lucia@example.com");
     expect(mail.texto).toContain("Plan ACEPTADO");
   });
+  it("el aviso de Resend trae sólo nuestra dirección: con el piloto en los encabezados no se reenvía", async () => {
+    // El caso del 2026-11-12: la oficina respondió a todos y a Federico le llegó también "contestó sólo a Vector".
+    await POST(pedido(evento({ cc: [] })));
+    expect(enviarMail).not.toHaveBeenCalled();
+  });
+  it("sin encabezados no se sabe si lo recibió: no se reenvía", async () => {
+    encabezadosMail = undefined;
+    await POST(pedido(evento({ cc: [] })));
+    expect(enviarMail).not.toHaveBeenCalled();
+  });
   it("una repetición (duplicada) no reenvía nada", async () => {
+    encabezadosMail = { to: DIR };
     duplicada = true;
     await POST(pedido(evento({ cc: [] })));
     expect(enviarMail).not.toHaveBeenCalled();

@@ -4,7 +4,7 @@ import { planDeLosDestinatarios } from "@/lib/direccion-respuesta";
 import {
   MAX_TEXTO_RESPUESTA,
   direccionDe,
-  pilotoYaLaRecibio,
+  reenviarAlPiloto,
   quienEscribe,
   resumir,
   sinLoCitado,
@@ -99,6 +99,7 @@ async function procesar(cuerpo: string, secretoPlan: string): Promise<NextRespon
 
   // El cuerpo no viene en el webhook. Si no se puede pedir, se guarda igual (sin texto).
   let crudo = "";
+  let destinatarios: { to?: unknown; cc?: unknown } | null = null;
   try {
     const key = process.env.RESEND_API_KEY;
     if (!key) throw new Error("falta RESEND_API_KEY");
@@ -107,8 +108,11 @@ async function procesar(cuerpo: string, secretoPlan: string): Promise<NextRespon
       cache: "no-store",
     });
     if (!r.ok) throw new Error(`Resend contestó ${r.status}`);
-    const mail = (await r.json()) as { text?: string | null; html?: string | null };
+    const mail = (await r.json()) as { text?: string | null; html?: string | null; headers?: Record<string, unknown> | null };
     crudo = mail.text?.trim() ? mail.text : mail.html ? textoDeHtml(mail.html) : "";
+    // To y Cc de verdad, para saber si la oficina copió al piloto (el aviso del webhook no los trae).
+    const h = Object.fromEntries(Object.entries(mail.headers ?? {}).map(([k, v]) => [k.toLowerCase(), v]));
+    destinatarios = { to: h.to, cc: h.cc };
   } catch (err) {
     console.warn("[mail entrante] no se pudo leer el cuerpo:", err instanceof Error ? err.message : err);
   }
@@ -135,7 +139,7 @@ async function procesar(cuerpo: string, secretoPlan: string): Promise<NextRespon
   if (duplicada) return ok("ya registrada");
 
   // La oficina le contestó sólo a Vector: se la pasamos al piloto, con el texto entero.
-  if (quien === "oficina" && piloto && !pilotoYaLaRecibio(piloto, to, cc)) {
+  if (quien === "oficina" && piloto && reenviarAlPiloto(piloto, destinatarios)) {
     const texto = [
       `La oficina (${direccionDe(from)}) contestó tu plan de vuelo sólo a Vector. Te copiamos su respuesta:`,
       "",
