@@ -1,5 +1,6 @@
 // Backend falso para sacar capturas de la app sin tocar producción.
 import { createServer } from "node:http";
+import { createECDH } from "node:crypto";
 import { readFileSync, existsSync } from "node:fs";
 const DIR = new URL(".", import.meta.url).pathname;
 const hoy = new Date("2026-10-06T12:00:00Z");
@@ -125,6 +126,7 @@ const planes = new Map();
 // ya trae unos minutos de recorrido (sube a 2.400 ft y cruza) y cada GET avanza un punto sobre la ruta.
 // El avión es un Cessna 152 y la matrícula está apagada, como en el real (se prende con POST .../matricula).
 // El clima del destino NO sale de acá: la ruta pública de la web le pide el METAR a aviationweather.gov.
+const CLAVE_PUSH = (() => { const e = createECDH("prime256v1"); e.generateKeys(); return e.getPublicKey().toString("base64url"); })();
 const TOKEN_SEGUIMIENTO = "tokenDePruebaDeSeguimiento000001";
 const SADF = [-34.4532, -58.5896];
 const SAAV = [-31.7117, -60.8117];
@@ -410,6 +412,16 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     }
     res.writeHead(estado, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(r));
+  }
+  // Los avisos push: una clave VAPID pública de verdad (generada al arrancar), para que se dibuje
+  // "Activar avisos"; suscribirse guarda en memoria y nunca manda nada.
+  if (ruta === "/api/push/clave") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ clave: CLAVE_PUSH }));
+  }
+  if (ruta === "/api/push/suscripcion" || ruta === "/api/push/baja") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ ok: true }));
   }
   if (ruta.startsWith("/api/publico/seguimientos/") && req.method === "GET") {
     const token = ruta.split("/").pop();

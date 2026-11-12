@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.25.0 — Activá los avisos desde el plan
+
+_12 de noviembre de 2026_
+
+- **Avisos de la oficina, al lado del envío** — En el plan de vuelo, junto a "Mandarlo por mail desde Vector", podés activar los avisos de este dispositivo para que te llegue un push cuando la oficina conteste: recibido, aceptado, rechazado o que corrijas algo.
+
 ## v3.24.0 — Tu vuelo compartido, aunque el teléfono duerma
 
 _12 de noviembre de 2026_

@@ -20,10 +20,23 @@ import { claveDeAplicacion, esDispositivoIOS, estadoDeAvisos, type EstadoAvisos 
  * - Sin `clave` —el backend no tiene los avisos configurados— o sin service worker
  *   (`next dev`), no se dibuja.
  *
- * `compacto` es la versión de la Actividad: sólo aparece si hay algo para hacer. La del
- * Hangar muestra siempre el estado y deja apagarlos.
+ * `compacto` es la versión de la Actividad y del plan de vuelo: sólo aparece si hay algo para hacer.
+ * La del Hangar muestra siempre el estado y deja apagarlos.
+ *
+ * La suscripción es una sola por dispositivo y trae todos los avisos (la red y, desde la 3.22.0, las
+ * respuestas de la oficina al plan). `motivo` sólo cambia cómo se lo ofrece: en el plan, por la
+ * oficina (Federico, 2026-11-12: la respuesta llegó antes de que activara los avisos, y sólo los
+ * encontró en la red).
  */
-export default function AvisosPush({ clave, compacto = false }: { clave: string | null; compacto?: boolean }) {
+export default function AvisosPush({
+  clave,
+  compacto = false,
+  motivo = "red",
+}: {
+  clave: string | null;
+  compacto?: boolean;
+  motivo?: "red" | "plan";
+}) {
   const [estado, setEstado] = useState<EstadoAvisos | null>(null);
   const [trabajando, setTrabajando] = useState(false);
   const { notificar } = useAvisos();
@@ -88,7 +101,7 @@ export default function AvisosPush({ clave, compacto = false }: { clave: string 
       notificar({
         tipo: "exito",
         titulo: "Avisos activados",
-        detalle: "Te avisamos cuando te sigan, te aplaudan o te comenten.",
+        detalle: motivo === "plan" ? "Te avisamos cuando conteste la oficina." : "Te avisamos cuando te sigan, te aplaudan o te comenten.",
       });
     } catch {
       notificar({ tipo: "error", titulo: "No se pudieron activar los avisos" });
@@ -114,14 +127,24 @@ export default function AvisosPush({ clave, compacto = false }: { clave: string 
     }
   };
 
+  const textosPlan = {
+    apagados: {
+      titulo: "Avisos de la oficina",
+      detalle: "Te avisamos en este dispositivo cuando la oficina conteste: recibido, aceptado, rechazado o que corrijas algo.",
+    },
+    "instalar-app": {
+      titulo: "Avisos en el iPhone",
+      detalle: "Para que te avise cuando conteste la oficina, Vector tiene que estar instalado: en Safari, tocá Compartir y después “Agregar a inicio”.",
+    },
+  };
   const textos: Record<Exclude<EstadoAvisos, "sin-soporte">, { titulo: string; detalle: string }> = {
     apagados: {
       titulo: "Avisos de tu red",
-      detalle: "Te avisamos en este dispositivo cuando te sigan, te aplaudan o te comenten.",
+      detalle: "Te avisamos en este dispositivo cuando te sigan, te aplaudan, te comenten o te conteste la oficina un plan de vuelo.",
     },
     prendidos: {
       titulo: "Avisos activados en este dispositivo",
-      detalle: "Te llegan cuando te siguen, te aplauden o te comentan. Nunca datos de tu bitácora.",
+      detalle: "Te llegan cuando te siguen, te aplauden, te comentan o la oficina contesta tu plan de vuelo. Nunca datos de tu bitácora.",
     },
     bloqueados: {
       titulo: "Los avisos están bloqueados en este navegador",
@@ -132,7 +155,7 @@ export default function AvisosPush({ clave, compacto = false }: { clave: string 
       detalle: "Llegan con Vector instalado: en Safari, tocá Compartir y después “Agregar a inicio”.",
     },
   };
-  const { titulo, detalle } = textos[estado];
+  const { titulo, detalle } = (motivo === "plan" && (estado === "apagados" || estado === "instalar-app") ? textosPlan[estado] : null) ?? textos[estado];
   const Icono = estado === "prendidos" ? Bell : estado === "instalar-app" ? Smartphone : estado === "bloqueados" ? BellOff : Bell;
 
   return (

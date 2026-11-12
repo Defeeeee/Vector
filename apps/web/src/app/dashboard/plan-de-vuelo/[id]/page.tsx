@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { apiFetch } from "@/lib/api";
 import EditorPlanDeVuelo from "@/components/dashboard/plan-de-vuelo/EditorPlanDeVuelo";
 import { leerSeguimientoDelPlan } from "@/actions/seguimiento";
 import { cuandoRespuesta } from "@/lib/respuesta-plan";
@@ -13,13 +14,17 @@ import { avionesParaPlan, firmaGuardada, leerPlan, leerRespuestas, pilotoParaPla
  */
 export default async function EditarPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [plan, aviones, piloto, firma, respuestas, seguimiento] = await Promise.all([
+  const [plan, aviones, piloto, firma, respuestas, seguimiento, clavePush] = await Promise.all([
     leerPlan(id),
     avionesParaPlan(),
     pilotoParaPlan(),
     firmaGuardada(),
     leerRespuestas(id),
     leerSeguimientoDelPlan(id),
+    // La clave de los avisos push, para ofrecerlos al lado del envío: `null` si no están configurados.
+    apiFetch("/push/clave")
+      .then(async (r) => (r.ok ? (((await r.json().catch(() => null)) as { clave?: string | null } | null)?.clave ?? null) : null))
+      .catch(() => null),
   ]);
   if (!plan) notFound();
 
@@ -47,6 +52,7 @@ export default async function EditarPlanPage({ params }: { params: Promise<{ id:
       envioAroActivo={process.env.PLAN_DE_VUELO_ENVIO_ARO === "1"}
       actualizadoInicial={plan.updated_at ?? null}
       seguimientoInicial={seguimiento}
+      clavePush={clavePush}
       respuestas={respuestas.map((r) => ({ ...r, cuando: cuandoRespuesta(r.recibido_at) }))}
     />
   );

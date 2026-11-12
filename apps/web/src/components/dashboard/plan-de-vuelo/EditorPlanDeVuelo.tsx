@@ -2,6 +2,7 @@
 
 import RespuestasOficina, { type RespuestaConFecha } from "./RespuestasOficina";
 import CompartirVuelo from "./CompartirVuelo";
+import AvisosPush from "@/components/social/AvisosPush";
 import type { SeguimientoDelPlan } from "@/actions/seguimiento";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -96,6 +97,8 @@ interface Props {
   respuestas: RespuestaConFecha[];
   /** El último link de "Compartir este vuelo" de este plan (migración 045), si hay. */
   seguimientoInicial: SeguimientoDelPlan | null;
+  /** La clave de los avisos push (`/push/clave`): `null` si el backend no los tiene. */
+  clavePush: string | null;
 }
 
 /** "19/10 23:52Z": sin `toLocaleString`, igual en el server y en el navegador (invariante 1). */
@@ -264,6 +267,7 @@ export default function EditorPlanDeVuelo({
   actualizadoInicial,
   respuestas,
   seguimientoInicial,
+  clavePush,
 }: Props) {
   const [f, setF] = useState<FormularioPlan>(() => leerFormulario(formularioInicial));
   const [guardado, setGuardado] = useState<"guardado" | "guardando" | "error">("guardado");
@@ -1170,6 +1174,7 @@ export default function EditorPlanDeVuelo({
                 )}
               </div>
             )}
+            {envioAroActivo && <AvisosPush clave={clavePush} compacto motivo="plan" />}
             <RespuestasOficina respuestas={respuestas} />
             <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">{envioAroActivo ? "O desde tu correo:" : "Desde tu correo:"}</p>
             <div className="flex flex-wrap gap-2">

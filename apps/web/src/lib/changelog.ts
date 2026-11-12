@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.25.0",
+    fecha: "2026-11-12",
+    titulo: "Activá los avisos desde el plan",
+    novedades: [
+      {
+        icono: "campana",
+        titulo: "Avisos de la oficina, al lado del envío",
+        texto: "En el plan de vuelo, junto a \"Mandarlo por mail desde Vector\", podés activar los avisos de este dispositivo para que te llegue un push cuando la oficina conteste: recibido, aceptado, rechazado o que corrijas algo.",
+        href: "/dashboard/plan-de-vuelo",
+        cta: "Ver tus planes",
+      },
+    ],
+  },
+  {
     version: "3.24.0",
     fecha: "2026-11-12",
     titulo: "Tu vuelo compartido, aunque el teléfono duerma",
