@@ -1,6 +1,8 @@
 # Diagnóstico de sólo lectura del VPS (oraclearm): el DERP propio y Tailscale.
 #
-# Se corre a mano (workflow_dispatch). No cambia nada en el servidor. El repo es público y los
+# Se corre a mano (workflow_dispatch). No cambia nada en el servidor, salvo con
+# `reiniciar_derper` (2026-11-12: el derper rechazaba a todos con "failed to query local
+# tailscaled status" desde que el tailscaled del VPS se reinició al actualizarse). El repo es público y los
 # logs de Actions se ven: la salida pasa por `tapar`, que reemplaza IPv4, claves de nodo y
 # direcciones de mail. Creado el 2026-11-12, cuando Tailscale dejó de andar en todos los
 # dispositivos (el tailnet usa sólo los relays propios: `derpMap` con OmitDefaultRegions).
@@ -8,6 +10,11 @@ name: Diagnóstico VPS
 
 on:
   workflow_dispatch:
+    inputs:
+      reiniciar_derper:
+        description: "Reiniciar el contenedor derper antes de mirar (el único cambio que puede hacer)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,12 +26,19 @@ jobs:
     steps:
       - name: Mirar derper y tailscaled
         uses: appleboy/ssh-action@v1
+        env:
+          REINICIAR: ${{ inputs.reiniciar_derper }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           command_timeout: 3m
+          envs: REINICIAR
           script: |
+            if [ "$REINICIAR" = "true" ]; then
+              echo "### reiniciando el contenedor derper"
+              (docker restart derper 2>/dev/null || sudo -n docker restart derper) && sleep 8
+            fi
             tapar() { sed -E -e 's/[0-9]{1,3}(\.[0-9]{1,3}){3}/x.x.x.x/g' -e 's/(nodekey|discokey|mkey|privkey):[0-9a-f]+/\1:…/g' -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}/<mail>/g'; }
             s() { echo; echo "### $*"; }
             {
