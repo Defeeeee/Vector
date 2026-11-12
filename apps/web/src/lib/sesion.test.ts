@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { vidaRestante, necesitaRenovar, MARGEN_MS, destinoSinSesion, DURACION_SESION_S, volverSeguro, loginCon } from "./sesion";
+import { vidaRestante, necesitaRenovar, MARGEN_MS, destinoSinSesion, DURACION_SESION_S, volverSeguro, loginCon, dominioDeCookie, hostDelPedido } from "./sesion";
 
 const AHORA = new Date("2026-08-18T12:00:00Z").getTime();
 
@@ -122,5 +122,39 @@ describe("volver a donde estabas", () => {
     expect(loginCon("/login?expirada=1", "/dashboard/mapa")).toBe("/login?expirada=1&volver=%2Fdashboard%2Fmapa");
     expect(loginCon("/login", "/dashboard")).toBe("/login");
     expect(loginCon("/login", "https://malo.example")).toBe("/login");
+  });
+});
+
+describe("dominioDeCookie", () => {
+  it("el dominio nuevo y sus subdominios comparten la cookie", () => {
+    expect(dominioDeCookie("vectoraero.ar")).toBe(".vectoraero.ar");
+    expect(dominioDeCookie("www.vectoraero.ar")).toBe(".vectoraero.ar");
+    expect(dominioDeCookie("api.vectoraero.ar")).toBe(".vectoraero.ar");
+  });
+  it("el dominio viejo sigue con el suyo", () => {
+    expect(dominioDeCookie("vector.fdiaznem.com.ar")).toBe(".fdiaznem.com.ar");
+    expect(dominioDeCookie("Vector.FDiazNem.com.ar:443")).toBe(".fdiaznem.com.ar");
+  });
+  it("cualquier otro host va sin domain", () => {
+    expect(dominioDeCookie("localhost:3000")).toBeUndefined();
+    expect(dominioDeCookie("vector-git-x.vercel.app")).toBeUndefined();
+    expect(dominioDeCookie(null)).toBeUndefined();
+    expect(dominioDeCookie("")).toBeUndefined();
+  });
+  it("no se deja engañar por dominios parecidos", () => {
+    expect(dominioDeCookie("evilvectoraero.ar")).toBeUndefined();
+    expect(dominioDeCookie("vectoraero.ar.evil.com")).toBeUndefined();
+    expect(dominioDeCookie("xfdiaznem.com.ar")).toBeUndefined();
+  });
+  it("con varios hosts reenviados toma el primero", () => {
+    expect(dominioDeCookie("vectoraero.ar, proxy.interno")).toBe(".vectoraero.ar");
+  });
+});
+
+describe("hostDelPedido", () => {
+  it("prefiere x-forwarded-host", () => {
+    const h = new Headers({ host: "127.0.0.1:3010", "x-forwarded-host": "vectoraero.ar" });
+    expect(hostDelPedido(h)).toBe("vectoraero.ar");
+    expect(hostDelPedido(new Headers({ host: "localhost:3000" }))).toBe("localhost:3000");
   });
 });

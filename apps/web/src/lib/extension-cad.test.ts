@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compararVersion, estadoExtension, navegadorParaCad, VERSION_EXTENSION } from "./extension-cad";
+import { compararVersion, estadoExtension, navegadorParaCad, VERSION_EXTENSION, VERSION_SIN_AVISO } from "./extension-cad";
 
 describe("compararVersion", () => {
   it("número por número", () => {
@@ -18,6 +18,12 @@ describe("estadoExtension", () => {
   });
   it("la que se baja hoy tiene puente", () => {
     expect(estadoExtension(VERSION_EXTENSION)).toBe("al-dia");
+  });
+  it("la 1.3.0 sirve en el dominio viejo: no se la apura a actualizar", () => {
+    expect(VERSION_EXTENSION).toBe("1.4.0");
+    expect(estadoExtension("1.3.0")).toBe("al-dia");
+    expect(estadoExtension("1.2.0")).toBe("vieja");
+    expect(compararVersion(VERSION_SIN_AVISO, VERSION_EXTENSION)).toBeLessThan(0);
   });
 });
 

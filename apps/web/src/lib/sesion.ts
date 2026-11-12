@@ -116,3 +116,24 @@ export function loginCon(base: string, volver: string | null | undefined): strin
   if (!v || v === "/dashboard") return base;
   return `${base}${base.includes("?") ? "&" : "?"}volver=${encodeURIComponent(v)}`;
 }
+
+/**
+ * El `domain` de las cookies de sesión, según el host con el que entró el pedido (mudanza a
+ * `vectoraero.ar`, 2026-11): durante la transición los dos dominios andan a la vez y cada uno
+ * necesita su cookie, porque el navegador descarta una cookie de un dominio que no es el suyo.
+ * Los subdominios comparten la del dominio raíz. Localhost, previews y cualquier otro host
+ * van sin `domain` (host-only), como en desarrollo.
+ *
+ * Tiene que usarse igual al poner y al borrar la cookie: borrar con otro `domain` no borra nada.
+ */
+export function dominioDeCookie(host: string | null | undefined): string | undefined {
+  const h = (host ?? "").split(",")[0].trim().toLowerCase().replace(/:\d+$/, "");
+  if (h === "vectoraero.ar" || h.endsWith(".vectoraero.ar")) return ".vectoraero.ar";
+  if (h === "fdiaznem.com.ar" || h.endsWith(".fdiaznem.com.ar")) return ".fdiaznem.com.ar";
+  return undefined;
+}
+
+/** El host del pedido, como lo ve el navegador: el que reenvía el proxy o, si no, `host`. */
+export function hostDelPedido(headers: { get(nombre: string): string | null }): string | null {
+  return headers.get("x-forwarded-host") || headers.get("host");
+}

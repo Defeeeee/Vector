@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LINK_SUPABASE, mailConfirmarCuenta, mailRecuperarContrasena } from "./mails-auth";
 
-const APP = "https://vector.fdiaznem.com.ar";
+const APP = "https://vectoraero.ar";
 
 describe("los mails de Supabase Auth", () => {
   for (const [nombre, armar] of [["confirmar", mailConfirmarCuenta], ["recuperar", mailRecuperarContrasena]] as const) {

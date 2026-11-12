@@ -1,4 +1,5 @@
 import { ArrowRight, Check, MessageCircle, Mic, PartyPopper, Plane } from "lucide-react";
+import { SITIO_HOST } from "@/lib/sitio";
 
 /**
  * Product mocks for the landing feature sections.
@@ -39,7 +40,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 /** Registro — the Nuevo Vuelo form, down to the block/ANAC split. */
 function LogFlightMock() {
   return (
-    <BrowserFrame url="vector.fdiaznem.com.ar/dashboard/log-flight">
+    <BrowserFrame url={`${SITIO_HOST}/dashboard/log-flight`}>
       <div className="space-y-4">
         <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
           <div className="space-y-1">
@@ -96,7 +97,7 @@ function PcaMock() {
     { label: "Nocturno", done: 3.2, need: 5 },
   ];
   return (
-    <BrowserFrame url="vector.fdiaznem.com.ar/dashboard/summary">
+    <BrowserFrame url={`${SITIO_HOST}/dashboard/summary`}>
       <div className="space-y-3">
         {rows.map((r) => {
           const pct = Math.min(100, (r.done / r.need) * 100);
@@ -173,7 +174,7 @@ function WeatherMock() {
     { k: "QNH", v: "1012" },
   ];
   return (
-    <BrowserFrame url="vector.fdiaznem.com.ar/dashboard/airports">
+    <BrowserFrame url={`${SITIO_HOST}/dashboard/airports`}>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2">
           <div>
@@ -311,7 +312,7 @@ function LibroMock() {
 /** La red: una publicación con su vuelo, sin matrícula, y los aplausos. */
 function RedMock() {
   return (
-    <BrowserFrame url="vector.fdiaznem.com.ar/dashboard/pilotos">
+    <BrowserFrame url={`${SITIO_HOST}/dashboard/pilotos`}>
       <div className="space-y-3">
         <div className="flex items-center gap-2.5">
           <span className="w-8 h-8 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center text-[10px] font-bold">AG</span>

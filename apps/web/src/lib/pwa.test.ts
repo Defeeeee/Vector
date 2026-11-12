@@ -128,7 +128,7 @@ describe("paginaCacheable", () => {
 });
 
 describe("estrategiaPara", () => {
-  const ORIGEN = "https://vector.fdiaznem.com.ar";
+  const ORIGEN = "https://vectoraero.ar";
   const pedir = (url: string, extra: Partial<Pedido> = {}): Pedido => ({
     metodo: "GET",
     url: url.startsWith("http") ? url : ORIGEN + url,
@@ -190,7 +190,7 @@ describe("estrategiaPara", () => {
   it("nada de otro origen, salvo las teselas del mapa base", () => {
     // El backend vive en otro dominio y ni siquiera pasa por el navegador. Las teselas de OSM
     // sí, desde la 3.15.0 (el Mapa sin señal): ver el test de "teselas".
-    expect(estrategiaPara(pedir("https://api.flightlog.fdiaznem.com.ar/dashboard"), ORIGEN)).toBe("ignorar");
+    expect(estrategiaPara(pedir("https://api.vectoraero.ar/dashboard"), ORIGEN)).toBe("ignorar");
 
     /*
       El caso que de verdad prueba la comprobación de origen: **otro dominio con
@@ -347,7 +347,7 @@ describe("cómo se aplica una versión nueva", () => {
 });
 
 describe("los links que sirven para actualizar", () => {
-  const O = "https://vector.fdiaznem.com.ar";
+  const O = "https://vectoraero.ar";
   it("otra pantalla de Vector, sí", () => {
     expect(linkParaActualizar("/dashboard/summary", O, "/dashboard", {})).toBe("/dashboard/summary");
     expect(linkParaActualizar(`${O}/dashboard/mapa?ruta=SADF-SADM`, O, "/dashboard", {})).toBe("/dashboard/mapa?ruta=SADF-SADM");

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S, destinoSinSesion, loginCon, necesitaRenovar } from "@/lib/sesion";
+import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S, destinoSinSesion, dominioDeCookie, hostDelPedido, loginCon, necesitaRenovar } from "@/lib/sesion";
 
-const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.flightlog.fdiaznem.com.ar";
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.vectoraero.ar";
 
 /** Los mismos atributos que `setSession` en `src/actions/auth.ts`. */
-function opcionesCookie() {
+function opcionesCookie(host: string | null) {
   const esProd = process.env.NODE_ENV === "production";
   return {
     httpOnly: true,
@@ -13,13 +13,14 @@ function opcionesCookie() {
     sameSite: "lax" as const,
     path: "/",
     /*
-      En producción la cookie es del dominio raíz para que valga en todos los
+      En producción la cookie es del dominio raíz (el del host del pedido: `vectoraero.ar` o
+      el viejo `fdiaznem.com.ar`, `dominioDeCookie`) para que valga en todos los
       subdominios. Si acá la escribiéramos sin `domain`, el navegador crearía una
       cookie **distinta** —host-only— que taparía a la buena, y el usuario quedaría con
       dos sesiones desincronizadas: una que se renueva y otra que no. Tiene que
       coincidir con `setSession` atributo por atributo.
     */
-    domain: esProd ? ".fdiaznem.com.ar" : undefined,
+    domain: dominioDeCookie(host),
   };
 }
 
@@ -137,7 +138,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const opciones = opcionesCookie();
+  const opciones = opcionesCookie(hostDelPedido(request.headers));
 
   /** Deja las cookies nuevas en cualquier respuesta que salga de acá. */
   const conCookies = (respuesta: NextResponse) => {
@@ -160,7 +161,7 @@ export async function proxy(request: NextRequest) {
 
   const aDondeVa = (destino: string) => {
     const host =
-      request.headers.get("x-forwarded-host") || request.headers.get("host") || "vector.fdiaznem.com.ar";
+      hostDelPedido(request.headers) || "vectoraero.ar";
     const proto = request.headers.get("x-forwarded-proto") || "https";
     return new URL(destino, `${proto}://${host}`);
   };

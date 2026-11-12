@@ -240,7 +240,7 @@ const AUTH_ROUTES = [
   "/api/bitacora/libro-anac",
 ];
 
-const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.flightlog.fdiaznem.com.ar";
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.vectoraero.ar";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

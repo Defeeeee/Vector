@@ -15,7 +15,7 @@ const oficina = { correo: "acmor@eana.com.ar", nombre: "Morón", oaci: "SADM" };
 const base = { plan, nombres: { salida: "Luján", destino: "Morón" }, piloto: "lucia@example.com", oficina };
 
 describe("el mail del plan de vuelo: la dirección por la que Vector se entera", () => {
-  const direccionRespuesta = "plan-0b8f2c1e-5a4d-4c3b-9e7f-123456789abc-0123456789@respuestas.vector.fdiaznem.com.ar";
+  const direccionRespuesta = "plan-0b8f2c1e-5a4d-4c3b-9e7f-123456789abc-0123456789@respuestas.vectoraero.com.ar";
   it("a la oficina: reply_to es el piloto y la dirección de Vector, y el piloto sigue en copia", () => {
     const m = armarMailPlan({ ...base, modo: "aro", direccionRespuesta });
     expect(m.responderA).toEqual(["lucia@example.com", direccionRespuesta]);

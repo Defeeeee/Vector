@@ -4,10 +4,11 @@ import { enviarMail, mailConfigurado } from "@/lib/mailer";
 import { enviarConSeguimiento } from "@/lib/mail-envio";
 import { armarMensajePrimerVuelo } from "@/lib/primer-vuelo-mail";
 import { linkCopiloto } from "@/lib/copiloto";
+import { SITIO_URL } from "@/lib/sitio";
 
 // Local por defecto, con /api, como los otros barridos (ver `lib/api.ts`).
 const API_URL = process.env.API_URL || "http://127.0.0.1:7477/api";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://vector.fdiaznem.com.ar";
+const APP_URL = SITIO_URL;
 
 /**
  * El mail del día siguiente al alta, para quien todavía no cargó vuelos.

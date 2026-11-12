@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { SITIO_URL } from "@/lib/sitio";
 import {
   camposHourlyViento,
   leerRespuestaOpenMeteo,
@@ -27,7 +28,7 @@ import {
  * de pago (con clave) o a otra fuente. Cambia sólo este archivo.
  */
 const HORA_MS = 3600_000;
-const USER_AGENT = "Vector (https://vector.fdiaznem.com.ar)";
+const USER_AGENT = `Vector (${SITIO_URL})`;
 
 const iso = (ms: number) => new Date(ms).toISOString().slice(0, 16);
 

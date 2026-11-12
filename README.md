@@ -4,14 +4,14 @@ Bitácora digital para pilotos argentinos: el libro de vuelo en formato ANAC, el
 de horas, los vencimientos y "¿puedo volar hoy?" según la RAAC 61. Además, el plan de
 vuelo para EANA, el paso de los vuelos al CAD de ANAC y una red de pilotos.
 
-En producción: [vector.fdiaznem.com.ar](https://vector.fdiaznem.com.ar).
+En producción: [vectoraero.ar](https://vectoraero.ar).
 
 ## Estructura
 
 ```text
 apps/
-├── web/         Next.js 16 · React 19 · Tailwind v4   → vector.fdiaznem.com.ar
-├── api/         Python · Litestar · Supabase           → api.flightlog.fdiaznem.com.ar
+├── web/         Next.js 16 · React 19 · Tailwind v4   → vectoraero.ar
+├── api/         Python · Litestar · Supabase           → api.vectoraero.ar
 └── extension/   La extensión "Vector → CAD" (la empaqueta el build de la web)
 docs/
 ├── bitacora/    Qué se cambió, cuándo y por qué (la de la API vieja, en bitacora/api/)

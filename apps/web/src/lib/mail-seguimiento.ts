@@ -9,7 +9,7 @@
  *
  * **Todo va firmado** con un HMAC del secreto de los barridos, por dos razones:
  * 1. Sin firma, `/api/mail/c?u=…` sería una redirección abierta: cualquiera podría armar
- *    un link de vector.fdiaznem.com.ar que mande a un sitio de phishing.
+ *    un link de vectoraero.ar que mande a un sitio de phishing.
  * 2. Nadie puede inventar aperturas o clics de un envío ajeno.
  *
  * **Qué no mide, y el panel lo dice:** una apertura no prueba lectura (Apple Mail baja las

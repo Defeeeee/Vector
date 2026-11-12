@@ -30,6 +30,10 @@ defaults:
 jobs:
   verificar:
     runs-on: ubuntu-latest
+    env:
+      # Mudanza a vectoraero.ar: el CI sigue contra el auth viejo (que sigue vivo) hasta que se
+      # defina la variable de repo `AUTH_PUBLICA_URL` con `https://auth.vectoraero.ar`.
+      NEXT_PUBLIC_AUTH_URL: ${{ vars.AUTH_PUBLICA_URL || 'https://auth.flightlog.fdiaznem.com.ar' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -74,6 +78,10 @@ jobs:
           # en el bundle del servidor la expresión queda como lectura de runtime
           # (`process.env.API_URL||"http://127.0.0.1:7477/api"` literal en los
           # chunks), así que se resuelve cuando el smoke levanta la app.
-          API_URL: https://api.flightlog.fdiaznem.com.ar
+          #
+          # Mudanza a vectoraero.ar: queda el dominio viejo, que sigue vivo, hasta que se
+          # defina la variable de repo `API_PUBLICA_URL` (Settings > Variables) con
+          # `https://api.vectoraero.ar`. Después se puede borrar el `||`.
+          API_URL: ${{ vars.API_PUBLICA_URL || 'https://api.flightlog.fdiaznem.com.ar' }}
           SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
           SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}

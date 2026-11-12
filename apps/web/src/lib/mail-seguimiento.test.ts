@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { clicValido, conSeguimiento, destinoDe, pixelValido, urlClic, urlPixel } from "./mail-seguimiento";
 import { armarMensajePrimerVuelo } from "./primer-vuelo-mail";
 
-const APP = "https://vector.fdiaznem.com.ar";
+const APP = "https://vectoraero.ar";
 const ID = "0b7f6a3e-2c1d-4e5f-8a9b-1c2d3e4f5a6b";
 const OTRO = "11111111-2222-4333-8444-555555555555";
 const S = "s3cr3to";

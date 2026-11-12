@@ -1,5 +1,6 @@
 /**
- * La dirección a la que contesta la oficina: `plan-<id>-<firma>@respuestas.vector.fdiaznem.com.ar`.
+ * La dirección a la que contesta la oficina: `plan-<id>-<firma>@respuestas.vector.fdiaznem.com.ar`
+ * (o `@respuestas.vectoraero.ar`, ver `DOMINIO_RESPUESTAS`).
  *
  * Resend recibe los mails de ese subdominio y avisa al webhook (`/api/mail/entrante`); la
  * dirección dice de qué plan es la respuesta. La firma es un HMAC corto (10 hex) del id del
@@ -12,7 +13,19 @@
  */
 import { createHmac, timingSafeEqual } from "crypto";
 
-export const DOMINIO_RESPUESTAS = "respuestas.vector.fdiaznem.com.ar";
+/** Los dominios de respuesta que existieron: los planes ya mandados contestan a cualquiera de ellos. */
+const DOMINIOS_CONOCIDOS = ["respuestas.vector.fdiaznem.com.ar", "respuestas.vectoraero.ar"];
+
+/**
+ * El dominio con el que SALE un plan. Variable `DOMINIO_RESPUESTAS`; sin ella, el viejo, hasta
+ * que `respuestas.vectoraero.ar` esté verificado en Resend (mudanza a vectoraero.ar, 2026-11).
+ */
+export const DOMINIO_RESPUESTAS = (process.env.DOMINIO_RESPUESTAS || DOMINIOS_CONOCIDOS[0]).trim().toLowerCase();
+
+/** Los que el webhook acepta al leer: el de salida y los conocidos, sin repetir. */
+export function dominiosAceptados(saliente: string = DOMINIO_RESPUESTAS): string[] {
+  return [...new Set([saliente.toLowerCase(), ...DOMINIOS_CONOCIDOS])];
+}
 
 const ETIQUETA = "vector:plan-respuesta:";
 const LARGO_FIRMA = 10;
@@ -29,7 +42,12 @@ export function direccionDeRespuesta(planId: string, secreto: string | undefined
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const DIRECCION = new RegExp(`plan-([0-9a-f-]{36})-([0-9a-f]{${LARGO_FIRMA}})@${DOMINIO_RESPUESTAS.replace(/\./g, "\\.")}`, "i");
+export function regexDeDireccion(dominios: string[]): RegExp {
+  const alt = dominios.map((d) => d.replace(/\./g, "\\.")).join("|");
+  return new RegExp(`plan-([0-9a-f-]{36})-([0-9a-f]{${LARGO_FIRMA}})@(?:${alt})(?![a-z0-9-])`, "i");
+}
+
+const DIRECCION = regexDeDireccion(dominiosAceptados());
 
 /**
  * El id del plan de la primera dirección de respuesta de una lista de destinatarios

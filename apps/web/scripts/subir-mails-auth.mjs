@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import { createJiti } from "jiti";
 
 const PROYECTO = process.env.SUPABASE_PROJECT_REF || "jkmcdbihjqkgizekzlun";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://vector.fdiaznem.com.ar";
+const APP_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://vectoraero.ar";
 const token = process.env.SUPABASE_ACCESS_TOKEN?.trim();
 if (!token) {
   console.error("Falta SUPABASE_ACCESS_TOKEN (un token personal de la cuenta de Supabase).");

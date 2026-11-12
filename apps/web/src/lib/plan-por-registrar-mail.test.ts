@@ -8,8 +8,8 @@ const base = {
   matricula: "LV-ABC",
   dia: "20/10",
   llegada: "16:15",
-  registrar: "https://vector.fdiaznem.com.ar/dashboard/log-flight?prefill=true&plan_vuelo_id=p1",
-  appUrl: "https://vector.fdiaznem.com.ar",
+  registrar: "https://vectoraero.ar/dashboard/log-flight?prefill=true&plan_vuelo_id=p1",
+  appUrl: "https://vectoraero.ar",
 };
 
 describe("el mail para cargar el vuelo de un plan", () => {

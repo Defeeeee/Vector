@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 import { createJiti } from "jiti";
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), "..");
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://vector.fdiaznem.com.ar";
+const APP_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://vectoraero.ar";
 const jiti = createJiti(import.meta.url, { alias: { "@": join(RAIZ, "src") } });
 const { mailConfirmarCuenta, mailRecuperarContrasena } = await jiti.import(join(RAIZ, "src/lib/mails-auth.ts"));
 

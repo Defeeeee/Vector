@@ -71,7 +71,7 @@ Vector (ver `AGENTS.md`), y el tracker de la PPA es lo que ninguna planilla le d
 
 ### URL de destino
 ```
-https://vector.fdiaznem.com.ar/?utm_source=meta&utm_medium=paid&utm_campaign=ppa-2026-10
+https://vectoraero.ar/?utm_source=meta&utm_medium=paid&utm_campaign=ppa-2026-10
 ```
 
 ### Público sugerido
@@ -111,7 +111,7 @@ Instagram y Facebook).
 > y cuánto te queda del pack.
 >
 > Para alumnos y pilotos en Argentina. Se instala en el teléfono como una app.
-> 👉 vector.fdiaznem.com.ar (link en la bio)
+> 👉 vectoraero.ar (link en la bio)
 >
 > #piloto #pilotoprivado #aviacion #aviacionargentina #alumnopiloto #bitacora #aeroclub
 
@@ -119,7 +119,7 @@ Instagram y Facebook).
 1. "Placa: ¿Volaste hoy? Cargalo con un audio. Abajo, un audio de WhatsApp de 14 segundos."
 2. "Un chat de WhatsApp con el copiloto de Vector: un audio, el resumen del vuelo y la confirmación."
 3. "La pantalla de inicio de Vector: Podés volar hoy, 51.8 horas para la PCA y 6.5 en el pack."
-4. "Placa final: Tu bitácora de vuelo, siempre al día. vector.fdiaznem.com.ar."
+4. "Placa final: Tu bitácora de vuelo, siempre al día. vectoraero.ar."
 
 ---
 

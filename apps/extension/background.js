@@ -6,7 +6,8 @@
  * pedido de Vector va a la última que se conectó; si no hay ninguna, vuelve `sin_cad` para que
  * Vector diga "abrí el CAD".
  */
-const VECTOR = "https://vector.fdiaznem.com.ar/";
+// Los dos dominios andan durante la mudanza a vectoraero.ar (1.4.0).
+const ORIGENES_VECTOR = ["https://vectoraero.ar/", "https://vector.fdiaznem.com.ar/"];
 const puertos = [];
 const esperando = new Map();
 
@@ -27,7 +28,7 @@ chrome.runtime.onConnect.addListener((puerto) => {
 });
 
 chrome.runtime.onMessage.addListener((m, remitente, responder) => {
-  if (!remitente.url || !remitente.url.startsWith(VECTOR) || !m || m.tipo !== "vector-cad:pedido") return;
+  if (!remitente.url || !ORIGENES_VECTOR.some((o) => remitente.url.startsWith(o)) || !m || m.tipo !== "vector-cad:pedido") return;
   const puerto = puertos[puertos.length - 1];
   if (!puerto) {
     responder({ tipo: "vector-cad:respuesta", id: m.id, ok: false, error: "sin_cad" });

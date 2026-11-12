@@ -13,7 +13,7 @@ import { hojaDePegatinas } from "../src/lib/pegatinas-hoja.ts";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const CHROME = process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const BASE = "https://vector.fdiaznem.com.ar";
+const BASE = "https://vectoraero.ar";
 // El HTML intermedio va a una carpeta temporal: en `salida/` quedan sólo el PNG y el PDF.
 const TMP = mkdtempSync(join(tmpdir(), "pegatinas-"));
 

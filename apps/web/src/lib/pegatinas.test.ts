@@ -39,7 +39,7 @@ describe("las pegatinas con QR", () => {
 
   it("la hoja lleva cada código con su QR a /q/<código>, de a diez por A4", async () => {
     const codigos = Array.from({ length: 12 }, (_, i) => `C${String(i).padStart(3, "0")}`);
-    const html = await hojaDePegatinas(codigos, "https://vector.fdiaznem.com.ar");
+    const html = await hojaDePegatinas(codigos, "https://vectoraero.ar");
     expect(html.match(/class="pegatina"/g)).toHaveLength(12);
     expect(html.match(/class="hoja"/g)).toHaveLength(2);
     expect(html).toContain(">C011<");

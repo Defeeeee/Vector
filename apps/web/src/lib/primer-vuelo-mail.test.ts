@@ -5,7 +5,7 @@ const base: DatosPrimerVuelo = {
   nombre: "Lucía",
   tieneAvion: false,
   tieneWhatsapp: false,
-  appUrl: "https://vector.fdiaznem.com.ar",
+  appUrl: "https://vectoraero.ar",
   linkCopiloto: null,
 };
 
@@ -28,7 +28,7 @@ describe("el mail del día siguiente al alta", () => {
     const { texto } = armarMensajePrimerVuelo(base);
     expect(texto).toContain("1. Con un audio");
     expect(texto).toContain("2. Con tu libro de papel");
-    expect(texto).toContain("https://vector.fdiaznem.com.ar/dashboard/log-flight/import");
+    expect(texto).toContain("https://vectoraero.ar/dashboard/log-flight/import");
     expect(texto).toContain("3. A mano");
   });
 
@@ -36,7 +36,7 @@ describe("el mail del día siguiente al alta", () => {
     expect(armarMensajePrimerVuelo(base).texto).toContain("primero cargá el avión");
     const conAvion = armarMensajePrimerVuelo({ ...base, tieneAvion: true });
     expect(conAvion.texto).not.toContain("primero cargá el avión");
-    expect(conAvion.html).toContain('href="https://vector.fdiaznem.com.ar/dashboard/log-flight"');
+    expect(conAvion.html).toContain('href="https://vectoraero.ar/dashboard/log-flight"');
   });
 
   it("sin número, pide dejarlo; con número y link del copiloto, abre WhatsApp", () => {

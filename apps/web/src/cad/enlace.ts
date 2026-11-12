@@ -17,7 +17,7 @@ declare const __CAD_ORIGEN__: string;
 
 (function () {
   const script = document.currentScript as HTMLScriptElement | null;
-  const VECTOR = script?.src ? new URL(script.src).origin : "https://vector.fdiaznem.com.ar";
+  const VECTOR = script?.src ? new URL(script.src).origin : "https://vectoraero.ar";
   const w = window as unknown as { __vectorCadEnlace?: { abrir: () => void } };
 
   if (location.origin !== __CAD_ORIGEN__) {

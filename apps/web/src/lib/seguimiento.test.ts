@@ -50,7 +50,7 @@ describe("la posición que se manda", () => {
 
 describe("el link", () => {
   it("se arma sobre el origen, sin barras de más", () => {
-    expect(urlDeSeguimiento("https://vector.fdiaznem.com.ar/", "a".repeat(32))).toBe(`https://vector.fdiaznem.com.ar/seguir/${"a".repeat(32)}`);
+    expect(urlDeSeguimiento("https://vectoraero.ar/", "a".repeat(32))).toBe(`https://vectoraero.ar/seguir/${"a".repeat(32)}`);
   });
   it("reconoce la forma de un token", () => {
     expect(tokenValido("a".repeat(32))).toBe(true);

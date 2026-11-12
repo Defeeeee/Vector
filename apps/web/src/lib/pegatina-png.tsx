@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { cargarFuentes } from "@/lib/imagen-tarjeta";
 import { NUMEROS_DE_LA_ROSA, qrSvg, rosa } from "@/lib/pegatinas-hoja";
+import { SITIO_HOST } from "@/lib/sitio";
 
 /**
  * Una pegatina con QR como PNG, para mandarla a hacer (2026-10-23). La imprenta de Federico
@@ -95,7 +96,7 @@ export async function pngDePegatina(codigo: string, base: string): Promise<Uint8
             </div>
             <div style={{ display: "flex", flexDirection: "column", fontSize: mm(2.4), lineHeight: 1.3, marginTop: mm(1.3), color: "#a1a1aa" }}>
               <span>Escaneá con la cámara o entrá a</span>
-              <span>vector.fdiaznem.com.ar</span>
+              <span>{SITIO_HOST}</span>
             </div>
           </div>
 

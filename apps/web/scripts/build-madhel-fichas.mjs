@@ -38,7 +38,7 @@ const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SALIDA = path.join(RAIZ, "src", "data", "madhel-fichas.tsv");
 const MADHEL_TSV = path.join(RAIZ, "src", "data", "madhel.tsv");
 const URL_FICHA = (d) => `https://datos.anac.gob.ar/madhel/api/v2/airports/${encodeURIComponent(d)}/`;
-const USER_AGENT = "Vector/1.0 (bitacora de vuelo; https://vector.fdiaznem.com.ar; actualizacion mensual)";
+const USER_AGENT = "Vector/1.0 (bitacora de vuelo; https://vectoraero.ar; actualizacion mensual)";
 
 const PAUSA_MS = 2000;
 const ESPERA_MS = 15000;

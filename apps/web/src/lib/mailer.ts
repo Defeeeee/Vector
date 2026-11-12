@@ -22,7 +22,7 @@
  * Con un dominio verificado en Resend, el remitente se cambia **sólo con esta variable**, en
  * el formato `Nombre <casilla@dominio>`:
  *
- *     RESEND_FROM="Vector <briefing@vector.fdiaznem.com.ar>"
+ *     RESEND_FROM="Vector <briefing@vectoraero.ar>"
  *
  * El dominio de la casilla **tiene que ser uno verificado en Resend**, y no hay forma de
  * chequearlo desde acá: Resend contesta 403 y el motivo queda en el log del barrido.
@@ -39,7 +39,7 @@ const REMITENTE_POR_DEFECTO = "Vector <onboarding@resend.dev>";
  *
  * Un `RESEND_FROM` sin arroba se descarta **avisando**, en vez de mandarse a Resend para que
  * conteste un 422. El caso que atrapa es el más fácil de escribir mal: poner el dominio
- * pelado —`vector.fdiaznem.com.ar`— en vez de una casilla.
+ * pelado —`vectoraero.ar`— en vez de una casilla.
  */
 export function remitente(): { from: string; aviso?: string } {
   const configurado = process.env.RESEND_FROM?.trim();

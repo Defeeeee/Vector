@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LegalShell from "../LegalShell";
+import { DOMINIO_RESPUESTAS } from "@/lib/direccion-respuesta";
 import CambiarConsentimientoMeta from "@/components/publico/CambiarConsentimientoMeta";
 
 export const metadata: Metadata = {
@@ -260,7 +261,7 @@ export default function PrivacidadPage() {
           <li>
             Avisarte cuando la oficina ARO/AIS contesta un plan, una demora, una modificación o
             una cancelación que mandaste desde Vector. Esos mails salen con una dirección
-            propia de Vector (<code>respuestas.vector.fdiaznem.com.ar</code>) además de la tuya,
+            propia de Vector (<code>{DOMINIO_RESPUESTAS}</code>) además de la tuya,
             así que la respuesta de la oficina pasa también por Vector: guardamos quién la
             mandó, el asunto, lo que escribió (sin el texto citado de tu mensaje, hasta 4.000
             caracteres) y cómo la clasificamos (recibido, aceptado, rechazado o a corregir), y te

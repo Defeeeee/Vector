@@ -7,7 +7,10 @@ import type { Metadata } from "next";
  */
 
 /** La URL pública, sin barra final. Todo lo canónico se arma sobre ésta. */
-export const SITIO_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://vector.fdiaznem.com.ar").replace(/\/+$/, "");
+export const SITIO_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://vectoraero.ar").replace(/\/+$/, "");
+
+/** El host público, para mostrarlo en piezas (`vectoraero.ar`). */
+export const SITIO_HOST = new URL(SITIO_URL).host;
 
 /**
  * Lo que va en todo `openGraph`: el de una página reemplaza entero al del layout, así

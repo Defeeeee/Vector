@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DOMINIO_RESPUESTAS, direccionDeRespuesta, firmaDelPlan, planDeLosDestinatarios } from "./direccion-respuesta";
+import { DOMINIO_RESPUESTAS, direccionDeRespuesta, dominiosAceptados, firmaDelPlan, planDeLosDestinatarios } from "./direccion-respuesta";
 
 const SECRETO = "secreto-de-prueba";
 const ID = "0b8f2c1e-5a4d-4c3b-9e7f-123456789abc";
@@ -33,5 +33,27 @@ describe("direccion de respuesta", () => {
   it("ignora otros dominios y destinatarios vacíos", () => {
     const firma = firmaDelPlan(ID, SECRETO);
     expect(planDeLosDestinatarios([`plan-${ID}-${firma}@otro.com`, null, undefined, ""], SECRETO)).toBeNull();
+  });
+});
+
+describe("dominios de respuesta (mudanza a vectoraero.ar)", () => {
+  const firma = firmaDelPlan(ID, SECRETO);
+  it("el webhook acepta los dos dominios, sea cual sea el de salida", () => {
+    for (const dom of ["respuestas.vector.fdiaznem.com.ar", "respuestas.vectoraero.ar"]) {
+      expect(planDeLosDestinatarios([`plan-${ID}-${firma}@${dom}`], SECRETO)).toBe(ID);
+      expect(planDeLosDestinatarios([`Vector <PLAN-${ID}-${firma}@${dom.toUpperCase()}>`], SECRETO)).toBe(ID);
+    }
+  });
+  it("sin la firma buena, ninguno de los dos sirve", () => {
+    expect(planDeLosDestinatarios([`plan-${ID}-0000000000@respuestas.vectoraero.ar`], SECRETO)).toBeNull();
+  });
+  it("no acepta un dominio parecido", () => {
+    expect(planDeLosDestinatarios([`plan-${ID}-${firma}@respuestas.vectoraero.arx`], SECRETO)).toBeNull();
+    expect(planDeLosDestinatarios([`plan-${ID}-${firma}@respuestas.otro.ar`], SECRETO)).toBeNull();
+  });
+  it("el dominio de salida configurado se suma a los conocidos, sin repetir", () => {
+    expect(dominiosAceptados("respuestas.vectoraero.ar")).toEqual(["respuestas.vectoraero.ar", "respuestas.vector.fdiaznem.com.ar"]);
+    expect(dominiosAceptados("respuestas.vector.fdiaznem.com.ar")).toEqual(["respuestas.vector.fdiaznem.com.ar", "respuestas.vectoraero.ar"]);
+    expect(dominiosAceptados("respuestas.nuevo.ar")).toHaveLength(3);
   });
 });

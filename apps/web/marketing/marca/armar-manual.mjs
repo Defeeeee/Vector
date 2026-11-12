@@ -4,7 +4,7 @@ const D = new URL(".", import.meta.url).pathname;
 const S = (n) => fs.readFileSync(D + "salida/" + n + ".svg", "utf8").trim().replace(/ width="\d+" height="\d+"/, "");
 const M = JSON.parse(fs.readFileSync(D + "salida/medidas.json", "utf8"));
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-const SITIO = "https://vector.fdiaznem.com.ar/marca/";
+const SITIO = "https://vectoraero.ar/marca/";
 
 // La construcción: la flecha sin girar en la grilla de 100, y girada.
 const G = M.G;
@@ -168,7 +168,7 @@ a { color: var(--acento) }
     <div class="logo" id="logo-portada"></div>
     <h1>Manual de marca.<br><span class="b">La flecha de rumbo, en dos tonos.</span></h1>
     <p>Cómo se dibuja, se usa y se cuida la marca de Vector: la bitácora y el copiloto de los pilotos argentinos, de la carta al CAD.</p>
-    <div class="meta"><span>Versión 1.0</span><span>Noviembre de 2026</span><span>vector.fdiaznem.com.ar</span></div>
+    <div class="meta"><span>Versión 1.0</span><span>Noviembre de 2026</span><span>vectoraero.ar</span></div>
   </header>
 
   <section aria-labelledby="t-idea">

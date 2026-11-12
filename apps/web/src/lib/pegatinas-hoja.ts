@@ -77,7 +77,7 @@ async function pegatina(codigo: string, base: string): Promise<string> {
     <div class="marca"><span class="logo">${LOGO}</span>Vector</div>
     <div class="gancho">¿Puedo<br>volar hoy?</div>
     <div class="bajada">Tu bitácora de vuelo,<br>en el teléfono.</div>
-    <div class="ayuda">Escaneá con la cámara o entrá a vector.fdiaznem.com.ar</div>
+    <div class="ayuda">Escaneá con la cámara o entrá a ${escapar(new URL(base).host)}</div>
   </div>
   <div class="der">
     <div class="baldosa">${qr}</div>

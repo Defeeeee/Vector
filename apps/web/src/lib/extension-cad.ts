@@ -15,6 +15,12 @@ export const VERSION_MINIMA_PUENTE = "1.1.0";
 export const VERSION_MINIMA_AUTORIDAD = "1.2.0";
 /** Desde la 1.3.0, corregir los demás campos de un vuelo pendiente de DDJJ (3.19.0). */
 export const VERSION_MINIMA_EDICION = "1.3.0";
+/**
+ * Desde la 1.4.0 la extensión también corre en `vectoraero.ar` (mudanza de dominio, 2026-11).
+ * No cambia lo que hace: una 1.3.0 sirve en el dominio viejo, así que no se avisa "hay una nueva"
+ * (`VERSION_SIN_AVISO`). En el dominio nuevo no corre y Vector la ve como "falta".
+ */
+export const VERSION_SIN_AVISO = "1.3.0";
 
 /** -1, 0 o 1, número por número ("1.10.0" > "1.9.2"). Lo que no es número cuenta como 0. */
 export function compararVersion(a: string, b: string): number {
@@ -29,7 +35,7 @@ export function compararVersion(a: string, b: string): number {
 
 export type EstadoExtension = "falta" | "sin-puente" | "vieja" | "al-dia";
 
-export function estadoExtension(instalada: string | null | undefined, actual = VERSION_EXTENSION): EstadoExtension {
+export function estadoExtension(instalada: string | null | undefined, actual = VERSION_SIN_AVISO): EstadoExtension {
   if (!instalada) return "falta";
   if (compararVersion(instalada, VERSION_MINIMA_PUENTE) < 0) return "sin-puente";
   return compararVersion(instalada, actual) < 0 ? "vieja" : "al-dia";

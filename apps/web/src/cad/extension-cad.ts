@@ -20,7 +20,7 @@ declare const chrome: {
   };
 };
 
-const VECTOR = "https://vector.fdiaznem.com.ar";
+const VECTOR = "https://vectoraero.ar";
 
 (function () {
   if (document.getElementById("vector-cad-aviso")) return;

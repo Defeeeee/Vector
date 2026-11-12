@@ -37,8 +37,15 @@ jobs:
         # Los secretos que la web necesita en su `.env` y que se cargan desde acá (ver abajo).
         env:
           RESEND_WEBHOOK_SECRET: ${{ secrets.RESEND_WEBHOOK_SECRET }}
+          # El dominio público (mudanza a vectoraero.ar, 2026-11): variables del repo, no secretos.
+          # Cambiarlas (`gh variable set`) y redesplegar es todo el cambio de dominio de la web.
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SITIO_URL }}
+          NEXT_PUBLIC_AUTH_URL: ${{ vars.AUTH_PUBLICA_URL }}
+          NEXT_PUBLIC_API_URL: ${{ vars.API_PUBLICA_URL }}
+          DOMINIO_RESPUESTAS: ${{ vars.DOMINIO_RESPUESTAS }}
+          RESEND_FROM: ${{ vars.RESEND_FROM }}
         with:
-          envs: RESEND_WEBHOOK_SECRET
+          envs: RESEND_WEBHOOK_SECRET,NEXT_PUBLIC_SITE_URL,NEXT_PUBLIC_AUTH_URL,NEXT_PUBLIC_API_URL,DOMINIO_RESPUESTAS,RESEND_FROM
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -73,6 +80,21 @@ jobs:
                 echo "RESEND_WEBHOOK_SECRET escrito en el .env de la web."
               fi
             fi
+
+            # Las variables del dominio: se escriben sólo si están definidas en el repo (si no, queda
+            # lo que tenga el .env). Van antes del build: las NEXT_PUBLIC_ se meten en el JS.
+            for var in NEXT_PUBLIC_SITE_URL NEXT_PUBLIC_AUTH_URL NEXT_PUBLIC_API_URL DOMINIO_RESPUESTAS RESEND_FROM; do
+              val="${!var:-}"
+              [ -n "$val" ] || continue
+              touch .env
+              if ! grep -qxF "${var}=${val}" .env; then
+                grep -v "^${var}=" .env > .env.nuevo || true
+                cat .env.nuevo > .env && rm -f .env.nuevo
+                if [ -s .env ] && [ -n "$(tail -c1 .env)" ]; then echo >> .env; fi
+                printf '%s=%s\n' "$var" "$val" >> .env
+                echo "${var} escrito en el .env de la web."
+              fi
+            done
 
             # **Lugar en disco antes de tocar nada.** El 2026-10-03 el VPS llegó a
             # 1,4 GB libres de 45, y el deploy necesita lugar para `node_modules`, el

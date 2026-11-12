@@ -42,7 +42,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-      UA: "Vector/1.0 (bitacora de vuelo; https://vector.fdiaznem.com.ar; NOTAM cada 15 min)"
+      UA: "Vector/1.0 (bitacora de vuelo; https://vectoraero.ar; NOTAM cada 15 min)"
     steps:
       - name: Llave del VPS
         env:

@@ -30,7 +30,7 @@ const API_URL = process.env.API_URL || "http://127.0.0.1:7477/api";
  *
  *   0 12 * * * curl -fsS -X POST \
  *     -H "X-Cron-Secret: $DOCUMENTS_ALERT_SECRET" \
- *     https://vector.fdiaznem.com.ar/api/cron/document-alerts
+ *     https://vectoraero.ar/api/cron/document-alerts
  */
 
 function secretsMatch(provided: string, expected: string): boolean {

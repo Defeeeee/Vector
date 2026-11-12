@@ -48,7 +48,7 @@ describe("cómo se muestra y adónde lleva", () => {
 
   it("en la URL va sin arroba, bajo /u", () => {
     expect(rutaPerfil("@Fede.DN")).toBe("/u/fede.dn");
-    expect(urlPerfil("fede", "https://vector.fdiaznem.com.ar/")).toBe("https://vector.fdiaznem.com.ar/u/fede");
+    expect(urlPerfil("fede", "https://vectoraero.ar/")).toBe("https://vectoraero.ar/u/fede");
   });
 });
 

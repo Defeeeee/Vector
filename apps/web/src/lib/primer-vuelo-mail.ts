@@ -16,7 +16,7 @@ export interface DatosPrimerVuelo {
   nombre: string | null;
   tieneAvion: boolean;
   tieneWhatsapp: boolean;
-  /** `https://vector.fdiaznem.com.ar`, sin barra final. */
+  /** `https://vectoraero.ar`, sin barra final. */
   appUrl: string;
   /** El link al chat con el copiloto, si está configurado (`lib/copiloto.ts`). */
   linkCopiloto: string | null;

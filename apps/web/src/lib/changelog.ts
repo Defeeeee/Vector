@@ -1539,6 +1539,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.29.1",
+    fecha: "2026-11-12",
+    motivo: "Preparación para la mudanza a vectoraero.ar: la cookie de sesión según el dominio, las URLs públicas por variable y la extensión 1.4.0 que acepta los dos dominios. El piloto no ve nada todavía.",
+  },
+  {
     version: "3.24.2",
     fecha: "2026-11-12",
     motivo: "La respuesta de la oficina al plan se le reenviaba al piloto aunque la oficina ya lo había copiado (\"contestó sólo a Vector\"): arreglo de la 3.22.0.",

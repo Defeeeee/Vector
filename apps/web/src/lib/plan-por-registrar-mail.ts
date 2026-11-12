@@ -23,7 +23,7 @@ export interface DatosPlanPorRegistrar {
   llegada: string;
   /** El link al formulario, con lo del plan (`hrefRegistrarDesdePlan`), ya absoluto. */
   registrar: string;
-  /** `https://vector.fdiaznem.com.ar`, sin barra final. */
+  /** `https://vectoraero.ar`, sin barra final. */
   appUrl: string;
 }
 

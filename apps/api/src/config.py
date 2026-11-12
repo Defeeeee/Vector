@@ -11,6 +11,11 @@ class Settings(BaseSettings):
     supabase_anon_key: str = Field(validation_alias="SUPABASE_PUBLISHABLE_KEY")
     supabase_service_role_key: Optional[str] = Field(default=None, validation_alias="SUPABASE_SERVICE_ROLE_KEY")
     
+    # La web a la que vuelven los links de Google y de recuperar contraseña. Con dos dominios
+    # vivos (mudanza a vectoraero.ar, 2026-11), `controllers/auth.py` usa el del Origin del pedido
+    # si es uno de los `WEBS_ACEPTADAS`, y si no, éste.
+    web_url: str = Field(default="https://vectoraero.ar", validation_alias="WEB_URL")
+
     # Shared secret for the document expiry sweep. Declared explicitly (rather
     # than read off the environment ad hoc) because the endpoint it guards runs
     # under the service role across every user, so it must fail closed when the
@@ -63,7 +68,12 @@ class Settings(BaseSettings):
         "https://vector.fdiaznem.com.ar",
         "https://flightlog.fdiaznem.com.ar",
         "https://api.flightlog.fdiaznem.com.ar",
-        "https://auth.flightlog.fdiaznem.com.ar"
+        "https://auth.flightlog.fdiaznem.com.ar",
+        # La mudanza a vectoraero.ar (2026-11): conviven con los de arriba hasta que el viejo redirija.
+        "https://vectoraero.ar",
+        "https://www.vectoraero.ar",
+        "https://api.vectoraero.ar",
+        "https://auth.vectoraero.ar"
     ] # Change this to your frontend URL in production
     
     # Environment config

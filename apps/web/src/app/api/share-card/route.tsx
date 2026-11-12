@@ -5,6 +5,7 @@ import { getSessionToken } from "@/actions/auth";
 import { datosTarjeta, parseTiles } from "@/lib/share-card";
 import { COLOR, MarcaVector, RESPLANDOR, cargarFuentes } from "@/lib/imagen-tarjeta";
 import type { Aircraft, Flight, Logbook } from "@/types";
+import { SITIO_HOST } from "@/lib/sitio";
 
 /**
  * La tarjeta de estadísticas, como PNG.
@@ -175,7 +176,7 @@ export async function GET(req: NextRequest) {
             {nombre || "Piloto"}
           </span>
           <span style={{ fontFamily: "PlexMono", fontSize: 24, color: COLOR.masTenue }}>
-            vector.fdiaznem.com.ar
+            {SITIO_HOST}
           </span>
         </div>
       </div>

@@ -6,4 +6,4 @@
  * Hasta el 2026-11-03 siete de estos scripts mandaban el User-Agent de un Chrome y un Referer
  * del sitio de ANAC.
  */
-export const UA_VECTOR = "Vector/1.0 (bitacora de vuelo; https://vector.fdiaznem.com.ar)";
+export const UA_VECTOR = "Vector/1.0 (bitacora de vuelo; https://vectoraero.ar)";

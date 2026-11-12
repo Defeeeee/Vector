@@ -3,6 +3,7 @@ import { apiFetch, TIMEOUT_IMAGEN_MS } from "@/lib/api";
 import { COLOR, MarcaVector, RESPLANDOR, cargarFuentes } from "@/lib/imagen-tarjeta";
 import { conArroba, normalizarHandle, problemaDelHandle } from "@/lib/handle";
 import type { PilotoPublico } from "@/types";
+import { SITIO_HOST } from "@/lib/sitio";
 
 /**
  * La vista previa del perfil: lo que aparece en WhatsApp cuando alguien pega el link
@@ -140,7 +141,7 @@ export default async function Image({ params }: { params: Promise<{ handle: stri
         </div>
 
         <span style={{ fontFamily: "PlexMono", fontSize: 24, color: COLOR.masTenue }}>
-          {`vector.fdiaznem.com.ar/u/${piloto?.handle ?? handle}`}
+          {`${SITIO_HOST}/u/${piloto?.handle ?? handle}`}
         </span>
       </div>
     ),

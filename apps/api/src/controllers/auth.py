@@ -1,15 +1,32 @@
 from litestar import Controller, post, get, status_codes, Request
 from litestar.exceptions import InternalServerException, NotAuthorizedException, TooManyRequestsException
 from supabase import Client
+from src.config import settings
 from src.supabase_client import SupabaseManager, establecer_sesion_de_auth
 from src.auth.security import AuthHandler
 from src.models.auth import UserRegister, UserLogin, AuthResponse, PasswordRecover, PasswordUpdate, TokenRefresh
+
+# Las webs desde las que se acepta iniciar Google o recuperar contraseña: las dos conviven
+# durante la mudanza a vectoraero.ar. También tienen que estar en la lista de URLs de redirección
+# de Supabase.
+WEBS_ACEPTADAS = (
+    "https://vectoraero.ar",
+    "https://www.vectoraero.ar",
+    "https://vector.fdiaznem.com.ar",
+)
+
+
+def web_de_origen(request: Request, por_defecto: str) -> str:
+    """La web de la que viene el pedido si es una aceptada; si no, `por_defecto`."""
+    origen = (request.headers.get("origin") or "").rstrip("/").lower()
+    return origen if origen in WEBS_ACEPTADAS else por_defecto.rstrip("/")
+
 
 class AuthController(Controller):
     path = "/auth"
 
     @get("/login/google")
-    async def login_google(self, supabase_client: Client) -> dict:
+    async def login_google(self, request: Request, supabase_client: Client) -> dict:
         """Get the Google OAuth login URL from Supabase."""
         try:
             # Force Google to show account selection by using 'prompt': 'select_account'
@@ -17,7 +34,7 @@ class AuthController(Controller):
             auth_response = supabase_client.auth.sign_in_with_oauth({
                 "provider": "google",
                 "options": {
-                    "redirectTo": "https://vector.fdiaznem.com.ar/auth/callback",
+                    "redirectTo": f"{web_de_origen(request, settings.web_url)}/auth/callback",
                     "query_params": {"prompt": "select_account"}
                 }
             })
@@ -27,11 +44,11 @@ class AuthController(Controller):
             raise InternalServerException(detail=f"Google login initiation failed: {error_msg}")
 
     @post("/recover")
-    async def recover_password(self, supabase_client: Client, data: PasswordRecover) -> dict:
+    async def recover_password(self, request: Request, supabase_client: Client, data: PasswordRecover) -> dict:
         """Send a password recovery email."""
         try:
             supabase_client.auth.reset_password_for_email(data.email, {
-                "redirect_to": "https://vector.fdiaznem.com.ar/update-password"
+                "redirect_to": f"{web_de_origen(request, settings.web_url)}/update-password"
             })
             return {"message": "Recovery email sent"}
         except Exception as e:

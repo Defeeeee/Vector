@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fetchAnac } from "./anac";
+import { SITIO_URL } from "./sitio";
 import { carpetaDeDatos } from "./madhel-descargado";
 
 /**
@@ -23,7 +24,7 @@ import { carpetaDeDatos } from "./madhel-descargado";
 export const VIGENCIA_MIN = 45;
 
 /** Cómo se presenta Vector ante ANAC desde el servidor: como lo que es, sin imitar un navegador. */
-export const USER_AGENT_VECTOR = "Vector/1.0 (bitacora de vuelo; https://vector.fdiaznem.com.ar)";
+export const USER_AGENT_VECTOR = `Vector/1.0 (bitacora de vuelo; ${SITIO_URL})`;
 
 export interface NotamsDelPais {
   /** La "Última actualización" de ANAC, tal cual la escribe ("02 Nov 2026 21:33", hora argentina). */

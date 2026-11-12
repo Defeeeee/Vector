@@ -1,10 +1,20 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S, volverSeguro } from "@/lib/sesion";
+import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S, volverSeguro, dominioDeCookie, hostDelPedido } from "@/lib/sesion";
 
-const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.flightlog.fdiaznem.com.ar";
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.vectoraero.ar";
+
+/**
+ * El `Origin` del navegador, para que el backend vuelva a la misma web (`web_de_origen`): una
+ * server action no lo manda, y con dos dominios vivos el link de Google o de recuperar
+ * contraseña tiene que volver al que usó el piloto.
+ */
+async function origenDelPedido(): Promise<Record<string, string>> {
+  const host = hostDelPedido(await headers());
+  return host ? { Origin: `https://${host}` } : {};
+}
 
 export async function login(formData: FormData) {
   const email = formData.get("email");
@@ -117,6 +127,7 @@ export async function recoverPassword(formData: FormData) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(await origenDelPedido()),
       },
       body: JSON.stringify({ email }),
     });
@@ -170,7 +181,7 @@ export async function updatePassword(formData: FormData) {
 export async function logout(arg?: string | FormData) {
   const redirectTo = typeof arg === "string" ? arg : "/";
   const cookieStore = await cookies();
-  const domain = process.env.NODE_ENV === "production" ? ".fdiaznem.com.ar" : undefined;
+  const domain = dominioDeCookie(hostDelPedido(await headers()));
   
   cookieStore.set("session_token", "", {
     path: "/",
@@ -193,7 +204,7 @@ export async function logout(arg?: string | FormData) {
 
 export async function getGoogleLoginUrl() {
   try {
-    const response = await fetch(`${AUTH_URL}/login/google`);
+    const response = await fetch(`${AUTH_URL}/login/google`, { headers: await origenDelPedido() });
     const data = await response.json();
     
     if (!response.ok) {
@@ -215,7 +226,7 @@ export async function setSession(token: string, refresh_token?: string, maxAge: 
   const cookieStore = await cookies();
   
   // In production, we use the root domain to ensure availability across subdomains
-  const domain = process.env.NODE_ENV === "production" ? ".fdiaznem.com.ar" : undefined;
+  const domain = dominioDeCookie(hostDelPedido(await headers()));
   const isSecure = process.env.NODE_ENV === "production";
   
 

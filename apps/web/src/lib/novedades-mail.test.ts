@@ -4,9 +4,9 @@ import { armarMensajeNovedades, novedades, type DatosNovedades } from "./novedad
 const base: DatosNovedades = {
   nombre: "Lucía",
   tieneVuelos: false,
-  appUrl: "https://vector.fdiaznem.com.ar",
+  appUrl: "https://vectoraero.ar",
   linkCopiloto: "https://wa.me/12015867983?text=Hola",
-  linkBaja: "https://vector.fdiaznem.com.ar/mail/baja?u=u&t=t&m=novedades",
+  linkBaja: "https://vectoraero.ar/mail/baja?u=u&t=t&m=novedades",
 };
 
 describe("el mail de novedades", () => {

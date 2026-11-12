@@ -21,7 +21,7 @@ const RESEND_URL = (process.env.RESEND_API_URL || "https://api.resend.com").repl
 /**
  * El webhook `email.received` de Resend: la oficina contestó un plan de vuelo.
  *
- * Los planes salen con `reply_to` = `plan-<id>-<firma>@respuestas.vector.fdiaznem.com.ar`
+ * Los planes salen con `reply_to` = `plan-<id>-<firma>@respuestas.vectoraero.ar`
  * (`lib/direccion-respuesta.ts`) y el piloto en copia. Resend recibe lo que llega a ese
  * subdominio y avisa acá, con **sólo los metadatos** (de, para, asunto): el cuerpo se pide
  * aparte (`GET /emails/receiving/{id}`). Acá se verifica, se clasifica y se le pasa al

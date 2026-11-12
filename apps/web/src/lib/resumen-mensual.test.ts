@@ -112,7 +112,7 @@ describe("calcularResumen", () => {
 });
 
 describe("armarMensajeResumen", () => {
-  const links = { appUrl: "https://vector.fdiaznem.com.ar", linkBaja: "https://vector.fdiaznem.com.ar/mail/baja?u=u&t=t" };
+  const links = { appUrl: "https://vectoraero.ar", linkBaja: "https://vectoraero.ar/mail/baja?u=u&t=t" };
 
   it("con vuelos: el asunto dice horas y vuelos, y el mail trae la baja", () => {
     const r = calcularResumen(entrada({ flights: [vuelo("2026-09-03", 1.2), vuelo("2026-09-05", 1.3)] }));
@@ -139,7 +139,7 @@ describe("armarMensajeResumen", () => {
 });
 
 describe("lo que falta pasar al CAD", () => {
-  const links = { appUrl: "https://vector.fdiaznem.com.ar", linkBaja: "https://vector.fdiaznem.com.ar/mail/baja" };
+  const links = { appUrl: "https://vectoraero.ar", linkBaja: "https://vectoraero.ar/mail/baja" };
   it("cuenta lo del mes y lo anterior sin pasar, y lleva a Pasar al CAD", () => {
     const vuelos = [vuelo("2026-09-10", 1), vuelo("2026-08-10", 1, { cad_vuelo_id: 9 }), vuelo("2026-09-12", 1), vuelo("2026-10-02", 1)];
     const r = calcularResumen(entrada({ flights: vuelos }));

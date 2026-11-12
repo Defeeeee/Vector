@@ -7,6 +7,7 @@ import { aerodromoCercano, hhmmArgentina, type RecorridoCompacto, type ResumenRe
 import { ESCALA, TILE, encuadrar, proyectar, tramos } from "@/lib/recorrido-imagen";
 import { fechaDeVuelo, rutaLegible } from "@/lib/social";
 import type { Aircraft, Flight } from "@/types";
+import { SITIO_HOST, SITIO_URL } from "@/lib/sitio";
 
 /**
  * El recorrido real de un vuelo como imagen para compartir (2.37.0), 1080 × 1350: el mapa de
@@ -37,7 +38,7 @@ const aerodromos = () => (argentinos ??= allAirports().filter((a) => a.country =
 async function tile(z: number, x: number, y: number): Promise<string | null> {
   try {
     const r = await fetch(`https://tile.openstreetmap.org/${z}/${x}/${y}.png`, {
-      headers: { "User-Agent": "Vector/2 (+https://vector.fdiaznem.com.ar; bitacora de vuelo)" },
+      headers: { "User-Agent": `Vector/2 (+${SITIO_URL}; bitacora de vuelo)` },
       next: { revalidate: 7 * 86400 },
       signal: AbortSignal.timeout(6000),
     });
@@ -184,7 +185,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
               <span style={{ fontFamily: "PlexMono", fontSize: 19, color: COLOR.masTenue }}>
                 © OpenStreetMap · Recorrido: {fuente}
               </span>
-              <span style={{ fontFamily: "PlexMono", fontSize: 21, color: COLOR.masTenue }}>vector.fdiaznem.com.ar</span>
+              <span style={{ fontFamily: "PlexMono", fontSize: 21, color: COLOR.masTenue }}>{SITIO_HOST}</span>
             </div>
           </div>
         </div>
