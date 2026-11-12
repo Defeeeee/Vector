@@ -1,0 +1,40 @@
+# Diagnóstico de sólo lectura del VPS (oraclearm): el DERP propio y Tailscale.
+#
+# Se corre a mano (workflow_dispatch). No cambia nada en el servidor. El repo es público y los
+# logs de Actions se ven: la salida pasa por `tapar`, que reemplaza IPv4, claves de nodo y
+# direcciones de mail. Creado el 2026-11-12, cuando Tailscale dejó de andar en todos los
+# dispositivos (el tailnet usa sólo los relays propios: `derpMap` con OmitDefaultRegions).
+name: Diagnóstico VPS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Mirar derper y tailscaled
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 3m
+          script: |
+            tapar() { sed -E -e 's/[0-9]{1,3}(\.[0-9]{1,3}){3}/x.x.x.x/g' -e 's/(nodekey|discokey|mkey|privkey):[0-9a-f]+/\1:…/g' -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}/<mail>/g'; }
+            s() { echo; echo "### $*"; }
+            {
+              s "uptime y disco"; uptime; df -h / | tail -1
+              s "servicios"; for u in derper tailscaled; do printf '%s: ' "$u"; systemctl is-active "$u" 2>&1; done
+              s "derper (unidad)"; systemctl cat derper 2>/dev/null | grep -E '^(ExecStart|User|Restart)' || echo "sin unidad derper"
+              s "derper en docker"; (docker ps -a --format '{{.Names}} {{.Image}} {{.Status}}' 2>/dev/null || sudo -n docker ps -a --format '{{.Names}} {{.Image}} {{.Status}}' 2>/dev/null) | grep -i derp || echo "nada en docker"
+              s "quién escucha 443/3478/80"; (sudo -n ss -lntup 2>/dev/null || ss -lntu) | grep -E ':(443|3478|80)\b' || true
+              s "tailscale del VPS"; tailscale version 2>&1 | head -1; tailscale status --self=true --peers=false 2>&1 | head -5
+              tailscale status --json 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print("BackendState:", d.get("BackendState")); print("Health:", d.get("Health")); s=d.get("Self",{}); print("Relay:", s.get("Relay"), "Online:", s.get("Online"))' 2>&1
+              s "derper: últimas líneas"; (sudo -n journalctl -u derper -n 40 --no-pager 2>/dev/null || journalctl -u derper -n 40 --no-pager 2>&1) | cut -c1-220
+              s "tailscaled: últimas líneas con error"; (sudo -n journalctl -u tailscaled -n 300 --no-pager 2>/dev/null || true) | grep -iE 'error|fail|derp|verify|reject|denied' | tail -25 | cut -c1-220
+            } 2>&1 | tapar
