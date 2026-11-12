@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { AlertTriangle, Layers, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Download, Loader2, MapPin, Minus, Navigation, NotebookPen, Plus, Radio, Square, Trash2, Undo2 } from "lucide-react";
+import { AlertTriangle, Layers, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Download, Loader2, MapPin, Minus, Navigation, NotebookPen, Plus, Radio, Square, Trash2, Undo2, X } from "lucide-react";
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { EspacioAereo } from "@/lib/espacios-aereos";
 import { aMagnetico } from "@/lib/navegacion";
@@ -38,7 +38,9 @@ import RutaAcciones from "./RutaAcciones";
 import { textoDeVistas } from "@/lib/seguimiento";
 import { distanciaNmPrecisa } from "@/lib/distance";
 import { useSeguimientoEnVivo, type SeguimientoEnVivo } from "./useSeguimientoEnVivo";
-import CompartirSeguimiento from "./CompartirSeguimiento";
+import CompartirSeguimiento, { mandarLink } from "./CompartirSeguimiento";
+import { avisoDeSalteados, type PlanParaElMapa } from "@/lib/plan-al-mapa";
+import type { SeguimientoDelPlan } from "@/actions/seguimiento";
 import HojaDirectoA, { type PuntoRestante } from "./HojaDirectoA";
 import {
   aerodromosMasCercanos,
@@ -106,12 +108,21 @@ export default function MapaClient({
   aeronaveInicial,
   piloto,
   rutasGuardadas,
+  planes,
+  planActual,
+  seguimientoDelPlan,
 }: {
   rutaInicial: string;
   aeronaves: Aircraft[];
   aeronaveInicial: string;
   piloto: PilotoParaPlan;
   rutasGuardadas: RutaGuardada[] | null;
+  /** "Tus planes": los que salen pronto. `null` = no se pudieron leer (no se muestra la sección). */
+  planes: PlanParaElMapa[] | null;
+  /** El plan con el que se abrió el Mapa (`?plan=`), si existe y es del piloto. */
+  planActual: { id: string; titulo: string; salteados: string[] } | null;
+  /** El link compartido de ese plan, si sigue activo: el Mapa lo usa en vez de crear otro. */
+  seguimientoDelPlan: SeguimientoDelPlan | null;
 }) {
   const [montado, setMontado] = useState(false);
   useEffect(() => setMontado(true), []);
@@ -175,9 +186,10 @@ export default function MapaClient({
 
   // La ruta en la URL, como el Planificador: se comparte mandando el link.
   useEffect(() => {
-    const q = tokens.length ? `?ruta=${encodeURIComponent(tokens.join("-"))}` : window.location.pathname;
-    window.history.replaceState(null, "", q);
-  }, [tokens]);
+    // El plan se queda en la URL: sin él, un refresco cambiaría la `key` del Mapa y lo armaría de nuevo.
+    const partes = [planActual ? `plan=${encodeURIComponent(planActual.id)}` : "", tokens.length ? `ruta=${encodeURIComponent(tokens.join("-"))}` : ""].filter(Boolean);
+    window.history.replaceState(null, "", partes.length ? `?${partes.join("&")}` : window.location.pathname);
+  }, [tokens, planActual]);
 
   const agregar = useCallback((codigo: string) => {
     setTexto((t) => {
@@ -267,7 +279,29 @@ export default function MapaClient({
   const puedeGps = montado && typeof navigator !== "undefined" && "geolocation" in navigator;
   // Que la familia siga el vuelo (3.20.0): vive acá y no en la pantalla de vuelo, porque al
   // terminar (`volando` en false) es el hook el que cierra el link.
-  const seguimiento = useSeguimientoEnVivo({ lectura, volando, ruta: tokens.join(" "), puntos, rutaLista: !buscando, aeronave });
+  // Si el Mapa se abrió desde un plan que ya se compartía, ése es el link: no se crea otro.
+  const adoptar = useMemo(
+    () =>
+      seguimientoDelPlan
+        ? { id: seguimientoDelPlan.id, token: seguimientoDelPlan.token, venceAt: seguimientoDelPlan.venceAt, mostrarMatricula: seguimientoDelPlan.mostrarMatricula }
+        : null,
+    [seguimientoDelPlan]
+  );
+  const seguimiento = useSeguimientoEnVivo({ lectura, volando, ruta: tokens.join(" "), puntos, rutaLista: !buscando, aeronave, adoptar });
+  const [avisoLink, setAvisoLink] = useState<"copiado" | "manual" | null>(null);
+  const mandarLinkDelPlan = async () => {
+    if (!seguimiento.url) return;
+    const r = await mandarLink(seguimiento.url);
+    setAvisoLink(r === "copiado" || r === "manual" ? r : null);
+  };
+  // Lo que el Mapa no pudo cargar del plan: se avisa hasta que el piloto lo cierra.
+  const [salteadosDelPlan, setSalteadosDelPlan] = useState<string[]>(planActual?.salteados ?? []);
+  const cargarPlan = (p: PlanParaElMapa) => {
+    setTexto(p.ruta);
+    setTextoFirme(p.ruta);
+    if (p.aircraftId && aeronaves.some((a) => a.id === p.aircraftId)) elegirAvion(p.aircraftId);
+    setSalteadosDelPlan(p.salteados);
+  };
 
   // El track (`lib/track-vuelo.ts`): en el teléfono. Se lee al montar (para mostrar el último
   // vuelo grabado) y se guarda cada 10 s mientras se vuela, al esconder la app y al terminar.
@@ -626,6 +660,41 @@ export default function MapaClient({
           guardarTrack(null);
         }} />}
 
+        {planActual && (
+          <section className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Del plan de vuelo</p>
+              <Link href={`/dashboard/plan-de-vuelo/${planActual.id}`} className="text-xs font-semibold text-aviation-blue hover:underline">
+                Ver el plan
+              </Link>
+            </div>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-white">{planActual.titulo}</p>
+            {avisoDeSalteados(salteadosDelPlan) && (
+              <p className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
+                <span className="flex-1">{avisoDeSalteados(salteadosDelPlan)}</span>
+                <button type="button" onClick={() => setSalteadosDelPlan([])} aria-label="Cerrar el aviso" className="shrink-0 text-amber-600/70 hover:text-amber-500 dark:text-amber-400/70">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </p>
+            )}
+            {seguimiento.delPlan && (
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-zinc-600 dark:text-zinc-300">
+                  Tu familia ya tiene el link de este vuelo.
+                  <span className="block text-[11px] text-zinc-500">Al tocar Volar, el GPS del teléfono se suma en ese mismo link.</span>
+                </p>
+                <button type="button" onClick={() => void mandarLinkDelPlan()} className="shrink-0 font-mono text-[10px] font-bold uppercase tracking-wider text-aviation-blue hover:underline">
+                  Copiar link
+                </button>
+              </div>
+            )}
+            {avisoLink === "copiado" && <p className="text-xs text-zinc-500">Link copiado.</p>}
+            {avisoLink === "manual" && seguimiento.url && (
+              <input readOnly value={seguimiento.url} onFocus={(e) => e.currentTarget.select()} className="w-full rounded-lg border border-zinc-200 dark:border-white/10 bg-transparent px-2 py-1.5 font-mono text-xs text-zinc-700 dark:text-white/80" />
+            )}
+          </section>
+        )}
+
         <section className="space-y-2">
           <textarea
             value={texto}
@@ -757,6 +826,9 @@ export default function MapaClient({
             rutas={rutas}
             onRutas={setRutas}
             onCargar={cargarRuta}
+            planes={planes}
+            planActualId={planActual?.id ?? null}
+            onCargarPlan={cargarPlan}
             puntosRuta={puntos.map((p) => ({ lat: p.lat, lon: p.lon }))}
             piernera={{
               ruta: tokens.join(" "),

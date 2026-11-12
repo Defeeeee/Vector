@@ -9,6 +9,7 @@ import type { PilotoParaPlan } from "@/lib/formulario-plan";
 import { crearPlan } from "@/actions/plan-de-vuelo";
 import { borrarRuta, guardarRuta } from "@/actions/rutas";
 import { formularioDesdePlanificador } from "@/components/dashboard/plan-de-vuelo/ArmarDesdePlanificador";
+import type { PlanParaElMapa } from "@/lib/plan-al-mapa";
 import { MAX_NOMBRE_RUTA, nombreSugerido, type RutaGuardada } from "@/lib/rutas-guardadas";
 import { armarPiernera, nombrePiernera, type DatosPiernera } from "@/lib/piernera";
 import { CAPAS_CARTAS, teselasDeRuta } from "@/lib/cartas-aip";
@@ -38,6 +39,9 @@ export default function RutaAcciones({
   rutas,
   onRutas,
   onCargar,
+  planes = null,
+  planActualId = null,
+  onCargarPlan,
   piernera,
   puntosRuta,
   espacios = null,
@@ -54,6 +58,11 @@ export default function RutaAcciones({
   rutas: RutaGuardada[] | null;
   onRutas: (r: RutaGuardada[]) => void;
   onCargar: (r: RutaGuardada) => void;
+  /** "Tus planes": los que salen pronto. `null` = no se pudieron leer, y la sección no se muestra. */
+  planes?: PlanParaElMapa[] | null;
+  /** El plan con el que se abrió el Mapa, para que tocarlo de nuevo vuelva a su ruta sin recargar. */
+  planActualId?: string | null;
+  onCargarPlan?: (p: PlanParaElMapa) => void;
   /** Lo que va en la piernera en PDF (3.15.0). */
   piernera: DatosPiernera;
   /** Los puntos ubicados de la ruta, para bajar sus cartas (el Mapa sin señal, 3.15.0). */
@@ -323,6 +332,32 @@ export default function RutaAcciones({
         >
           <Printer className="w-3.5 h-3.5" /> Planilla con viento y combustible, para imprimir
         </Link>
+      )}
+
+      {planes && planes.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">Tus planes</p>
+          <ul className="space-y-px">
+            {planes.map((p) => (
+              <li key={p.id}>
+                <Link
+                  href={`/dashboard/mapa?plan=${encodeURIComponent(p.id)}`}
+                  onClick={(e) => {
+                    // Es el plan que ya está abierto: se vuelve a su ruta sin pedirle nada al servidor.
+                    if (p.id === planActualId && onCargarPlan) {
+                      e.preventDefault();
+                      onCargarPlan(p);
+                    }
+                  }}
+                  className={`block rounded-xl px-2 py-1.5 ${p.id === planActualId ? "bg-aviation-blue/10" : "hover:bg-zinc-50 dark:hover:bg-white/5"}`}
+                >
+                  <span className="block text-sm font-semibold text-zinc-900 dark:text-white truncate">{p.titulo}</span>
+                  <span className="block font-mono text-[11px] text-zinc-500 truncate">{p.ruta}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {rutas && rutas.length > 0 && (

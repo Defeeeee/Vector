@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.26.0 — Tu plan de vuelo, en el Mapa
+
+_12 de noviembre de 2026_
+
+- **Del plan al Mapa, y al revés** — Desde un plan de vuelo, "Abrir en el Mapa" carga la ruta y el avión. En el Mapa, "Tus planes" muestra los de los próximos días para cargarlos con un toque. Lo que el Mapa no puede ubicar, te lo avisa.
+- **Un solo link para tu familia** — Si compartiste el vuelo desde el plan y después volás con el Mapa, el teléfono le suma su GPS a ese mismo link: tu familia sigue uno solo, desde "Sale a las…" hasta "Aterrizó".
+
 ## v3.25.0 — Activá los avisos desde el plan
 
 _12 de noviembre de 2026_

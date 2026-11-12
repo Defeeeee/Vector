@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.26.0",
+    fecha: "2026-11-12",
+    titulo: "Tu plan de vuelo, en el Mapa",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Del plan al Mapa, y al revés",
+        texto: "Desde un plan de vuelo, \"Abrir en el Mapa\" carga la ruta y el avión. En el Mapa, \"Tus planes\" muestra los de los próximos días para cargarlos con un toque. Lo que el Mapa no puede ubicar, te lo avisa.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+      {
+        icono: "compartir",
+        titulo: "Un solo link para tu familia",
+        texto: "Si compartiste el vuelo desde el plan y después volás con el Mapa, el teléfono le suma su GPS a ese mismo link: tu familia sigue uno solo, desde \"Sale a las…\" hasta \"Aterrizó\".",
+        href: "/dashboard/plan-de-vuelo",
+        cta: "Ver tus planes",
+      },
+    ],
+  },
+  {
     version: "3.25.0",
     fecha: "2026-11-12",
     titulo: "Activá los avisos desde el plan",

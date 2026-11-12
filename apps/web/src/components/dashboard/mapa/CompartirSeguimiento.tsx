@@ -59,7 +59,7 @@ export async function mandarLink(url: string): Promise<"compartido" | "cancelado
 }
 
 export default function CompartirSeguimiento({ seguimiento, className = "" }: { seguimiento: SeguimientoEnVivo; className?: string }) {
-  const { estado, url, error, sinSenal, vistas, compartir, dejarDeCompartir } = seguimiento;
+  const { estado, url, error, sinSenal, vistas, delPlan, compartir, dejarDeCompartir } = seguimiento;
   const [aviso, setAviso] = useState<Aviso>(null);
 
   const alCompartir = async () => {
@@ -114,6 +114,9 @@ export default function CompartirSeguimiento({ seguimiento, className = "" }: { 
           </button>
         </div>
       </div>
+      {delPlan && (
+        <p className="mt-1.5 text-xs text-white/70">Tu familia ya tiene el link de este vuelo, el del plan: el GPS del teléfono se suma al ADS-B en el mismo link.</p>
+      )}
       {detalleDeVistas(vistas) && <p className="mt-1.5 text-xs text-white/70">{detalleDeVistas(vistas)}</p>}
       <InterruptorMatricula seguimiento={seguimiento} />
       {sinSenal && <p className="mt-1.5 text-xs text-amber-300">Sin señal: el link muestra la última posición que llegó.</p>}

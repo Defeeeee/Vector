@@ -271,6 +271,23 @@ function planesDeVuelo(req, ruta, json) {
   }
   return p;
 }
+// Un plan sembrado para probar el Mapa desde el plan (`/dashboard/mapa?plan=<id>`): sale en dos horas,
+// con DCT, un grupo de velocidad y nivel, un VOR, un lugar que el Mapa no conoce y una coordenada.
+{
+  const salida = new Date(Date.now() + 2 * 3600e3);
+  const dos = (n) => String(n).padStart(2, "0");
+  const f = {
+    version: 1, aircraftId: "a1", matricula: "LV-S048", reglas: "V", tipoVuelo: "G", numero: "1", tipoAeronave: "C152", estela: "L", equipo: "SDGZ", vigilancia: "C",
+    salida: { codigo: "SADM", nombre: "Morón" }, velocidad: "N0095", nivel: "VFR", ruta: "DCT N0100VFR DCT EZE DCT SECTOR ESCUELA DCT 3441S05838W DCT",
+    destino: { codigo: "SADL", nombre: "La Plata" }, eet: "0045", altn1: null, altn2: null, otros: {}, autonomia: "0300", personas: "2",
+    radio: { u: false, v: true, e: false }, supervivencia: { s: false, p: false, d: false, m: false, j: false }, chalecos: { j: false, l: false, f: false, u: false, v: false },
+    botes: { d: false, numero: "", capacidad: "", c: false, color: "" }, colorMarcas: "BLANCO Y ROJO", observaciones: "", piloto: "LUCIA FERRARI PPA 12345678", presentadoPor: "", oficina: "SADF",
+    origen: {}, sugerencias: {}, dofUtc: salida.toISOString().slice(0, 10), eobtUtc: `${dos(salida.getUTCHours())}${dos(salida.getUTCMinutes())}`,
+  };
+  const ahora = new Date().toISOString();
+  const p = resumenPlan({ id: "00000000-0000-4000-8000-0000000000a1", aircraft_id: "a1", completo: true, formulario: f, demoras: [], envios: [], enviado_at: null, descargado_at: null, created_at: ahora, updated_at: ahora });
+  planes.set(p.id, p);
+}
 // Los recorridos ADS-B (2.30.0): con `ADSB_DEMO=<puntos.json>` (fuera del repo: es un vuelo
 // real), un vuelo del 24/10 con ese recorrido y los vuelos detectados de ese día.
 const ADSB_DEMO = process.env.ADSB_DEMO && existsSync(process.env.ADSB_DEMO) ? JSON.parse(readFileSync(process.env.ADSB_DEMO, "utf8")) : null;
@@ -378,6 +395,18 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     let r = { detail: "Ese seguimiento no existe." }, estado = 404;
     if (seguimientoPlan && seguimientoPlan.id === id && accion === "terminar") { seguimientoPlan.terminado = true; r = { terminado: true }; estado = 200; }
     else if (seguimientoPlan && seguimientoPlan.id === id && accion === "matricula") { seguimientoPlan.mostrar = Boolean(json.mostrar); r = { mostrar_matricula: seguimientoPlan.mostrar }; estado = 200; }
+    else if (seguimientoPlan && seguimientoPlan.id === id && (accion === "posicion" || accion === "ruta")) {
+      // El Mapa que se abrió desde el plan manda el GPS (y la ruta cambiada) al mismo seguimiento.
+      if (seguimientoPlan.terminado) { r = { detail: "Este seguimiento ya terminó." }; estado = 410; }
+      else if (accion === "ruta") { seguimientoPlan.ruta = String(json.ruta ?? ""); r = { ok: true }; estado = 200; }
+      else {
+        const ahora = new Date();
+        seguimientoPlan.posiciones = (seguimientoPlan.posiciones ?? 0) + 1;
+        seguimientoPlan.ultima = { lat: json.lat, lon: json.lon, hora: ahora.toISOString() };
+        console.log(`posición al seguimiento del plan (${seguimientoPlan.token}): #${seguimientoPlan.posiciones} ${json.lat},${json.lon}`);
+        r = { aceptada: true, vence_at: seguimientoPlan.vence.toISOString(), mirando_ahora: 1, vistos_total: 2, ultima_vista_at: ahora.toISOString(), ahora: ahora.toISOString() }; estado = 200;
+      }
+    }
     if (seguimiento && seguimiento.id === id) {
       if (accion === "terminar") { seguimiento.terminado ??= new Date(); r = { terminado: true }; estado = 200; }
       else if (accion === "ruta") {

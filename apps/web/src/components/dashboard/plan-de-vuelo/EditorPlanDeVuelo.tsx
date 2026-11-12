@@ -5,6 +5,7 @@ import CompartirVuelo from "./CompartirVuelo";
 import AvisosPush from "@/components/social/AvisosPush";
 import type { SeguimientoDelPlan } from "@/actions/seguimiento";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
@@ -17,6 +18,7 @@ import {
   Download,
   Loader2,
   Mail,
+  Map as MapaIcono,
   Phone,
   Save,
   Sparkles,
@@ -462,6 +464,18 @@ export default function EditorPlanDeVuelo({
   };
 
   /** Que el mail salga con lo último que se escribió: el guardado pendiente y el que está en vuelo. */
+  /** "Abrir en el Mapa": el Mapa lee el plan guardado, así que primero se espera el guardado. */
+  const router = useRouter();
+  const [abriendoMapa, setAbriendoMapa] = useState(false);
+  const abrirEnElMapa = async () => {
+    setAbriendoMapa(true);
+    try {
+      await esperarGuardado();
+    } finally {
+      router.push(`/dashboard/mapa?plan=${encodeURIComponent(id)}`);
+    }
+  };
+
   async function esperarGuardado() {
     if (temporizador.current) {
       clearTimeout(temporizador.current);
@@ -881,6 +895,16 @@ export default function EditorPlanDeVuelo({
               estado={e.ruta}
               onCambio={(ruta) => cambiar({ ruta })}
             />
+            {f.salida && f.destino && (
+              <button
+                type="button"
+                onClick={() => void abrirEnElMapa()}
+                disabled={abriendoMapa}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-aviation-blue hover:underline disabled:opacity-60"
+              >
+                {abriendoMapa ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapaIcono className="w-3.5 h-3.5" />} Abrir en el Mapa
+              </button>
+            )}
             {!avion?.cruise_tas_kt && !f.velocidad && (
               <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
                 La velocidad es la TAS de crucero, en nudos con N y cuatro cifras: 90 kt es N0090.

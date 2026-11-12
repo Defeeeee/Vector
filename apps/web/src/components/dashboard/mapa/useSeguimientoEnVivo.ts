@@ -37,6 +37,10 @@ import {
  *   una ruta a medias) y un instante a que termine de cambiar; si falla por falta de señal se
  *   reintenta. El recorrido ya volado no se toca.
  * - Una lectura con más de 150 m de error no se manda (`posicionDeLectura`).
+ * - **Se adopta el link del plan** (`adoptar`): si el Mapa se abrió desde un plan de vuelo que ya se
+ *   compartía ("Compartir este vuelo"), ese seguimiento es el activo: al tocar Volar el teléfono
+ *   le manda el GPS **al mismo token**, sin crear otro. El backend admite uno solo por piloto, y el
+ *   GPS se suma al ADS-B. Terminar el vuelo lo termina, como siempre.
  */
 
 export type EstadoCompartir = "apagado" | "creando" | "compartiendo";
@@ -56,6 +60,8 @@ export interface SeguimientoEnVivo {
   sinSenal: boolean;
   /** Quién mira el link (migración 044), según la última respuesta del backend; `null` si todavía no llegó una. */
   vistas: VistasDelLink | null;
+  /** El link que se comparte es el de un plan de vuelo (el piloto lo mandó desde el plan). */
+  delPlan: boolean;
   /** Empieza (o retoma el activo) y devuelve el link, o `null` si falló (el motivo queda en `error`). */
   compartir: () => Promise<string | null>;
   /** Deja de compartir: el link pasa a "El vuelo terminó". */
@@ -75,6 +81,8 @@ interface Opciones {
   rutaLista?: boolean;
   /** El avión elegido en el Mapa (`Aircraft` sirve tal cual). Su tipo y designador salen en el link; la matrícula sólo si el piloto lo prende. */
   aeronave?: { registration: string; type: string; icao: string } | null;
+  /** El seguimiento de un plan de vuelo que ya está activo, para seguir con ese mismo link. */
+  adoptar?: SeguimientoGuardado | null;
 }
 
 function guardar(s: SeguimientoGuardado | null) {
@@ -90,7 +98,7 @@ function guardar(s: SeguimientoGuardado | null) {
 const firmaDeRuta = (ruta: string, puntos: Opciones["puntos"]) =>
   `${ruta}|${puntos.map((p) => `${p.codigo}@${p.lat.toFixed(4)},${p.lon.toFixed(4)}`).join(";")}`;
 
-export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, rutaLista = true, aeronave = null }: Opciones): SeguimientoEnVivo {
+export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, rutaLista = true, aeronave = null, adoptar = null }: Opciones): SeguimientoEnVivo {
   const [activo, setActivo] = useState<SeguimientoGuardado | null>(null);
   const [creando, setCreando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -130,7 +138,24 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, rutaLista
     }
   }, []);
 
+  // El link del plan: queda como el activo (y en el teléfono, para retomarlo si se recarga en vuelo).
+  // Va después de retomar, así que le gana: el backend sólo admite un seguimiento por piloto.
+  const adoptarId = adoptar?.id ?? null;
+  const [delPlan, setDelPlan] = useState(false);
+  useEffect(() => {
+    if (!adoptar) return;
+    setActivo(adoptar);
+    setMostrarMatricula(adoptar.mostrarMatricula);
+    setDelPlan(true);
+    guardar(adoptar);
+    activoRef.current = adoptar;
+    // El backend tiene la ruta del plan: la del Mapa se manda al empezar a volar.
+    rutaEnviada.current = null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adoptarId]);
+
   const cerrar = useCallback(() => {
+    setDelPlan(false);
     guardar(null);
     setActivo(null);
     setMostrarMatricula(false); // el próximo vuelo vuelve a empezar apagado
@@ -309,6 +334,7 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, rutaLista
     cambiarMostrarMatricula,
     sinSenal,
     vistas,
+    delPlan: delPlan && activo !== null,
     compartir,
     dejarDeCompartir,
   };
