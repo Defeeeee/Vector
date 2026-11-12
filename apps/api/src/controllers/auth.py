@@ -34,7 +34,7 @@ class AuthController(Controller):
             auth_response = supabase_client.auth.sign_in_with_oauth({
                 "provider": "google",
                 "options": {
-                    "redirectTo": f"{web_de_origen(request, settings.web_url)}/auth/callback",
+                    "redirect_to": f"{web_de_origen(request, settings.web_url)}/auth/callback",
                     "query_params": {"prompt": "select_account"}
                 }
             })

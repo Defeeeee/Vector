@@ -227,8 +227,8 @@ Actividad.
    que revalidar sólo volvería a dibujar el feed entero en cada aplauso (ver
    `actions/social.ts`).
 9. **`API_URL` por defecto es `http://127.0.0.1:7477/api`, con `/api`**: el backend vive
-   en el mismo VPS. Por el dominio público va **sin** `/api`, porque lo agrega el proxy
-   (Traefik, `addPrefix` en `flightlog.fdiaznem.com.ar.yml`; ver Deploy). Esa asimetría
+   en el mismo VPS. Por el dominio público (`api.vectoraero.ar`) va **sin** `/api`, porque lo agrega el proxy
+   (Traefik, `addPrefix` en `vectoraero.ar.yml`; ver Deploy). Esa asimetría
    cortó producción el 2026-08-27. En CI el smoke usa el dominio público.
 10. **La tarjeta compartible saca los números de la sesión**, nunca del query string, y no
     acepta `user_id`: una tarjeta pública necesita un token firmado y su propio modelo
@@ -372,8 +372,7 @@ ande; el smoke del CI, sí.
 
 **El proxy es Traefik, no nginx.** El tráfico entra por Cloudflare y lo atiende el
 contenedor `main-traefik` (red del host, puertos 80 y 443), con una ruta por dominio en
-`/home/ubuntu/traefik/dynamic/` del VPS: `vector.fdiaznem.com.ar.yml` manda a
-`127.0.0.1:3010`. **nginx está apagado**: lo que queda en `/etc/nginx/sites-*` es de
+`/home/ubuntu/traefik/dynamic/` del VPS: `vectoraero.ar.yml` manda `vectoraero.ar` a `127.0.0.1:3010` y `api.`/`auth.vectoraero.ar` al backend con su prefijo (certificado origin de Cloudflare en `/etc/ssl/customssl/vectoraero.*`). **Desde el 2026-11-12 Vector vive en `vectoraero.ar`**: `vector.fdiaznem.com.ar.yml` redirige todo con 301/308 a la misma ruta (pegatinas QR, links viejos, marcadores del CAD) y `api.`/`auth.flightlog.fdiaznem.com.ar` siguen andando. Las URLs públicas de la web salen de **variables del repo** (`SITIO_URL`, `AUTH_PUBLICA_URL`, `API_PUBLICA_URL`, `DOMINIO_RESPUESTAS`, `RESEND_FROM`) que el deploy escribe en el `.env`; la cookie de sesión toma el dominio del host (`dominioDeCookie`). **nginx está apagado**: lo que queda en `/etc/nginx/sites-*` es de
 antes y no sirve nada, así que tocarlo no cambia nada. Traefik no limita el tamaño del
 cuerpo: un POST de 13 MB llega entero a Next (medido el 2026-09-23). El tope que
 importa es el del backend (`request_max_body_size`, 30 MB).
@@ -418,7 +417,7 @@ importa es el del backend (`request_max_body_size`, 30 MB).
   el `.env` del VPS (lo mete el build). Está en la política de privacidad, sección `#meta`.
 - **SEO:** hay guías, sitemap y datos estructurados, y el dominio está verificado en
   Google Search Console (Federico, 2026-09-24). El sitio vive en un subdominio
-  personal (`vector.fdiaznem.com.ar`): un dominio propio ayudaría. La landing no dice
+  propio, `vectoraero.ar`, desde el 2026-11-12 (el subdominio personal `vector.fdiaznem.com.ar` redirige; falta cambiar la propiedad en Search Console). La landing no dice
   "gratis": el precio es decisión de Federico.
 - **El plan de vuelo para EANA** (2026-10-10; guardado y editable desde el 2026-10-19):
   - **Qué es:** una pestaña de Preparar vuelo, con los planes guardados, duplicar, la ruta
@@ -437,7 +436,7 @@ importa es el del backend (`request_max_body_size`, 30 MB).
   - **El envío por mail desde Vector** (2026-10-20, `enviarPlan`): el PDF firmado va a la
     oficina con copia al piloto, y las respuestas van al piloto. Prendido con
     `PLAN_DE_VUELO_ENVIO_ARO=1` en el `.env` del VPS (Federico, después de recibir la prueba).
-    Sale de `plandevuelo@vector.fdiaznem.com.ar` como "<nombre del piloto> vía Vector". El
+    Sale de `plandevuelo@vectoraero.ar` (antes del 2026-11-12, `@vector.fdiaznem.com.ar`) como "<nombre del piloto> vía Vector". El
     mail del piloto sale del token, después de que el backend lo aceptó. **La prueba al
     piloto** sigue en el server, pero la pantalla ya no la ofrece. Queda bajar el PDF y
     mandarlo a mano; "Compartir" se sacó (Federico, 2026-10-20).
@@ -470,7 +469,7 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     número: los LAD están en la lista AER del CAD con la misma clave (2.33.0).
   - **Vientos en altura** (3.28.0, `lib/vientos-por-altitud.ts`, `VientosEnAltura.tsx`): de 1.500 a 9.500 ft, frente/cola, cruzada, GS, tiempo y combustible por altitud, con un solo pedido a Open-Meteo (`/api/viento` con `altitudesFt`). **El tiempo incluye el ascenso** (Federico: en livianos se sube a 65–70 KIAS; por defecto 70 kt y 500 ft/min, editables y guardados por avión). Sugiere la EET, no toca el nivel. **Los niveles VFR por derrota** (3.29.0, `lib/niveles-vfr.ts`): RAAC 91.159 y AIP ENR 1.7 columnas 2 y 4, parseadas de `src/data/aip/ENR-1.7.txt` (texto del PDF, AMDT 3/2022, bajado a mano: **el workflow del AIP no lo actualiza**; `npm run build:niveles-vfr` regenera el JSON y el test lo valida contra el texto), derrota magnética con la variación de MADHEL; por debajo de 3.000 ft sobre los aeródromos, "recomendado, no obligatorio"; desde ahí, el FL. No cambia la fila de "menos tiempo".
   - **Las respuestas de la oficina, con push** (3.22.0, migración 043 `planes_respuestas`): el mail a la
-    oficina va con `reply_to` = [el piloto, `plan-<id>-<firma>@respuestas.vector.fdiaznem.com.ar`]
+    oficina va con `reply_to` = [el piloto, `plan-<id>-<firma>@vectoraero.ar`; el webhook acepta también los viejos `@respuestas.vector.fdiaznem.com.ar`]
     (`lib/direccion-respuesta.ts`, firmada con `DOCUMENTS_ALERT_SECRET`). Resend recibe en ese subdominio
     y llama a `/api/mail/entrante` (Svix verificado a mano, `lib/svix.ts`, `RESEND_WEBHOOK_SECRET`); se
     pide el cuerpo a Resend (la `RESEND_API_KEY` tiene que poder leer lo recibido), se limpia lo citado y
