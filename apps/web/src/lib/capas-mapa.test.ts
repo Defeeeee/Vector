@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alternarCapa, CAPAS_POR_DEFECTO, GRUPOS_CAPAS, leerCapas } from "./capas-mapa";
+import { alternarCapa, CAPAS_POR_DEFECTO, GRUPOS_CAPAS, leerCapas, VERSION_CAPAS } from "./capas-mapa";
 import { CAPAS_CARTAS } from "./cartas-aip";
 
 describe("las capas del Mapa", () => {
@@ -25,9 +25,16 @@ describe("las capas del Mapa", () => {
   it("lo guardado se valida: lo que no se entiende vuelve a lo de siempre", () => {
     expect(leerCapas(null).visibles).toEqual(CAPAS_POR_DEFECTO);
     expect(leerCapas("{no es json").visibles).toEqual(CAPAS_POR_DEFECTO);
-    expect(leerCapas(JSON.stringify({ visibles: ["tma", "inventada", "tma"], opacidad: 7 }))).toEqual({ visibles: ["tma"], opacidad: 1 });
-    expect(leerCapas(JSON.stringify({ visibles: ["carta-inf", "carta-sup"], opacidad: 0.6 }))).toEqual({ visibles: ["carta-inf"], opacidad: 0.6 });
+    expect(leerCapas(JSON.stringify({ version: VERSION_CAPAS, visibles: ["tma", "inventada", "tma"], opacidad: 7 }))).toEqual({ visibles: ["tma"], opacidad: 1 });
+    expect(leerCapas(JSON.stringify({ version: VERSION_CAPAS, visibles: ["carta-inf", "carta-sup"], opacidad: 0.6 }))).toEqual({ visibles: ["carta-inf"], opacidad: 0.6 });
     // Apagar todo también se recuerda.
-    expect(leerCapas(JSON.stringify({ visibles: [] })).visibles).toEqual([]);
+    expect(leerCapas(JSON.stringify({ version: VERSION_CAPAS, visibles: [] })).visibles).toEqual([]);
+  });
+
+  it("lo guardado antes de los procedimientos visuales los recibe prendidos, una sola vez", () => {
+    const viejo = leerCapas(JSON.stringify({ visibles: ["tma"], opacidad: 1 })).visibles;
+    expect(viejo.sort()).toEqual(["tma", "vis-02", "vis-20", "vis-llegadas", "vis-referencias", "vis-salidas"]);
+    // Ya con la versión nueva, lo que apagó a propósito queda apagado.
+    expect(leerCapas(JSON.stringify({ version: VERSION_CAPAS, visibles: ["tma", "vis-02"] })).visibles).toEqual(["tma", "vis-02"]);
   });
 });

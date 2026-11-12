@@ -17,7 +17,12 @@ export type IdCapa =
   | "corredores"
   | "sectores-vfr"
   | "aerodromos"
-  | "radioayudas";
+  | "radioayudas"
+  | "vis-llegadas"
+  | "vis-salidas"
+  | "vis-02"
+  | "vis-20"
+  | "vis-referencias";
 
 export interface CapaDelMenu {
   id: IdCapa;
@@ -60,6 +65,17 @@ export const GRUPOS_CAPAS: GrupoDeCapas[] = [
     ],
   },
   {
+    titulo: "Morón · procedimientos visuales",
+    nota: "Del AIP SADM AD 2.N2 y 2.N4 (AMDT AIRAC 1/2023), dibujados como flechas: indicativo, vale la carta. Desde zoom 10. Las vías del ferrocarril: © colaboradores de OpenStreetMap (ODbL).",
+    capas: [
+      { id: "vis-llegadas", nombre: "Llegadas", detalle: "Pistas 02 y 20", muestra: { borde: "#22d3ee" } },
+      { id: "vis-salidas", nombre: "Salidas", detalle: "Pistas 02 y 20", muestra: { borde: "#e879f9" } },
+      { id: "vis-02", nombre: "Pista 02", detalle: "Sus llegadas y salidas", muestra: { borde: "#a1a1aa", punteada: true } },
+      { id: "vis-20", nombre: "Pista 20", detalle: "Sus llegadas y salidas", muestra: { borde: "#a1a1aa", punteada: true } },
+      { id: "vis-referencias", nombre: "Referencias visuales", detalle: "GIVA, Libertad, Puente de Hierro y las vías", muestra: { borde: "#f59e0b", relleno: "#f59e0b", punto: true } },
+    ],
+  },
+  {
     titulo: "Puntos",
     capas: [
       { id: "aerodromos", nombre: "Aeródromos", detalle: "Tocalos para sumarlos a la ruta", muestra: { borde: "#18181b", relleno: "#18181b", punto: true } },
@@ -74,6 +90,16 @@ const TODAS = GRUPOS_CAPAS.flatMap((g) => g.capas.map((c) => c.id));
 export const CAPAS_POR_DEFECTO: IdCapa[] = TODAS.filter((id) => !id.startsWith("carta-"));
 export const OPACIDAD_CARTA_POR_DEFECTO = 1;
 export const CLAVE_CAPAS = "vector-mapa-capas";
+
+/**
+ * Qué capas conocía lo guardado. Una capa nueva que se prende de entrada tiene que llegarle
+ * también a quien ya guardó su elección, pero una sola vez: después, si la apaga, queda apagada.
+ * Al sumar capas, subir la versión y anotar cuáles aparecen en ella.
+ */
+export const VERSION_CAPAS = 2;
+const CAPAS_NUEVAS_EN: Record<number, IdCapa[]> = {
+  2: ["vis-llegadas", "vis-salidas", "vis-02", "vis-20", "vis-referencias"],
+};
 
 /** Prender o apagar una capa. La carta inferior y la superior cubren lo mismo: una apaga a la otra. */
 export function alternarCapa(visibles: IdCapa[], id: IdCapa): IdCapa[] {
@@ -92,6 +118,9 @@ export function leerCapas(guardado: string | null): { visibles: IdCapa[]; opacid
     let visibles = d.visibles.filter((v: unknown): v is IdCapa => TODAS.includes(v as IdCapa));
     if (visibles.includes("carta-inf") && visibles.includes("carta-sup")) visibles = visibles.filter((v: IdCapa) => v !== "carta-sup");
     const opacidad = typeof d.opacidad === "number" && d.opacidad >= 0.2 && d.opacidad <= 1 ? d.opacidad : OPACIDAD_CARTA_POR_DEFECTO;
+    // Lo guardado antes de una versión no conocía sus capas: se prenden esta vez.
+    const version = typeof d.version === "number" ? d.version : 1;
+    for (let v = version + 1; v <= VERSION_CAPAS; v++) visibles = [...visibles, ...(CAPAS_NUEVAS_EN[v] ?? [])];
     return { visibles: [...new Set(visibles)] as IdCapa[], opacidad };
   } catch {
     return porDefecto;

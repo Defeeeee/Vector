@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.27.0 — Las llegadas y salidas de Morón, en el Mapa
+
+_12 de noviembre de 2026_
+
+- **Procedimientos visuales de Morón** — Las llegadas y salidas visuales de las pistas 02 y 20 de Morón, como flechas en el Mapa, con el texto del AIP al tocarlas. Filtralas por llegada o salida y por pista desde las capas. También están GIVA, Libertad, Puente de Hierro y las vías del Sarmiento y el Belgrano resaltadas.
+
 ## v3.26.0 — Tu plan de vuelo, en el Mapa
 
 _12 de noviembre de 2026_

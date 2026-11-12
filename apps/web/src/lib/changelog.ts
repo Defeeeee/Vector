@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.27.0",
+    fecha: "2026-11-12",
+    titulo: "Las llegadas y salidas de Morón, en el Mapa",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Procedimientos visuales de Morón",
+        texto: "Las llegadas y salidas visuales de las pistas 02 y 20 de Morón, como flechas en el Mapa, con el texto del AIP al tocarlas. Filtralas por llegada o salida y por pista desde las capas. También están GIVA, Libertad, Puente de Hierro y las vías del Sarmiento y el Belgrano resaltadas.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+    ],
+  },
+  {
     version: "3.26.0",
     fecha: "2026-11-12",
     titulo: "Tu plan de vuelo, en el Mapa",

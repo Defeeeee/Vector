@@ -14,6 +14,17 @@ import type { Fir, Vfr } from "@/lib/firs";
 import type { PuntoMapa } from "@/lib/mapa-ruta";
 import type { PuntoTrack } from "@/lib/track-vuelo";
 import { descripcionCorredor, etiquetaCorredor, informacionCorredor } from "@/lib/corredores-vfr";
+import {
+  COLOR_LLEGADA,
+  COLOR_REFERENCIA,
+  COLOR_SALIDA,
+  flechasDeLinea,
+  procedimientosVisibles,
+  puntaFinal,
+  puntoAlLargo,
+  VISUALES,
+  ZOOM_MINIMO_VISUALES,
+} from "@/lib/procedimientos-visuales";
 
 /** Lo que devuelve `/api/mapa`, compacto: arrays en vez de objetos. */
 export interface CapasMapa {
@@ -52,9 +63,36 @@ const ESTILO: Record<EspacioAereo["tipo"], L.PathOptions> = {
 };
 
 /** El orden en que se apilan, de abajo hacia arriba: lo que se toca queda arriba. */
-const ORDEN_CAPAS: IdCapa[] = ["firs", "tma", "ctr", "atz", "sectores-vfr", "corredores", "aerodromos", "radioayudas"];
+// Los procedimientos visuales de Morón (3.27) van arriba de los espacios y debajo de los
+// aeródromos, que se siguen pudiendo tocar: las vías, los procedimientos y las referencias.
+type ClaveGrupo = Exclude<IdCapa, `carta-${string}` | `vis-${string}`> | "vis-vias" | "vis-proc" | "vis-referencias";
+const ORDEN_CAPAS: ClaveGrupo[] = ["firs", "tma", "ctr", "atz", "sectores-vfr", "corredores", "vis-vias", "vis-proc", "vis-referencias", "aerodromos", "radioayudas"];
 
-type Grupos = Record<Exclude<IdCapa, `carta-${string}`>, L.LayerGroup> & { ruta: L.LayerGroup; estela: L.LayerGroup; avion: L.LayerGroup };
+type Grupos = Record<ClaveGrupo, L.LayerGroup> & { ruta: L.LayerGroup; estela: L.LayerGroup; avion: L.LayerGroup };
+
+/**
+ * Una flechita de dirección (o la punta del final, más grande) para los procedimientos visuales.
+ * Como `iconoAvion`: los íconos quedan derechos en la pantalla, así que gira el rumbo más lo que
+ * está rotado el mapa.
+ */
+function iconoFlecha(rumbo: number, rumboMapa: number, color: string, punta: boolean): L.DivIcon {
+  const t = punta ? 20 : 14;
+  return L.divIcon({
+    className: "",
+    iconSize: [t, t],
+    iconAnchor: [t / 2, t / 2],
+    html: `<svg width="${t}" height="${t}" viewBox="0 0 20 20" style="transform: rotate(${(rumbo + rumboMapa) % 360}deg)"><path d="M10 2 L17 17 L10 13 L3 17 Z" fill="${color}" stroke="#0b1220" stroke-width="${punta ? 1.8 : 2.2}" stroke-linejoin="round"/></svg>`,
+  });
+}
+
+function iconoNotificacion(): L.DivIcon {
+  return L.divIcon({
+    className: "",
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    html: `<svg width="18" height="18" viewBox="0 0 18 18"><path d="M9 2 L16.5 15.5 L1.5 15.5 Z" fill="${COLOR_REFERENCIA}" stroke="#0b1220" stroke-width="1.5" stroke-linejoin="round"/></svg>`,
+  });
+}
 
 const escapar = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
@@ -174,6 +212,9 @@ export default function MapaLeaflet({
       atz: grupo(),
       "sectores-vfr": grupo(),
       corredores: grupo(),
+      "vis-vias": grupo(),
+      "vis-proc": grupo(),
+      "vis-referencias": grupo(),
       aerodromos: grupo(),
       radioayudas: grupo(),
       ruta: grupo().addTo(m),
@@ -216,11 +257,48 @@ export default function MapaLeaflet({
     };
   }, []);
 
+  // Los procedimientos visuales de Morón. Un toque sobre una línea abre su popup, salvo mientras
+  // se agregan puntos: ahí el toque es de la ruta.
+  const abrirPopup = (capa: L.Path, html: string) => {
+    capa.on("click", (e: L.LeafletMouseEvent) => {
+      if (callbacks.current.agregando) {
+        callbacks.current.onPuntoLibre?.(e.latlng.lat, e.latlng.lng);
+        return;
+      }
+      L.popup({ maxWidth: 300 }).setLatLng(e.latlng).setContent(html).openOn(mapa.current!);
+    });
+  };
+
+  // Las referencias visuales y las vías (una vez: no dependen de lo que se prenda).
+  function dibujarReferenciasVisuales(c: Grupos) {
+    c["vis-vias"].clearLayers();
+    c["vis-referencias"].clearLayers();
+    for (const v of VISUALES.vias) {
+      for (const tramo of v.tramos) {
+        const linea = L.polyline(tramo, { color: COLOR_REFERENCIA, weight: 6, opacity: 0.5, lineCap: "round", bubblingMouseEvents: false })
+          .bindTooltip(`<b>${escapar(v.nombre)}</b><br><span style="font-size:10px">${escapar(VISUALES.fuenteVias)}</span>`, { sticky: true })
+          .addTo(c["vis-vias"]);
+        abrirPopup(linea, `<b>${escapar(v.nombre)}</b><br>Resaltada como referencia visual.<br><small>${escapar(VISUALES.fuenteVias)}</small>`);
+      }
+    }
+    for (const r of VISUALES.referencias) {
+      const popup = `<b>${escapar(r.nombre)}</b><br>${escapar(r.detalle)}<br><small>${escapar(VISUALES.fuente)}<br>${escapar(VISUALES.precision)}</small>`;
+      const marca =
+        r.tipo === "notificacion"
+          ? L.marker([r.lat, r.lon], { icon: iconoNotificacion(), keyboard: false, bubblingMouseEvents: false })
+          : L.circleMarker([r.lat, r.lon], { radius: 6, color: "#0b1220", weight: 1.5, fillColor: COLOR_REFERENCIA, fillOpacity: 1, bubblingMouseEvents: false });
+      marca
+        .bindTooltip(escapar(r.nombre), { permanent: true, direction: "right", offset: [8, 0] })
+        .bindPopup(popup, { maxWidth: 300 })
+        .addTo(c["vis-referencias"]);
+    }
+  }
+
   // Las capas fijas: espacios aéreos, aeródromos y radioayudas.
   useEffect(() => {
     const c = capasRef.current;
     if (!c || !capas) return;
-    for (const id of ORDEN_CAPAS) c[id as keyof Grupos].clearLayers();
+    for (const id of ORDEN_CAPAS) if (!id.startsWith("vis-")) c[id as keyof Grupos].clearLayers();
 
     // Las FIR: sólo los tramos del AIP (sin los rodeos por afuera del país), y la línea entre
     // los sectores de su centro. En gris, debajo de todo: son el fondo, no el dato.
@@ -274,6 +352,8 @@ export default function MapaLeaflet({
         .addTo(c.corredores);
     }
 
+    dibujarReferenciasVisuales(c);
+
     for (const [icao, local, nombre, lat, lon, tamano] of capas.aerodromos) {
       const grande = tamano === "L" || tamano === "M";
       const codigo = icao || local;
@@ -300,23 +380,80 @@ export default function MapaLeaflet({
     }
   }, [capas]);
 
-  // Lo que el piloto eligió ver. Se sacan y se vuelven a poner en `ORDEN_CAPAS`: Leaflet apila
-  // por orden de llegada, y una ATZ prendida después de la TMA tiene que quedar arriba para tocarla.
+  // Lo que el piloto eligió ver.
   const claveVisibles = [...visibles].sort().join(",");
+  const procedimientosIconos = useRef<{ marcador: L.Marker; rumbo: number; color: string; punta: boolean }[]>([]);
   useEffect(() => {
     const m = mapa.current;
     const c = capasRef.current;
     if (!m || !c) return;
-    for (const id of ORDEN_CAPAS) c[id as keyof Grupos].remove();
-    for (const id of ORDEN_CAPAS) if (visibles.includes(id)) c[id as keyof Grupos].addTo(m);
-    c.ruta.remove().addTo(m);
-    c.estela.remove().addTo(m);
-    c.avion.remove().addTo(m);
+
+    // Los procedimientos visibles (tipo y pista): se redibujan al cambiar lo prendido.
+    c["vis-proc"].clearLayers();
+    procedimientosIconos.current = [];
+    for (const p of procedimientosVisibles(visibles)) {
+      const color = p.tipo === "llegada" ? COLOR_LLEGADA : COLOR_SALIDA;
+      const popup = `<b>${escapar(p.titulo)}</b><p style="margin:4px 0">${escapar(p.texto)}</p><small>${escapar(VISUALES.fuente)}<br>${escapar(VISUALES.precision)}</small>`;
+      // El borde oscuro debajo, para que se lea sobre el mapa base y las cartas.
+      // También es lo que se toca: 6 px de ancho dejan el toque con el dedo más cómodo que 3.
+      abrirPopup(L.polyline(p.puntos, { color: "#0b1220", weight: 7, opacity: 0.7, bubblingMouseEvents: false }).addTo(c["vis-proc"]), popup);
+      abrirPopup(L.polyline(p.puntos, { color, weight: 3, opacity: 1, bubblingMouseEvents: false }).addTo(c["vis-proc"]), popup);
+      const iconos = (lat: number, lon: number, rumbo: number, punta: boolean) => {
+        const marcador = L.marker([lat, lon], { icon: iconoFlecha(rumbo, m.getBearing(), color, punta), interactive: false, keyboard: false }).addTo(c["vis-proc"]);
+        procedimientosIconos.current.push({ marcador, rumbo, color, punta });
+      };
+      for (const f of flechasDeLinea(p.puntos)) iconos(f.lat, f.lon, f.rumbo, false);
+      const fin = puntaFinal(p.puntos);
+      if (fin) iconos(fin.lat, fin.lon, fin.rumbo, true);
+      // El número de pista, cerca del principio.
+      const inicio = puntoAlLargo(p.puntos, 450);
+      if (inicio) {
+        L.marker([inicio.lat, inicio.lon], {
+          interactive: false,
+          keyboard: false,
+          icon: L.divIcon({
+            className: "",
+            iconSize: [26, 16],
+            iconAnchor: [13, 8],
+            html: `<div style="width:26px;height:16px;border-radius:4px;background:#0b1220;border:1.5px solid ${color};color:${color};font:700 10px/13px ui-monospace,monospace;text-align:center">${p.pista}</div>`,
+          }),
+        }).addTo(c["vis-proc"]);
+      }
+    }
+
+    // Se sacan y se vuelven a poner en `ORDEN_CAPAS`: Leaflet apila por orden de llegada, y una
+    // ATZ prendida después de la TMA tiene que quedar arriba para tocarla. Lo de Morón, sólo
+    // desde zoom 10 (que no ensucie el país entero).
+    const aplicar = () => {
+      const cerca = m.getZoom() >= ZOOM_MINIMO_VISUALES;
+      const prendido = (id: ClaveGrupo) =>
+        id === "vis-proc" ? cerca && procedimientosVisibles(visibles).length > 0
+        : id === "vis-vias" || id === "vis-referencias" ? cerca && visibles.includes("vis-referencias")
+        : visibles.includes(id);
+      for (const id of ORDEN_CAPAS) c[id].remove();
+      for (const id of ORDEN_CAPAS) if (prendido(id)) c[id].addTo(m);
+      c.ruta.remove().addTo(m);
+      c.estela.remove().addTo(m);
+      c.avion.remove().addTo(m);
+    };
+    aplicar();
+    m.on("zoomend", aplicar);
+    // Con el mapa rotado, las flechas giran lo que gira el mapa para seguir apuntando bien.
+    const rotar = () => {
+      const b = m.getBearing();
+      for (const i of procedimientosIconos.current) i.marcador.setIcon(iconoFlecha(i.rumbo, b, i.color, i.punta));
+    };
+    m.on("rotate", rotar);
+    rotar();
     for (const [id, capa] of Object.entries(cartasRef.current)) {
       if (visibles.includes(id as IdCapa)) {
         if (!m.hasLayer(capa)) capa.addTo(m);
       } else capa.remove();
     }
+    return () => {
+      m.off("zoomend", aplicar);
+      m.off("rotate", rotar);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `claveVisibles` resume `visibles`
   }, [claveVisibles]);
   useEffect(() => {

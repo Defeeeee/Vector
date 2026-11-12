@@ -28,7 +28,7 @@ import {
 import type { ApiMapa, CapasMapa, Posicion } from "./MapaLeaflet";
 import { CLAVE_TRACK, fechaArgentina, gpxDelTrack, leerTrack, nombreDelGpx, resumenTrack, sigueElTrack, sumarPunto, type TrackVuelo } from "@/lib/track-vuelo";
 import MenuCapas from "./MenuCapas";
-import { alternarCapa, CAPAS_POR_DEFECTO, CLAVE_CAPAS, leerCapas, OPACIDAD_CARTA_POR_DEFECTO, type IdCapa } from "@/lib/capas-mapa";
+import { alternarCapa, CAPAS_POR_DEFECTO, CLAVE_CAPAS, leerCapas, OPACIDAD_CARTA_POR_DEFECTO, VERSION_CAPAS, type IdCapa } from "@/lib/capas-mapa";
 import BriefingRuta from "../BriefingRuta";
 import { SECCIONES } from "@/lib/secciones";
 import type { Aircraft } from "@/types";
@@ -589,7 +589,7 @@ export default function MapaClient({
   }, []);
   const guardarCapas = (v: IdCapa[], o: number) => {
     try {
-      localStorage.setItem(CLAVE_CAPAS, JSON.stringify({ visibles: v, opacidad: o }));
+      localStorage.setItem(CLAVE_CAPAS, JSON.stringify({ version: VERSION_CAPAS, visibles: v, opacidad: o }));
     } catch {}
   };
   const alternar = (id: IdCapa) => {
