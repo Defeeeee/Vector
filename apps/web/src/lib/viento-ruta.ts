@@ -256,16 +256,39 @@ export function horaUtcDeTextos(fecha: string, hora: string): number {
   return Date.parse(`${fecha.trim()}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00Z`);
 }
 
-/** Validación del pedido a `/api/viento`: devuelve los puntos o el motivo del rechazo. */
+/** Cuántas altitudes acepta un pedido de varias (la tabla del plan de vuelo usa ~10). */
+export const MAX_ALTITUDES_VIENTO = 12;
+
+function altitudValida(a: unknown): a is number {
+  return typeof a === "number" && Number.isFinite(a) && a >= 0 && a <= ALTITUD_MAX_FT;
+}
+
+/**
+ * Validación del pedido a `/api/viento`: devuelve los puntos o el motivo del rechazo.
+ *
+ * El pedido trae **una** `altitudFt` (la planilla) o **varias** `altitudesFt` (la tabla de
+ * vientos en altura del plan de vuelo), nunca las dos: en el primer caso `altitudesFt` es
+ * `null`, en el segundo `altitudFt` lo es. Cada altitud se valida igual que la sola.
+ */
 export function validarPedidoViento(
   cuerpo: unknown
-): { puntos: PuntoViento[]; altitudFt: number } | { error: string } {
-  const c = cuerpo as { puntos?: unknown; altitudFt?: unknown } | null;
+): { puntos: PuntoViento[]; altitudFt: number | null; altitudesFt: number[] | null } | { error: string } {
+  const c = cuerpo as { puntos?: unknown; altitudFt?: unknown; altitudesFt?: unknown } | null;
   if (!c || !Array.isArray(c.puntos) || c.puntos.length === 0) return { error: "Faltan los puntos" };
   if (c.puntos.length > MAX_PUNTOS_VIENTO) return { error: `Hasta ${MAX_PUNTOS_VIENTO} puntos` };
-  const altitudFt = c.altitudFt;
-  if (typeof altitudFt !== "number" || !Number.isFinite(altitudFt) || altitudFt < 0 || altitudFt > ALTITUD_MAX_FT) {
-    return { error: "Altitud fuera de rango" };
+
+  let altitudFt: number | null = null;
+  let altitudesFt: number[] | null = null;
+  if (c.altitudesFt !== undefined) {
+    if (c.altitudFt !== undefined) return { error: "Una altitud o varias, no las dos" };
+    const lista = c.altitudesFt;
+    if (!Array.isArray(lista) || lista.length === 0) return { error: "Faltan las altitudes" };
+    if (lista.length > MAX_ALTITUDES_VIENTO) return { error: `Hasta ${MAX_ALTITUDES_VIENTO} altitudes` };
+    if (!lista.every(altitudValida)) return { error: "Altitud fuera de rango" };
+    altitudesFt = lista as number[];
+  } else {
+    if (!altitudValida(c.altitudFt)) return { error: "Altitud fuera de rango" };
+    altitudFt = c.altitudFt;
   }
   const ahora = Date.now();
   const puntos: PuntoViento[] = [];
@@ -281,5 +304,5 @@ export function validarPedidoViento(
     }
     puntos.push({ lat, lon, horaMs });
   }
-  return { puntos, altitudFt };
+  return { puntos, altitudFt, altitudesFt };
 }

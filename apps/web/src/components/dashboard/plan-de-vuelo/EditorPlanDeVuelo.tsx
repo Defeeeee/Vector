@@ -32,6 +32,7 @@ import { cancelarPlan, duplicarPlan, enviarCambio, enviarDemora, enviarPlan, gua
 import type { EnvioPlan } from "@/lib/plan-de-vuelo-servidor";
 import { borradorParaRecuperar, claveBorrador, leerBorrador } from "@/lib/borrador-plan";
 import {
+  tasDeVelocidad,
   aplicarAvion,
   horaDeTexto,
   leerFormulario,
@@ -65,6 +66,7 @@ import { horariosDelPlan } from "@/lib/plan-cierre";
 import FirmaPiloto from "./FirmaPiloto";
 import EditorRuta from "./EditorRuta";
 import { useRutaResuelta } from "./useRutaResuelta";
+import VientosEnAltura from "./VientosEnAltura";
 
 export interface AvionEditor {
   id: string;
@@ -935,6 +937,21 @@ export default function EditorPlanDeVuelo({
               </Campo>
             </div>
             {!sugEet && notaEet && <p className="text-[11px] text-zinc-400 dark:text-zinc-500">{notaEet}</p>}
+          </Seccion>
+
+          {/* Vientos en altura (ayuda: no es una casilla) */}
+          <Seccion titulo="Vientos en altura">
+            <VientosEnAltura
+              avionId={f.aircraftId ?? ""}
+              salida={f.salida}
+              destino={f.destino}
+              nodos={rutaResuelta.nodos}
+              tasKt={tasDeVelocidad(f.velocidad) ?? avion?.cruise_tas_kt ?? null}
+              salidaUtc={vigente}
+              consumoLh={avion?.fuel_burn_lph ?? null}
+              eetActual={f.eet}
+              onUsarEet={(eet) => cambiar({ eet })}
+            />
           </Seccion>
 
           {/* 18 */}

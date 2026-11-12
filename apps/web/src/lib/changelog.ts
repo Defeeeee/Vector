@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.28.0",
+    fecha: "2026-11-12",
+    titulo: "Vientos en altura para tu plan",
+    novedades: [
+      {
+        icono: "nube",
+        titulo: "¿A qué altitud conviene volar?",
+        texto: "En el plan de vuelo, \"Vientos en altura\" te muestra para cada altitud de 1.500 a 9.500 ft el viento pronosticado en tu ruta a la hora de salida, cuánto es de frente o de cola, la cruzada, la GS, el tiempo con el ascenso incluido y el combustible. Marca la que tarda menos, y con un toque usás ese tiempo como EET.",
+        href: "/dashboard/plan-de-vuelo",
+        cta: "Ver tus planes",
+      },
+    ],
+  },
+  {
     version: "3.27.0",
     fecha: "2026-11-12",
     titulo: "Las llegadas y salidas de Morón, en el Mapa",

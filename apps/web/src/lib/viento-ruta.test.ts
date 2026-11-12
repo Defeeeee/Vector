@@ -230,3 +230,31 @@ describe("validarPedidoViento", () => {
     expect("error" in validarPedidoViento({ ...ok, puntos: muchos })).toBe(true);
   });
 });
+
+describe("validarPedidoViento con varias altitudes", () => {
+  const ahora = new Date().toISOString();
+  const puntos = [{ lat: -34.5, lon: -58.6, hora: ahora }];
+  it("acepta una lista y deja altitudFt en null", () => {
+    const r = validarPedidoViento({ puntos, altitudesFt: [1500, 2500, 9500] });
+    expect("error" in r).toBe(false);
+    if (!("error" in r)) {
+      expect(r.altitudesFt).toEqual([1500, 2500, 9500]);
+      expect(r.altitudFt).toBeNull();
+    }
+  });
+  it("la altitud sola sigue igual", () => {
+    const r = validarPedidoViento({ puntos, altitudFt: 4500 });
+    if ("error" in r) throw new Error("debía andar");
+    expect(r.altitudFt).toBe(4500);
+    expect(r.altitudesFt).toBeNull();
+  });
+  it("rechaza lo inválido", () => {
+    expect("error" in validarPedidoViento({ puntos, altitudesFt: [] })).toBe(true);
+    expect("error" in validarPedidoViento({ puntos, altitudesFt: "1500" })).toBe(true);
+    expect("error" in validarPedidoViento({ puntos, altitudesFt: [1500, -1] })).toBe(true);
+    expect("error" in validarPedidoViento({ puntos, altitudesFt: [1500, 90000] })).toBe(true);
+    expect("error" in validarPedidoViento({ puntos, altitudesFt: [1500, "x"] })).toBe(true);
+    expect("error" in validarPedidoViento({ puntos, altitudesFt: Array.from({ length: 13 }, () => 2500) })).toBe(true);
+    expect("error" in validarPedidoViento({ puntos, altitudFt: 4500, altitudesFt: [1500] })).toBe(true);
+  });
+});

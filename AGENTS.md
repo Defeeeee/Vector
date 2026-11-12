@@ -468,6 +468,7 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     ofrece** (Federico, 2026-10-28: sólo AD y LAD). La lista se actualiza con el workflow del AIP.
   - Un vuelo desde un LAD se registra (Registrar vuelo busca LAD con `lad`) y pasa al CAD por su
     número: los LAD están en la lista AER del CAD con la misma clave (2.33.0).
+  - **Vientos en altura** (3.28.0, `lib/vientos-por-altitud.ts`, `VientosEnAltura.tsx`): de 1.500 a 9.500 ft, frente/cola, cruzada, GS, tiempo y combustible por altitud, con un solo pedido a Open-Meteo (`/api/viento` con `altitudesFt`). **El tiempo incluye el ascenso** (Federico: en livianos se sube a 65–70 KIAS; por defecto 70 kt y 500 ft/min, editables y guardados por avión). Sugiere la EET, no toca el nivel. Los niveles VFR por rumbo no están: la RAAC 91.159 remite a la tabla de la AIP ENR 1.7, que no está en el repo.
   - **Las respuestas de la oficina, con push** (3.22.0, migración 043 `planes_respuestas`): el mail a la
     oficina va con `reply_to` = [el piloto, `plan-<id>-<firma>@respuestas.vector.fdiaznem.com.ar`]
     (`lib/direccion-respuesta.ts`, firmada con `DOCUMENTS_ALERT_SECRET`). Resend recibe en ese subdominio

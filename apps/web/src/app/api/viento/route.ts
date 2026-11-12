@@ -14,6 +14,11 @@ import {
  * el mismo orden, `{ direccion, velocidad, horaModelo, niveles }` o `null` donde no se
  * sabe (invariante 2). La cuenta está en `lib/viento-ruta.ts`.
  *
+ * Con `altitudesFt: number[]` en lugar de `altitudFt` (la tabla de vientos en altura del
+ * plan de vuelo), cada punto trae un arreglo con ese mismo resultado para cada altitud,
+ * en el orden pedido. Es el mismo pedido a Open-Meteo: las alturas salen de la misma
+ * respuesta.
+ *
  * Un solo pedido a Open-Meteo con todas las coordenadas. Se redondea lo que va en la URL
  * (dos decimales, ~1 km, y las horas enteras) para que dos pilotos con la misma ruta
  * compartan el caché de `revalidate`, y se pide sólo la ventana de horas que hace falta.
@@ -37,7 +42,7 @@ export async function POST(req: NextRequest) {
   }
   const pedido = validarPedidoViento(cuerpo);
   if ("error" in pedido) return NextResponse.json({ error: pedido.error }, { status: 400 });
-  const { puntos, altitudFt } = pedido;
+  const { puntos, altitudFt, altitudesFt } = pedido;
 
   const horas = puntos.map((p) => p.horaMs);
   // Con 3 h de margen a cada lado: es lo que `horaMasCercana` tolera.
@@ -62,8 +67,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "El servicio de pronóstico no respondió" }, { status: 502 });
     }
     const lugares = leerRespuestaOpenMeteo(await res.json(), puntos.length);
-    const resultado = puntos.map((p, k) => {
-      const r = vientoEnPunto(lugares[k], p.horaMs, altitudFt);
+    const en = (k: number, horaMs: number, altitud: number) => {
+      const r = vientoEnPunto(lugares[k], horaMs, altitud);
       if (!r) return null;
       return {
         direccion: r.viento.direccion,
@@ -71,7 +76,12 @@ export async function POST(req: NextRequest) {
         horaModelo: r.horaModeloMs,
         niveles: r.nivelesHPa,
       };
-    });
+    };
+    if (altitudesFt) {
+      const resultado = puntos.map((p, k) => altitudesFt.map((a) => en(k, p.horaMs, a)));
+      return NextResponse.json({ puntos: resultado, altitudesFt, modelo: "Open-Meteo" });
+    }
+    const resultado = puntos.map((p, k) => en(k, p.horaMs, altitudFt!));
     return NextResponse.json({ puntos: resultado, modelo: "Open-Meteo" });
   } catch {
     return NextResponse.json({ error: "No se pudo contactar el servicio de pronóstico" }, { status: 502 });

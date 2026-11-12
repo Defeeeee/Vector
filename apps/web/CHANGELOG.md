@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.28.0 — Vientos en altura para tu plan
+
+_12 de noviembre de 2026_
+
+- **¿A qué altitud conviene volar?** — En el plan de vuelo, "Vientos en altura" te muestra para cada altitud de 1.500 a 9.500 ft el viento pronosticado en tu ruta a la hora de salida, cuánto es de frente o de cola, la cruzada, la GS, el tiempo con el ascenso incluido y el combustible. Marca la que tarda menos, y con un toque usás ese tiempo como EET.
+
 ## v3.27.0 — Las llegadas y salidas de Morón, en el Mapa
 
 _12 de noviembre de 2026_
