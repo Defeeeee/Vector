@@ -376,13 +376,32 @@ export default function PrivacidadPage() {
             meteorológico (METAR) del aeródromo de destino, que no sale de tu teléfono sino de
             aviationweather.gov. <strong>La matrícula sólo se muestra si vos prendés &ldquo;Mostrar la
             matrícula&rdquo;</strong> antes o mientras compartís: viene apagado, y mientras está apagado
-            ni se guarda; si la apagás, se borra. <strong>Nunca</strong> tu correo, tu apellido ni nada de
+            el link no la dice (se la guarda aparte, sin mostrarla, para buscar el avión en ADS-B: ver
+            &ldquo;Posiciones ADS-B del avión&rdquo;). <strong>Nunca</strong> tu correo, tu apellido ni nada de
             tu bitácora.
           </li>
           <li>
             <strong>Con quién:</strong> con cualquiera que tenga el link. No pide cuenta ni contraseña,
             y el link no se puede adivinar, pero quien lo reciba puede reenviarlo. Mandalo sólo a quien
             quieras que te vea.
+          </li>
+          <li>
+            <strong>Posiciones ADS-B del avión:</strong> para que el link siga mostrando el avión
+            cuando el teléfono deja de mandar (pantalla apagada, sin batería, sin señal), y para
+            compartir un plan de vuelo sin el teléfono, Vector puede usar las posiciones ADS-B
+            públicas del avión (el aviso que el propio avión transmite por radio y que reciben
+            antenas de aficionados, publicado por adsb.fi). Para buscarlas guarda la matrícula del
+            avión en el seguimiento, aparte y <strong>sin mostrarla</strong> salvo que prendas
+            &ldquo;Mostrar la matrícula&rdquo;. Esas posiciones son las del avión, no las de tu
+            teléfono, y el link puede mostrar las de un vuelo del mismo avión que haga otra persona
+            mientras el link siga abierto. No todos los aviones transmiten ADS-B ni hay antenas en
+            todos lados: cuando no hay datos, el link lo dice.
+          </li>
+          <li>
+            <strong>Compartir un plan de vuelo:</strong> desde el plan podés compartir &ldquo;Este
+            vuelo&rdquo;: el link lleva lo mismo que arriba más la hora de salida prevista del plan,
+            y vence cuando termina el vuelo previsto (la salida más la duración del plan y dos horas
+            de margen), cuando aterriza o cuando tocás &ldquo;Dejar de compartir&rdquo;.
           </li>
           <li>
             <strong>Cuánto dura:</strong> el link deja de mostrar el vuelo en curso cuando tocás

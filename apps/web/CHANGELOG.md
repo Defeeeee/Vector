@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.24.0 — Tu vuelo compartido, aunque el teléfono duerma
+
+_12 de noviembre de 2026_
+
+- **ADS-B cuando el teléfono no manda** — Si compartís tu vuelo y el teléfono deja de mandar la posición (pantalla apagada, sin batería, sin señal), el link sigue mostrando el avión con las posiciones ADS-B públicas, y dice de dónde sale cada una.
+- **Compartí un vuelo desde el plan** — En el plan de vuelo, "Compartir este vuelo" arma el link sin usar el teléfono: dice a qué hora salís, muestra el vuelo cuando el avión despega y "Aterrizó" cuando toca tierra. Necesita que el avión transmita ADS-B.
+
 ## v3.23.0 — Cambiá la ruta sin aterrizar
 
 _11 de noviembre de 2026_

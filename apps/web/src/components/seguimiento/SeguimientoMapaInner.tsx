@@ -5,6 +5,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { TILES_OPCIONES, TILES_URL } from "@/lib/mapa-tiles";
 import type { SeguimientoPublico } from "@/lib/seguimiento";
+import { tramosPorFuente } from "@/lib/seguimiento-calculos";
 
 /**
  * El mapa de `/seguir/[token]`: el avión, por dónde pasó y la ruta prevista, con los mismos tiles
@@ -20,6 +21,8 @@ import type { SeguimientoPublico } from "@/lib/seguimiento";
  */
 
 const CIAN = "#38bdf8";
+/** El tramo de ADS-B, en otro tono que el GPS del teléfono (cian). */
+const VIOLETA = "#a78bfa";
 
 const SOMBRA = "text-shadow:0 0 3px #000,0 0 3px #000,0 0 6px #000";
 const escapar = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
@@ -53,7 +56,7 @@ export default function SeguimientoMapaInner({
 }) {
   const contenedor = useRef<HTMLDivElement>(null);
   const mapaRef = useRef<L.Map | null>(null);
-  const capas = useRef<{ ruta: L.LayerGroup; estela: L.Polyline; avion: L.Marker | null } | null>(null);
+  const capas = useRef<{ ruta: L.LayerGroup; estela: L.LayerGroup; avion: L.Marker | null } | null>(null);
   const encuadrado = useRef(false);
   const siguiendo = useRef(true);
   const alSoltar = useRef(onSuelto);
@@ -70,7 +73,7 @@ export default function SeguimientoMapaInner({
     L.tileLayer(TILES_URL, TILES_OPCIONES).addTo(mapa);
     mapa.setView([-34.6, -58.4], 8);
     const ruta = L.layerGroup().addTo(mapa);
-    const estela = L.polyline([], { color: CIAN, weight: 3.5, opacity: 0.95, lineCap: "round", interactive: false }).addTo(mapa);
+    const estela = L.layerGroup().addTo(mapa);
     capas.current = { ruta, estela, avion: null };
     // Sólo el gesto de quien mira suelta el mapa; los movimientos de código (`fitBounds`, `panTo`) no.
     mapa.on("dragstart", () => {
@@ -119,10 +122,21 @@ export default function SeguimientoMapaInner({
       punto.bindTooltip(html, { permanent: true, direction: "top", offset: [0, -6], className: "!bg-transparent !border-0 !shadow-none !text-white !font-mono !text-[10px] !font-bold !text-center" });
     });
 
+    // El recorrido en un tono por fuente: GPS del teléfono en cian, ADS-B en violeta.
     const volado = datos.recorrido.map((p) => [p[0], p[1]] as L.LatLngTuple);
     const u = datos.ultima;
-    if (u) volado.push([u.lat, u.lon]);
-    c.estela.setLatLngs(volado);
+    const ultimoDelRecorrido = volado[volado.length - 1];
+    if (u && !(ultimoDelRecorrido && ultimoDelRecorrido[0] === u.lat && ultimoDelRecorrido[1] === u.lon)) volado.push([u.lat, u.lon]);
+    c.estela.clearLayers();
+    for (const tramo of tramosPorFuente(datos.recorrido)) {
+      L.polyline(tramo.puntos, {
+        color: tramo.fuente === "adsb" ? VIOLETA : CIAN,
+        weight: 3.5,
+        opacity: 0.95,
+        lineCap: "round",
+        interactive: false,
+      }).addTo(c.estela);
+    }
 
     if (u) {
       const ll: L.LatLngTuple = [u.lat, u.lon];

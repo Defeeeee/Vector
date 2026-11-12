@@ -11,7 +11,7 @@
  */
 
 import { distanciaNmPrecisa } from "@/lib/distance";
-import type { PuntoPublico, PuntoRecorrido, SeguimientoPublico } from "@/lib/seguimiento";
+import type { FuenteDePosicion, PuntoPublico, PuntoRecorrido, SeguimientoPublico } from "@/lib/seguimiento";
 
 /** Debajo de esta velocidad sobre el suelo se considera que el avión está en tierra. */
 export const GS_EN_TIERRA_KT = 30;
@@ -65,6 +65,31 @@ export function horaArgentinaConDia(iso: string | null, referencia: string): str
   if (d === r + 1) return `${h} hs de mañana`;
   if (d === r - 1) return `${h} hs de ayer`;
   return `${h} hs`;
+}
+
+/** "15:30Z" (la hora UTC de un instante, como se escribe en un plan), o `null` si no se lee. */
+export function horaUtc(iso: string | null): string | null {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  const d = new Date(t);
+  return `${DOS(d.getUTCHours())}:${DOS(d.getUTCMinutes())}Z`;
+}
+
+/**
+ * La salida prevista de un plan, en hora argentina y en UTC, armada a mano (invariante 1):
+ * "Sale a las 12:30 (15:30Z)", "Sale mañana a las 06:00 (09:00Z)". Si la hora ya pasó, "Salida
+ * prevista a las…" (no se promete que va a salir). `referencia` es la hora del servidor.
+ */
+export function textoSalida(iso: string | null | undefined, referencia: string): string | null {
+  const h = horaArgentina(iso ?? null);
+  const z = horaUtc(iso ?? null);
+  if (!h || !z || !iso) return null;
+  const d = diaArgentino(iso);
+  const r = diaArgentino(referencia);
+  const dia = d === null || r === null || d === r ? "" : d === r + 1 ? " mañana" : d === r - 1 ? " ayer" : "";
+  const futura = Date.parse(iso) > Date.parse(referencia);
+  return `${futura ? "Sale" : "Salida prevista"}${dia} a las ${h} (${z})`;
 }
 
 /** 4500 s -> "1 h 15 min"; menos de una hora -> "42 min"; menos de un minuto -> "menos de 1 min". */
@@ -181,11 +206,12 @@ export interface VelocidadVertical {
 /**
  * Sube, baja o está nivelado, con los últimos puntos del recorrido y la última posición. Se compara
  * la última altura con la de un punto de entre 30 s y 5 min atrás (el más cercano a 2 min): menos
- * que eso es ruido del GPS; más es otra fase del vuelo. `null` si no alcanza.
+ * que eso es ruido del GPS; más es otra fase del vuelo. `null` si no alcanza. Sólo con puntos de la
+ * misma fuente que la última (GPS del teléfono o ADS-B).
  */
 export function velocidadVertical(
   recorrido: PuntoRecorrido[],
-  ultima: { alt_ft: number | null; hora: string | null } | null
+  ultima: { alt_ft: number | null; hora: string | null; fuente?: FuenteDePosicion } | null
 ): VelocidadVertical | null {
   if (!ultima || ultima.alt_ft === null || !ultima.hora) return null;
   const tFin = Date.parse(ultima.hora) / 1000;
@@ -193,6 +219,9 @@ export function velocidadVertical(
   let elegido: { alt: number; t: number } | null = null;
   for (const p of recorrido) {
     if (p[2] === null || p[3] === null) continue;
+    // La altura del teléfono es GPS y la de ADS-B es barométrica: entre fuentes distintas hay un
+    // escalón que no es subir ni bajar. Se compara con puntos de la misma fuente que la última.
+    if (ultima.fuente && p[4] && p[4] !== ultima.fuente) continue;
     const dt = tFin - p[3];
     if (dt < 30 || dt > 300) continue;
     if (!elegido || Math.abs(dt - 120) < Math.abs(tFin - elegido.t - 120)) elegido = { alt: p[2], t: p[3] };
@@ -214,8 +243,10 @@ export function textoVertical(v: VelocidadVertical | null): string | null {
 
 export type EstadoMostrado =
   | { clave: "esperando"; titulo: string }
+  | { clave: "antes_de_salir"; titulo: string }
   | { clave: "volando" | "en_tierra" | "en_seguimiento"; titulo: string }
   | { clave: "sin_datos"; titulo: string; aviso: string }
+  | { clave: "aterrizo"; titulo: string }
   | { clave: "terminado"; titulo: string };
 
 /** Los segundos desde la última posición, o `null` si no hay. */
@@ -223,12 +254,33 @@ export function segundosSinDatos(hora: string | null, ahora: string): number | n
   return hora ? SEG_ENTRE(hora, ahora) : null;
 }
 
-/** Lo que dice el encabezado: Volando, En tierra, Sin datos, El vuelo terminó… */
-export function estadoMostrado(d: Pick<SeguimientoPublico, "estado" | "ultima">, ahora: string): EstadoMostrado {
-  if (d.estado !== "en_vuelo") return { clave: "terminado", titulo: "El vuelo terminó" };
+/**
+ * Lo que dice el encabezado: Todavía no salió, Volando, En tierra, Sin datos, Aterrizó, El vuelo terminó…
+ *
+ * Con la fase del backend (migración 045) se cuentan "antes de salir", "aterrizó" y "sin datos" de un
+ * avión que se sigue por ADS-B; **sin posiciones nunca se inventa un vuelo**: el aviso de "sin datos"
+ * dice que puede que el avión no transmita ADS-B o que no haya receptores cerca. Lo demás (volando
+ * o en tierra) sale de la velocidad de la última posición, de cualquiera de las dos fuentes.
+ */
+export function estadoMostrado(
+  d: Pick<SeguimientoPublico, "estado" | "ultima"> & Partial<Pick<SeguimientoPublico, "fase" | "salida_prevista" | "con_adsb">>,
+  ahora: string
+): EstadoMostrado {
+  if (d.estado !== "en_vuelo") return d.fase === "aterrizo" ? { clave: "aterrizo", titulo: "Aterrizó" } : { clave: "terminado", titulo: "El vuelo terminó" };
+  if (d.fase === "antes_de_salir") return { clave: "antes_de_salir", titulo: "Todavía no salió" };
+  const conAdsb = Boolean(d.con_adsb || d.salida_prevista);
+  const s = d.ultima ? segundosSinDatos(d.ultima.hora, ahora) : null;
+  const viejo = s !== null && s > DATOS_VIEJOS_S;
+  if (conAdsb && (d.fase === "sin_datos" || viejo)) {
+    const motivo = "Puede que el avión no transmita ADS-B o que no haya receptores cerca, y el teléfono no está mandando.";
+    return {
+      clave: "sin_datos",
+      titulo: "Sin datos recientes",
+      aviso: d.ultima && s !== null ? `Sin datos hace ${duracion(s)}. ${motivo} Se muestra la última posición que llegó.` : `Todavía no llegó ninguna posición del avión. ${motivo}`,
+    };
+  }
   if (!d.ultima) return { clave: "esperando", titulo: "Esperando la primera posición" };
-  const s = segundosSinDatos(d.ultima.hora, ahora);
-  if (s !== null && s > DATOS_VIEJOS_S) {
+  if (viejo && s !== null) {
     return {
       clave: "sin_datos",
       titulo: "Sin datos recientes",
@@ -249,9 +301,13 @@ export interface PuntoPerfil {
 }
 
 /** Los puntos con altura y hora (más la última posición), en orden de tiempo, para el perfil de altura. */
-export function puntosDePerfil(recorrido: PuntoRecorrido[], ultima: { alt_ft: number | null; hora: string | null } | null): PuntoPerfil[] {
+export function puntosDePerfil(
+  recorrido: PuntoRecorrido[],
+  ultima: { alt_ft: number | null; hora: string | null; fuente?: FuenteDePosicion } | null
+): PuntoPerfil[] {
   const crudos: { t: number; alt: number }[] = [];
-  for (const p of recorrido) if (p[2] !== null && p[3] !== null) crudos.push({ t: p[3], alt: p[2] });
+  // Sólo los puntos de la misma fuente que la última: GPS y barométrica no se mezclan en una curva.
+  for (const p of recorrido) if (p[2] !== null && p[3] !== null && !(ultima?.fuente && p[4] && p[4] !== ultima.fuente)) crudos.push({ t: p[3], alt: p[2] });
   if (ultima && ultima.alt_ft !== null && ultima.hora) {
     const t = Date.parse(ultima.hora) / 1000;
     if (!Number.isNaN(t) && (crudos.length === 0 || t > crudos[crudos.length - 1].t)) crudos.push({ t, alt: ultima.alt_ft });
@@ -271,8 +327,38 @@ export function normalizar(d: SeguimientoPublico): SeguimientoPublico {
     avion: d.avion ?? null,
     inicio: d.inicio ?? null,
     puntos: (d.puntos ?? []).map((p) => [p[0], p[1], p[2] ?? "", p[3] ?? ""] as PuntoPublico),
-    recorrido: (d.recorrido ?? []).map((p) => [p[0], p[1], p[2] ?? null, p[3] ?? null] as PuntoRecorrido),
+    // Sin fuente (un backend anterior a la 045): todo era del teléfono.
+    recorrido: (d.recorrido ?? []).map((p) => [p[0], p[1], p[2] ?? null, p[3] ?? null, p[4] ?? "gps"] as PuntoRecorrido),
+    fase: d.fase,
+    salida_prevista: d.salida_prevista ?? null,
+    con_adsb: d.con_adsb ?? false,
+    ultima: d.ultima ? { ...d.ultima, fuente: d.ultima.fuente ?? "gps" } : null,
   };
+}
+
+/** Un tramo del recorrido dibujado de un solo tono. */
+export interface TramoDelRecorrido {
+  fuente: FuenteDePosicion;
+  puntos: [number, number][];
+}
+
+/**
+ * El recorrido partido por fuente, para dibujar el GPS del teléfono y el ADS-B en tonos distintos.
+ * Cada tramo empieza donde terminó el anterior, así la línea no tiene huecos.
+ */
+export function tramosPorFuente(recorrido: PuntoRecorrido[]): TramoDelRecorrido[] {
+  const tramos: TramoDelRecorrido[] = [];
+  for (const p of recorrido) {
+    const fuente = p[4] ?? "gps";
+    const punto: [number, number] = [p[0], p[1]];
+    const actual = tramos[tramos.length - 1];
+    if (actual && actual.fuente === fuente) {
+      actual.puntos.push(punto);
+    } else {
+      tramos.push({ fuente, puntos: actual ? [actual.puntos[actual.puntos.length - 1], punto] : [punto] });
+    }
+  }
+  return tramos;
 }
 
 /** "SADF · San Fernando", o sólo el código si no hay nombre. */

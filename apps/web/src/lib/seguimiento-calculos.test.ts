@@ -5,13 +5,16 @@ import {
   estadoMostrado,
   horaArgentina,
   horaArgentinaConDia,
+  horaUtc,
   llegadaEstimada,
   nombreDePunto,
   normalizar,
   puntosDePerfil,
   recorridoNm,
   textoDelAvion,
+  textoSalida,
   textoVertical,
+  tramosPorFuente,
   velocidadVertical,
 } from "./seguimiento-calculos";
 import type { PuntoPublico, PuntoRecorrido, SeguimientoPublico } from "./seguimiento";
@@ -168,7 +171,7 @@ describe("normalizar y nombres", () => {
     const viejo = { nombre: "L", ruta: "", puntos: [[1, 2, "SADF"]], recorrido: [[1, 2]], estado: "en_vuelo", ultima: null, ahora: "x" } as unknown as SeguimientoPublico;
     const n = normalizar(viejo);
     expect(n.puntos[0]).toEqual([1, 2, "SADF", ""]);
-    expect(n.recorrido[0]).toEqual([1, 2, null, null]);
+    expect(n.recorrido[0]).toEqual([1, 2, null, null, "gps"]);
     expect(n.avion).toBeNull();
     expect(n.inicio).toBeNull();
   });
@@ -179,5 +182,97 @@ describe("normalizar y nombres", () => {
     expect(textoDelAvion({ tipo: "Cessna 152", icao: "C152", matricula: "LV-ABC" })).toBe("LV-ABC · Cessna 152 (C152)");
     expect(textoDelAvion(null)).toBeNull();
     expect(textoDelAvion({})).toBeNull();
+  });
+});
+
+describe("la salida prevista de un plan", () => {
+  const ref = "2026-11-11T12:00:00Z"; // 09:00 en Argentina
+  it("hora argentina y UTC, armadas a mano", () => {
+    expect(textoSalida("2026-11-11T15:30:00Z", ref)).toBe("Sale a las 12:30 (15:30Z)");
+    expect(horaUtc("2026-11-11T15:30:00Z")).toBe("15:30Z");
+    expect(horaUtc(null)).toBeNull();
+  });
+  it("mañana y ayer, por el día argentino", () => {
+    expect(textoSalida("2026-11-12T09:00:00Z", ref)).toBe("Sale mañana a las 06:00 (09:00Z)");
+    expect(textoSalida("2026-11-11T01:00:00Z", ref)).toBe("Salida prevista ayer a las 22:00 (01:00Z)");
+    // 01:00Z del 12/11 es todavía el 11/11 en Argentina (22:00).
+    expect(textoSalida("2026-11-12T01:00:00Z", ref)).toBe("Sale a las 22:00 (01:00Z)");
+  });
+  it("si la hora ya pasó no promete que sale", () => {
+    expect(textoSalida("2026-11-11T11:00:00Z", ref)).toBe("Salida prevista a las 08:00 (11:00Z)");
+  });
+  it("sin salida o ilegible, nada", () => {
+    expect(textoSalida(null, ref)).toBeNull();
+    expect(textoSalida("x", ref)).toBeNull();
+  });
+});
+
+describe("el estado de un vuelo con ADS-B", () => {
+  const ultima = (gs: number | null, hora = "2026-11-11T15:00:00Z") => ({ lat: 0, lon: 0, alt_ft: 1000, gs_kt: gs, track: 90, hora, fuente: "adsb" as const });
+  const ahora = "2026-11-11T15:00:20Z";
+  it("antes de salir", () => {
+    const e = estadoMostrado({ estado: "en_vuelo", fase: "antes_de_salir", salida_prevista: "2026-11-11T15:30:00Z", ultima: null }, ahora);
+    expect(e).toEqual({ clave: "antes_de_salir", titulo: "Todavía no salió" });
+  });
+  it("aterrizó: el título y el estado son otros que 'El vuelo terminó'", () => {
+    expect(estadoMostrado({ estado: "terminado", fase: "aterrizo", ultima: ultima(5) }, ahora)).toEqual({ clave: "aterrizo", titulo: "Aterrizó" });
+    expect(estadoMostrado({ estado: "terminado", fase: "terminado", ultima: ultima(5) }, ahora).titulo).toBe("El vuelo terminó");
+  });
+  it("sin una sola posición, con respaldo ADS-B: lo dice, no inventa un vuelo", () => {
+    const e = estadoMostrado({ estado: "en_vuelo", fase: "sin_datos", con_adsb: true, ultima: null }, ahora);
+    expect(e.clave).toBe("sin_datos");
+    expect("aviso" in e && e.aviso).toContain("no transmita ADS-B");
+    expect("aviso" in e && e.aviso).toContain("receptores");
+  });
+  it("con una última posición vieja, dice hace cuánto", () => {
+    const e = estadoMostrado({ estado: "en_vuelo", fase: "sin_datos", con_adsb: true, ultima: ultima(90) }, "2026-11-11T15:03:00Z");
+    expect("aviso" in e && e.aviso).toContain("Sin datos hace 3 min.");
+    expect("aviso" in e && e.aviso).toContain("la última posición");
+  });
+  it("sin respaldo ADS-B (el Mapa solo) sigue el aviso de siempre", () => {
+    const e = estadoMostrado({ estado: "en_vuelo", ultima: ultima(90) }, "2026-11-11T15:03:00Z");
+    expect("aviso" in e && e.aviso).toContain("falta de señal en el avión");
+  });
+  it("volando y en tierra salen de la velocidad de cualquier fuente", () => {
+    expect(estadoMostrado({ estado: "en_vuelo", fase: "volando", con_adsb: true, ultima: ultima(95) }, ahora).clave).toBe("volando");
+    expect(estadoMostrado({ estado: "en_vuelo", fase: "antes_de_salir", ultima: ultima(3) }, ahora).clave).toBe("antes_de_salir");
+  });
+});
+
+describe("las dos fuentes en el mismo recorrido", () => {
+  const rec: PuntoRecorrido[] = [
+    [0, 0, 1000, 100, "gps"],
+    [0, 1, 1000, 160, "gps"],
+    [0, 2, 1100, 220, "adsb"],
+    [0, 3, 1100, 280, "adsb"],
+    [0, 4, 1000, 340, "gps"],
+  ];
+  it("se parte por fuente y cada tramo arranca donde terminó el anterior", () => {
+    const t = tramosPorFuente(rec);
+    expect(t.map((x) => x.fuente)).toEqual(["gps", "adsb", "gps"]);
+    expect(t[1].puntos).toEqual([[0, 1], [0, 2], [0, 3]]);
+    expect(t[2].puntos).toEqual([[0, 3], [0, 4]]);
+    expect(tramosPorFuente([])).toEqual([]);
+  });
+  it("sin fuente (backend viejo) todo es del teléfono", () => {
+    expect(tramosPorFuente([[0, 0, null, null], [0, 1, null, null]]).map((x) => x.fuente)).toEqual(["gps"]);
+  });
+  it("la velocidad vertical sólo compara puntos de la misma fuente que la última", () => {
+    // La altura de ADS-B (barométrica) y la del GPS difieren: el escalón no es subir.
+    const mix: PuntoRecorrido[] = [[0, 0, 1000, 100, "gps"], [0, 0, 1500, 100, "adsb"]];
+    const hora = new Date(220_000).toISOString();
+    expect(velocidadVertical(mix, { alt_ft: 1500, hora, fuente: "adsb" })).toEqual({ tendencia: "nivelado", fpm: 0 });
+    expect(velocidadVertical(mix, { alt_ft: 1000, hora, fuente: "gps" })).toEqual({ tendencia: "nivelado", fpm: 0 });
+    expect(velocidadVertical([[0, 0, 1000, 100, "gps"]], { alt_ft: 1500, hora, fuente: "adsb" })).toBeNull();
+  });
+  it("el perfil de altura no mezcla la altura GPS con la barométrica", () => {
+    const p = puntosDePerfil(rec, { alt_ft: 1000, hora: new Date(400_000).toISOString(), fuente: "gps" });
+    expect(p.map((x) => x.alt)).toEqual([1000, 1000, 1000, 1000]);
+    expect(puntosDePerfil(rec, { alt_ft: 1100, hora: new Date(400_000).toISOString(), fuente: "adsb" }).map((x) => x.alt)).toEqual([1100, 1100, 1100]);
+  });
+  it("normalizar conserva la fuente de cada punto y de la última", () => {
+    const n = normalizar({ nombre: "L", ruta: "", puntos: [], recorrido: rec, estado: "en_vuelo", ultima: { lat: 0, lon: 0, alt_ft: null, gs_kt: null, track: null, hora: null, fuente: "adsb" }, ahora: "x", avion: null, inicio: null });
+    expect(n.recorrido.map((p) => p[4])).toEqual(["gps", "gps", "adsb", "adsb", "gps"]);
+    expect(n.ultima?.fuente).toBe("adsb");
   });
 });

@@ -39,7 +39,7 @@ function InterruptorMatricula({ seguimiento }: { seguimiento: SeguimientoEnVivo 
   );
 }
 
-async function mandarLink(url: string): Promise<"compartido" | "cancelado" | Aviso> {
+export async function mandarLink(url: string): Promise<"compartido" | "cancelado" | Aviso> {
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     try {
       await navigator.share({ title: "Seguí mi vuelo", text: "Seguí mi vuelo en vivo:", url });

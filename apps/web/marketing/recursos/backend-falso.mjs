@@ -149,8 +149,31 @@ function vistaSeguimiento(sg) {
   const estado = sg.terminado ? "terminado" : ahora >= sg.vence ? "vencido" : "en_vuelo";
   const puntos = sg.puntos.length ? sg.puntos : puntosDemo;
   const avion = { tipo: sg.avion.tipo, icao: sg.avion.icao, ...(sg.mostrarMatricula && sg.avion.matricula ? { matricula: sg.avion.matricula } : {}) };
-  return { nombre: sg.nombre, ruta: sg.ruta, puntos, avion, inicio: sg.creado.toISOString(), estado, ultima: sg.ultima, recorrido: sg.recorrido, ahora: ahora.toISOString() };
+  // Migración 045: el demo de siempre mezcla GPS del teléfono y un tramo de ADS-B (cuando el teléfono "calla").
+  const recorrido = sg.recorrido.map((p, i) => [p[0], p[1], p[2], p[3], p[4] ?? (i >= 8 && i < 12 ? "adsb" : "gps")]);
+  const ultima = sg.ultima ? { ...sg.ultima, fuente: sg.ultima.fuente ?? (sg.recorrido.length > 8 && sg.recorrido.length <= 12 ? "adsb" : "gps") } : null;
+  return { nombre: sg.nombre, ruta: sg.ruta, puntos, avion, inicio: sg.creado.toISOString(), estado, fase: estado === "en_vuelo" ? (ultima ? "volando" : "esperando") : "terminado", salida_prevista: null, con_adsb: true, ultima, recorrido, ahora: ahora.toISOString() };
 }
+// Seguimientos desde un plan de vuelo (migración 045), con ADS-B simulado. Tokens fijos para abrir /seguir/<token>:
+//   antes de salir, volando (avanza solo con cada GET) y aterrizado.
+const TOKENS_PLAN = { antes: "tokenPlanAntesDeSalir00000000001", volando: "tokenPlanVolando00000000000000002", aterrizo: "tokenPlanAterrizo0000000000000003" };
+const iso = (ms) => new Date(ms).toISOString();
+function vistaPlan(tipo) {
+  const ahora = Date.now();
+  const base = { nombre: "Federico", ruta: "SADF VM SAAV", puntos: puntosDemo, avion: { tipo: "Cessna 152", icao: "C152" }, con_adsb: true, ahora: iso(ahora) };
+  if (tipo === "antes") return { ...base, inicio: iso(ahora - 3600e3), estado: "en_vuelo", fase: "antes_de_salir", salida_prevista: iso(ahora + 40 * 60e3), ultima: null, recorrido: [] };
+  const n = tipo === "aterrizo" ? PASOS_DEMO + 1 : Math.min(PASOS_DEMO, 4 + Math.floor((ahora - arranquePlan) / 15000));
+  const t0 = ahora - n * 60e3;
+  const recorrido = [];
+  for (let i = 0; i <= n; i++) { const p = puntoDemo(Math.min(i, PASOS_DEMO), new Date(t0 + i * 60e3)); recorrido.push([p.la, p.lo, p.alt, p.epoch, "adsb"]); }
+  const u = recorrido[recorrido.length - 1];
+  const aterrizo = tipo === "aterrizo";
+  const ultima = { lat: u[0], lon: u[1], alt_ft: aterrizo ? null : u[2], gs_kt: aterrizo ? 4 : 96, track: 330, hora: iso(u[3] * 1000), fuente: "adsb" };
+  return { ...base, inicio: iso(ahora - 3 * 3600e3), estado: aterrizo ? "terminado" : "en_vuelo", fase: aterrizo ? "aterrizo" : "volando", salida_prevista: iso(t0 - 5 * 60e3), ultima, recorrido };
+}
+const arranquePlan = Date.now();
+// El seguimiento que se crea desde el editor de un plan (POST /seguimientos/desde-plan), en memoria.
+let seguimientoPlan = null;
 // Un punto del demo: avanza por la línea, sube hasta 2.400 ft en los primeros pasos y cruza.
 function puntoDemo(i, cuando) {
   const [la, lo] = enLinea(Math.min(i, PASOS_DEMO) / PASOS_DEMO);
@@ -281,6 +304,22 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     return res.end(JSON.stringify(r ?? { detail: "No existe" }));
   }
   // Seguir el vuelo en vivo (migración 041): crear, posición (rate de 10 s como el real), terminar y el link público.
+  if (ruta === "/api/seguimientos/desde-plan" && req.method === "POST") {
+    const plan = planes.get(json.plan_id);
+    const f = plan?.formulario ?? {};
+    const estado = !plan ? 404 : !f.matricula ? 400 : !f.dofUtc || !f.eobtUtc ? 400 : 200;
+    if (estado !== 200) { res.writeHead(estado, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ detail: estado === 404 ? "Ese plan de vuelo no existe." : "El plan no tiene matrícula o salida." })); }
+    const salida = new Date(`${f.dofUtc}T${f.eobtUtc.slice(0, 2)}:${f.eobtUtc.slice(2)}:00Z`);
+    seguimientoPlan = { id: seguimientoPlan?.id ?? crypto.randomUUID(), token: TOKENS_PLAN.antes, plan_id: json.plan_id, vence: new Date(+salida + 4 * 3600e3), terminado: false, mostrar: Boolean(json.mostrar_matricula), salida };
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ id: seguimientoPlan.id, token: seguimientoPlan.token, vence_at: seguimientoPlan.vence.toISOString(), ya_existia: false, mostrar_matricula: seguimientoPlan.mostrar, salida_prevista: salida.toISOString() }));
+  }
+  if (ruta.startsWith("/api/seguimientos/de-plan/") && req.method === "GET") {
+    const sp = seguimientoPlan;
+    const ok = sp && ruta.endsWith(sp.plan_id);
+    res.writeHead(ok ? 200 : 404, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(ok ? { id: sp.id, token: sp.token, vence_at: sp.vence.toISOString(), activo: !sp.terminado, aterrizo_at: null, terminado_at: null, mostrar_matricula: sp.mostrar, salida_prevista: sp.salida.toISOString(), mirando_ahora: 1, vistos_total: 2, ultima_vista_at: new Date().toISOString(), ahora: new Date().toISOString() } : { detail: "Ese seguimiento no existe." }));
+  }
   if (ruta === "/api/seguimientos" && req.method === "POST") {
     const sg = seguimiento && !seguimiento.terminado && new Date() < seguimiento.vence ? seguimiento : nuevoSeguimiento(json);
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -289,6 +328,8 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
   if (ruta.startsWith("/api/seguimientos/") && req.method === "POST") {
     const [, , , id, accion] = ruta.split("/");
     let r = { detail: "Ese seguimiento no existe." }, estado = 404;
+    if (seguimientoPlan && seguimientoPlan.id === id && accion === "terminar") { seguimientoPlan.terminado = true; r = { terminado: true }; estado = 200; }
+    else if (seguimientoPlan && seguimientoPlan.id === id && accion === "matricula") { seguimientoPlan.mostrar = Boolean(json.mostrar); r = { mostrar_matricula: seguimientoPlan.mostrar }; estado = 200; }
     if (seguimiento && seguimiento.id === id) {
       if (accion === "terminar") { seguimiento.terminado ??= new Date(); r = { terminado: true }; estado = 200; }
       else if (accion === "ruta") {
@@ -326,6 +367,11 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
   }
   if (ruta.startsWith("/api/publico/seguimientos/") && req.method === "GET") {
     const token = ruta.split("/").pop();
+    const tipoPlan = Object.entries(TOKENS_PLAN).find(([, t]) => t === token)?.[0];
+    if (tipoPlan) {
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify(vistaPlan(tipoPlan)));
+    }
     // Sin ningún vuelo creado, el token de prueba muestra uno que avanza solo (para ver la página sin el Mapa).
     if (token === TOKEN_SEGUIMIENTO && !seguimiento) {
       const sg = nuevoSeguimiento({ ruta: "SADF VM SAAV", avion: { tipo: "Cessna 152", icao: "C152", matricula: "LV-ABC" } });

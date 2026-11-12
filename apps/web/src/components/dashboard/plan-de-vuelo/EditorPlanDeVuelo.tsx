@@ -1,6 +1,8 @@
 "use client";
 
 import RespuestasOficina, { type RespuestaConFecha } from "./RespuestasOficina";
+import CompartirVuelo from "./CompartirVuelo";
+import type { SeguimientoDelPlan } from "@/actions/seguimiento";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -92,6 +94,8 @@ interface Props {
   actualizadoInicial: string | null;
   /** Lo que contestó la oficina (con la fecha ya escrita en el server). */
   respuestas: RespuestaConFecha[];
+  /** El último link de "Compartir este vuelo" de este plan (migración 045), si hay. */
+  seguimientoInicial: SeguimientoDelPlan | null;
 }
 
 /** "19/10 23:52Z": sin `toLocaleString`, igual en el server y en el navegador (invariante 1). */
@@ -259,6 +263,7 @@ export default function EditorPlanDeVuelo({
   envioAroActivo,
   actualizadoInicial,
   respuestas,
+  seguimientoInicial,
 }: Props) {
   const [f, setF] = useState<FormularioPlan>(() => leerFormulario(formularioInicial));
   const [guardado, setGuardado] = useState<"guardado" | "guardando" | "error">("guardado");
@@ -1217,6 +1222,20 @@ export default function EditorPlanDeVuelo({
             >
               <Copy className="w-3.5 h-3.5" /> Duplicar para otro día
             </button>
+          </Seccion>
+
+          <Seccion titulo="Compartir este vuelo">
+            <CompartirVuelo
+              planId={id}
+              f={f}
+              demoras={demoras}
+              avion={avion ? { type: avion.type, icao: avion.icao } : null}
+              nodos={rutaResuelta.nodos}
+              inicial={seguimientoInicial}
+              ahoraIso={ahoraIso}
+              cancelado={Boolean(cancelado)}
+              esperarGuardado={esperarGuardado}
+            />
           </Seccion>
 
           <Seccion titulo="Demora (DLA)">

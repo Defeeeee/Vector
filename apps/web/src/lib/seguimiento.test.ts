@@ -10,6 +10,8 @@ import {
   haceCuanto,
   leerSeguimientoGuardado,
   posicionDeLectura,
+  rotuloDeAltura,
+  textoDeFuente,
   tituloDelEstado,
   tocaMandar,
   tokenValido,
@@ -157,5 +159,18 @@ describe("quién mira el link", () => {
     expect(detalleDeVistas({ ...base, mirandoAhora: 1, vistosTotal: 4 })).toBe("1 te está mirando ahora · 4 personas abrieron el link.");
     expect(detalleDeVistas({ ...base, vistosTotal: 1, ultimaVistaAt: "2026-11-11T14:57:00Z" })).toBe("1 persona abrió el link; la última vez, hace 3 min.");
     expect(detalleDeVistas(base)).toBe("Nadie abrió el link todavía.");
+  });
+});
+
+describe("de dónde salió la posición", () => {
+  it("lo dice en palabras", () => {
+    expect(textoDeFuente("gps")).toBe("GPS del teléfono");
+    expect(textoDeFuente("adsb")).toBe("ADS-B");
+    expect(textoDeFuente(undefined)).toBeNull();
+  });
+  it("la altura de ADS-B no se llama GPS", () => {
+    expect(rotuloDeAltura("adsb")).toBe("Altitud ADS-B");
+    expect(rotuloDeAltura("gps")).toBe("Altura GPS");
+    expect(rotuloDeAltura(undefined)).toBe("Altura GPS");
   });
 });

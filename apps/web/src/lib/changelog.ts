@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.24.0",
+    fecha: "2026-11-12",
+    titulo: "Tu vuelo compartido, aunque el teléfono duerma",
+    novedades: [
+      {
+        icono: "compartir",
+        titulo: "ADS-B cuando el teléfono no manda",
+        texto: "Si compartís tu vuelo y el teléfono deja de mandar la posición (pantalla apagada, sin batería, sin señal), el link sigue mostrando el avión con las posiciones ADS-B públicas, y dice de dónde sale cada una.",
+        href: "/dashboard/mapa",
+        cta: "Abrir el Mapa",
+      },
+      {
+        icono: "compartir",
+        titulo: "Compartí un vuelo desde el plan",
+        texto: "En el plan de vuelo, \"Compartir este vuelo\" arma el link sin usar el teléfono: dice a qué hora salís, muestra el vuelo cuando el avión despega y \"Aterrizó\" cuando toca tierra. Necesita que el avión transmita ADS-B.",
+        href: "/dashboard/plan-de-vuelo",
+        cta: "Ver tus planes",
+      },
+    ],
+  },
+  {
     version: "3.23.0",
     fecha: "2026-11-11",
     titulo: "Cambiá la ruta sin aterrizar",

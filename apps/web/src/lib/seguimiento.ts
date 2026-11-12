@@ -28,8 +28,16 @@ export type EstadoSeguimiento = "en_vuelo" | "terminado" | "vencido";
 
 /** [lat, lon, código, nombre] de la ruta prevista (los viejos no traen el nombre). */
 export type PuntoPublico = [number, number, string, string];
-/** [lat, lon, alt_ft, epoch_s]: la altura y la hora (del servidor) pueden faltar en los viejos. */
-export type PuntoRecorrido = [number, number, number | null, number | null];
+/**
+ * De dónde salió una posición (migración 045): el GPS del teléfono del piloto o una antena ADS-B
+ * (adsb.fi). La altura del teléfono es GPS y la de ADS-B es barométrica: no se comparan entre sí.
+ */
+export type FuenteDePosicion = "gps" | "adsb";
+/** [lat, lon, alt_ft, epoch_s, fuente]: la altura y la hora (del servidor) pueden faltar en los viejos, y la fuente en un backend anterior a la 045. */
+export type PuntoRecorrido = [number, number, number | null, number | null, FuenteDePosicion?];
+
+/** En qué está el vuelo según el backend (migración 045). `esperando` es el del Mapa sin posiciones todavía. */
+export type FaseDelVuelo = "esperando" | "antes_de_salir" | "volando" | "sin_datos" | "aterrizo" | "terminado";
 
 export interface AvionPublico {
   tipo?: string;
@@ -46,7 +54,13 @@ export interface SeguimientoPublico {
   /** ISO: cuándo empezó a compartir. */
   inicio: string | null;
   estado: EstadoSeguimiento;
-  ultima: { lat: number; lon: number; alt_ft: number | null; gs_kt: number | null; track: number | null; hora: string | null } | null;
+  /** Migración 045. Un backend anterior no la manda. */
+  fase?: FaseDelVuelo;
+  /** ISO: la salida prevista de un seguimiento desde un plan de vuelo (la EOBT vigente), o `null`/ausente si es del Mapa. */
+  salida_prevista?: string | null;
+  /** Si el link puede completarse con ADS-B (el backend tiene la matrícula; nunca se la muestra). */
+  con_adsb?: boolean;
+  ultima: { lat: number; lon: number; alt_ft: number | null; gs_kt: number | null; track: number | null; hora: string | null; fuente?: FuenteDePosicion } | null;
   recorrido: PuntoRecorrido[];
   /** La hora del servidor al contestar. */
   ahora: string;
@@ -152,6 +166,16 @@ export function tocaMandar(ultimoIntentoMs: number | null, ahoraMs: number): boo
 /** Los textos de cada estado de la página pública. */
 export function tituloDelEstado(estado: EstadoSeguimiento): string {
   return estado === "en_vuelo" ? "En vuelo" : "El vuelo terminó";
+}
+
+/** "GPS del teléfono" o "ADS-B": de dónde salió la última posición. `null` si el backend no lo dice. */
+export function textoDeFuente(fuente: FuenteDePosicion | undefined | null): string | null {
+  return fuente === "gps" ? "GPS del teléfono" : fuente === "adsb" ? "ADS-B" : null;
+}
+
+/** El nombre de la altura según la fuente: la del teléfono es GPS; la de ADS-B es barométrica, sin corregir. */
+export function rotuloDeAltura(fuente: FuenteDePosicion | undefined | null): string {
+  return fuente === "adsb" ? "Altitud ADS-B" : "Altura GPS";
 }
 
 /** 1523 -> "1.523": el punto de los miles a mano, sin `toLocaleString` (invariante 1). */

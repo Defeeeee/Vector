@@ -6,13 +6,15 @@ import SeguimientoMapa from "./SeguimientoMapa";
 import ClimaDestino from "./ClimaDestino";
 import PerfilAltura from "./PerfilAltura";
 import { LogoVector } from "@/components/Marca";
-import { CADA_MIRANDO_MS, CLAVE_VISITANTE, conMiles, haceCuanto, idDeVisitanteValido, idDesdeBytes, type SeguimientoPublico } from "@/lib/seguimiento";
+import { CADA_MIRANDO_MS, CLAVE_VISITANTE, conMiles, haceCuanto, idDeVisitanteValido, idDesdeBytes, rotuloDeAltura, textoDeFuente, type SeguimientoPublico } from "@/lib/seguimiento";
 import {
   avanceSobreRuta,
   duracion,
   estadoMostrado,
   ftAM,
+  horaArgentina,
   horaArgentinaConDia,
+  horaUtc,
   ktAKmh,
   llegadaEstimada,
   nmAKm,
@@ -21,6 +23,7 @@ import {
   puntosDePerfil,
   recorridoNm,
   textoDelAvion,
+  textoSalida,
   textoVertical,
   velocidadVertical,
 } from "@/lib/seguimiento-calculos";
@@ -153,7 +156,13 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
   const llegada = llegadaEstimada({ faltaNm: avance?.faltaNm ?? null, gsKt: u?.gs_kt ?? null, horaUltima: u?.hora ?? null, ahora });
   const llegadaTexto = horaArgentinaConDia(llegada, ahora);
   const quedaS = llegada ? Math.max(0, (Date.parse(llegada) - Date.parse(ahora)) / 1000) : null;
-  const duracionS = datos.inicio && u?.hora ? (Date.parse(u.hora) - Date.parse(datos.inicio)) / 1000 : null;
+  // Un seguimiento desde un plan existe desde antes de la salida: "duró" desde que se creó no dice nada.
+  const dePlan = Boolean(datos.salida_prevista);
+  const salidaTexto = textoSalida(datos.salida_prevista, ahora);
+  const duracionS = !dePlan && datos.inicio && u?.hora ? (Date.parse(u.hora) - Date.parse(datos.inicio)) / 1000 : null;
+  const fuente = textoDeFuente(u?.fuente);
+  const hayAdsb = datos.recorrido.some((p) => p[4] === "adsb");
+  const hayGps = datos.recorrido.some((p) => p[4] === "gps");
   const proximo = avance?.proximo != null ? datos.puntos[avance.proximo] : null;
   const salida = datos.puntos[0];
   const destino = datos.puntos.length > 1 ? datos.puntos[datos.puntos.length - 1] : null;
@@ -172,7 +181,11 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
   }
 
   const colorEstado =
-    estado.clave === "sin_datos" ? "text-amber-300" : estado.clave === "terminado" || estado.clave === "esperando" ? "text-white/70" : "text-aviation-cyan";
+    estado.clave === "sin_datos"
+      ? "text-amber-300"
+      : estado.clave === "terminado" || estado.clave === "esperando" || estado.clave === "antes_de_salir"
+        ? "text-white/70"
+        : "text-aviation-cyan";
 
   return (
     <Pantalla>
@@ -216,15 +229,24 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
           {terminado ? "Seguimiento" : "Seguimiento en vivo"}
         </p>
         <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-white">
-          {terminado ? "El vuelo terminó" : `${datos.nombre} · ${estado.titulo.toLowerCase().replace(/^./, (c) => c.toUpperCase())}`}
+          {terminado ? estado.titulo : `${datos.nombre} · ${estado.titulo.toLowerCase().replace(/^./, (c) => c.toUpperCase())}`}
         </h1>
         {datos.ruta && <p className="mt-1 font-mono text-sm text-white/75">{datos.ruta}</p>}
+        {estado.clave === "antes_de_salir" && (
+          <div className="mt-3 border-t border-white/10 pt-3">
+            {salidaTexto && <p className="text-lg font-bold text-white">{salidaTexto}</p>}
+            <p className="mt-1 text-sm text-white/80">
+              {u ? "El avión está en tierra. " : "Todavía no se lo ve. "}Cuando despegue, aparece en el mapa con las posiciones ADS-B.
+            </p>
+          </div>
+        )}
 
         <div aria-live="polite">
           {"aviso" in estado && <p className="mt-3 border-l-2 border-amber-300 pl-3 text-sm font-semibold text-amber-200">{estado.aviso}</p>}
           {sinConexion && !terminado && <p className="mt-3 text-sm text-amber-200">Sin conexión: se muestra lo último que llegó. Reintentando.</p>}
           {terminado && (
             <p className="mt-3 text-base text-white/85">
+              {estado.clave === "aterrizo" && "El avión tocó tierra y el seguimiento terminó. "}
               {u ? `Última posición ${hace ?? "registrada"}.` : "No llegó ninguna posición."}
               {duracionS !== null && duracionS >= 60 ? ` El seguimiento duró ${duracion(duracionS)}.` : ""}
             </p>
@@ -234,7 +256,12 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
         {/* Lo más importante: dónde está, a qué altura y cuándo llega. */}
         {u ? (
           <div className="mt-4 grid grid-cols-3 gap-3 border-t border-white/10 pt-4">
-            <Cifra rotulo="Altura GPS" valor={u.alt_ft !== null ? conMiles(u.alt_ft) : "—"} unidad="ft" sub={u.alt_ft !== null ? `${conMiles(ftAM(u.alt_ft))} m` : "sin dato"} />
+            <Cifra
+              rotulo={rotuloDeAltura(u.fuente)}
+              valor={u.alt_ft !== null ? conMiles(u.alt_ft) : "—"}
+              unidad="ft"
+              sub={u.alt_ft !== null ? `${conMiles(ftAM(u.alt_ft))} m${u.fuente === "adsb" ? " · barométrica" : ""}` : "sin dato"}
+            />
             <Cifra rotulo="Velocidad" valor={u.gs_kt !== null ? String(Math.round(u.gs_kt)) : "—"} unidad="kt" sub={u.gs_kt !== null ? `${Math.round(ktAKmh(u.gs_kt))} km/h` : "sin dato"} />
             <Cifra
               rotulo={terminado ? "Última pos." : "Llegada"}
@@ -243,7 +270,7 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
               chico={terminado}
             />
           </div>
-        ) : (
+        ) : estado.clave === "antes_de_salir" || estado.clave === "sin_datos" ? null : (
           <p className="mt-4 border-t border-white/10 pt-4 text-lg font-bold text-white">Esperando la primera posición</p>
         )}
         {u && !terminado && (
@@ -251,7 +278,17 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
             Actualizado <strong className="font-mono text-white">{hace ?? "—"}</strong>
             {textoVertical(vertical) && <> · {textoVertical(vertical)}</>}
             {u.track !== null && <> · Rumbo {String(Math.round(u.track) % 360).padStart(3, "0")}°</>}
+            {fuente && <> · Fuente: <strong className="text-white">{fuente}</strong></>}
           </p>
+        )}
+        {u && hayAdsb && hayGps && (
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-3 text-xs text-white/60">
+            <span className="inline-flex items-center gap-1.5"><span className="h-0.5 w-4 rounded bg-aviation-cyan" aria-hidden />GPS del teléfono</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-0.5 w-4 rounded bg-[#a78bfa]" aria-hidden />ADS-B</span>
+          </p>
+        )}
+        {u && hayAdsb && !hayGps && !terminado && (
+          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-white/60"><span className="h-0.5 w-4 rounded bg-[#a78bfa]" aria-hidden />El recorrido viene de receptores ADS-B.</p>
         )}
 
         {/* Avance sobre la ruta */}
@@ -306,7 +343,8 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
           <Bloque titulo="El avión y el vuelo">
             <dl className="space-y-1.5 text-sm">
               {avion && <Fila k="Avión" v={avion} />}
-              {datos.inicio && <Fila k="Seguimiento desde" v={horaArgentinaConDia(datos.inicio, ahora) ?? "—"} />}
+              {dePlan && datos.salida_prevista && <Fila k="Salida prevista" v={`${horaArgentina(datos.salida_prevista)} (${horaUtc(datos.salida_prevista)})`} />}
+              {!dePlan && datos.inicio && <Fila k="Seguimiento desde" v={horaArgentinaConDia(datos.inicio, ahora) ?? "—"} />}
               {duracionS !== null && duracionS >= 60 && <Fila k={terminado ? "Duró" : "Lleva"} v={duracion(duracionS)} />}
               {salida && datos.puntos.length > 1 && <Fila k="Salida" v={nombreDePunto(salida)} />}
               {destino && <Fila k="Destino" v={nombreDePunto(destino)} />}
@@ -321,7 +359,12 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
         )}
 
         <footer className="mt-8 flex items-end justify-between gap-4 border-t border-white/10 pt-4">
-          <p className="text-xs leading-snug text-white/60">Posición del GPS del teléfono del piloto: puede tardar o cortarse. No reemplaza la comunicación con el vuelo. El clima es informativo.</p>
+          <p className="text-xs leading-snug text-white/60">
+            {datos.con_adsb || dePlan
+              ? "Posición del GPS del teléfono del piloto o, si el teléfono no manda, de receptores ADS-B públicos (adsb.fi): puede tardar, cortarse, o no haber datos si el avión no transmite. "
+              : "Posición del GPS del teléfono del piloto: puede tardar o cortarse. "}
+            No reemplaza la comunicación con el vuelo. El clima es informativo.
+          </p>
           <Link href="/" className="shrink-0" aria-label="Vector">
             <LogoVector className="h-5 w-auto" sobreOscuro />
           </Link>

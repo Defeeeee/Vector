@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import EditorPlanDeVuelo from "@/components/dashboard/plan-de-vuelo/EditorPlanDeVuelo";
+import { leerSeguimientoDelPlan } from "@/actions/seguimiento";
 import { cuandoRespuesta } from "@/lib/respuesta-plan";
 import { oficinasAro } from "@/lib/oficinas-aro-disco";
 import { avionesParaPlan, firmaGuardada, leerPlan, leerRespuestas, pilotoParaPlan } from "@/lib/plan-de-vuelo-servidor";
@@ -12,12 +13,13 @@ import { avionesParaPlan, firmaGuardada, leerPlan, leerRespuestas, pilotoParaPla
  */
 export default async function EditarPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [plan, aviones, piloto, firma, respuestas] = await Promise.all([
+  const [plan, aviones, piloto, firma, respuestas, seguimiento] = await Promise.all([
     leerPlan(id),
     avionesParaPlan(),
     pilotoParaPlan(),
     firmaGuardada(),
     leerRespuestas(id),
+    leerSeguimientoDelPlan(id),
   ]);
   if (!plan) notFound();
 
@@ -44,6 +46,7 @@ export default async function EditarPlanPage({ params }: { params: Promise<{ id:
       canceladoInicial={plan.cancelado_at ?? null}
       envioAroActivo={process.env.PLAN_DE_VUELO_ENVIO_ARO === "1"}
       actualizadoInicial={plan.updated_at ?? null}
+      seguimientoInicial={seguimiento}
       respuestas={respuestas.map((r) => ({ ...r, cuando: cuandoRespuesta(r.recibido_at) }))}
     />
   );
