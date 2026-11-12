@@ -32,6 +32,14 @@ jobs:
               s "servicios"; for u in derper tailscaled; do printf '%s: ' "$u"; systemctl is-active "$u" 2>&1; done
               s "derper (unidad)"; systemctl cat derper 2>/dev/null | grep -E '^(ExecStart|User|Restart)' || echo "sin unidad derper"
               s "derper en docker"; (docker ps -a --format '{{.Names}} {{.Image}} {{.Status}}' 2>/dev/null || sudo -n docker ps -a --format '{{.Names}} {{.Image}} {{.Status}}' 2>/dev/null) | grep -i derp || echo "nada en docker"
+              s "derper en docker: variables (sin valores de claves) y montajes"
+              D="docker"; docker ps >/dev/null 2>&1 || D="sudo -n docker"
+              $D inspect derper --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | grep -E '^DERP_' | sed -E 's/(KEY|SECRET|TOKEN)=.*/\1=…/'
+              $D inspect derper --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{println}}{{end}}' 2>/dev/null
+              $D inspect derper --format 'creado {{.Created}} · reinicios {{.RestartCount}} · imagen {{.Image}}' 2>/dev/null
+              ls -la --time-style=+%Y-%m-%dT%H:%M /var/run/tailscale/ 2>/dev/null | tail -n +2
+              systemctl show tailscaled -p ActiveEnterTimestamp 2>/dev/null
+              s "derper en docker: últimas líneas"; $D logs --tail 40 derper 2>&1 | cut -c1-220
               s "quién escucha 443/3478/80"; (sudo -n ss -lntup 2>/dev/null || ss -lntu) | grep -E ':(443|3478|80)\b' || true
               s "tailscale del VPS"; tailscale version 2>&1 | head -1; tailscale status --self=true --peers=false 2>&1 | head -5
               tailscale status --json 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print("BackendState:", d.get("BackendState")); print("Health:", d.get("Health")); s=d.get("Self",{}); print("Relay:", s.get("Relay"), "Online:", s.get("Online"))' 2>&1
