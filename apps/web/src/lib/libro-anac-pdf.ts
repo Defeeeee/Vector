@@ -1,5 +1,5 @@
 import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, degrees, rgb } from "pdf-lib";
-import { ajustarEnCaja, fechaDelDorso } from "./firmas-libro";
+import { acomodarSellos, ajustarEnCaja, fechaDelDorso } from "./firmas-libro";
 import {
   COLUMNAS_LIBRO,
   RENGLONES_POR_HOJA,
@@ -273,6 +273,12 @@ export interface DorsoParaPdf {
   aclaracion?: string | null;
   /** "AAAA-MM-DD". */
   fecha?: string | null;
+  /**
+   * Las firmas con sello de las personas elegidas (migración 048). Se usan **sólo si la hoja
+   * no tiene foto propia** (`png`): se acomodan en grilla, abajo a la derecha. Con ellas no
+   * va la línea de aclaración: el sello ya la trae.
+   */
+  sellos?: Uint8Array[];
 }
 
 export interface CertificacionParaPdf {
@@ -513,13 +519,27 @@ export async function pdfDelLibro(
     }
   }
   const dorsoImagenes = new Map<number, PDFImage>();
+  const dorsoSellos = new Map<number, PDFImage[]>();
   if (dorsos) {
     for (const [hoja, dorso] of dorsos) {
-      if (!dorso.png) continue;
-      try {
-        dorsoImagenes.set(hoja, await doc.embedPng(dorso.png));
-      } catch {
-        /* un dorso sin imagen legible va sin imagen */
+      if (dorso.png) {
+        try {
+          dorsoImagenes.set(hoja, await doc.embedPng(dorso.png));
+        } catch {
+          /* un dorso sin imagen legible va sin imagen */
+        }
+      }
+      // Sin foto propia, las firmas con sello de las personas elegidas.
+      if (!dorsoImagenes.has(hoja) && dorso.sellos?.length) {
+        const listas: PDFImage[] = [];
+        for (const png of dorso.sellos) {
+          try {
+            listas.push(await doc.embedPng(png));
+          } catch {
+            /* un sello ilegible se saltea */
+          }
+        }
+        if (listas.length) dorsoSellos.set(hoja, listas);
       }
     }
   }
@@ -601,7 +621,7 @@ export async function pdfDelLibro(
       { tamano: 4.6, color: GRIS }
     );
 
-    if (dorsos) dorsoDeLaHoja(doc, normal, negrita, i + 1, paginas.length, dorsos.get(i + 1) ?? null, dorsoImagenes.get(i + 1) ?? null);
+    if (dorsos) dorsoDeLaHoja(doc, normal, negrita, i + 1, paginas.length, dorsos.get(i + 1) ?? null, dorsoImagenes.get(i + 1) ?? null, dorsoSellos.get(i + 1) ?? []);
   });
 
   return doc.save();
@@ -624,13 +644,23 @@ function dorsoDeLaHoja(
   numero: number,
   total: number,
   dorso: DorsoParaPdf | null,
-  imagen: PDFImage | null
+  imagen: PDFImage | null,
+  sellos: PDFImage[] = []
 ) {
   const page = doc.addPage([ANCHO_HOJA, ALTO_HOJA]);
-  const aclaracion = seguro(dorso?.aclaracion?.trim());
+  // Con sellos de personas no va la línea de aclaración: el sello ya la trae.
+  const aclaracion = sellos.length ? "" : seguro(dorso?.aclaracion?.trim());
   const fecha = fechaDelDorso(dorso?.fecha);
-  if (!imagen && !aclaracion && !fecha) return;
+  if (!imagen && !sellos.length && !aclaracion && !fecha) return;
   const d = new Dibujo(page, normal, negrita);
+
+  if (sellos.length) {
+    const cajas = acomodarSellos(
+      sellos.map((s) => ({ ancho: s.width, alto: s.height })),
+      { ancho: ANCHO_HOJA, alto: ALTO_HOJA, margen: MARGEN }
+    );
+    sellos.forEach((s, i) => page.drawImage(s, { x: cajas[i].x, y: cajas[i].y, width: cajas[i].w, height: cajas[i].h }));
+  }
 
   const ancho = 440;
   const xBloque = ANCHO_HOJA - MARGEN - ancho;
@@ -655,6 +685,10 @@ function dorsoDeLaHoja(
     page.drawText(a.texto, { x: xBloque + (ancho - aw) / 2, y: ALTO_HOJA - (yLinea + 11), size: a.tamano, font: negrita, color: NEGRO });
     d.texto("FIRMA Y ACLARACIÓN", xBloque + ancho / 2 - 38, yLinea + 20, { tamano: 5.6, color: GRIS });
   }
-  if (fecha) d.texto(fecha, xBloque, yBase + 10, { tamano: 7 });
+  if (fecha) {
+    // Con sellos, la fecha va arriba a la derecha: abajo está la grilla.
+    if (sellos.length) d.texto(fecha, ANCHO_HOJA - MARGEN - 48, MARGEN + 8, { tamano: 7 });
+    else d.texto(fecha, xBloque, yBase + 10, { tamano: 7 });
+  }
   d.texto(`Dorso de la hoja ${numero} de ${total}`, MARGEN, ALTO_HOJA - MARGEN, { tamano: 5, color: GRIS });
 }

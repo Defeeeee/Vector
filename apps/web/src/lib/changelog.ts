@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.32.0",
+    fecha: "2026-11-13",
+    titulo: "Cada firma, con quien te certificó",
+    novedades: [
+      {
+        icono: "camara",
+        titulo: "Quién certificó cada vuelo",
+        texto: "En el Hangar, cada persona que te certifica tiene su firma, su firma con sello y los nombres con los que aparece en tus vuelos. Vector te sugiere a qué vuelos asociarla, te muestra los que no tienen certificante para asignarlos de a varios, y elegís si su firma va sola en el PDF o sólo donde digas.",
+        href: "/dashboard/settings",
+        cta: "Ir al Hangar",
+      },
+      {
+        icono: "camara",
+        titulo: "El dorso con varias firmas",
+        texto: "En cada hoja, en lugar de subir una foto del dorso, elegí qué personas firmaron: el PDF acomoda sus firmas con sello detrás de la hoja.",
+        href: "/dashboard/settings",
+        cta: "Ir al Hangar",
+      },
+    ],
+  },
+  {
     version: "3.31.0",
     fecha: "2026-11-13",
     titulo: "Las firmas, en tu libro",

@@ -359,9 +359,19 @@ describe("el certificante y las hojas del dorso", () => {
       aeronaves: [avion()],
       apertura: valoresEnCero(),
     });
-    expect(hoja.renglones[0].certificante).toEqual({ autoridadId: 5, nombre: "Juan Pérez" });
-    expect(hoja.renglones[1].certificante).toEqual({ autoridadId: 7, nombre: "" });
+    expect(hoja.renglones[0].certificante).toEqual({ autoridadId: 5, nombre: "Juan Pérez", certificanteId: null, firma: null });
+    expect(hoja.renglones[1].certificante).toEqual({ autoridadId: 7, nombre: "", certificanteId: null, firma: null });
     expect(hoja.renglones[2].certificante).toBeNull();
+  });
+
+  it("un vuelo con persona asignada o con anulación lleva certificante aunque no tenga nombre del CAD", () => {
+    const [hoja] = armarLibro({
+      vuelos: [vuelo({ certificante_id: "P1" }), vuelo({ certificante_firma: "no" })],
+      aeronaves: [avion()],
+      apertura: valoresEnCero(),
+    });
+    expect(hoja.renglones[0].certificante).toEqual({ autoridadId: null, nombre: "", certificanteId: "P1", firma: null });
+    expect(hoja.renglones[1].certificante?.firma).toBe("no");
   });
 
   it("cuenta las hojas como las numera el PDF, y al menos una", () => {

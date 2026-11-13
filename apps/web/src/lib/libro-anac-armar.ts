@@ -1,7 +1,7 @@
 import { esAlumno, vuelosDesdeLaPpa } from "@/lib/licencias";
 import { apellidoYNombre, armarLibro, fechaDeGeneracion, renglonesDeLaHoja, valoresDeApertura, vuelosDeUnLibro, type RenglonLibro } from "@/lib/libro-anac";
 import { pdfDelLibro, type CertificacionParaPdf, type DorsoParaPdf } from "@/lib/libro-anac-pdf";
-import { dorsosPorHoja, firmaParaVuelo, type DorsoHoja, type FirmaCertificante } from "@/lib/firmas-libro";
+import { dorsosPorHoja, firmaDelRenglon, type DorsoHoja, type FirmaCertificante } from "@/lib/firmas-libro";
 import type { Aircraft, Flight, Logbook, Profile } from "@/types";
 
 /**
@@ -93,7 +93,7 @@ export async function armarPdfDelLibro(
       return { ok: false, status: 404, error: "Todavía no guardaste ninguna firma de certificante. Se cargan en el Hangar, en «Firmas del libro»." };
     }
     certificaciones = (renglon) => {
-      const f = firmaParaVuelo(renglon.certificante, firmas);
+      const f = firmaDelRenglon(renglon.certificante, firmas);
       const png = f ? pngDeDataUrl(f.png) : undefined;
       return f && png ? { id: f.id, png, nombre: f.nombre, licencia: f.licencia } : null;
     };
@@ -102,6 +102,16 @@ export async function armarPdfDelLibro(
   // El dorso de cada hoja de este libro.
   let dorsos: Map<number, DorsoParaPdf> | undefined;
   if (opciones.conDorsos) {
+    // Las firmas con sello de las personas elegidas para cada hoja (migración 048).
+    const sellos = new Map<string, Uint8Array>();
+    const rf = await leer("/firmas/certificantes");
+    if (!rf.ok) {
+      return { ok: false, status: 502, error: "No se pudieron leer las firmas con sello para los dorsos. Probá de nuevo en un momento." };
+    }
+    for (const f of (await rf.json().catch(() => [])) as FirmaCertificante[]) {
+      const png = pngDeDataUrl(f.png_sello);
+      if (png) sellos.set(f.id, png);
+    }
     const r = await leer(`/firmas/dorsos${libro ? `?logbook_id=${encodeURIComponent(libro.id)}` : ""}`);
     if (!r.ok) {
       return { ok: false, status: 502, error: "No se pudieron leer los dorsos de las hojas. Probá de nuevo en un momento." };
@@ -109,7 +119,8 @@ export async function armarPdfDelLibro(
     const filas = (await r.json().catch(() => [])) as DorsoHoja[];
     dorsos = new Map();
     for (const [hoja, d] of dorsosPorHoja(filas, libro?.id)) {
-      dorsos.set(hoja, { png: pngDeDataUrl(d.png), aclaracion: d.aclaracion, fecha: d.fecha });
+      const elegidos = (d.certificante_ids ?? []).map((id) => sellos.get(id)).filter((x): x is Uint8Array => !!x);
+      dorsos.set(hoja, { png: pngDeDataUrl(d.png), aclaracion: d.aclaracion, fecha: d.fecha, sellos: elegidos });
     }
   }
 

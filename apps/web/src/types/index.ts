@@ -41,6 +41,10 @@ export interface Flight {
   /** El estado en el CAD ("PENDIENTE DE DDJJ", …), de la última sincronización (migración 037). */
   cad_estado?: string | null;
   cad_cargado_at?: string | null;
+  /** Quién lo certificó (migración 048, `firmas_certificantes`): sólo sirve para el PDF del libro. */
+  certificante_id?: string | null;
+  /** La anulación de su firma en este vuelo: null = lo que diga la persona; "si" o "no". */
+  certificante_firma?: "si" | "no" | null;
 
   discount_type?: 'value' | 'percent';
   discount_amount?: number;

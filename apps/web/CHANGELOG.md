@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.32.0 — Cada firma, con quien te certificó
+
+_13 de noviembre de 2026_
+
+- **Quién certificó cada vuelo** — En el Hangar, cada persona que te certifica tiene su firma, su firma con sello y los nombres con los que aparece en tus vuelos. Vector te sugiere a qué vuelos asociarla, te muestra los que no tienen certificante para asignarlos de a varios, y elegís si su firma va sola en el PDF o sólo donde digas.
+- **El dorso con varias firmas** — En cada hoja, en lugar de subir una foto del dorso, elegí qué personas firmaron: el PDF acomoda sus firmas con sello detrás de la hoja.
+
 ## v3.31.0 — Las firmas, en tu libro
 
 _13 de noviembre de 2026_

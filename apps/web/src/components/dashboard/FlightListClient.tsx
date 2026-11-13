@@ -8,6 +8,7 @@ import FlightCard from "@/components/dashboard/FlightCard";
 import { pesos } from "@/lib/costos";
 import { filtrarVuelos, hayFiltros, type FiltrosVuelo } from "@/lib/busqueda-vuelos";
 import { AnimatePresence, motion } from "framer-motion";
+import type { CertificanteBreve } from "@/lib/firmas-libro";
 import { BandaAutoridad, FilaElegible } from "@/components/dashboard/AutoridadEnLoteBitacora";
 
 interface FlightListClientProps {
@@ -17,6 +18,8 @@ interface FlightListClientProps {
   costos?: Map<string, number>;
   alumno?: boolean;
   fechaPpa?: string | null;
+  /** Las personas con firma guardada (migración 048). */
+  certificantes?: CertificanteBreve[];
   /** El id de un vuelo para abrir en edición (`?editar=`, desde Pasar al CAD). */
   editar?: string;
   /** El id de un vuelo para abrir (`?ver=`, desde el buscador). */
@@ -28,7 +31,7 @@ const MONTH_NAMES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ];
 
-export default function FlightListClient({ flights, aircraft, costos = new Map(), alumno = false, fechaPpa = null, editar, ver }: FlightListClientProps) {
+export default function FlightListClient({ flights, aircraft, costos = new Map(), alumno = false, fechaPpa = null, editar, ver, certificantes = [] }: FlightListClientProps) {
   const [filtros, setFiltros] = useState<FiltrosVuelo>({});
   const [abierto, setAbierto] = useState(false);
   // Elegir varios vuelos para ponerles la autoridad certificante de una vez (3.17.0).
@@ -264,6 +267,7 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
                         fechaPpa={fechaPpa}
                         editarAlAbrir={flight.id === editar}
                         verAlAbrir={flight.id === ver}
+                        certificantes={certificantes}
                       />
                     ))}
                   </div>
@@ -316,6 +320,7 @@ export default function FlightListClient({ flights, aircraft, costos = new Map()
           <div className="h-40" aria-hidden="true" />
           <BandaAutoridad
             elegidos={flights.filter((f) => elegidos.has(f.id))}
+            certificantes={certificantes}
             alSalir={() => {
               setEligiendo(false);
               setElegidos(new Set());

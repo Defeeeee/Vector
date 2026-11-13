@@ -1,5 +1,7 @@
 "use client";
 
+import CertificanteDelVuelo from "@/components/dashboard/CertificanteDelVuelo";
+import { etiquetaFirma, type CertificanteBreve } from "@/lib/firmas-libro";
 import RecorridoDelVuelo from "@/components/dashboard/RecorridoDelVuelo";
 import { DESDE_RECORRIDOS } from "@/lib/recorrido";
 import { esVueloDeAlumno } from "@/lib/licencias";
@@ -75,9 +77,11 @@ interface FlightCardProps {
   editarAlAbrir?: boolean;
   /** Abrirlo y traerlo a la vista: viene del buscador (`?ver=`). */
   verAlAbrir?: boolean;
+  /** Las personas con firma guardada (migración 048), para "Certificó" y "Firma en el PDF". */
+  certificantes?: CertificanteBreve[];
 }
 
-export default function FlightCard({ flight, aircraft, allAircraft, costo = null, alumno = false, fechaPpa = null, editarAlAbrir = false, verAlAbrir = false }: FlightCardProps) {
+export default function FlightCard({ flight, aircraft, allAircraft, costo = null, alumno = false, fechaPpa = null, editarAlAbrir = false, verAlAbrir = false, certificantes = [] }: FlightCardProps) {
   const [isOpen, setIsOpen] = useState(verAlAbrir);
   const [isEditing, setIsEditing] = useState(editarAlAbrir);
   const raiz = useRef<HTMLDivElement>(null);
@@ -224,6 +228,7 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
                   </select>
                 </EditField>
                 <EditField label="Nombre y apellido (CAD)"><input name="cad_autoridad_nombre" maxLength={120} defaultValue={flight.cad_autoridad_nombre ?? ""} placeholder="Quien certifica el vuelo" className="w-full bg-transparent border-b border-zinc-300 dark:border-zinc-700 py-2 text-sm md:text-base text-zinc-900 dark:text-white outline-none font-bold focus:border-zinc-900 dark:focus:border-white transition-colors" /></EditField>
+                <CertificanteDelVuelo variante="tarjeta" certificantes={certificantes} certificanteId={flight.certificante_id} firma={flight.certificante_firma} />
               </>
             )}
           </div>
@@ -404,6 +409,13 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
                 <DetailItem label="Landing" value={new Date(flight.landing).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })} />
                 <DetailItem label="Landings" value={`${flight.landings} ciclos`} />
                 <DetailItem label="Tipo OACI" value={aircraft?.icao || "---"} />
+                {/* Quién lo certificó y si su firma va sola en el PDF del libro (migración 048). */}
+                {!alumno && flight.certificante_id && (
+                  <DetailItem
+                    label="Certificó"
+                    value={`${certificantes.find((c) => c.id === flight.certificante_id)?.nombre ?? "—"} · firma ${etiquetaFirma(flight.certificante_firma)}`}
+                  />
+                )}
                 {/* Sólo si hubo cobro: en modo `packs` el vuelo consume horas y no
                     pesos, y un "$ 0" sería inventar un precio que nadie pagó. */}
                 {costo !== null && costo > 0 && (

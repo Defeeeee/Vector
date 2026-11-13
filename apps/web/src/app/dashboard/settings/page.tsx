@@ -12,7 +12,7 @@ import LogbooksManager from "@/components/dashboard/LogbooksManager";
 import FirmasDelLibro from "@/components/dashboard/FirmasDelLibro";
 import { cantidadDeHojas, vuelosDeUnLibro } from "@/lib/libro-anac";
 import { vuelosDesdeLaPpa } from "@/lib/licencias";
-import type { DorsoHoja, FirmaCertificante } from "@/lib/firmas-libro";
+import type { DorsoHoja, FirmaCertificante, SugerenciaCertificante } from "@/lib/firmas-libro";
 import HorasDeAntesAlumno from "@/components/dashboard/HorasDeAntesAlumno";
 import { esAlumno } from "@/lib/licencias";
 import WhatsAppMissingNotice from "@/components/dashboard/WhatsAppMissingNotice";
@@ -25,7 +25,7 @@ import AvisosPush from "@/components/social/AvisosPush";
 import ListaBloqueados from "@/components/social/ListaBloqueados";
 
 async function getSettingsData() {
-  const [profilesRes, aircraftRes, packsRes, documentsRes, logbooksRes, flightsRes, perfilPublicoRes, bloqueadosRes, clavePushRes, firmasRes, dorsosRes] =
+  const [profilesRes, aircraftRes, packsRes, documentsRes, logbooksRes, flightsRes, perfilPublicoRes, bloqueadosRes, clavePushRes, firmasRes, dorsosRes, sugerenciasRes] =
     await Promise.all([
       apiFetch("/profiles"),
       apiFetch("/aircraft"),
@@ -47,6 +47,8 @@ async function getSettingsData() {
       // Las firmas del libro (migración 047): sin cache, se acaban de cargar desde esta pantalla.
       apiFetch("/firmas/certificantes", { cache: "no-store" }),
       apiFetch("/firmas/dorsos", { cache: "no-store" }),
+      // Los nombres de vuelos sin certificante que son de una persona guardada (migración 048).
+      apiFetch("/firmas/certificantes/sugerencias", { cache: "no-store" }),
     ]);
 
   if (profilesRes.status === 401 || aircraftRes.status === 401 || packsRes.status === 401) {
@@ -71,12 +73,13 @@ async function getSettingsData() {
 
   const firmas: FirmaCertificante[] = firmasRes.ok ? await firmasRes.json().catch(() => []) : [];
   const dorsos: DorsoHoja[] = dorsosRes.ok ? await dorsosRes.json().catch(() => []) : [];
+  const sugerencias: SugerenciaCertificante[] = sugerenciasRes.ok ? await sugerenciasRes.json().catch(() => []) : [];
 
-  return { profile: profiles[0] || null, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, firmas, dorsos };
+  return { profile: profiles[0] || null, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, firmas, dorsos, sugerencias };
 }
 
 export default async function SettingsPage() {
-  const { profile, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, firmas, dorsos } =
+  const { profile, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, firmas, dorsos, sugerencias } =
     await getSettingsData();
   // Cuántas hojas tiene cada libro, numeradas igual que el PDF (el dorso se carga hoja por hoja).
   const vuelosDelPdf = vuelosDesdeLaPpa(flights, profile?.fecha_ppa);
@@ -112,7 +115,7 @@ export default async function SettingsPage() {
           </div>
           <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Firmas del libro</h3>
         </div>
-        <FirmasDelLibro firmas={firmas} dorsos={dorsos} libros={logbooks.map((l) => ({ id: l.id, name: l.name }))} hojasPorLibro={hojasPorLibro} />
+        <FirmasDelLibro firmas={firmas} dorsos={dorsos} libros={logbooks.map((l) => ({ id: l.id, name: l.name }))} hojasPorLibro={hojasPorLibro} sugerencias={sugerencias} vuelos={vuelosDelPdf} aviones={aircraft} />
       </section>}
 
       {/* El alumno no ve los libros, pero sí sus horas de antes (`lib/apertura-alumno.ts`). */}

@@ -8,6 +8,8 @@ import { Check, Loader2, X } from "lucide-react";
 import type { Aircraft, Flight } from "@/types";
 import { AUTORIDADES_CAD } from "@/lib/cad";
 import { asignarAutoridad } from "@/actions/cad";
+import { asignarCertificante, desasociarCertificante } from "@/actions/firmas";
+import type { CertificanteBreve } from "@/lib/firmas-libro";
 
 /**
  * La autoridad certificante para varios vuelos de la Bitácora (3.17.0, Federico): se eligen los
@@ -53,8 +55,44 @@ export function FilaElegible({
   );
 }
 
-export function BandaAutoridad({ elegidos, alSalir }: { elegidos: Flight[]; alSalir: () => void }) {
+export function BandaAutoridad({
+  elegidos,
+  alSalir,
+  certificantes = [],
+}: {
+  elegidos: Flight[];
+  alSalir: () => void;
+  /** Las personas con firma guardada (migración 048): suma "Asignar certificante". */
+  certificantes?: CertificanteBreve[];
+}) {
   const router = useRouter();
+  const [modo, setModo] = useState<"autoridad" | "certificante">("autoridad");
+  const [persona, setPersona] = useState("");
+  const [anula, setAnula] = useState<"" | "si" | "no">("");
+  const [avisos, setAvisos] = useState<string[]>([]);
+
+  const asignarPersona = async () => {
+    setAvisos([]);
+    setEstado({ tipo: "guardando" });
+    const r = await asignarCertificante(persona, elegidos.map((f) => f.id), anula || null);
+    if ("error" in r) return setEstado({ tipo: "error", texto: r.error });
+    const nombre = certificantes.find((c) => c.id === persona)?.nombre ?? "esa persona";
+    setAvisos(r.avisos.map((a) => a.mensaje));
+    setEstado({
+      tipo: "listo",
+      texto: `Listo: ${r.asignados === 1 ? "1 vuelo" : `${r.asignados} vuelos`} certificados por ${nombre}.${r.completados ? ` ${r.completados === 1 ? "1 no tenía" : `${r.completados} no tenían`} certificante para el CAD y quedó el suyo.` : ""}`,
+    });
+    router.refresh();
+  };
+
+  const sacarPersona = async () => {
+    setAvisos([]);
+    setEstado({ tipo: "guardando" });
+    const r = await desasociarCertificante(elegidos.map((f) => f.id));
+    if ("error" in r) return setEstado({ tipo: "error", texto: r.error });
+    setEstado({ tipo: "listo", texto: "Listo: sin certificante asignado. El nombre para el CAD quedó como estaba." });
+    router.refresh();
+  };
   const [id, setId] = useState("");
   const [nombre, setNombre] = useState("");
   const [estado, setEstado] = useState<{ tipo: "" | "guardando" | "listo" | "error"; texto?: string; enElCad?: number }>({ tipo: "" });
@@ -96,6 +134,68 @@ export function BandaAutoridad({ elegidos, alSalir }: { elegidos: Flight[]; alSa
             <X className="w-4 h-4" />
           </button>
         </div>
+        {certificantes.length > 0 && (
+          <div role="tablist" aria-label="Qué asignar" className="flex gap-4 font-mono text-[11px] uppercase tracking-[0.12em]">
+            {(["autoridad", "certificante"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={modo === m}
+                onClick={() => {
+                  setModo(m);
+                  setEstado({ tipo: "" });
+                  setAvisos([]);
+                }}
+                className={`min-h-8 border-b-2 ${modo === m ? "border-aviation-cyan text-aviation-cyan" : "border-transparent text-zinc-500"}`}
+              >
+                {m === "autoridad" ? "Autoridad en el CAD" : "Asignar certificante"}
+              </button>
+            ))}
+          </div>
+        )}
+        {modo === "certificante" && certificantes.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_auto_auto] gap-2">
+            <select
+              value={persona}
+              onChange={(e) => setPersona(e.target.value)}
+              aria-label="Quién certificó"
+              className="h-10 min-w-0 rounded-xl bg-white/5 border border-white/10 px-3 text-sm text-white [color-scheme:dark]"
+            >
+              <option value="">Quién certificó…</option>
+              {certificantes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre}
+                </option>
+              ))}
+            </select>
+            <select
+              value={anula}
+              onChange={(e) => setAnula(e.target.value as "" | "si" | "no")}
+              aria-label="Firma en el PDF"
+              className="h-10 min-w-0 rounded-xl bg-white/5 border border-white/10 px-3 text-sm text-white [color-scheme:dark]"
+            >
+              <option value="">Firma: automática</option>
+              <option value="si">Firma: sí, en estos</option>
+              <option value="no">Firma: no, sin firma</option>
+            </select>
+            <button
+              onClick={() => void asignarPersona()}
+              disabled={!persona || elegidos.length === 0 || estado.tipo === "guardando"}
+              className="h-10 px-5 rounded-full bg-aviation-cyan text-noche text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-40"
+            >
+              {estado.tipo === "guardando" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              Asignar a {elegidos.length === 1 ? "1 vuelo" : `los ${elegidos.length}`}
+            </button>
+            <button
+              onClick={() => void sacarPersona()}
+              disabled={elegidos.length === 0 || estado.tipo === "guardando"}
+              className="h-10 px-4 text-sm font-semibold text-zinc-400 hover:text-white disabled:opacity-40"
+            >
+              Sacar
+            </button>
+          </div>
+        ) : (
         <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_auto] gap-2">
           <select
             value={id}
@@ -126,6 +226,15 @@ export function BandaAutoridad({ elegidos, alSalir }: { elegidos: Flight[]; alSa
             Poner a {elegidos.length === 1 ? "1 vuelo" : `los ${elegidos.length}`}
           </button>
         </div>
+        )}
+        {avisos.length > 0 && (
+          <ul className="text-xs text-amber-300 space-y-0.5 max-h-16 overflow-y-auto">
+            {avisos.slice(0, 5).map((a, i) => (
+              <li key={i}>{a}</li>
+            ))}
+            {avisos.length > 5 && <li>…y {avisos.length - 5} más.</li>}
+          </ul>
+        )}
         {estado.texto && (
           <p role="status" className={`text-xs ${estado.tipo === "error" ? "text-red-400" : "text-emerald-400"}`}>
             {estado.texto}

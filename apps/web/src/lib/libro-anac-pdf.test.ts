@@ -28,3 +28,23 @@ describe("el libro en PDF, firmado", () => {
     if (process.env.LIBRO_PDF_DEMO) writeFileSync(process.env.LIBRO_PDF_DEMO, firmado);
   });
 });
+
+describe("el dorso con las firmas con sello", () => {
+  const cuenta = (bytes: Uint8Array) => (Buffer.from(bytes).toString("latin1").match(/\/Subtype \/Image/g) ?? []).length;
+
+  it("sin foto propia, cada sello elegido va en el dorso de la hoja", async () => {
+    const a = new Uint8Array(await QRCode.toBuffer("sello A", { type: "png" }));
+    const b = new Uint8Array(await QRCode.toBuffer("sello B", { type: "png" }));
+    const dorsos = new Map([[1, { sellos: [a, b] }]]);
+    const bytes = await pdfDelLibro([], titular, { generado: "26/10/2026", apertura, dorsos });
+    expect(cuenta(bytes)).toBe(2);
+    if (process.env.LIBRO_PDF_DEMO) writeFileSync(process.env.LIBRO_PDF_DEMO.replace(/\.pdf$/, "-sellos.pdf"), bytes);
+  });
+
+  it("con foto propia, los sellos no se usan", async () => {
+    const foto = new Uint8Array(await QRCode.toBuffer("foto", { type: "png" }));
+    const a = new Uint8Array(await QRCode.toBuffer("sello A", { type: "png" }));
+    const bytes = await pdfDelLibro([], titular, { generado: "26/10/2026", apertura, dorsos: new Map([[1, { png: foto, sellos: [a] }]]) });
+    expect(cuenta(bytes)).toBe(1);
+  });
+});

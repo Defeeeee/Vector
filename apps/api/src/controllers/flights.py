@@ -6,11 +6,11 @@ from uuid import UUID
 from datetime import datetime, timezone
 from src.models.flight import Flight, FlightCreate, FlightUpdate
 from src.auth.guards import auth_guard
-from src.services import audit_engine, derived_expiries
+from src.services import audit_engine, certificantes, derived_expiries
 
 #: Lo que un vuelo guarda sólo para el libro en papel (migración 020): cambiarlo no
 #: toca el cobro, la auditoría ni los vencimientos derivados.
-MARCAS_DEL_LIBRO = frozenset({"cierra_hoja", "cad_vuelo_id", "cad_cargado_at", "cad_omitido", "cad_autoridad_id", "cad_autoridad_nombre"})
+MARCAS_DEL_LIBRO = frozenset({"cierra_hoja", "cad_vuelo_id", "cad_cargado_at", "cad_omitido", "cad_autoridad_id", "cad_autoridad_nombre", "certificante_id", "certificante_firma"})
 
 
 def solo_marcas_del_libro(cambios: Dict[str, Any]) -> bool:
@@ -48,6 +48,42 @@ class FlightsController(Controller):
             .execute()
         )
         return created.data[0]["id"]
+
+    @staticmethod
+    def _resolver_certificante(
+        supabase_client: Client, user_id: str, payload: Dict[str, Any], vuelo: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """
+        El certificante de un vuelo (migración 048): sólo uno **del mismo piloto**, y si el
+        vuelo no tiene certificante para el CAD, toma el nombre de la persona. Si ya tiene otro
+        nombre no se pisa. Modifica `payload`. Un `null` desasocia y no toca el CAD.
+        """
+        if payload.get("certificante_id") is None:
+            if vuelo is None:
+                # Alta sin certificante: no se manda nada (la columna puede no existir todavía).
+                payload.pop("certificante_id", None)
+                if payload.get("certificante_firma") is None:
+                    payload.pop("certificante_firma", None)
+            elif "certificante_id" in payload:
+                # Se desasocia: sin persona no hay anulación que valga.
+                payload["certificante_firma"] = None
+            return
+        resp = (
+            supabase_client.table("firmas_certificantes")
+            .select("id,nombre,autoridad_id,alias")
+            .eq("id", str(payload["certificante_id"]))
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if not resp.data:
+            raise NotFoundException("Ese certificante no existe.")
+        persona = resp.data[0]
+        actual = {
+            "cad_autoridad_nombre": payload["cad_autoridad_nombre"] if "cad_autoridad_nombre" in payload else (vuelo or {}).get("cad_autoridad_nombre"),
+            "cad_autoridad_id": payload["cad_autoridad_id"] if "cad_autoridad_id" in payload else (vuelo or {}).get("cad_autoridad_id"),
+        }
+        cambios, _aviso = certificantes.completar_autoridad(actual, persona)
+        payload.update(cambios)
 
     @staticmethod
     def _refresh_audit(user_id: str, supabase_client: Client) -> None:
@@ -206,6 +242,7 @@ class FlightsController(Controller):
         # become NOT NULL, and a flight with no logbook is invisible in the app.
         if not insert_data.get("logbook_id"):
             insert_data["logbook_id"] = self._default_logbook_id(user_id, supabase_client)
+        self._resolver_certificante(supabase_client, user_id, insert_data)
         # Traído del CAD (migración 030): sólo con el id de allá, y anotado con la hora del server.
         if insert_data.get("cad_vuelo_id"):
             insert_data["cad_cargado_at"] = datetime.now(timezone.utc).isoformat()
@@ -240,6 +277,17 @@ class FlightsController(Controller):
         user_id = str(request.state.user.id)
         # Use mode="json" for serialization and by_alias=True for DB column names
         update_data = data.model_dump(exclude_unset=True, by_alias=True, mode="json")
+        if "certificante_id" in update_data or "certificante_firma" in update_data:
+            actual = (
+                supabase_client.table("flights")
+                .select("cad_autoridad_nombre,cad_autoridad_id")
+                .eq("id", str(flight_id))
+                .eq("user_id", user_id)
+                .execute()
+            )
+            if not actual.data:
+                raise NotFoundException(f"Flight with ID {flight_id} not found or permission denied")
+            self._resolver_certificante(supabase_client, user_id, update_data, actual.data[0])
         # Pasado al CAD (migración 029): la hora es la del servidor, no la del navegador.
         if update_data.get("cad_vuelo_id"):
             update_data["cad_cargado_at"] = datetime.now(timezone.utc).isoformat()

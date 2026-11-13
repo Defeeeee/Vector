@@ -53,6 +53,10 @@ class Flight(BaseModel):
     cad_autoridad_nombre: Optional[str] = None
     #: El estado del vuelo en el CAD ("PENDIENTE DE DDJJ", …), de la última sincronización (037).
     cad_estado: Optional[str] = None
+    #: Quién lo certificó (migración 048, `firmas_certificantes`) y la anulación de su firma en
+    #: el PDF del libro: null = lo que diga la persona, "si" o "no".
+    certificante_id: Optional[UUID] = None
+    certificante_firma: Optional[Literal["si", "no"]] = None
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
@@ -96,6 +100,9 @@ class FlightCreate(BaseModel):
     #: Quién certifica el vuelo en el CAD (migración 032). Opcional.
     cad_autoridad_id: Optional[int] = Field(default=None, ge=1, le=999)
     cad_autoridad_nombre: Optional[str] = Field(default=None, max_length=120)
+    #: Quién lo certificó (migración 048). El controlador verifica que sea del mismo piloto.
+    certificante_id: Optional[UUID] = None
+    certificante_firma: Optional[Literal["si", "no"]] = None
     
     model_config = ConfigDict(populate_by_name=True)
 
@@ -136,5 +143,8 @@ class FlightUpdate(BaseModel):
     #: Quién certifica el vuelo en el CAD (migración 032). Null lo borra.
     cad_autoridad_id: Optional[int] = Field(default=None, ge=1, le=999)
     cad_autoridad_nombre: Optional[str] = Field(default=None, max_length=120)
+    #: Quién lo certificó (migración 048). Null lo desasocia.
+    certificante_id: Optional[UUID] = None
+    certificante_firma: Optional[Literal["si", "no"]] = None
 
     model_config = ConfigDict(populate_by_name=True)

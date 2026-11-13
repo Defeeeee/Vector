@@ -266,7 +266,7 @@ function repasoDemo(id) {
 // `LIBRO=1` siembra un libro y pone certificante a algunos vuelos, para probar el PDF.
 const firmasCert = new Map();
 const dorsosFalsos = new Map();
-if (process.env.LIBRO) {
+if (process.env.LIBRO || process.env.CERT) {
   libros.push({ id: "l1", user_id: "u1", name: "Mi libro", is_default: true, created_at: new Date().toISOString(), renglones_por_hoja: 15, apertura_ppa: null,
     opening_pic_day_loc: 12, opening_pic_day_tra: 3, opening_landings: 40 });
   vuelos.forEach((f, i) => {
@@ -274,19 +274,115 @@ if (process.env.LIBRO) {
     else if (i % 3 === 1) { f.cad_autoridad_id = 5; f.cad_autoridad_nombre = "PEDRO SIN FIRMA"; }
   });
 }
+// `CERT=1` (migración 048): un instructor con dos nombres en los vuelos (45 con uno, 1 con la licencia
+// pegada), otro con un nombre, y el resto sin certificante: para probar sugerencias y asignación en lote.
+if (process.env.CERT) {
+  const ordenados = [...vuelos].sort((a, b) => a.date.localeCompare(b.date));
+  ordenados.forEach((f, i) => {
+    delete f.cad_autoridad_id;
+    delete f.cad_autoridad_nombre;
+    if (i < 45) f.cad_autoridad_nombre = "GUSTAVO EMILIO MACEDO";
+    else if (i === 45) f.cad_autoridad_nombre = "GUSTAVO EMILIO MACEDO IV 25358574";
+    else if (i === 46) f.cad_autoridad_nombre = "GUSTAVO GIMENEZ";
+    else if (i === 47) f.cad_autoridad_nombre = "PEDRO SIN FIRMA";
+  });
+}
+const normalizar = (t) => String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9Ñ ]+/g, " ").replace(/\s+/g, " ").trim();
+const SIGLAS = new Set(["IV", "IVA", "INA", "IC", "ICA", "PPA", "PCA", "PLA", "TLA", "CPL", "ATPL", "DNI", "LIC", "LICENCIA", "NRO", "NUM", "N", "NO"]);
+// Como `services/certificantes.py`: 3 exacta, 2 mismas palabras, 1 con la licencia pegada, 0 no.
+function forma(a, b) {
+  const x = normalizar(a).split(" ").filter(Boolean), y = normalizar(b).split(" ").filter(Boolean);
+  if (!x.length || !y.length) return 0;
+  if (x.join(" ") === y.join(" ")) return 3;
+  if ([...x].sort().join(" ") === [...y].sort().join(" ")) return 2;
+  if (x.length > y.length) {
+    const resto = [...x];
+    for (const t of y) { const i = resto.indexOf(t); if (i < 0) return 0; resto.splice(i, 1); }
+    if (resto.length && resto.every((t) => /\d/.test(t) || SIGLAS.has(t))) return 1;
+  }
+  return 0;
+}
+const mejorForma = (n, p) => Math.max(0, ...[p.nombre, ...(p.alias ?? [])].map((q) => forma(n, q)));
 function rutaFirmas(req, res, ruta, url, json) {
   const dar = (cod, cuerpo) => { res.writeHead(cod, { "Content-Type": "application/json" }); res.end(cuerpo === undefined ? "" : JSON.stringify(cuerpo)); };
   const esPng = (v) => typeof v === "string" && v.startsWith("data:image/png;base64,") && v.length <= 450000;
-  if (ruta === "/api/firmas/certificantes" && req.method === "GET") return dar(200, [...firmasCert.values()]);
+  const personas = () => [...firmasCert.values()];
+  const conDefaults = (f) => ({ alias: [], png_sello: null, automatica: true, ...f });
+  if (ruta === "/api/firmas/certificantes" && req.method === "GET") return dar(200, personas().map(conDefaults));
+  if (ruta === "/api/firmas/certificantes/nombres" && req.method === "GET") return dar(200, personas().map((f) => ({ id: f.id, nombre: f.nombre, licencia: f.licencia ?? null, automatica: f.automatica !== false })));
+  if (ruta === "/api/firmas/certificantes/sugerencias" && req.method === "GET") {
+    const grupos = new Map();
+    for (const v of vuelos) {
+      if (v.certificante_id) continue;
+      const crudo = String(v.cad_autoridad_nombre ?? "").replace(/\s+/g, " ").trim();
+      const k = normalizar(crudo);
+      if (!k) continue;
+      if (!grupos.has(k)) grupos.set(k, { nombre: crudo, ids: [] });
+      grupos.get(k).ids.push(v.id);
+    }
+    const salida = [];
+    for (const [k, g] of grupos) {
+      const ps = personas().map((p) => [mejorForma(g.nombre, p), p]).filter(([sc]) => sc > 0);
+      if (!ps.length) continue;
+      const mejor = Math.max(...ps.map(([sc]) => sc));
+      const ganadoras = ps.filter(([sc]) => sc === mejor);
+      if (ganadoras.length !== 1) continue;
+      const p = ganadoras[0][1];
+      const conocidos = new Set([normalizar(p.nombre), ...(p.alias ?? []).map(normalizar)]);
+      salida.push({ certificante_id: p.id, nombre_en_vuelos: g.nombre, vuelo_ids: g.ids, sumar_alias: !conocidos.has(k) });
+    }
+    return dar(200, salida.sort((a, b) => b.vuelo_ids.length - a.vuelo_ids.length));
+  }
   if (ruta === "/api/firmas/certificantes" && req.method === "PUT") {
     if (!esPng(json.png) || !json.nombre?.trim()) return dar(400, { detail: "La firma tiene que ser un PNG." });
     const nombre = json.nombre.trim().replace(/\s+/g, " ").toUpperCase();
-    const previa = [...firmasCert.values()].find((x) => x.nombre === nombre);
-    const f = { id: previa?.id ?? `f${firmasCert.size + 1}-0000-4000-8000-000000000000`, nombre, licencia: json.licencia ? json.licencia.toUpperCase() : null, autoridad_id: json.autoridad_id ?? null, png: json.png, updated_at: new Date().toISOString() };
+    const previa = personas().find((x) => x.nombre === nombre);
+    const f = { ...conDefaults(previa ?? {}), id: previa?.id ?? `f${firmasCert.size + 1}000000-0000-4000-8000-000000000000`, nombre, licencia: json.licencia ? json.licencia.toUpperCase() : null, autoridad_id: json.autoridad_id ?? null, png: json.png, updated_at: new Date().toISOString() };
+    for (const c of ["alias", "png_sello", "automatica"]) if (c in json) f[c] = c === "alias" ? json[c].map(normalizar) : json[c];
     firmasCert.set(f.id, f);
     return dar(200, f);
   }
-  if (ruta.startsWith("/api/firmas/certificantes/") && req.method === "DELETE") { firmasCert.delete(ruta.split("/").pop()); return dar(204); }
+  let m;
+  if (ruta === "/api/firmas/certificantes/vuelos" && req.method === "DELETE") {
+    const ids = (url.searchParams.get("vuelo_ids") || "").split(",");
+    let n = 0;
+    for (const v of vuelos) if (ids.includes(v.id)) { v.certificante_id = null; v.certificante_firma = null; n++; }
+    return dar(200, { desasociados: n });
+  }
+  if ((m = /^\/api\/firmas\/certificantes\/([^/]+)\/vuelos$/.exec(ruta)) && req.method === "POST") {
+    const p = firmasCert.get(m[1]);
+    if (!p) return dar(404, { detail: "Esa persona no existe." });
+    const elegidos = vuelos.filter((v) => json.vuelo_ids.includes(v.id));
+    if (elegidos.length !== new Set(json.vuelo_ids).size) return dar(404, { detail: "Alguno de esos vuelos no existe." });
+    const avisos = [];
+    let completados = 0;
+    for (const v of elegidos) {
+      v.certificante_id = p.id;
+      v.certificante_firma = json.firma ?? null;
+      const actual = String(v.cad_autoridad_nombre ?? "").trim();
+      if (!actual) { v.cad_autoridad_nombre = p.nombre; if (p.autoridad_id && !v.cad_autoridad_id) v.cad_autoridad_id = p.autoridad_id; completados++; }
+      else if (!mejorForma(actual, p)) avisos.push({ vuelo_id: v.id, mensaje: `Este vuelo dice ${actual} para el CAD; no lo cambié.` });
+    }
+    if (json.sumar_alias && !(p.alias ?? []).includes(normalizar(json.sumar_alias)) && normalizar(json.sumar_alias) !== normalizar(p.nombre)) p.alias = [...(p.alias ?? []), normalizar(json.sumar_alias)];
+    return dar(200, { asignados: elegidos.length, completados, avisos });
+  }
+  if ((m = /^\/api\/firmas\/certificantes\/([^/]+)$/.exec(ruta)) && req.method === "PATCH") {
+    const p = firmasCert.get(m[1]);
+    if (!p) return dar(404, { detail: "Esa firma no existe." });
+    for (const c of ["png", "png_sello"]) if (json[c] && !esPng(json[c])) return dar(400, { detail: "La firma tiene que ser un PNG." });
+    for (const c of ["nombre", "licencia", "autoridad_id", "png", "png_sello", "alias", "automatica"]) {
+      if (!(c in json)) continue;
+      p[c] = c === "nombre" ? json[c].trim().replace(/\s+/g, " ").toUpperCase() : c === "licencia" ? (json[c] ? json[c].toUpperCase() : null) : c === "alias" ? json[c].map(normalizar) : json[c];
+    }
+    return dar(200, conDefaults(p));
+  }
+  if (m = /^\/api\/firmas\/certificantes\/([^/]+)$/.exec(ruta)) {
+    if (req.method === "DELETE") {
+      firmasCert.delete(m[1]);
+      for (const v of vuelos) if (v.certificante_id === m[1]) { v.certificante_id = null; v.certificante_firma = null; }
+      return dar(204);
+    }
+  }
   if (ruta === "/api/firmas/dorsos" && req.method === "GET") {
     const lb = url.searchParams.get("logbook_id");
     return dar(200, [...dorsosFalsos.values()].filter((d) => !lb || d.logbook_id === lb).sort((a, b) => a.hoja - b.hoja));
@@ -294,7 +390,7 @@ function rutaFirmas(req, res, ruta, url, json) {
   if (ruta === "/api/firmas/dorsos" && req.method === "PUT") {
     if (json.png && !esPng(json.png)) return dar(400, { detail: "La firma tiene que ser un PNG." });
     const k = `${json.logbook_id}:${json.hoja}`;
-    const d = { id: dorsosFalsos.get(k)?.id ?? `d${dorsosFalsos.size + 1}-0000-4000-8000-000000000000`, logbook_id: json.logbook_id, hoja: json.hoja, png: json.png ?? null, aclaracion: json.aclaracion ? json.aclaracion.toUpperCase() : null, fecha: json.fecha ?? null };
+    const d = { id: dorsosFalsos.get(k)?.id ?? `d${dorsosFalsos.size + 1}-0000-4000-8000-000000000000`, logbook_id: json.logbook_id, hoja: json.hoja, png: json.png ?? null, aclaracion: json.aclaracion ? json.aclaracion.toUpperCase() : null, fecha: json.fecha ?? null, certificante_ids: json.certificante_ids ?? [] };
     dorsosFalsos.set(k, d);
     return dar(200, d);
   }

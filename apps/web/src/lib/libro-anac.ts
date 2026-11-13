@@ -113,8 +113,18 @@ export interface RenglonLibro {
    * autoridad del CAD y el nombre. Con eso se busca su firma guardada para la columna
    * "Certificaciones" (`lib/firmas-libro.ts`). Nada de acá se dibuja solo.
    */
-  certificante: { autoridadId: number | null; nombre: string } | null;
+  certificante: CertificanteDelRenglon | null;
   valores: ValoresLibro;
+}
+
+/** Quién certificó el vuelo para el PDF: lo del CAD y, desde la 048, la persona asignada y la anulación de su firma. */
+export interface CertificanteDelRenglon {
+  autoridadId: number | null;
+  nombre: string;
+  /** `flights.certificante_id`: la persona asignada al vuelo, si la hay. */
+  certificanteId?: string | null;
+  /** `flights.certificante_firma`: null = lo que diga la persona; "si" o "no" anula. */
+  firma?: "si" | "no" | null;
 }
 
 export interface HojaLibro {
@@ -240,8 +250,13 @@ function renglon(f: Flight, avion: Aircraft | undefined): RenglonLibro {
     potencia: avion?.potencia_hp ? String(avion.potencia_hp) : "",
     clase: claseOficial(avion?.type_acft),
     certificante:
-      f.cad_autoridad_id || f.cad_autoridad_nombre?.trim()
-        ? { autoridadId: f.cad_autoridad_id ?? null, nombre: (f.cad_autoridad_nombre ?? "").trim() }
+      f.cad_autoridad_id || f.cad_autoridad_nombre?.trim() || f.certificante_id || f.certificante_firma
+        ? {
+            autoridadId: f.cad_autoridad_id ?? null,
+            nombre: (f.cad_autoridad_nombre ?? "").trim(),
+            certificanteId: f.certificante_id ?? null,
+            firma: f.certificante_firma ?? null,
+          }
         : null,
     valores: v,
   };

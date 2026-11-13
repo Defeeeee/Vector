@@ -1,5 +1,7 @@
 "use client";
 
+import CertificanteDelVuelo from "@/components/dashboard/CertificanteDelVuelo";
+import type { CertificanteBreve } from "@/lib/firmas-libro";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AUTORIDADES_CAD } from "@/lib/cad";
@@ -131,6 +133,8 @@ interface FlightLogFormProps {
    * la que el formulario propone para el CAD. Vacío, los campos arrancan vacíos.
    */
   autoridades?: Record<string, { id: number; nombre: string }>;
+  /** Las personas con firma guardada (migración 048): "Certificó" y "Firma en el PDF". */
+  certificantes?: CertificanteBreve[];
   /**
    * El piloto conectó su cuenta de ANAC ("Pasar al CAD desde Vector", 2.33.0): se ofrece
    * cargarlo también en el CAD al guardar. Sin cuenta conectada no se muestra nada.
@@ -172,7 +176,7 @@ function isValidCode(code: string, airport: AirportRef | null): boolean {
   return cleaned.length === 4 && /^[A-Z0-9]+$/.test(cleaned);
 }
 
-export default function FlightLogForm({ aircraft, logbooks = [], initialData, redirectTo, planVueloId, autoridades = {}, cadConectado = false }: FlightLogFormProps) {
+export default function FlightLogForm({ aircraft, logbooks = [], initialData, redirectTo, planVueloId, autoridades = {}, certificantes = [], cadConectado = false }: FlightLogFormProps) {
   const router = useRouter();
   const { notificar } = useAvisos();
   const [isPending, setIsPending] = useState(false);
@@ -836,6 +840,8 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
                   <p className="text-[12px] text-zinc-500 dark:text-zinc-400">
                     El CAD de ANAC la pide en cada vuelo. Si la cargás acá, la tenés lista para pasarlo.
                   </p>
+                  {/* Quién lo firma en el PDF del libro (migración 048). */}
+                  <CertificanteDelVuelo variante="formulario" certificantes={certificantes} />
                   {cadConectado && (
                     <label className="flex items-start gap-3 cursor-pointer rounded-2xl border border-aviation-blue/20 dark:border-aviation-cyan/20 bg-aviation-blue/[0.04] dark:bg-aviation-cyan/[0.05] px-4 py-3">
                       <input

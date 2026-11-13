@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import type { CertificanteBreve } from "@/lib/firmas-libro";
 import { Flight, Aircraft, Logbook, Profile, Transaction } from "@/types";
 import { costosPorVuelo } from "@/lib/costos";
 import { hitoCruzado } from "@/lib/hitos";
@@ -44,14 +45,17 @@ async function getHistoryData() {
 }
 
 export default async function HistoryPage({ searchParams }: { searchParams: Promise<{ nuevo?: string; editar?: string; ver?: string }> }) {
-  const [{ flights, aircraft, transactions, profile }, resumen, librosRes, { nuevo, editar, ver }] = await Promise.all([
+  const [{ flights, aircraft, transactions, profile }, resumen, librosRes, certificantesRes, { nuevo, editar, ver }] = await Promise.all([
     getHistoryData(),
     leerResumenSocial(),
     // Para el PDF (se arma de a un libro) y para el hito: la apertura suma al total.
     apiFetch("/logbooks"),
+    // Las personas con firma guardada (migración 048), sin sus imágenes.
+    apiFetch("/firmas/certificantes/nombres", { cache: "no-store" }),
     searchParams,
   ]);
   const libros: Logbook[] = librosRes.ok ? await librosRes.json() : [];
+  const certificantes: CertificanteBreve[] = certificantesRes.ok ? await certificantesRes.json().catch(() => []) : [];
 
   const costos = costosPorVuelo(transactions);
 
@@ -181,7 +185,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
           hito={hito}
         />
       )}
-      <FlightListClient flights={sortedFlights} aircraft={aircraft} costos={costos} alumno={esAlumno(profile?.license_type)} fechaPpa={profile?.fecha_ppa ?? null} editar={editar} ver={ver} />
+      <FlightListClient flights={sortedFlights} aircraft={aircraft} costos={costos} alumno={esAlumno(profile?.license_type)} fechaPpa={profile?.fecha_ppa ?? null} editar={editar} ver={ver} certificantes={certificantes} />
     </div>
   );
 }

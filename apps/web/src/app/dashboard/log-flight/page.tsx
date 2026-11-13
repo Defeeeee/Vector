@@ -8,6 +8,7 @@ import FlightLogForm from "@/components/dashboard/FlightLogForm";
 import SinAeronaves from "@/components/dashboard/SinAeronaves";
 import { parsePrefill } from "@/lib/prefill";
 import { autoridadesPorFinalidad } from "@/lib/cad";
+import type { CertificanteBreve } from "@/lib/firmas-libro";
 import { estadoConexionCad } from "@/actions/cad-vector";
 
 import { redirect } from "next/navigation";
@@ -15,7 +16,7 @@ import { redirect } from "next/navigation";
 async function getData() {
   // El orden importa y ya mordió una vez: se agregó `/logbooks` en el medio del array
   // sin mover los nombres y la página murió con `logbooks.find is not a function`.
-  const [acRes, lbRes, perfilRes, recientesRes] = await Promise.all([
+  const [acRes, lbRes, perfilRes, recientesRes, certificantesRes] = await Promise.all([
     apiFetch("/aircraft"),
     apiFetch("/logbooks"),
     // El alumno piloto ve un formulario más simple.
@@ -23,6 +24,8 @@ async function getData() {
     // Los últimos vuelos, del más nuevo al más viejo: de ahí sale la autoridad para el CAD
     // que el formulario propone en cada finalidad (`autoridadesPorFinalidad`).
     apiFetch("/flights/history?limit=100"),
+    // Las personas con firma guardada (migración 048): "Certificó" en el formulario.
+    apiFetch("/firmas/certificantes/nombres", { cache: "no-store" }),
   ]);
 
   if (acRes.status === 401) {
@@ -35,7 +38,9 @@ async function getData() {
   const perfiles: Profile[] = perfilRes.ok ? await perfilRes.json() : [];
   const recientes = recientesRes.ok ? ((await recientesRes.json()) as { items?: Flight[] }).items ?? [] : [];
 
-  return { aircraft, logbooks, alumno: esAlumno(perfiles[0]?.license_type), autoridades: autoridadesPorFinalidad(recientes) };
+  const certificantes: CertificanteBreve[] = certificantesRes.ok ? await certificantesRes.json().catch(() => []) : [];
+
+  return { aircraft, logbooks, alumno: esAlumno(perfiles[0]?.license_type), autoridades: autoridadesPorFinalidad(recientes), certificantes };
 }
 
 interface PageProps {
@@ -48,7 +53,7 @@ export default async function LogFlightPage({ searchParams }: PageProps) {
   // de iOS. Ver `src/lib/prefill.ts`.
   const { initialData: prefillData, planVueloId } = parsePrefill(resolvedParams);
 
-  const [{ aircraft, logbooks, alumno, autoridades }, conexionCad] = await Promise.all([getData(), estadoConexionCad()]);
+  const [{ aircraft, logbooks, alumno, autoridades, certificantes }, conexionCad] = await Promise.all([getData(), estadoConexionCad()]);
   // "Cargarlo también en tu CAD" sólo con la cuenta de ANAC conectada y andando.
   const cadConectado = !!conexionCad?.disponible && conexionCad.conectado && conexionCad.estado === "ok";
 
@@ -96,6 +101,7 @@ export default async function LogFlightPage({ searchParams }: PageProps) {
             initialData={prefillData}
             planVueloId={planVueloId}
             autoridades={autoridades}
+            certificantes={certificantes}
             cadConectado={cadConectado}
             /*
               Antes de esto, `logFlight` redirigía sola con `push`, así que volver
