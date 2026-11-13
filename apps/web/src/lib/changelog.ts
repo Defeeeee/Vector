@@ -1602,6 +1602,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.32.1",
+    fecha: "2026-11-13",
+    motivo: "Una firma que ya venía sin fondo (PNG transparente) se cargaba en negativo: el limpiador tomaba el fondo transparente como tinta. Arreglo de la 3.31.0.",
+  },
+  {
     version: "3.29.1",
     fecha: "2026-11-12",
     motivo: "Preparación para la mudanza a vectoraero.ar: la cookie de sesión según el dominio, las URLs públicas por variable y la extensión 1.4.0 que acepta los dos dominios. El piloto no ve nada todavía.",

@@ -252,9 +252,31 @@ function sacarMotas(alfa: Uint8ClampedArray, w: number, h: number, minimo: numbe
  * La foto, limpia: tinta sobre transparente, recortada al trazo. `null` si no encontró nada
  * de tinta (una foto de papel en blanco, o un ajuste demasiado bajo).
  */
+/**
+ * La imagen sobre papel blanco, respetando su transparencia. Un PNG que ya viene limpio (fondo
+ * transparente) trae el fondo como negro con alfa 0: sin esto, el limpiador lo leía como tinta y
+ * la firma salía en negativo (Federico, 2026-11-13, al subir una firma ya aislada). Una foto, que
+ * es toda opaca, pasa igual.
+ */
+export function sobrePapel(img: ImagenRgba): ImagenRgba {
+  const { width, height, data } = img;
+  let transparente = false;
+  for (let o = 3; o < data.length; o += 4) if (data[o] < 255) { transparente = true; break; }
+  if (!transparente) return img;
+  const fuera = new Uint8ClampedArray(data.length);
+  for (let o = 0; o < data.length; o += 4) {
+    const a = data[o + 3] / 255;
+    fuera[o] = data[o] * a + 255 * (1 - a);
+    fuera[o + 1] = data[o + 1] * a + 255 * (1 - a);
+    fuera[o + 2] = data[o + 2] * a + 255 * (1 - a);
+    fuera[o + 3] = 255;
+  }
+  return { width, height, data: fuera };
+}
+
 export function limpiarFirma(entrada: ImagenRgba, opciones: OpcionesLimpieza = {}): ImagenRgba | null {
   const { ajuste = 0, conservarColores = false, tinta = "azul", anchoMax = ANCHO_MAX_FIRMA, ladoMaxTrabajo = 1400 } = opciones;
-  const img = reducir(entrada, ladoMaxTrabajo);
+  const img = reducir(sobrePapel(entrada), ladoMaxTrabajo);
   const { width: w, height: h, data } = img;
   const total = w * h;
   const radio = Math.max(8, Math.round(Math.max(w, h) / 30));

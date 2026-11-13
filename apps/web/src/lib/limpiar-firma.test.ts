@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { desenfoqueCaja, limpiarFirma, otsu, reducir, rotar90, type ImagenRgba } from "./limpiar-firma";
+import { desenfoqueCaja, limpiarFirma, otsu, reducir, rotar90, sobrePapel, type ImagenRgba } from "./limpiar-firma";
 
 /** Una "foto" de papel: luz despareja, una sombra suave, grano, una firma, un sello y motas. */
 function foto({ sello = true, claro = true }: { sello?: boolean; claro?: boolean } = {}): {
@@ -172,6 +172,34 @@ describe("limpiarFirma", () => {
   it("anda con una imagen muy chica", () => {
     const data = new Uint8ClampedArray(4 * 4 * 4).fill(255);
     expect(() => limpiarFirma({ width: 4, height: 4, data })).not.toThrow();
+  });
+});
+
+describe("una firma que ya viene sin fondo (PNG transparente)", () => {
+  // Fondo transparente como lo entrega un canvas: negro con alfa 0, y un trazo azul opaco.
+  const w = 200, h = 80;
+  const data = new Uint8ClampedArray(w * h * 4);
+  for (let y = 30; y < 40; y++) for (let x = 20; x < 180; x++) { const o = (y * w + x) * 4; data[o] = 25; data[o + 1] = 40; data[o + 2] = 140; data[o + 3] = 255; }
+  const img: ImagenRgba = { width: w, height: h, data };
+
+  it("se pone sobre papel blanco: lo transparente queda blanco, el trazo igual", () => {
+    const p = sobrePapel(img);
+    expect(Array.from(p.data.subarray(0, 4))).toEqual([255, 255, 255, 255]);
+    const o = (35 * w + 100) * 4;
+    expect(Array.from(p.data.subarray(o, o + 3))).toEqual([25, 40, 140]);
+  });
+  it("una foto opaca no cambia", () => {
+    const opaca = { width: 2, height: 1, data: new Uint8ClampedArray([10, 20, 30, 255, 200, 200, 200, 255]) };
+    expect(sobrePapel(opaca)).toBe(opaca);
+  });
+  it("no sale en negativo: lo que queda con tinta es el trazo, no el fondo", () => {
+    const r = limpiarFirma(img)!;
+    expect(r).not.toBeNull();
+    let tinta = 0;
+    for (let o = 3; o < r.data.length; o += 4) if (r.data[o] > 128) tinta++;
+    // El trazo ocupa una franja chica del recorte; en negativo, casi todo el recorte sería tinta.
+    expect(tinta / (r.width * r.height)).toBeLessThan(0.6);
+    expect(r.height).toBeLessThan(h);
   });
 });
 
