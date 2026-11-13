@@ -119,7 +119,7 @@ export async function borrarFirmaCertificante(id: string) {
   return r;
 }
 
-/** Lo que se cambia de una persona ya guardada. `pngSello: null` quita el sello. */
+/** Lo que se cambia de una persona ya guardada (sus sellos van aparte: `agregarSello`, `editarSello`). */
 export async function editarCertificante(
   id: string,
   cambios: { nombre?: string; licencia?: string | null; autoridadId?: number | null; png?: string; alias?: string[]; automatica?: boolean }

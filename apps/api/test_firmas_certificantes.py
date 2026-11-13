@@ -69,10 +69,8 @@ lb = uuid4()
 d = DorsoHojaIn(logbook_id=lb, hoja=3, png=PNG, aclaracion=" pedro  gómez ", fecha="2026-11-02")
 check("el dorso normaliza la aclaración", d.aclaracion == "PEDRO GÓMEZ")
 check("el dorso toma la fecha", d.fecha.isoformat() == "2026-11-02")
-check("el dorso viejo con png se acepta (se ignora)", DorsoHojaIn(logbook_id=lb, hoja=1, png=PNG).png == PNG)
-check("el dorso puede ir sin imagen", DorsoHojaIn(logbook_id=lb, hoja=1, aclaracion="X").png is None)
+check("un png de una web vieja se ignora (la columna se borró en la 053)", not hasattr(DorsoHojaIn(logbook_id=lb, hoja=1, png=PNG), "png"))
 check("la hoja 0 no existe", falla(lambda: DorsoHojaIn(logbook_id=lb, hoja=0)))
-check("un dorso con JPG no pasa", falla(lambda: DorsoHojaIn(logbook_id=lb, hoja=1, png=JPG)))
 
 
 # --------------------------------------------------------------- 048: modelos

@@ -304,13 +304,12 @@ class DorsoTexto(BaseModel):
 class DorsoHojaIn(BaseModel):
     """
     El dorso de una hoja: aclaración, fecha y los sellos elegidos. **Las fotos van aparte**
-    (`/dorsos/fotos`, una por pedido). `png` se acepta por compatibilidad con la web vieja y
-    se ignora: la foto única pasó a `libro_hojas_dorso_fotos` en la migración 049.
+    (`/dorsos/fotos`, una por pedido). La columna `png` de la foto única se borró en la
+    migración 053; un `png` que mande una web vieja se ignora como cualquier campo de más.
     """
 
     logbook_id: UUID
     hoja: int = Field(ge=1, le=100_000)
-    png: Optional[str] = Field(default=None, max_length=MAX_DORSO_CHARS)
     aclaracion: Optional[str] = Field(default=None, max_length=160)
     fecha: Optional[dt.date] = None
     #: Los sellos (de cualquier persona) que van en este dorso, junto a sus fotos.
@@ -328,12 +327,6 @@ class DorsoHojaIn(BaseModel):
             return None
         v = limpiar_texto(v).upper()
         return v or None
-
-    @field_validator("png")
-    @classmethod
-    def _png(cls, v: Optional[str]) -> Optional[str]:
-        return None if v is None else validar_png(v)
-
 
 class DorsoFotoIn(BaseModel):
     logbook_id: UUID
