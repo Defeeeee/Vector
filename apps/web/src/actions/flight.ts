@@ -80,7 +80,7 @@ export async function logFlight(
     // Quién certifica el vuelo en el CAD, si la cargó (migración 032; `lib/cad.ts`).
     ...autoridadDelFormulario(formData.get("cad_autoridad_id"), formData.get("cad_autoridad_nombre")),
     // Quién lo certificó, para el PDF del libro (migración 048).
-    ...certificanteDelFormulario(formData.get("certificante_id"), formData.get("certificante_firma")),
+    ...certificanteDelFormulario(formData.get("certificante_id"), formData.get("certificante_firma"), formData.get("certificante_sello_id")),
   };
 
   const response = await apiFetch("/flights", {
@@ -219,7 +219,7 @@ export async function updateFlight(formData: FormData) {
     purpose: (formData.get("purpose") as string) || undefined,
     // Sólo si el formulario la trae: un PATCH sin estos campos no la toca (migración 032).
     ...(formData.has("cad_autoridad_id") ? autoridadDelFormulario(formData.get("cad_autoridad_id"), formData.get("cad_autoridad_nombre")) : {}),
-    ...certificanteDelFormulario(formData.get("certificante_id"), formData.get("certificante_firma")),
+    ...certificanteDelFormulario(formData.get("certificante_id"), formData.get("certificante_firma"), formData.get("certificante_sello_id")),
   };
 
   try {

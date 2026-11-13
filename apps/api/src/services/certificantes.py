@@ -81,14 +81,32 @@ def persona_de(nombre_vuelo: Optional[str], personas: Iterable[Dict[str, Any]]) 
     return ganadoras[0] if len(ganadoras) == 1 else None
 
 
+def sello_para_cargo(sellos: Iterable[Dict[str, Any]], autoridad_id: Optional[int]) -> Optional[Dict[str, Any]]:
+    """
+    El sello de una persona que le toca a un vuelo con ese cargo del CAD (migración 049):
+    el que tiene **el mismo `autoridad_id`**; si ninguno lo tiene, el que no declara cargo;
+    si tampoco, ninguno (no se elige uno "parecido"). Con dos del mismo cargo, el primero por orden.
+    """
+    ordenados = sorted(sellos, key=lambda x: (x.get("orden") or 0))
+    if autoridad_id is not None:
+        for sello in ordenados:
+            if sello.get("autoridad_id") == autoridad_id:
+                return sello
+    for sello in ordenados:
+        if sello.get("autoridad_id") is None:
+            return sello
+    return None
+
+
 def sugerencias(personas: List[Dict[str, Any]], vuelos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Por cada nombre distinto que aparece en vuelos **sin** certificante asignado y que es de
-    una persona guardada: `{certificante_id, nombre_en_vuelos, vuelo_ids, sumar_alias}`.
+    una persona guardada: `{certificante_id, nombre_en_vuelos, vuelo_ids, sumar_alias, sello_id}`.
     `sumar_alias` es True si el nombre no es el de la persona ni uno de sus alias (el toque
-    "Asociar y sumar el alias").
+    "Asociar y sumar el alias"). **Un mismo nombre con dos cargos del CAD son dos sugerencias**,
+    cada una con el sello de su cargo (`sello_para_cargo`; las personas traen su lista `sellos`).
     """
-    grupos: Dict[str, Dict[str, Any]] = {}
+    grupos: Dict[Tuple[str, Optional[int]], Dict[str, Any]] = {}
     for v in vuelos:
         if v.get("certificante_id"):
             continue
@@ -96,37 +114,47 @@ def sugerencias(personas: List[Dict[str, Any]], vuelos: List[Dict[str, Any]]) ->
         clave = normalizar(crudo)
         if not clave:
             continue
-        g = grupos.setdefault(clave, {"nombre": crudo, "vuelo_ids": []})
+        cargo = v.get("cad_autoridad_id")
+        g = grupos.setdefault((clave, cargo), {"nombre": crudo, "cargo": cargo, "vuelo_ids": []})
         g["vuelo_ids"].append(str(v["id"]))
     salida: List[Dict[str, Any]] = []
-    for clave, g in grupos.items():
+    for (clave, _cargo), g in grupos.items():
         persona = persona_de(g["nombre"], personas)
         if not persona:
             continue
         conocidos = {normalizar(persona.get("nombre"))} | {normalizar(a) for a in persona.get("alias") or []}
+        sello = sello_para_cargo(persona.get("sellos") or [], g["cargo"])
         salida.append({
             "certificante_id": str(persona["id"]),
             "nombre_en_vuelos": g["nombre"],
             "vuelo_ids": g["vuelo_ids"],
             "sumar_alias": clave not in conocidos,
+            "sello_id": str(sello["id"]) if sello else None,
         })
     salida.sort(key=lambda s: (-len(s["vuelo_ids"]), s["nombre_en_vuelos"]))
     return salida
 
 
-def completar_autoridad(vuelo: Dict[str, Any], persona: Dict[str, Any]) -> Tuple[Dict[str, Any], Optional[str]]:
+def completar_autoridad(
+    vuelo: Dict[str, Any], persona: Dict[str, Any], sello: Optional[Dict[str, Any]] = None
+) -> Tuple[Dict[str, Any], Optional[str]]:
     """
-    Qué escribirle a `cad_autoridad_*` de un vuelo al asignarle esta persona: `(cambios, aviso)`.
+    Qué escribirle a `cad_autoridad_*` de un vuelo al asignarle esta persona (y, si lo hay, su
+    sello): `(cambios, aviso)`.
 
-    Si el vuelo no tiene nombre de certificante, se le pone el de la persona (y su cargo, si lo
-    tiene): es lo que va al CAD. **Si ya tiene otro nombre, no se pisa**: va un aviso. Si el
-    nombre que tiene es de la misma persona (otra grafía, con la licencia) no hay nada que avisar.
+    Si el vuelo no tiene nombre de certificante, se le pone el que va al CAD con ese sello
+    (`nombre_cad`, o el de la persona) y su cargo (el del sello, o el de la persona) si el
+    vuelo no tiene uno. **Si ya tiene otro nombre, no se pisa**: va un aviso. Si el nombre que
+    tiene es de la misma persona (otra grafía, con la licencia) no hay nada que avisar.
     """
     actual = " ".join((vuelo.get("cad_autoridad_nombre") or "").split())
     if not actual:
-        cambios: Dict[str, Any] = {"cad_autoridad_nombre": persona["nombre"]}
-        if persona.get("autoridad_id") is not None and not vuelo.get("cad_autoridad_id"):
-            cambios["cad_autoridad_id"] = persona["autoridad_id"]
+        cambios: Dict[str, Any] = {"cad_autoridad_nombre": (sello or {}).get("nombre_cad") or persona["nombre"]}
+        cargo = (sello or {}).get("autoridad_id")
+        if cargo is None:
+            cargo = persona.get("autoridad_id")
+        if cargo is not None and not vuelo.get("cad_autoridad_id"):
+            cambios["cad_autoridad_id"] = cargo
         return cambios, None
     if mejor_forma(actual, persona) > 0:
         return {}, None

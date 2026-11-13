@@ -20,17 +20,25 @@ from src.models.firmas import (
     AsignarVuelos,
     AvisoVuelo,
     CertificanteBreve,
+    DorsoFoto,
+    DorsoFotoIn,
     DorsoHoja,
     DorsoHojaIn,
     FirmaCertificante,
     FirmaCertificanteEdicion,
     FirmaCertificanteIn,
+    MAX_FOTOS_POR_DORSO,
+    MAX_SELLOS_POR_PERSONA,
+    Sello,
+    SelloEdicion,
+    SelloIn,
     SugerenciaCertificante,
     limpiar_alias,
 )
 from src.services import certificantes as svc
 
-COLUMNAS_CERTIFICANTE = "id,nombre,licencia,autoridad_id,png,alias,png_sello,automatica,updated_at"
+COLUMNAS_CERTIFICANTE = "id,nombre,licencia,autoridad_id,png,alias,automatica,updated_at"
+COLUMNAS_SELLO = "id,certificante_id,etiqueta,autoridad_id,nombre_cad,orden"
 
 #: Cuántos certificantes y cuántas hojas con dorso. Un piloto tiene un puñado de instructores
 #: y un libro de unas decenas de hojas; esto sólo evita que la tabla sea un depósito.
@@ -55,7 +63,8 @@ class FirmasController(Controller):
             .limit(LIMITE_CERTIFICANTES)
             .execute()
         )
-        return [FirmaCertificante(**f) for f in (resp.data or [])]
+        sellos = _sellos_por_persona(supabase_client, user_id, con_png=True)
+        return [FirmaCertificante(**f, sellos=[Sello(**x) for x in sellos.get(f["id"], [])]) for f in (resp.data or [])]
 
     @put("/certificantes")
     async def guardar_certificante(
@@ -88,7 +97,7 @@ class FirmasController(Controller):
             "png": data.png,
         }
         # Lo nuevo de la 048 sólo se escribe si vino: guardar de nuevo una firma no borra los alias.
-        for campo in ("alias", "png_sello", "automatica"):
+        for campo in ("alias", "automatica"):
             if campo in data.model_fields_set:
                 fila[campo] = getattr(data, campo)
         resp = (
@@ -98,13 +107,16 @@ class FirmasController(Controller):
         )
         if not resp.data:
             raise ClientException(detail="No se pudo guardar la firma.")
-        return FirmaCertificante(**resp.data[0])
+        return _con_sellos(supabase_client, user_id, resp.data[0])
 
     @get("/certificantes/nombres")
     async def nombres_certificantes(self, request: Request, supabase_client: Client) -> List[CertificanteBreve]:
         """Las personas sin sus imágenes (decenas de KB cada una): para elegir una en un vuelo."""
         user_id = str(request.state.user.id)
-        return [CertificanteBreve(**p) for p in sorted(_personas(supabase_client, user_id), key=lambda p: p["nombre"])]
+        return [
+            CertificanteBreve(**{k: v for k, v in p.items() if k != "alias"})
+            for p in sorted(_personas(supabase_client, user_id), key=lambda p: p["nombre"])
+        ]
 
     @get("/certificantes/sugerencias")
     async def sugerencias_certificantes(self, request: Request, supabase_client: Client) -> List[SugerenciaCertificante]:
@@ -118,7 +130,7 @@ class FirmasController(Controller):
             return []
         vuelos = (
             supabase_client.table("flights")
-            .select("id,cad_autoridad_nombre,certificante_id")
+            .select("id,cad_autoridad_nombre,cad_autoridad_id,certificante_id")
             .eq("user_id", user_id)
             .is_("certificante_id", "null")
             .execute()
@@ -146,7 +158,76 @@ class FirmasController(Controller):
         )
         if not resp.data:
             raise NotFoundException("Esa firma no existe.")
-        return FirmaCertificante(**resp.data[0])
+        return _con_sellos(supabase_client, user_id, resp.data[0])
+
+    # ------------------------------------------------------------- sellos (049)
+
+    @post("/certificantes/{firma_id:uuid}/sellos")
+    async def agregar_sello(self, request: Request, supabase_client: Client, firma_id: UUID, data: SelloIn) -> Sello:
+        """Un sello más de la persona (una imagen por pedido: el cuerpo de una server action tiene tope)."""
+        user_id = str(request.state.user.id)
+        _persona(supabase_client, user_id, firma_id)
+        existentes = (
+            supabase_client.table("certificante_sellos")
+            .select("id,orden")
+            .eq("user_id", user_id)
+            .eq("certificante_id", str(firma_id))
+            .execute()
+        ).data or []
+        if len(existentes) >= MAX_SELLOS_POR_PERSONA:
+            raise ClientException(detail=f"Hasta {MAX_SELLOS_POR_PERSONA} sellos por persona.")
+        resp = (
+            supabase_client.table("certificante_sellos")
+            .insert(
+                {
+                    "user_id": user_id,
+                    "certificante_id": str(firma_id),
+                    "etiqueta": data.etiqueta,
+                    "autoridad_id": data.autoridad_id,
+                    "nombre_cad": data.nombre_cad,
+                    "png": data.png,
+                    "orden": max((e["orden"] or 0 for e in existentes), default=-1) + 1,
+                }
+            )
+            .execute()
+        )
+        if not resp.data:
+            raise ClientException(detail="No se pudo guardar el sello.")
+        return Sello(**resp.data[0])
+
+    @patch("/sellos/{sello_id:uuid}")
+    async def editar_sello(self, request: Request, supabase_client: Client, sello_id: UUID, data: SelloEdicion) -> Sello:
+        user_id = str(request.state.user.id)
+        cambios = data.model_dump(exclude_unset=True)
+        for campo in ("etiqueta", "png"):
+            if campo in cambios and cambios[campo] is None:
+                raise ClientException(detail=f"El campo {campo} no puede ir vacío.")
+        if not cambios:
+            raise ClientException(detail="No hay nada para cambiar.")
+        resp = (
+            supabase_client.table("certificante_sellos")
+            .update(cambios)
+            .eq("id", str(sello_id))
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if not resp.data:
+            raise NotFoundException("Ese sello no existe.")
+        return Sello(**resp.data[0])
+
+    @delete("/sellos/{sello_id:uuid}")
+    async def borrar_sello(self, request: Request, supabase_client: Client, sello_id: UUID) -> None:
+        """Sus vuelos quedan sin sello (`on delete set null`); un dorso que lo elegía lo ignora."""
+        user_id = str(request.state.user.id)
+        resp = (
+            supabase_client.table("certificante_sellos")
+            .delete()
+            .eq("id", str(sello_id))
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if not resp.data:
+            raise NotFoundException("Ese sello no existe.")
 
     @post("/certificantes/{firma_id:uuid}/vuelos")
     async def asignar_vuelos(
@@ -159,6 +240,11 @@ class FirmasController(Controller):
         """
         user_id = str(request.state.user.id)
         persona = _persona(supabase_client, user_id, firma_id)
+        sello = None
+        if data.sello_id:
+            sello = next((x for x in persona.get("sellos") or [] if x["id"] == str(data.sello_id)), None)
+            if not sello:
+                raise NotFoundException("Ese sello no es de esa persona.")
         ids = list(dict.fromkeys(str(v) for v in data.vuelo_ids))
         vuelos = (
             supabase_client.table("flights")
@@ -171,13 +257,13 @@ class FirmasController(Controller):
             raise NotFoundException("Alguno de esos vuelos no existe.")
 
         supabase_client.table("flights").update(
-            {"certificante_id": str(firma_id), "certificante_firma": data.firma}
+            {"certificante_id": str(firma_id), "certificante_firma": data.firma, "certificante_sello_id": str(data.sello_id) if data.sello_id else None}
         ).eq("user_id", user_id).in_("id", ids).execute()
 
         avisos: List[AvisoVuelo] = []
         a_completar: dict = {}
         for v in vuelos:
-            cambios, aviso = svc.completar_autoridad(v, persona)
+            cambios, aviso = svc.completar_autoridad(v, persona, sello)
             if aviso:
                 avisos.append(AvisoVuelo(vuelo_id=v["id"], mensaje=aviso))
             elif cambios:
@@ -217,7 +303,7 @@ class FirmasController(Controller):
             raise ClientException(detail=f"Elegí de 1 a {MAX_VUELOS_POR_PEDIDO} vuelos.")
         resp = (
             supabase_client.table("flights")
-            .update({"certificante_id": None, "certificante_firma": None})
+            .update({"certificante_id": None, "certificante_firma": None, "certificante_sello_id": None})
             .eq("user_id", user_id)
             .in_("id", ids)
             .execute()
@@ -243,42 +329,58 @@ class FirmasController(Controller):
     async def listar_dorsos(
         self, request: Request, supabase_client: Client, logbook_id: Optional[UUID] = None
     ) -> List[DorsoHoja]:
+        """Los dorsos con sus fotos (varias por hoja, por `orden`). Una hoja con fotos siempre tiene su fila."""
         user_id = str(request.state.user.id)
         q = (
             supabase_client.table("libro_hojas_dorso")
-            .select("id,logbook_id,hoja,png,aclaracion,fecha,certificante_ids")
+            .select("id,logbook_id,hoja,aclaracion,fecha,sello_ids")
+            .eq("user_id", user_id)
+        )
+        qf = (
+            supabase_client.table("libro_hojas_dorso_fotos")
+            .select("id,logbook_id,hoja,png,orden")
             .eq("user_id", user_id)
         )
         if logbook_id:
             q = q.eq("logbook_id", str(logbook_id))
+            qf = qf.eq("logbook_id", str(logbook_id))
         resp = q.order("hoja").limit(LIMITE_DORSOS).execute()
-        return [DorsoHoja(**f) for f in (resp.data or [])]
+        fotos = qf.order("orden").limit(LIMITE_DORSOS * MAX_FOTOS_POR_DORSO).execute().data or []
+        por_hoja: dict = {}
+        for f in fotos:
+            por_hoja.setdefault((f["logbook_id"], f["hoja"]), []).append(DorsoFoto(id=f["id"], png=f["png"], orden=f["orden"] or 0))
+        return [DorsoHoja(**f, fotos=por_hoja.get((f["logbook_id"], f["hoja"]), [])) for f in (resp.data or [])]
 
     @put("/dorsos")
     async def guardar_dorso(self, request: Request, supabase_client: Client, data: DorsoHojaIn) -> DorsoHoja:
+        """Aclaración, fecha y sellos del dorso. Las fotos se agregan y se quitan una por una."""
         user_id = str(request.state.user.id)
-        libro = (
-            supabase_client.table("logbooks")
-            .select("id")
-            .eq("id", str(data.logbook_id))
-            .eq("user_id", user_id)
-            .execute()
-        )
-        if not libro.data:
-            raise NotFoundException("Ese libro no existe.")
-        elegidos = [str(c) for c in dict.fromkeys(data.certificante_ids or [])]
-        if not data.png and not data.aclaracion and not data.fecha and not elegidos:
-            raise ClientException(detail="No hay nada para guardar en el dorso.")
+        _libro_propio(supabase_client, user_id, data.logbook_id)
+        elegidos = [str(c) for c in dict.fromkeys(data.sello_ids or [])]
+        if not data.aclaracion and not data.fecha and not elegidos:
+            # Sin nada de esto, el dorso sólo existe si tiene fotos (o ya existía): se acepta
+            # para que "guardar" con las fotos recién cargadas no falle.
+            hay = (
+                supabase_client.table("libro_hojas_dorso_fotos")
+                .select("id")
+                .eq("user_id", user_id)
+                .eq("logbook_id", str(data.logbook_id))
+                .eq("hoja", data.hoja)
+                .limit(1)
+                .execute()
+            ).data
+            if not hay:
+                raise ClientException(detail="No hay nada para guardar en el dorso.")
         if elegidos:
             propios = (
-                supabase_client.table("firmas_certificantes")
+                supabase_client.table("certificante_sellos")
                 .select("id")
                 .eq("user_id", user_id)
                 .in_("id", elegidos)
                 .execute()
             ).data or []
             if len(propios) != len(elegidos):
-                raise NotFoundException("Alguna de esas firmas no existe.")
+                raise NotFoundException("Alguno de esos sellos no existe.")
         resp = (
             supabase_client.table("libro_hojas_dorso")
             .upsert(
@@ -286,10 +388,9 @@ class FirmasController(Controller):
                     "user_id": user_id,
                     "logbook_id": str(data.logbook_id),
                     "hoja": data.hoja,
-                    "png": data.png,
                     "aclaracion": data.aclaracion,
                     "fecha": data.fecha.isoformat() if data.fecha else None,
-                    "certificante_ids": elegidos,
+                    "sello_ids": elegidos,
                 },
                 on_conflict="logbook_id,hoja",
             )
@@ -297,10 +398,83 @@ class FirmasController(Controller):
         )
         if not resp.data:
             raise ClientException(detail="No se pudo guardar el dorso.")
-        return DorsoHoja(**resp.data[0])
+        fila = resp.data[0]
+        fotos = (
+            supabase_client.table("libro_hojas_dorso_fotos")
+            .select("id,png,orden")
+            .eq("user_id", user_id)
+            .eq("logbook_id", fila["logbook_id"])
+            .eq("hoja", fila["hoja"])
+            .order("orden")
+            .execute()
+        ).data or []
+        return DorsoHoja(**fila, fotos=[DorsoFoto(**f) for f in fotos])
+
+    @post("/dorsos/fotos")
+    async def agregar_foto_dorso(self, request: Request, supabase_client: Client, data: DorsoFotoIn) -> DorsoFoto:
+        """
+        Una foto más para el dorso de una hoja (una por pedido: el cuerpo de una server action de
+        Next tiene tope de 1 MB y cada PNG pesa ~330 KB). Hasta 12 por hoja. Si la hoja no
+        tenía dorso, se crea vacío para que aparezca en la lista.
+        """
+        user_id = str(request.state.user.id)
+        _libro_propio(supabase_client, user_id, data.logbook_id)
+        existentes = (
+            supabase_client.table("libro_hojas_dorso_fotos")
+            .select("id,orden")
+            .eq("user_id", user_id)
+            .eq("logbook_id", str(data.logbook_id))
+            .eq("hoja", data.hoja)
+            .execute()
+        ).data or []
+        if len(existentes) >= MAX_FOTOS_POR_DORSO:
+            raise ClientException(detail=f"Hasta {MAX_FOTOS_POR_DORSO} fotos por dorso.")
+        resp = (
+            supabase_client.table("libro_hojas_dorso_fotos")
+            .insert(
+                {
+                    "user_id": user_id,
+                    "logbook_id": str(data.logbook_id),
+                    "hoja": data.hoja,
+                    "png": data.png,
+                    "orden": max((e["orden"] or 0 for e in existentes), default=-1) + 1,
+                }
+            )
+            .execute()
+        )
+        if not resp.data:
+            raise ClientException(detail="No se pudo guardar la foto.")
+        hay_dorso = (
+            supabase_client.table("libro_hojas_dorso")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("logbook_id", str(data.logbook_id))
+            .eq("hoja", data.hoja)
+            .execute()
+        ).data
+        if not hay_dorso:
+            supabase_client.table("libro_hojas_dorso").insert(
+                {"user_id": user_id, "logbook_id": str(data.logbook_id), "hoja": data.hoja}
+            ).execute()
+        f = resp.data[0]
+        return DorsoFoto(id=f["id"], png=f["png"], orden=f["orden"] or 0)
+
+    @delete("/dorsos/fotos/{foto_id:uuid}")
+    async def borrar_foto_dorso(self, request: Request, supabase_client: Client, foto_id: UUID) -> None:
+        user_id = str(request.state.user.id)
+        resp = (
+            supabase_client.table("libro_hojas_dorso_fotos")
+            .delete()
+            .eq("id", str(foto_id))
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if not resp.data:
+            raise NotFoundException("Esa foto no existe.")
 
     @delete("/dorsos/{dorso_id:uuid}")
     async def borrar_dorso(self, request: Request, supabase_client: Client, dorso_id: UUID) -> None:
+        """Quita el dorso entero: su aclaración, sus sellos y todas sus fotos."""
         user_id = str(request.state.user.id)
         resp = (
             supabase_client.table("libro_hojas_dorso")
@@ -311,6 +485,41 @@ class FirmasController(Controller):
         )
         if not resp.data:
             raise NotFoundException("Ese dorso no existe.")
+        fila = resp.data[0]
+        supabase_client.table("libro_hojas_dorso_fotos").delete().eq("user_id", user_id).eq(
+            "logbook_id", fila["logbook_id"]
+        ).eq("hoja", fila["hoja"]).execute()
+
+
+def _libro_propio(supabase_client: Client, user_id: str, logbook_id: UUID) -> None:
+    """El libro tiene que ser del piloto, o 404."""
+    libro = (
+        supabase_client.table("logbooks").select("id").eq("id", str(logbook_id)).eq("user_id", user_id).execute()
+    )
+    if not libro.data:
+        raise NotFoundException("Ese libro no existe.")
+
+
+def _sellos_por_persona(supabase_client: Client, user_id: str, con_png: bool = False) -> dict:
+    """`{certificante_id: [sello, …]}` por `orden`; con la imagen sólo si hace falta."""
+    columnas = COLUMNAS_SELLO + (",png" if con_png else "")
+    filas = (
+        supabase_client.table("certificante_sellos")
+        .select(columnas)
+        .eq("user_id", user_id)
+        .order("orden")
+        .limit(LIMITE_CERTIFICANTES * MAX_SELLOS_POR_PERSONA)
+        .execute()
+    ).data or []
+    salida: dict = {}
+    for f in filas:
+        salida.setdefault(f["certificante_id"], []).append({k: v for k, v in f.items() if k != "certificante_id"})
+    return salida
+
+
+def _con_sellos(supabase_client: Client, user_id: str, fila: dict) -> FirmaCertificante:
+    sellos = _sellos_por_persona(supabase_client, user_id, con_png=True).get(fila["id"], [])
+    return FirmaCertificante(**fila, sellos=[Sello(**x) for x in sellos])
 
 
 def _personas(supabase_client: Client, user_id: str) -> List[dict]:
@@ -322,7 +531,8 @@ def _personas(supabase_client: Client, user_id: str) -> List[dict]:
         .limit(LIMITE_CERTIFICANTES)
         .execute()
     )
-    return list(resp.data or [])
+    sellos = _sellos_por_persona(supabase_client, user_id)
+    return [{**p, "sellos": sellos.get(p["id"], [])} for p in (resp.data or [])]
 
 
 def _persona(supabase_client: Client, user_id: str, firma_id: UUID) -> dict:
@@ -336,4 +546,4 @@ def _persona(supabase_client: Client, user_id: str, firma_id: UUID) -> dict:
     )
     if not resp.data:
         raise NotFoundException("Esa persona no existe.")
-    return resp.data[0]
+    return {**resp.data[0], "sellos": _sellos_por_persona(supabase_client, user_id).get(str(firma_id), [])}

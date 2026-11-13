@@ -125,6 +125,8 @@ export interface CertificanteDelRenglon {
   certificanteId?: string | null;
   /** `flights.certificante_firma`: null = lo que diga la persona; "si" o "no" anula. */
   firma?: "si" | "no" | null;
+  /** `flights.certificante_sello_id`: con qué sello/cargo certificó (migración 049). */
+  selloId?: string | null;
 }
 
 export interface HojaLibro {
@@ -250,12 +252,13 @@ function renglon(f: Flight, avion: Aircraft | undefined): RenglonLibro {
     potencia: avion?.potencia_hp ? String(avion.potencia_hp) : "",
     clase: claseOficial(avion?.type_acft),
     certificante:
-      f.cad_autoridad_id || f.cad_autoridad_nombre?.trim() || f.certificante_id || f.certificante_firma
+      f.cad_autoridad_id || f.cad_autoridad_nombre?.trim() || f.certificante_id || f.certificante_firma || f.certificante_sello_id
         ? {
             autoridadId: f.cad_autoridad_id ?? null,
             nombre: (f.cad_autoridad_nombre ?? "").trim(),
             certificanteId: f.certificante_id ?? null,
             firma: f.certificante_firma ?? null,
+            selloId: f.certificante_sello_id ?? null,
           }
         : null,
     valores: v,
@@ -367,6 +370,29 @@ export function vuelosDeUnLibro(vuelos: Flight[], libros: Logbook[], libro: Logb
 }
 
 /** Cuántas hojas tiene hoy el libro (la última, la que se está llenando, cuenta). Mínimo una. */
+/**
+ * Los sellos distintos con que se certificaron los vuelos de cada hoja de un libro, numeradas como el
+ * PDF (hoja 1 = la primera). Para ofrecer «Usar los sellos de los vuelos de esta hoja» en el dorso.
+ */
+export function sellosPorHoja(vuelosDelLibro: Flight[], aeronaves: Aircraft[], libro: Logbook | null | undefined): Record<number, string[]> {
+  const hojas = armarLibro({
+    vuelos: vuelosDelLibro,
+    aeronaves,
+    apertura: valoresDeApertura(libro),
+    renglonesPorHoja: renglonesDeLaHoja(libro),
+  });
+  const salida: Record<number, string[]> = {};
+  hojas.forEach((h, i) => {
+    const ids: string[] = [];
+    for (const r of h.renglones) {
+      const id = r.certificante?.selloId;
+      if (id && !ids.includes(id)) ids.push(id);
+    }
+    if (ids.length) salida[i + 1] = ids;
+  });
+  return salida;
+}
+
 export function cantidadDeHojas(vuelosDelLibro: Flight[], aeronaves: Aircraft[], libro: Logbook | null | undefined): number {
   const hojas = armarLibro({
     vuelos: vuelosDelLibro,

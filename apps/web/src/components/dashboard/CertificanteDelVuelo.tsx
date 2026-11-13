@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { CertificanteBreve } from "@/lib/firmas-libro";
+import { opcionesDeCertificante, valorDeOpcion, type CertificanteBreve } from "@/lib/firmas-libro";
 
 /**
  * "Certificó" y "Firma en el PDF" de un vuelo (migración 048): quién firmó el vuelo en el libro
@@ -15,16 +15,24 @@ import type { CertificanteBreve } from "@/lib/firmas-libro";
 export default function CertificanteDelVuelo({
   certificantes,
   certificanteId,
+  selloId,
+  autoridadId,
   firma,
   variante,
 }: {
   certificantes: CertificanteBreve[];
   certificanteId?: string | null;
+  /** Con qué sello/cargo lo certificó (migración 049). */
+  selloId?: string | null;
+  /** El cargo del CAD del vuelo: elige por defecto el sello que coincide. */
+  autoridadId?: number | null;
   firma?: "si" | "no" | null;
   /** `tarjeta`: la edición del vuelo en la Bitácora; `formulario`: Registrar vuelo. */
   variante: "tarjeta" | "formulario";
 }) {
-  const [id, setId] = useState(certificanteId ?? "");
+  // Una opción por persona, o por sello si la persona tiene varios: `persona|sello`.
+  const [opcion, setOpcion] = useState(valorDeOpcion(certificantes, certificanteId, selloId, autoridadId));
+  const [id, selloElegido] = opcion.split("|");
   const [anula, setAnula] = useState(firma ?? "");
   if (!certificantes.length && !certificanteId) return null;
 
@@ -41,19 +49,20 @@ export default function CertificanteDelVuelo({
         <label className={rotulo} htmlFor={`certifico-${variante}`}>Certificó</label>
         <select
           id={`certifico-${variante}`}
-          name="certificante_id"
-          value={id}
+          value={opcion}
           onChange={(e) => {
-            setId(e.target.value);
+            setOpcion(e.target.value);
             if (!e.target.value) setAnula("");
           }}
           className={clase}
         >
           <option value="" className="dark:bg-zinc-900">Nadie asignado</option>
-          {certificantes.map((c) => (
-            <option key={c.id} value={c.id} className="dark:bg-zinc-900">{c.nombre}</option>
+          {opcionesDeCertificante(certificantes).map((o) => (
+            <option key={o.valor} value={o.valor} className="dark:bg-zinc-900">{o.texto}</option>
           ))}
         </select>
+        <input type="hidden" name="certificante_id" value={id ?? ""} />
+        <input type="hidden" name="certificante_sello_id" value={selloElegido ?? ""} />
       </div>
       <div className="space-y-2">
         <label className={rotulo} htmlFor={`firma-pdf-${variante}`}>Firma en el PDF</label>

@@ -10,7 +10,7 @@ from src.services import audit_engine, certificantes, derived_expiries
 
 #: Lo que un vuelo guarda sólo para el libro en papel (migración 020): cambiarlo no
 #: toca el cobro, la auditoría ni los vencimientos derivados.
-MARCAS_DEL_LIBRO = frozenset({"cierra_hoja", "cad_vuelo_id", "cad_cargado_at", "cad_omitido", "cad_autoridad_id", "cad_autoridad_nombre", "certificante_id", "certificante_firma"})
+MARCAS_DEL_LIBRO = frozenset({"cierra_hoja", "cad_vuelo_id", "cad_cargado_at", "cad_omitido", "cad_autoridad_id", "cad_autoridad_nombre", "certificante_id", "certificante_firma", "certificante_sello_id"})
 
 
 def solo_marcas_del_libro(cambios: Dict[str, Any]) -> bool:
@@ -64,9 +64,12 @@ class FlightsController(Controller):
                 payload.pop("certificante_id", None)
                 if payload.get("certificante_firma") is None:
                     payload.pop("certificante_firma", None)
+                if payload.get("certificante_sello_id") is None:
+                    payload.pop("certificante_sello_id", None)
             elif "certificante_id" in payload:
-                # Se desasocia: sin persona no hay anulación que valga.
+                # Se desasocia: sin persona no hay anulación ni sello que valgan.
                 payload["certificante_firma"] = None
+                payload["certificante_sello_id"] = None
             return
         resp = (
             supabase_client.table("firmas_certificantes")
@@ -78,11 +81,27 @@ class FlightsController(Controller):
         if not resp.data:
             raise NotFoundException("Ese certificante no existe.")
         persona = resp.data[0]
+        sello = None
+        if payload.get("certificante_sello_id"):
+            sello_resp = (
+                supabase_client.table("certificante_sellos")
+                .select("id,autoridad_id,nombre_cad")
+                .eq("id", str(payload["certificante_sello_id"]))
+                .eq("certificante_id", str(persona["id"]))
+                .eq("user_id", user_id)
+                .execute()
+            )
+            if not sello_resp.data:
+                raise NotFoundException("Ese sello no es de esa persona.")
+            sello = sello_resp.data[0]
+        elif vuelo is not None and "certificante_sello_id" not in payload and vuelo.get("certificante_id") != str(persona["id"]):
+            # Otra persona sin elegir sello: el de la anterior no vale.
+            payload["certificante_sello_id"] = None
         actual = {
             "cad_autoridad_nombre": payload["cad_autoridad_nombre"] if "cad_autoridad_nombre" in payload else (vuelo or {}).get("cad_autoridad_nombre"),
             "cad_autoridad_id": payload["cad_autoridad_id"] if "cad_autoridad_id" in payload else (vuelo or {}).get("cad_autoridad_id"),
         }
-        cambios, _aviso = certificantes.completar_autoridad(actual, persona)
+        cambios, _aviso = certificantes.completar_autoridad(actual, persona, sello)
         payload.update(cambios)
 
     @staticmethod
@@ -277,10 +296,10 @@ class FlightsController(Controller):
         user_id = str(request.state.user.id)
         # Use mode="json" for serialization and by_alias=True for DB column names
         update_data = data.model_dump(exclude_unset=True, by_alias=True, mode="json")
-        if "certificante_id" in update_data or "certificante_firma" in update_data:
+        if "certificante_id" in update_data or "certificante_firma" in update_data or "certificante_sello_id" in update_data:
             actual = (
                 supabase_client.table("flights")
-                .select("cad_autoridad_nombre,cad_autoridad_id")
+                .select("cad_autoridad_nombre,cad_autoridad_id,certificante_id")
                 .eq("id", str(flight_id))
                 .eq("user_id", user_id)
                 .execute()

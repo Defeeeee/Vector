@@ -4,6 +4,7 @@ import {
   apellidoYNombre,
   armarLibro,
   cantidadDeHojas,
+  sellosPorHoja,
   vuelosDeUnLibro,
   claseOficial,
   fechaDeGeneracion,
@@ -359,8 +360,8 @@ describe("el certificante y las hojas del dorso", () => {
       aeronaves: [avion()],
       apertura: valoresEnCero(),
     });
-    expect(hoja.renglones[0].certificante).toEqual({ autoridadId: 5, nombre: "Juan Pérez", certificanteId: null, firma: null });
-    expect(hoja.renglones[1].certificante).toEqual({ autoridadId: 7, nombre: "", certificanteId: null, firma: null });
+    expect(hoja.renglones[0].certificante).toEqual({ autoridadId: 5, nombre: "Juan Pérez", certificanteId: null, firma: null, selloId: null });
+    expect(hoja.renglones[1].certificante).toEqual({ autoridadId: 7, nombre: "", certificanteId: null, firma: null, selloId: null });
     expect(hoja.renglones[2].certificante).toBeNull();
   });
 
@@ -370,7 +371,7 @@ describe("el certificante y las hojas del dorso", () => {
       aeronaves: [avion()],
       apertura: valoresEnCero(),
     });
-    expect(hoja.renglones[0].certificante).toEqual({ autoridadId: null, nombre: "", certificanteId: "P1", firma: null });
+    expect(hoja.renglones[0].certificante).toEqual({ autoridadId: null, nombre: "", certificanteId: "P1", firma: null, selloId: null });
     expect(hoja.renglones[1].certificante?.firma).toBe("no");
   });
 
@@ -378,6 +379,21 @@ describe("el certificante y las hojas del dorso", () => {
     const muchos = Array.from({ length: RENGLONES_POR_HOJA + 1 }, () => vuelo({}));
     expect(cantidadDeHojas(muchos, [avion()], null)).toBe(2);
     expect(cantidadDeHojas([], [avion()], null)).toBe(1);
+  });
+
+  it("los sellos de cada hoja son los distintos de sus vuelos, numeradas como el PDF", () => {
+    const vs = [
+      ...Array.from({ length: RENGLONES_POR_HOJA }, () => vuelo({ certificante_id: "P1", certificante_sello_id: "S-JEFE" })),
+      vuelo({ certificante_id: "P1", certificante_sello_id: "S-IV" }),
+      vuelo({ certificante_id: "P1", certificante_sello_id: "S-JEFE" }),
+      vuelo({}),
+    ];
+    // Fechas distintas para que el orden sea el de la lista.
+    vs.forEach((v, i) => (v.date = `2026-01-${String(i + 1).padStart(2, "0")}`));
+    const porHoja = sellosPorHoja(vs, [avion()], null);
+    expect(porHoja[1]).toEqual(["S-JEFE"]);
+    expect(porHoja[2]).toEqual(["S-IV", "S-JEFE"]);
+    expect(sellosPorHoja([vuelo({})], [avion()], null)).toEqual({});
   });
 
   it("con varios libros, un vuelo sin libro es del principal", () => {

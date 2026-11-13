@@ -45,6 +45,8 @@ export interface Flight {
   certificante_id?: string | null;
   /** La anulación de su firma en este vuelo: null = lo que diga la persona; "si" o "no". */
   certificante_firma?: "si" | "no" | null;
+  /** Con qué sello/cargo de la persona lo certificó (migración 049, `certificante_sellos`). */
+  certificante_sello_id?: string | null;
 
   discount_type?: 'value' | 'percent';
   discount_amount?: number;

@@ -29,8 +29,8 @@ import {
  *   que guardó de quien lo certificó, con su aclaración; el vuelo sin certificante o sin
  *   firma guardada sigue en blanco.
  * - **El dorso de cada hoja** (`dorsos`, "Con el dorso de cada hoja"): después de cada hoja,
- *   una página del mismo tamaño para imprimir doble faz, con la imagen de la firma y el
- *   sello que el piloto cargó para esa hoja. **El dorso no lo define el Adjunto A de la
+ *   una página del mismo tamaño para imprimir doble faz, con las imágenes de las firmas y los
+ *   sellos que el piloto cargó para esa hoja (varias, a tamaño real: 7 × 3,5 cm cada una). **El dorso no lo define el Adjunto A de la
  *   Res. 147/2013 que tenemos documentado: es la práctica que pidió Federico (firma con
  *   sello o aclaración atrás de cada hoja), no algo de la norma** (invariante 6). Una
  *   hoja sin dorso cargado va con su dorso en blanco, para que la doble faz no se corra.
@@ -268,16 +268,20 @@ class Dibujo {
   }
 }
 
+/** Cuántas imágenes entran en un dorso (fotos más sellos). */
+export const MAX_IMAGENES_DORSO = 12;
+
 export interface DorsoParaPdf {
-  png?: Uint8Array;
+  /**
+   * Las fotos del dorso (varias, migración 049) y, después, los sellos elegidos: todos van
+   * juntos en la misma grilla, hasta `MAX_IMAGENES_DORSO`, **a tamaño real** (cada bloque en
+   * una caja de 70 × 35 mm, `acomodarSellos`).
+   */
+  fotos?: Uint8Array[];
   aclaracion?: string | null;
   /** "AAAA-MM-DD". */
   fecha?: string | null;
-  /**
-   * Las firmas con sello de las personas elegidas (migración 048). Se usan **sólo si la hoja
-   * no tiene foto propia** (`png`): se acomodan en grilla, abajo a la derecha. Con ellas no
-   * va la línea de aclaración: el sello ya la trae.
-   */
+  /** Las firmas con sello elegidas (de cualquier persona), después de las fotos. */
   sellos?: Uint8Array[];
 }
 
@@ -518,29 +522,18 @@ export async function pdfDelLibro(
       }
     }
   }
-  const dorsoImagenes = new Map<number, PDFImage>();
-  const dorsoSellos = new Map<number, PDFImage[]>();
+  const dorsoImagenes = new Map<number, PDFImage[]>();
   if (dorsos) {
     for (const [hoja, dorso] of dorsos) {
-      if (dorso.png) {
+      const listas: PDFImage[] = [];
+      for (const png of [...(dorso.fotos ?? []), ...(dorso.sellos ?? [])].slice(0, MAX_IMAGENES_DORSO)) {
         try {
-          dorsoImagenes.set(hoja, await doc.embedPng(dorso.png));
+          listas.push(await doc.embedPng(png));
         } catch {
-          /* un dorso sin imagen legible va sin imagen */
+          /* una imagen ilegible se saltea */
         }
       }
-      // Sin foto propia, las firmas con sello de las personas elegidas.
-      if (!dorsoImagenes.has(hoja) && dorso.sellos?.length) {
-        const listas: PDFImage[] = [];
-        for (const png of dorso.sellos) {
-          try {
-            listas.push(await doc.embedPng(png));
-          } catch {
-            /* un sello ilegible se saltea */
-          }
-        }
-        if (listas.length) dorsoSellos.set(hoja, listas);
-      }
+      if (listas.length) dorsoImagenes.set(hoja, listas);
     }
   }
 
@@ -621,7 +614,7 @@ export async function pdfDelLibro(
       { tamano: 4.6, color: GRIS }
     );
 
-    if (dorsos) dorsoDeLaHoja(doc, normal, negrita, i + 1, paginas.length, dorsos.get(i + 1) ?? null, dorsoImagenes.get(i + 1) ?? null, dorsoSellos.get(i + 1) ?? []);
+    if (dorsos) dorsoDeLaHoja(doc, normal, negrita, i + 1, paginas.length, dorsos.get(i + 1) ?? null, dorsoImagenes.get(i + 1) ?? []);
   });
 
   return doc.save();
@@ -631,11 +624,13 @@ export async function pdfDelLibro(
  * El dorso de una hoja: una página del mismo tamaño, para imprimir doble faz.
  *
  * - **Sin nada cargado, en blanco**: así la hoja siguiente no cae en el dorso de otra.
- * - **La imagen es la firma con el sello o la aclaración** tal como queda en el papel
- *   (no es la de la celda de certificaciones), grande, abajo a la derecha.
- * - **La línea "FIRMA Y ACLARACIÓN" sólo va si el piloto cargó una aclaración en texto**: si no,
- *   la imagen no tiene nada encima que le tape el sello. Con aclaración, la imagen apoya
- *   sobre la línea y el texto va debajo.
+ * - **Las imágenes son las firmas con el sello o la aclaración** tal como quedan en el papel
+ *   (no son la de la celda de certificaciones): todas las fotos de la hoja y los sellos elegidos,
+ *   **a tamaño real** (7 × 3,5 cm cada una, nunca estiradas al espacio libre), en grilla desde
+ *   abajo a la derecha. Si no entran todas así, se achican lo mínimo (`acomodarSellos`).
+ * - **La línea "FIRMA Y ACLARACIÓN" sólo va si el piloto cargó una aclaración en texto**: va abajo
+ *   a la derecha y la grilla queda arriba de ella, sin taparla. La fecha va debajo de la línea o,
+ *   sin aclaración, arriba a la derecha.
  */
 function dorsoDeLaHoja(
   doc: PDFDocument,
@@ -644,41 +639,28 @@ function dorsoDeLaHoja(
   numero: number,
   total: number,
   dorso: DorsoParaPdf | null,
-  imagen: PDFImage | null,
-  sellos: PDFImage[] = []
+  imagenes: PDFImage[] = []
 ) {
   const page = doc.addPage([ANCHO_HOJA, ALTO_HOJA]);
-  // Con sellos de personas no va la línea de aclaración: el sello ya la trae.
-  const aclaracion = sellos.length ? "" : seguro(dorso?.aclaracion?.trim());
+  const aclaracion = seguro(dorso?.aclaracion?.trim());
   const fecha = fechaDelDorso(dorso?.fecha);
-  if (!imagen && !sellos.length && !aclaracion && !fecha) return;
+  if (!imagenes.length && !aclaracion && !fecha) return;
   const d = new Dibujo(page, normal, negrita);
-
-  if (sellos.length) {
-    const cajas = acomodarSellos(
-      sellos.map((s) => ({ ancho: s.width, alto: s.height })),
-      { ancho: ANCHO_HOJA, alto: ALTO_HOJA, margen: MARGEN }
-    );
-    sellos.forEach((s, i) => page.drawImage(s, { x: cajas[i].x, y: cajas[i].y, width: cajas[i].w, height: cajas[i].h }));
-  }
 
   const ancho = 440;
   const xBloque = ANCHO_HOJA - MARGEN - ancho;
-  const yBase = ALTO_HOJA - MARGEN - 18; // desde arriba: el pie del bloque
-  const yLinea = aclaracion ? yBase - 30 : yBase;
-  const altoMax = 300;
-
-  if (imagen) {
-    const caja = ajustarEnCaja(imagen.width, imagen.height, ancho, altoMax, true);
-    // Apoyada en la línea (o en el pie, sin línea), pegada a la derecha.
-    page.drawImage(imagen, {
-      x: ANCHO_HOJA - MARGEN - caja.w - (aclaracion ? (ancho - caja.w) / 2 : 0),
-      y: ALTO_HOJA - (yLinea - 3),
-      width: caja.w,
-      height: caja.h,
-    });
+  // Con aclaración: la línea a 62 pt del borde de abajo, el texto, el rótulo y la fecha debajo.
+  const reservaAbajo = aclaracion ? 68 : 10;
+  if (imagenes.length) {
+    const cajas = acomodarSellos(
+      imagenes.map((s) => ({ ancho: s.width, alto: s.height })),
+      { ancho: ANCHO_HOJA, alto: ALTO_HOJA, margen: MARGEN, reservaAbajo }
+    );
+    imagenes.forEach((s, i) => page.drawImage(s, { x: cajas[i].x, y: cajas[i].y, width: cajas[i].w, height: cajas[i].h }));
   }
+
   if (aclaracion) {
+    const yLinea = ALTO_HOJA - 62; // desde arriba
     d.linea(xBloque, yLinea, ANCHO_HOJA - MARGEN, yLinea, 0.6, NEGRO);
     const a = ajustar(negrita, aclaracion, ancho, 9, 5);
     const aw = negrita.widthOfTextAtSize(a.texto, a.tamano);
@@ -686,9 +668,9 @@ function dorsoDeLaHoja(
     d.texto("FIRMA Y ACLARACIÓN", xBloque + ancho / 2 - 38, yLinea + 20, { tamano: 5.6, color: GRIS });
   }
   if (fecha) {
-    // Con sellos, la fecha va arriba a la derecha: abajo está la grilla.
-    if (sellos.length) d.texto(fecha, ANCHO_HOJA - MARGEN - 48, MARGEN + 8, { tamano: 7 });
-    else d.texto(fecha, xBloque, yBase + 10, { tamano: 7 });
+    // Con aclaración, debajo de la línea; si no, arriba a la derecha (abajo está la grilla).
+    if (aclaracion) d.texto(fecha, xBloque, ALTO_HOJA - 22, { tamano: 7 });
+    else d.texto(fecha, ANCHO_HOJA - MARGEN - 48, MARGEN + 8, { tamano: 7 });
   }
   d.texto(`Dorso de la hoja ${numero} de ${total}`, MARGEN, ALTO_HOJA - MARGEN, { tamano: 5, color: GRIS });
 }

@@ -10,7 +10,7 @@ import FlightPackForm from "@/components/dashboard/FlightPackForm";
 import DocumentsManager from "@/components/dashboard/DocumentsManager";
 import LogbooksManager from "@/components/dashboard/LogbooksManager";
 import FirmasDelLibro from "@/components/dashboard/FirmasDelLibro";
-import { cantidadDeHojas, vuelosDeUnLibro } from "@/lib/libro-anac";
+import { cantidadDeHojas, sellosPorHoja, vuelosDeUnLibro } from "@/lib/libro-anac";
 import { vuelosDesdeLaPpa } from "@/lib/licencias";
 import type { DorsoHoja, FirmaCertificante, SugerenciaCertificante } from "@/lib/firmas-libro";
 import HorasDeAntesAlumno from "@/components/dashboard/HorasDeAntesAlumno";
@@ -86,6 +86,10 @@ export default async function SettingsPage() {
   const hojasPorLibro = Object.fromEntries(
     logbooks.map((l) => [l.id, cantidadDeHojas(vuelosDeUnLibro(vuelosDelPdf, logbooks, l), aircraft, l)])
   );
+  // Los sellos con que se certificaron los vuelos de cada hoja: «Usar los sellos de los vuelos» en el dorso.
+  const sellosDeLasHojas = Object.fromEntries(
+    logbooks.map((l) => [l.id, sellosPorHoja(vuelosDeUnLibro(vuelosDelPdf, logbooks, l), aircraft, l)])
+  );
   const cma = documents.find(doc => doc.kind === "cma");
 
   return (
@@ -115,7 +119,7 @@ export default async function SettingsPage() {
           </div>
           <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Firmas del libro</h3>
         </div>
-        <FirmasDelLibro firmas={firmas} dorsos={dorsos} libros={logbooks.map((l) => ({ id: l.id, name: l.name }))} hojasPorLibro={hojasPorLibro} sugerencias={sugerencias} vuelos={vuelosDelPdf} aviones={aircraft} />
+        <FirmasDelLibro firmas={firmas} dorsos={dorsos} libros={logbooks.map((l) => ({ id: l.id, name: l.name }))} hojasPorLibro={hojasPorLibro} sugerencias={sugerencias} vuelos={vuelosDelPdf} aviones={aircraft} sellosPorHoja={sellosDeLasHojas} />
       </section>}
 
       {/* El alumno no ve los libros, pero sí sus horas de antes (`lib/apertura-alumno.ts`). */}

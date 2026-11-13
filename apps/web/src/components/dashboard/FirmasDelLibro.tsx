@@ -3,24 +3,33 @@
 import { useState, useTransition } from "react";
 import { ChevronDown, PenLine, Trash2, X } from "lucide-react";
 import {
+  agregarFotoDorso,
+  agregarSello,
   asignarCertificante,
   borrarDorso,
   borrarFirmaCertificante,
   desasociarCertificante,
   editarCertificante,
+  editarSello,
   guardarDorso,
   guardarFirmaCertificante,
+  quitarFotoDorso,
+  quitarSello,
 } from "@/actions/firmas";
 import { useAvisos } from "@/components/dashboard/Avisos";
 import CapturaFirma from "@/components/dashboard/CapturaFirma";
 import { AUTORIDADES_CAD } from "@/lib/cad";
+import { asignarPorSellos } from "@/lib/asignar-sellos";
 import {
   fechaDelDorso,
+  nombreDeSello,
   normalizarNombre,
+  opcionesDeCertificante,
   vuelosPorCertificante,
   vuelosSinCertificante,
   type DorsoHoja,
   type FirmaCertificante,
+  type SelloCertificante,
   type SugerenciaCertificante,
 } from "@/lib/firmas-libro";
 import type { Aircraft, Flight } from "@/types";
@@ -39,6 +48,7 @@ export default function FirmasDelLibro({
   sugerencias = [],
   vuelos = [],
   aviones = [],
+  sellosPorHoja = {},
 }: {
   firmas: FirmaCertificante[];
   dorsos: DorsoHoja[];
@@ -50,11 +60,13 @@ export default function FirmasDelLibro({
   /** Los vuelos del libro: para contar los de cada persona y listar los que no tienen. */
   vuelos?: Flight[];
   aviones?: Aircraft[];
+  /** Por libro y hoja, los sellos de los vuelos que caen en ella (para ofrecer «Usar los sellos de los vuelos»). */
+  sellosPorHoja?: Record<string, Record<number, string[]>>;
 }) {
   return (
     <div className="space-y-10">
       <Certificantes firmas={firmas} sugerencias={sugerencias} vuelos={vuelos} aviones={aviones} />
-      <Dorsos dorsos={dorsos} libros={libros} hojasPorLibro={hojasPorLibro} firmas={firmas} />
+      <Dorsos dorsos={dorsos} libros={libros} hojasPorLibro={hojasPorLibro} firmas={firmas} sellosPorHoja={sellosPorHoja} />
     </div>
   );
 }
@@ -90,6 +102,8 @@ function Certificantes({
   const [png, setPng] = useState<string | null>(null);
   const [sello, setSello] = useState<string | null>(null);
   const [conSello, setConSello] = useState(false);
+  const [etiquetaSello, setEtiquetaSello] = useState("");
+  const [cargoSello, setCargoSello] = useState("");
   const [nombre, setNombre] = useState("");
   const [licencia, setLicencia] = useState("");
   const [autoridad, setAutoridad] = useState("");
@@ -106,7 +120,13 @@ function Certificantes({
     if (!png) return;
     setError(null);
     empezar(async () => {
-      const r = await guardarFirmaCertificante({ nombre, licencia, autoridadId: autoridad ? Number(autoridad) : null, png, pngSello: sello });
+      const r = await guardarFirmaCertificante({
+        nombre,
+        licencia,
+        autoridadId: autoridad ? Number(autoridad) : null,
+        png,
+        sello: sello ? { png: sello, etiqueta: etiquetaSello.trim() || "Con sello", autoridadId: cargoSello ? Number(cargoSello) : autoridad ? Number(autoridad) : null } : null,
+      });
       if ("error" in r) {
         setError(r.error);
         return;
@@ -116,6 +136,8 @@ function Certificantes({
       setPng(null);
       setSello(null);
       setConSello(false);
+      setEtiquetaSello("");
+      setCargoSello("");
       setNombre("");
       setLicencia("");
       setAutoridad("");
@@ -163,7 +185,7 @@ function Certificantes({
                     </span>
                     <span className="block text-xs text-zinc-500 dark:text-zinc-400 truncate">
                       {n === 1 ? "1 vuelo" : `${n} vuelos`} · {f.automatica === false ? "no se pone sola" : "se pone sola"}
-                      {f.png_sello ? " · con sello" : ""}
+                      {f.sellos?.length ? ` · ${f.sellos.length === 1 ? "1 sello" : `${f.sellos.length} sellos`}` : ""}
                     </span>
                   </span>
                   <ChevronDown className={`w-4 h-4 shrink-0 text-zinc-500 transition-transform ${abiertaEsta ? "rotate-180" : ""}`} aria-hidden="true" />
@@ -208,9 +230,25 @@ function Certificantes({
               Sumar su firma con sello (opcional, para el dorso)
             </button>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <p className={rotulo}>Firma con sello o aclaración (para el dorso de las hojas)</p>
               <CapturaFirma modo="dorso" alCambiar={setSello} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className={rotulo} htmlFor="sello-etiqueta">Cómo se llama este sello</label>
+                  <input id="sello-etiqueta" value={etiquetaSello} onChange={(e) => setEtiquetaSello(e.target.value)} placeholder="Jefe de instructores" autoComplete="off" className={campo} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className={rotulo} htmlFor="sello-cargo">Cargo en el CAD de este sello</label>
+                  <select id="sello-cargo" value={cargoSello} onChange={(e) => setCargoSello(e.target.value)} className={campo}>
+                    <option value="">El de arriba</option>
+                    {AUTORIDADES_CAD.map((a) => (
+                      <option key={a.id} value={a.id}>{a.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Después le sumás los otros cargos desde su ficha, en «Sus sellos».</p>
             </div>
           )}
 
@@ -248,7 +286,7 @@ function Sugerencias({ sugerencias, firmas }: { sugerencias: SugerenciaCertifica
 
   const asociar = (s: SugerenciaCertificante) =>
     empezar(async () => {
-      const r = await asignarCertificante(s.certificante_id, s.vuelo_ids, null, s.sumar_alias ? s.nombre_en_vuelos : undefined);
+      const r = await asignarCertificante(s.certificante_id, s.vuelo_ids, null, s.sumar_alias ? s.nombre_en_vuelos : undefined, s.sello_id);
       if ("error" in r) {
         notificar({ tipo: "error", titulo: r.error });
         return;
@@ -263,14 +301,16 @@ function Sugerencias({ sugerencias, firmas }: { sugerencias: SugerenciaCertifica
       <ul className={unaFila}>
         {visibles.map((s) => {
           const persona = firmas.find((f) => f.id === s.certificante_id);
+          const sello = persona?.sellos?.find((x) => x.id === s.sello_id);
+          const quien = persona ? nombreDeSello({ nombre: persona.nombre, sellos: persona.sellos }, sello) : "";
           const n = s.vuelo_ids.length;
           return (
-            <li key={`${s.certificante_id}-${s.nombre_en_vuelos}`} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <li key={`${s.certificante_id}-${s.nombre_en_vuelos}-${s.sello_id ?? ""}-${s.vuelo_ids[0]}`} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
               <p className="flex-1 min-w-0 text-sm text-zinc-900 dark:text-white">
                 {n === 1 ? "1 vuelo dice" : `${n} vuelos dicen`} <strong className="break-words">{s.nombre_en_vuelos}</strong>
               </p>
               <button type="button" onClick={() => asociar(s)} disabled={pendiente} className="min-h-11 px-4 rounded-full border border-aviation-cyan/40 text-aviation-cyan text-sm font-semibold disabled:opacity-40 self-start">
-                {s.sumar_alias ? `Asociar a ${persona?.nombre} y sumar el alias` : `Asociar a ${persona?.nombre}`}
+                {s.sumar_alias ? `Asociar a ${quien} y sumar el alias` : `Asociar a ${quien}`}
               </button>
             </li>
           );
@@ -293,9 +333,7 @@ function EditorDePersona({ firma, idsDeVuelos, alBorrar, borrando }: { firma: Fi
   const [licencia, setLicencia] = useState(firma.licencia ?? "");
   const [autoridad, setAutoridad] = useState(firma.autoridad_id ? String(firma.autoridad_id) : "");
   const [nuevaFirma, setNuevaFirma] = useState<string | null>(null);
-  const [nuevoSello, setNuevoSello] = useState<string | null>(null);
   const [cambiandoFirma, setCambiandoFirma] = useState(false);
-  const [cambiandoSello, setCambiandoSello] = useState(false);
   const [alias, setAlias] = useState<string[]>(firma.alias ?? []);
   const [nuevoAlias, setNuevoAlias] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -306,8 +344,7 @@ function EditorDePersona({ firma, idsDeVuelos, alBorrar, borrando }: { firma: Fi
     nombre.trim().toUpperCase() !== firma.nombre ||
     licencia.trim().toUpperCase() !== (firma.licencia ?? "") ||
     autoridad !== (firma.autoridad_id ? String(firma.autoridad_id) : "") ||
-    !!nuevaFirma ||
-    !!nuevoSello;
+    !!nuevaFirma;
 
   const aplicar = (c: Parameters<typeof editarCertificante>[1], listo?: string) =>
     empezar(async () => {
@@ -324,7 +361,6 @@ function EditorDePersona({ firma, idsDeVuelos, alBorrar, borrando }: { firma: Fi
         licencia,
         autoridadId: autoridad ? Number(autoridad) : null,
         ...(nuevaFirma ? { png: nuevaFirma } : {}),
-        ...(nuevoSello ? { pngSello: nuevoSello } : {}),
       },
       "Cambios guardados"
     );
@@ -377,21 +413,9 @@ function EditorDePersona({ firma, idsDeVuelos, alBorrar, borrando }: { firma: Fi
             <CapturaFirma modo="firma" alCambiar={setNuevaFirma} />
           )}
         </div>
-        <div className="space-y-2">
-          <p className={rotulo}>Su firma con sello (para el dorso)</p>
-          {!cambiandoSello && firma.png_sello ? (
-            <div className="flex items-center gap-3 flex-wrap">
-              <Miniatura png={firma.png_sello} alto="h-14" />
-              <button type="button" onClick={() => setCambiandoSello(true)} className="text-sm font-semibold text-aviation-cyan min-h-11">Cambiarla</button>
-              <button type="button" onClick={() => aplicar({ pngSello: null }, "Sello quitado")} disabled={pendiente} className="text-sm font-semibold text-red-500 min-h-11">Quitarla</button>
-            </div>
-          ) : !cambiandoSello ? (
-            <button type="button" onClick={() => setCambiandoSello(true)} className="text-sm font-semibold text-aviation-cyan min-h-11">Agregar la firma con sello</button>
-          ) : (
-            <CapturaFirma modo="dorso" alCambiar={setNuevoSello} />
-          )}
-        </div>
       </div>
+
+      <SellosDePersona firma={firma} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5">
@@ -467,6 +491,148 @@ function EditorDePersona({ firma, idsDeVuelos, alBorrar, borrando }: { firma: Fi
   );
 }
 
+/**
+ * "Sus sellos" (migración 049): una persona con varios sellos, cada uno con su cargo del CAD
+ * ("Jefe de instructores", "Instructor de vuelo"). Una persona, no dos: así sus vuelos y las
+ * sugerencias por nombre no se parten. Cada imagen va en su propio pedido.
+ */
+function SellosDePersona({ firma }: { firma: FirmaCertificante }) {
+  const sellos = firma.sellos ?? [];
+  const [agregando, setAgregando] = useState(false);
+  const [png, setPng] = useState<string | null>(null);
+  const [etiqueta, setEtiqueta] = useState("");
+  const [cargo, setCargo] = useState(firma.autoridad_id ? String(firma.autoridad_id) : "");
+  const [nombreCad, setNombreCad] = useState("");
+  const [intento, setIntento] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [pendiente, empezar] = useTransition();
+  const { notificar } = useAvisos();
+
+  const sumar = () =>
+    empezar(async () => {
+      if (!png) return;
+      setError(null);
+      const r = await agregarSello(firma.id, { png, etiqueta: etiqueta.trim() || (cargo ? AUTORIDADES_CAD.find((a) => a.id === Number(cargo))?.nombre ?? "Con sello" : "Con sello"), autoridadId: cargo ? Number(cargo) : null, nombreCad });
+      if ("error" in r) return setError(r.error);
+      notificar({ tipo: "exito", titulo: "Sello guardado" });
+      setAgregando(false);
+      setPng(null);
+      setEtiqueta("");
+      setNombreCad("");
+      setIntento((n) => n + 1);
+    });
+
+  return (
+    <div className="space-y-3">
+      <p className={rotulo}>Sus sellos (para el dorso y para saber con qué cargo certificó)</p>
+      {sellos.length > 0 && (
+        <ul className="divide-y divide-white/10 border-y border-white/10">
+          {sellos.map((x) => (
+            <li key={x.id}>
+              <FilaDeSello sello={x} />
+            </li>
+          ))}
+        </ul>
+      )}
+      {!agregando ? (
+        <button type="button" onClick={() => setAgregando(true)} className="text-sm font-semibold text-aviation-cyan min-h-11">
+          {sellos.length ? "Agregar otro sello" : "Agregar su firma con sello"}
+        </button>
+      ) : (
+        <div className="space-y-4 rounded-2xl border border-white/10 p-4">
+          <CapturaFirma key={intento} modo="dorso" alCambiar={setPng} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className={rotulo} htmlFor={`ns-etiqueta-${firma.id}`}>Cómo se llama este sello</label>
+              <input id={`ns-etiqueta-${firma.id}`} value={etiqueta} onChange={(e) => setEtiqueta(e.target.value)} placeholder="Instructor de vuelo" autoComplete="off" className={campo} />
+            </div>
+            <div className="space-y-1.5">
+              <label className={rotulo} htmlFor={`ns-cargo-${firma.id}`}>Cargo en el CAD</label>
+              <select id={`ns-cargo-${firma.id}`} value={cargo} onChange={(e) => setCargo(e.target.value)} className={campo}>
+                <option value="">Sin cargo</option>
+                {AUTORIDADES_CAD.map((a) => (
+                  <option key={a.id} value={a.id}>{a.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <label className={rotulo} htmlFor={`ns-cad-${firma.id}`}>Nombre para el CAD con este cargo (opcional)</label>
+              <input id={`ns-cad-${firma.id}`} value={nombreCad} onChange={(e) => setNombreCad(e.target.value)} placeholder="Si va con la licencia, escribilo igual que en el CAD" autoComplete="off" className={`${campo} uppercase`} />
+            </div>
+          </div>
+          {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
+          <div className="flex flex-wrap gap-3">
+            <button type="button" onClick={sumar} disabled={!png || pendiente} className={principal}>
+              {pendiente ? "Guardando…" : "Guardar el sello"}
+            </button>
+            <button type="button" onClick={() => setAgregando(false)} className="min-h-12 px-5 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FilaDeSello({ sello }: { sello: SelloCertificante }) {
+  const [etiqueta, setEtiqueta] = useState(sello.etiqueta);
+  const [cargo, setCargo] = useState(sello.autoridad_id ? String(sello.autoridad_id) : "");
+  const [nombreCad, setNombreCad] = useState(sello.nombre_cad ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [pendiente, empezar] = useTransition();
+  const { notificar } = useAvisos();
+  const cambio =
+    etiqueta.trim() !== sello.etiqueta || cargo !== (sello.autoridad_id ? String(sello.autoridad_id) : "") || nombreCad.trim().toUpperCase() !== (sello.nombre_cad ?? "");
+
+  const guardar = () =>
+    empezar(async () => {
+      setError(null);
+      const r = await editarSello(sello.id, { etiqueta, autoridadId: cargo ? Number(cargo) : null, nombreCad: nombreCad || null });
+      if ("error" in r) setError(r.error);
+      else notificar({ tipo: "exito", titulo: "Sello guardado" });
+    });
+  const quitar = () =>
+    empezar(async () => {
+      const r = await quitarSello(sello.id);
+      if ("error" in r) setError(r.error);
+    });
+
+  return (
+    <div className="py-3 space-y-3">
+      <div className="flex items-center gap-3">
+        <Miniatura png={sello.png} alto="h-14" />
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <label className="sr-only" htmlFor={`se-${sello.id}`}>Etiqueta del sello</label>
+          <input id={`se-${sello.id}`} value={etiqueta} onChange={(e) => setEtiqueta(e.target.value)} autoComplete="off" className={campo} />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className={rotulo} htmlFor={`sc-${sello.id}`}>Cargo en el CAD</label>
+          <select id={`sc-${sello.id}`} value={cargo} onChange={(e) => setCargo(e.target.value)} className={campo}>
+            <option value="">Sin cargo</option>
+            {AUTORIDADES_CAD.map((a) => (
+              <option key={a.id} value={a.id}>{a.nombre}</option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1.5">
+          <label className={rotulo} htmlFor={`sn-${sello.id}`}>Nombre para el CAD (opcional)</label>
+          <input id={`sn-${sello.id}`} value={nombreCad} onChange={(e) => setNombreCad(e.target.value)} autoComplete="off" className={`${campo} uppercase`} />
+        </div>
+      </div>
+      {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
+      <div className="flex flex-wrap gap-3 items-center">
+        <button type="button" onClick={guardar} disabled={!cambio || !etiqueta.trim() || pendiente} className="min-h-11 px-5 rounded-full border border-aviation-cyan/40 text-aviation-cyan text-sm font-semibold disabled:opacity-40">
+          {pendiente ? "Guardando…" : "Guardar"}
+        </button>
+        <button type="button" onClick={quitar} disabled={pendiente} className="min-h-11 px-3 text-sm font-semibold text-red-500">Quitar</button>
+      </div>
+    </div>
+  );
+}
+
 /** Los vuelos que nadie firmó: una lista corta para asociarlos de a uno o en lote. */
 function SinCertificante({ firmas, vuelos, aviones }: { firmas: FirmaCertificante[]; vuelos: Flight[]; aviones: Aircraft[] }) {
   const sin = vuelosSinCertificante(vuelos);
@@ -498,9 +664,11 @@ function SinCertificante({ firmas, vuelos, aviones }: { firmas: FirmaCertificant
       return n;
     });
 
+  const opciones = opcionesDeCertificante(firmas, { segunCargo: true });
   const asignar = (quien: string, ids: string[], firma: "si" | "no" | null) =>
     empezar(async () => {
-      const r = await asignarCertificante(quien, ids, firma);
+      const conCargo = sin.filter((v) => ids.includes(v.id));
+      const r = await asignarPorSellos(quien, conCargo, firmas.find((f) => f.id === quien.split("|")[0])?.sellos, firma);
       if ("error" in r) {
         notificar({ tipo: "error", titulo: r.error });
         return;
@@ -531,10 +699,10 @@ function SinCertificante({ firmas, vuelos, aviones }: { firmas: FirmaCertificant
           />
           Todos
         </label>
-        <select value={persona} onChange={(e) => setPersona(e.target.value)} aria-label="Quién certificó los elegidos" className={`${campo} sm:max-w-[16rem]`}>
+        <select value={persona} onChange={(e) => setPersona(e.target.value)} aria-label="Quién certificó los elegidos" className={`${campo} sm:max-w-[22rem]`}>
           <option value="">Quién certificó…</option>
-          {firmas.map((f) => (
-            <option key={f.id} value={f.id}>{f.nombre}</option>
+          {opciones.map((o) => (
+            <option key={o.valor} value={o.valor}>{o.texto}</option>
           ))}
         </select>
         <select value={anula} onChange={(e) => setAnula(e.target.value as "" | "si" | "no")} aria-label="Firma en el PDF" className={`${campo} sm:max-w-[13rem]`}>
@@ -568,8 +736,8 @@ function SinCertificante({ firmas, vuelos, aviones }: { firmas: FirmaCertificant
                 className="h-10 max-sm:w-full max-sm:ml-7 sm:w-44 shrink-0 rounded-xl bg-white/5 border border-white/10 px-2 text-sm text-zinc-900 dark:text-white [color-scheme:dark]"
               >
                 <option value="">Asignar…</option>
-                {firmas.map((f) => (
-                  <option key={f.id} value={f.id}>{f.nombre}</option>
+                {opcionesDeCertificante(firmas).map((o) => (
+                  <option key={o.valor} value={o.valor}>{o.texto}</option>
                 ))}
               </select>
             </li>
@@ -591,26 +759,30 @@ function Dorsos({
   libros,
   hojasPorLibro,
   firmas,
+  sellosPorHoja,
 }: {
   dorsos: DorsoHoja[];
   libros: { id: string; name: string }[];
   hojasPorLibro: Record<string, number>;
-  /** Las personas: las que tienen firma con sello se pueden elegir para el dorso. */
+  /** Las personas: cada sello suyo se puede elegir para el dorso. */
   firmas: FirmaCertificante[];
+  sellosPorHoja: Record<string, Record<number, string[]>>;
 }) {
   const [libroId, setLibroId] = useState(libros[0]?.id ?? "");
   const [abierta, setAbierta] = useState<number | null>(null);
   if (!libros.length) return null;
   const hojas = hojasPorLibro[libroId] ?? 1;
   const delLibro = new Map(dorsos.filter((d) => d.logbook_id === libroId).map((d) => [d.hoja, d]));
+  const cuantosSellos = (d: DorsoHoja) => (d.sello_ids ?? []).filter((id) => firmas.some((f) => f.sellos?.some((x) => x.id === id))).length;
 
   return (
     <div className="space-y-4">
       <div>
         <h4 className="text-base md:text-lg font-bold text-zinc-900 dark:text-white">Firmas del dorso de cada hoja</h4>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-          La firma con su sello o aclaración que va atrás de cada hoja del libro. Es otra imagen que la de la celda de certificaciones:
-          fotografiala tal como queda en el papel, o elegí las firmas con sello de tus certificantes y el PDF las acomoda solas. Una hoja sin dorso cargado sale con su dorso en blanco, para que la doble faz no se corra.
+          Las firmas con su sello o aclaración que van atrás de cada hoja del libro. Son otras imágenes que la de la celda de certificaciones:
+          fotografialas tal como quedan en el papel (todas las que quieras por hoja) y sumá los sellos de tus certificantes. Salen a tamaño real, 7 × 3,5 cm cada una, como en el papel.
+          Una hoja sin dorso cargado sale con su dorso en blanco, para que la doble faz no se corra.
         </p>
       </div>
 
@@ -628,22 +800,44 @@ function Dorsos({
       <ul className="divide-y divide-white/10 border-y border-white/10">
         {Array.from({ length: hojas }, (_, i) => i + 1).map((hoja) => {
           const d = delLibro.get(hoja);
+          const fotos = d?.fotos ?? [];
+          const sellos = d ? cuantosSellos(d) : 0;
+          const resumen = d
+            ? [
+                fotos.length ? (fotos.length === 1 ? "1 foto" : `${fotos.length} fotos`) : "",
+                sellos ? (sellos === 1 ? "1 sello" : `${sellos} sellos`) : "",
+                d.aclaracion,
+                fechaDelDorso(d.fecha),
+              ]
+                .filter(Boolean)
+                .join(" · ")
+            : "";
           return (
             <li key={`${libroId}-${hoja}`} className="py-3">
               <button
                 type="button"
                 onClick={() => setAbierta(abierta === hoja ? null : hoja)}
                 aria-expanded={abierta === hoja}
-                className="w-full flex items-center gap-4 min-h-11 text-left"
+                className="w-full flex items-center gap-3 min-h-11 text-left"
               >
                 <span className="font-mono text-xs tracking-wider text-zinc-500 dark:text-zinc-400 w-16 shrink-0">HOJA {hoja}</span>
-                {d?.png ? <Miniatura png={d.png} alto="h-9" /> : null}
+                {fotos[0] ? <Miniatura png={fotos[0].png} alto="h-9" /> : null}
                 <span className="flex-1 min-w-0 text-sm text-zinc-900 dark:text-white truncate">
-                  {d ? [d.aclaracion, fechaDelDorso(d.fecha), d.certificante_ids?.length ? `Con ${d.certificante_ids.length === 1 ? "1 firma" : `${d.certificante_ids.length} firmas`} con sello` : ""].filter(Boolean).join(" · ") || "Con imagen" : <span className="text-zinc-500">Sin cargar (dorso en blanco)</span>}
+                  {d ? resumen || "Sin imágenes" : <span className="text-zinc-500">Sin cargar (dorso en blanco)</span>}
                 </span>
                 <span className="text-xs font-semibold text-aviation-cyan">{abierta === hoja ? "Cerrar" : d ? "Cambiar" : "Cargar"}</span>
               </button>
-              {abierta === hoja && <EditorDeDorso key={`${libroId}-${hoja}-${d?.id ?? "nuevo"}`} libroId={libroId} hoja={hoja} actual={d ?? null} firmas={firmas} alTerminar={() => setAbierta(null)} />}
+              {abierta === hoja && (
+                <EditorDeDorso
+                  key={`${libroId}-${hoja}`}
+                  libroId={libroId}
+                  hoja={hoja}
+                  actual={d ?? null}
+                  firmas={firmas}
+                  selloIdsDeLosVuelos={sellosPorHoja[libroId]?.[hoja] ?? []}
+                  alTerminar={() => setAbierta(null)}
+                />
+              )}
             </li>
           );
         })}
@@ -652,24 +846,63 @@ function Dorsos({
   );
 }
 
-function EditorDeDorso({ libroId, hoja, actual, firmas, alTerminar }: { libroId: string; hoja: number; actual: DorsoHoja | null; firmas: FirmaCertificante[]; alTerminar: () => void }) {
-  const [png, setPng] = useState<string | null>(null);
+/** Cuántas imágenes entran en un dorso (fotos más sellos): lo mismo que el PDF y el backend. */
+const MAX_IMAGENES = 12;
+
+function EditorDeDorso({
+  libroId,
+  hoja,
+  actual,
+  firmas,
+  selloIdsDeLosVuelos,
+  alTerminar,
+}: {
+  libroId: string;
+  hoja: number;
+  actual: DorsoHoja | null;
+  firmas: FirmaCertificante[];
+  /** Los sellos de los vuelos que caen en esta hoja, para ofrecer usarlos de un toque. */
+  selloIdsDeLosVuelos: string[];
+  alTerminar: () => void;
+}) {
+  const [nueva, setNueva] = useState<string | null>(null);
+  const [intento, setIntento] = useState(0);
   const [aclaracion, setAclaracion] = useState(actual?.aclaracion ?? "");
   const [fecha, setFecha] = useState(actual?.fecha ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pendiente, empezar] = useTransition();
   const { notificar } = useAvisos();
 
-  // Sin foto nueva se conserva la imagen que ya estaba.
-  const imagen = png ?? actual?.png ?? null;
-  const conSello = firmas.filter((f) => f.png_sello);
-  const [elegidas, setElegidas] = useState<Set<string>>(() => new Set((actual?.certificante_ids ?? []).filter((id) => conSello.some((f) => f.id === id))));
-  const puede = !pendiente && (!!imagen || aclaracion.trim().length > 0 || !!fecha || elegidas.size > 0);
+  const fotos = actual?.fotos ?? [];
+  // Todos los sellos de todas las personas, cada uno con su nombre y su cargo.
+  const sellos = firmas.flatMap((f) => (f.sellos ?? []).map((x) => ({ sello: x, texto: nombreDeSello({ nombre: f.nombre, sellos: f.sellos }, x) })));
+  const existentes = new Set(sellos.map((x) => x.sello.id));
+  const [elegidos, setElegidos] = useState<Set<string>>(() => new Set((actual?.sello_ids ?? []).filter((id) => existentes.has(id))));
+  const deLosVuelos = selloIdsDeLosVuelos.filter((id) => existentes.has(id));
+  const total = fotos.length + elegidos.size;
+  const puede = !pendiente && (fotos.length > 0 || aclaracion.trim().length > 0 || !!fecha || elegidos.size > 0);
+
+  const agregarFoto = () =>
+    empezar(async () => {
+      if (!nueva) return;
+      setError(null);
+      const r = await agregarFotoDorso({ logbookId: libroId, hoja, png: nueva });
+      if ("error" in r) return setError(r.error);
+      setNueva(null);
+      setIntento((n) => n + 1);
+    });
+
+  const quitarFoto = (id: string) =>
+    empezar(async () => {
+      setError(null);
+      const r = await quitarFotoDorso(id);
+      if ("error" in r) setError(r.error);
+    });
 
   const guardar = () =>
     empezar(async () => {
       setError(null);
-      const r = await guardarDorso({ logbookId: libroId, hoja, png: imagen, aclaracion, fecha, certificanteIds: [...elegidas] });
+      const r = await guardarDorso({ logbookId: libroId, hoja, aclaracion, fecha, selloIds: [...elegidos] });
       if ("error" in r) {
         setError(r.error);
         return;
@@ -688,41 +921,72 @@ function EditorDeDorso({ libroId, hoja, actual, firmas, alTerminar }: { libroId:
 
   return (
     <div className="space-y-5 pt-4">
-      {actual?.png && !png && (
-        <div className="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-          <Miniatura png={actual.png} alto="h-16" />
-          <span>Imagen actual. Sacá otra foto para reemplazarla.</span>
-        </div>
-      )}
-      <CapturaFirma modo="dorso" alCambiar={setPng} />
-      {conSello.length > 0 && (
+      <div className="space-y-2">
+        <p className={rotulo}>Fotos de este dorso ({fotos.length})</p>
+        {fotos.length > 0 && (
+          <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {fotos.map((f, i) => (
+              <li key={f.id} className="rounded-2xl border border-white/10 p-2 space-y-1.5">
+                <Miniatura png={f.png} alto="h-14" />
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-[11px] text-zinc-500">{i + 1}</span>
+                  <button type="button" onClick={() => quitarFoto(f.id)} disabled={pendiente} aria-label={`Quitar la foto ${i + 1}`} className="min-h-11 px-2 text-sm font-semibold text-red-500 disabled:opacity-40">
+                    Quitar
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        {total >= MAX_IMAGENES ? (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Un dorso lleva hasta {MAX_IMAGENES} imágenes entre fotos y sellos.</p>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">{fotos.length ? "Agregar otra foto" : "Sacale una foto a la firma con su sello"}: cada una se limpia en tu teléfono y se guarda aparte.</p>
+            <CapturaFirma key={intento} modo="dorso" alCambiar={setNueva} />
+            {nueva && (
+              <button type="button" onClick={agregarFoto} disabled={pendiente} className={principal}>
+                {pendiente ? "Guardando…" : fotos.length ? "Agregar otra foto" : "Agregar esta foto"}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {sellos.length > 0 && (
         <fieldset className="space-y-2">
-          <legend className={rotulo}>Usar las firmas con sello de…</legend>
+          <legend className={rotulo}>Sumar los sellos de…</legend>
           <ul className="flex flex-wrap gap-2">
-            {conSello.map((f) => (
-              <li key={f.id}>
-                <label className={`inline-flex items-center gap-2 min-h-11 px-3 rounded-full border text-sm cursor-pointer ${elegidas.has(f.id) ? "border-aviation-cyan/60 bg-aviation-cyan/10 text-aviation-cyan" : "border-white/10 text-zinc-900 dark:text-white"}`}>
+            {sellos.map(({ sello, texto }) => (
+              <li key={sello.id}>
+                <label className={`inline-flex items-center gap-2 min-h-11 px-3 rounded-full border text-sm cursor-pointer ${elegidos.has(sello.id) ? "border-aviation-cyan/60 bg-aviation-cyan/10 text-aviation-cyan" : "border-white/10 text-zinc-900 dark:text-white"}`}>
                   <input
                     type="checkbox"
-                    checked={elegidas.has(f.id)}
+                    checked={elegidos.has(sello.id)}
                     onChange={(e) =>
-                      setElegidas((s) => {
+                      setElegidos((s) => {
                         const n = new Set(s);
-                        if (e.target.checked) n.add(f.id);
-                        else n.delete(f.id);
+                        if (e.target.checked) n.add(sello.id);
+                        else n.delete(sello.id);
                         return n;
                       })
                     }
                     className="w-4 h-4 accent-[#2bd4ff]"
                   />
-                  {f.nombre}
+                  {texto}
                 </label>
               </li>
             ))}
           </ul>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">Si la hoja tiene su propia foto, se usa la foto. Con sellos no va la línea de aclaración: el sello ya la trae.</p>
+          {elegidos.size === 0 && deLosVuelos.length > 0 && (
+            <button type="button" onClick={() => setElegidos(new Set(deLosVuelos.slice(0, MAX_IMAGENES - fotos.length)))} className="min-h-11 text-sm font-semibold text-aviation-cyan text-left">
+              Usar los sellos de los vuelos de esta hoja ({deLosVuelos.length})
+            </button>
+          )}
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Van junto a las fotos, a tamaño real. Un sello ya trae la aclaración: sólo escribila abajo si hace falta.</p>
         </fieldset>
       )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <label className={rotulo} htmlFor={`dorso-acl-${hoja}`}>Aclaración en texto (opcional)</label>

@@ -19,9 +19,12 @@ from src.controllers.flights import FlightsController
 from src.models.firmas import (
     MAX_FIRMA_CHARS,
     AsignarVuelos,
+    DorsoFotoIn,
     DorsoHojaIn,
     FirmaCertificanteEdicion,
     FirmaCertificanteIn,
+    SelloEdicion,
+    SelloIn,
 )
 from src.models.flight import FlightCreate, FlightUpdate
 from src.services import certificantes as svc
@@ -64,7 +67,7 @@ lb = uuid4()
 d = DorsoHojaIn(logbook_id=lb, hoja=3, png=PNG, aclaracion=" pedro  gómez ", fecha="2026-11-02")
 check("el dorso normaliza la aclaración", d.aclaracion == "PEDRO GÓMEZ")
 check("el dorso toma la fecha", d.fecha.isoformat() == "2026-11-02")
-check("el dorso admite hasta MAX_DORSO_CHARS", DorsoHojaIn(logbook_id=lb, hoja=1, png=PNG).png == PNG)
+check("el dorso viejo con png se acepta (se ignora)", DorsoHojaIn(logbook_id=lb, hoja=1, png=PNG).png == PNG)
 check("el dorso puede ir sin imagen", DorsoHojaIn(logbook_id=lb, hoja=1, aclaracion="X").png is None)
 check("la hoja 0 no existe", falla(lambda: DorsoHojaIn(logbook_id=lb, hoja=0)))
 check("un dorso con JPG no pasa", falla(lambda: DorsoHojaIn(logbook_id=lb, hoja=1, png=JPG)))
@@ -77,16 +80,25 @@ check("los alias van normalizados y sin repetir", f2.alias == ["GUSTAVO EMILIO M
 check("automatica llega como se mandó", f2.automatica is False)
 check("sin alias ni sello no se mandan (no pisan lo guardado)", "alias" not in FirmaCertificanteIn(nombre="A", png=PNG).model_fields_set)
 check("más de 20 alias no pasan", falla(lambda: FirmaCertificanteIn(nombre="A", png=PNG, alias=[f"N{i}" for i in range(21)])))
-check("el sello es un PNG", falla(lambda: FirmaCertificanteIn(nombre="A", png=PNG, png_sello=JPG)))
-check("el sello admite el tope del dorso", FirmaCertificanteIn(nombre="A", png=PNG, png_sello=PNG).png_sello == PNG)
-e = FirmaCertificanteEdicion(png_sello=None, alias=["pérez"])
-check("la edición distingue 'quitar el sello' de 'no tocarlo'", "png_sello" in e.model_fields_set and "png" not in e.model_fields_set)
+e = FirmaCertificanteEdicion(alias=["pérez"])
 check("la edición normaliza alias", e.alias == ["PEREZ"])
 check("un nombre vacío en la edición no pasa", falla(lambda: FirmaCertificanteEdicion(nombre="  ")))
 check("firma 'quizás' no existe", falla(lambda: AsignarVuelos(vuelo_ids=[uuid4()], firma="quizas")))
 check("hay que elegir al menos un vuelo", falla(lambda: AsignarVuelos(vuelo_ids=[])))
-check("el dorso toma las personas", len(DorsoHojaIn(logbook_id=lb, hoja=1, certificante_ids=[uuid4(), uuid4()]).certificante_ids) == 2)
-check("más de 12 personas en un dorso no pasan", falla(lambda: DorsoHojaIn(logbook_id=lb, hoja=1, certificante_ids=[uuid4() for _ in range(13)])))
+check("el dorso toma los sellos", len(DorsoHojaIn(logbook_id=lb, hoja=1, sello_ids=[uuid4(), uuid4()]).sello_ids) == 2)
+check("más de 12 sellos en un dorso no pasan", falla(lambda: DorsoHojaIn(logbook_id=lb, hoja=1, sello_ids=[uuid4() for _ in range(13)])))
+
+# --------------------------------------------------------------- 049: modelos
+sl = SelloIn(etiqueta="  Jefe  de IV's ", autoridad_id=6, nombre_cad=" gustavo emilio macedo ", png=PNG)
+check("el sello limpia la etiqueta y pone el nombre del CAD en mayúsculas", sl.etiqueta == "Jefe de IV's" and sl.nombre_cad == "GUSTAVO EMILIO MACEDO")
+check("un sello sin etiqueta no pasa", falla(lambda: SelloIn(etiqueta="  ", png=PNG)))
+check("un sello con JPG no pasa", falla(lambda: SelloIn(etiqueta="X", png=JPG)))
+check("el sello admite el tope del dorso", SelloIn(etiqueta="X", png=PNG).png == PNG)
+check("la edición del sello distingue 'quitar el cargo' de 'no tocarlo'",
+      "autoridad_id" in SelloEdicion(autoridad_id=None).model_fields_set and "autoridad_id" not in SelloEdicion(etiqueta="Y").model_fields_set)
+check("una foto del dorso es un PNG de verdad", falla(lambda: DorsoFotoIn(logbook_id=lb, hoja=1, png=FALSO)) and DorsoFotoIn(logbook_id=lb, hoja=2, png=PNG).hoja == 2)
+check("la hoja 0 no existe para una foto", falla(lambda: DorsoFotoIn(logbook_id=lb, hoja=0, png=PNG)))
+check("el vuelo trae su sello", FlightUpdate(certificante_sello_id=uuid4()).certificante_sello_id is not None)
 check("el vuelo trae certificante_firma si o no", FlightUpdate(certificante_firma="si").certificante_firma == "si")
 check("el vuelo no admite otra anulación", falla(lambda: FlightUpdate(certificante_firma="tal vez")))
 
@@ -152,6 +164,14 @@ class Consulta:
     def upsert(self, *_a, **_k):
         return self
 
+    def insert(self, valores):
+        self.modo, self.valores = "insert", valores
+        return self
+
+    def delete(self):
+        self.modo = "delete"
+        return self
+
     def eq(self, col, v):
         self.filtros.append(lambda f: str(f.get(col)) == str(v))
         return self
@@ -172,7 +192,14 @@ class Consulta:
         return self
 
     def execute(self):
+        if self.modo == "insert":
+            fila = {"id": str(uuid4()), **self.valores}
+            self.filas.append(fila)
+            return SimpleNamespace(data=[dict(fila)], count=1)
         hallados = [f for f in self.filas if all(fl(f) for fl in self.filtros)]
+        if self.modo == "delete":
+            for f in hallados:
+                self.filas.remove(f)
         if self.modo == "update":
             for f in hallados:
                 f.update(self.valores)
@@ -206,7 +233,17 @@ def lanza(clase, coro):
 YO, OTRO = "11111111-1111-1111-1111-111111111111", "22222222-2222-2222-2222-222222222222"
 P_YO, P_OTRO = str(uuid4()), str(uuid4())
 VA, VB, VC, VAJENO = str(uuid4()), str(uuid4()), str(uuid4()), str(uuid4())
+S_JEFE, S_IV, S_AJENO = str(uuid4()), str(uuid4()), str(uuid4())
+LIBRO, LIBRO_AJENO = str(uuid4()), str(uuid4())
 base = BaseFalsa(
+    certificante_sellos=[
+        {"id": S_JEFE, "user_id": YO, "certificante_id": P_YO, "etiqueta": "Jefe de instructores", "autoridad_id": 6, "nombre_cad": None, "orden": 0, "png": PNG},
+        {"id": S_IV, "user_id": YO, "certificante_id": P_YO, "etiqueta": "Instructor de vuelo", "autoridad_id": 5, "nombre_cad": "GUSTAVO EMILIO MACEDO IV 25358574", "orden": 1, "png": PNG},
+        {"id": S_AJENO, "user_id": OTRO, "certificante_id": P_OTRO, "etiqueta": "Otro", "autoridad_id": None, "nombre_cad": None, "orden": 0, "png": PNG},
+    ],
+    logbooks=[{"id": LIBRO, "user_id": YO}, {"id": LIBRO_AJENO, "user_id": OTRO}],
+    libro_hojas_dorso=[],
+    libro_hojas_dorso_fotos=[],
     firmas_certificantes=[
         {"id": P_YO, "user_id": YO, "nombre": "GUSTAVO EMILIO MACEDO", "licencia": None, "autoridad_id": 4, "alias": [], "automatica": True, "png": PNG},
         {"id": P_OTRO, "user_id": OTRO, "nombre": "OTRO INSTRUCTOR", "autoridad_id": None, "alias": [], "automatica": True, "png": PNG},
@@ -223,6 +260,7 @@ ctl = FirmasController(owner=None)
 vuelo = lambda i: next(f for f in base.tablas["flights"] if f["id"] == i)
 
 check("no se asigna la persona de otro piloto", lanza(NotFoundException, asignar(ctl, pedido(YO), base, __import__("uuid").UUID(P_OTRO), AsignarVuelos(vuelo_ids=[VA]))))
+check("no se asigna con el sello de otra persona", lanza(NotFoundException, asignar(ctl, pedido(YO), base, __import__("uuid").UUID(P_YO), AsignarVuelos(vuelo_ids=[VA], sello_id=__import__("uuid").UUID(S_AJENO)))))
 check("no se asigna un vuelo de otro piloto", lanza(NotFoundException, asignar(ctl, pedido(YO), base, __import__("uuid").UUID(P_YO), AsignarVuelos(vuelo_ids=[VA, VAJENO]))))
 check("…y el del otro no cambió", vuelo(VAJENO)["certificante_id"] is None and vuelo(VA)["certificante_id"] is None)
 
@@ -271,10 +309,113 @@ resolver(base, YO, carga)
 check("un alta sin certificante no manda columnas nuevas", "certificante_id" not in carga and "certificante_firma" not in carga)
 cambios = {"certificante_id": None}
 resolver(base, YO, cambios, {"cad_autoridad_nombre": "X"})
-check("desasociar desde el vuelo limpia la anulación", cambios == {"certificante_id": None, "certificante_firma": None})
+check("desasociar desde el vuelo limpia la anulación y el sello", cambios == {"certificante_id": None, "certificante_firma": None, "certificante_sello_id": None})
 cambios = {"certificante_id": _u.UUID(P_YO)}
 resolver(base, YO, cambios, {"cad_autoridad_nombre": "PEDRO NADIE"})
 check("editar un vuelo con otro nombre no lo pisa", "cad_autoridad_nombre" not in cambios)
+
+# ------------------------------------------------ 049: sellos con su cargo
+
+SEL = [{"id": S_JEFE, "autoridad_id": 6, "orden": 0}, {"id": S_IV, "autoridad_id": 5, "orden": 1}, {"id": "sin-cargo", "autoridad_id": None, "orden": 2}]
+check("el sello sugerido es el del mismo cargo", svc.sello_para_cargo(SEL, 6)["id"] == S_JEFE and svc.sello_para_cargo(SEL, 5)["id"] == S_IV)
+check("sin sello de ese cargo, el que no declara cargo", svc.sello_para_cargo(SEL, 9)["id"] == "sin-cargo")
+check("sin cargo en el vuelo, el que no declara cargo", svc.sello_para_cargo(SEL, None)["id"] == "sin-cargo")
+check("sin ninguno que sirva, ninguno", svc.sello_para_cargo(SEL[:2], 9) is None and svc.sello_para_cargo([], 6) is None)
+
+MAC2 = {**MACEDO, "sellos": [{"id": "s-jefe", "autoridad_id": 6, "orden": 0}, {"id": "s-iv", "autoridad_id": 5, "orden": 1}]}
+V2 = lambda i, n, cargo: {"id": f"w{i}", "cad_autoridad_nombre": n, "cad_autoridad_id": cargo, "certificante_id": None}
+vuelos2 = [V2(i, "GUSTAVO EMILIO MACEDO", 6) for i in range(45)] + [V2(45, "GUSTAVO EMILIO MACEDO IV 25358574", 5)]
+sug2 = {x["nombre_en_vuelos"]: x for x in svc.sugerencias([MAC2], vuelos2)}
+check("los 45 de cargo 6 van con su sello de jefe", sug2["GUSTAVO EMILIO MACEDO"]["sello_id"] == "s-jefe" and len(sug2["GUSTAVO EMILIO MACEDO"]["vuelo_ids"]) == 45)
+check("el de cargo 5 va con su sello de instructor", sug2["GUSTAVO EMILIO MACEDO IV 25358574"]["sello_id"] == "s-iv")
+mismo_nombre = svc.sugerencias([MAC2], [V2(1, "GUSTAVO EMILIO MACEDO", 6), V2(2, "GUSTAVO EMILIO MACEDO", 5)])
+check("el mismo nombre con dos cargos son dos sugerencias", sorted(x["sello_id"] for x in mismo_nombre) == ["s-iv", "s-jefe"])
+check("una persona sin sellos sugiere sin sello", svc.sugerencias([MACEDO], [V2(1, "GUSTAVO EMILIO MACEDO", 6)])[0]["sello_id"] is None)
+
+c, _ = svc.completar_autoridad({"cad_autoridad_nombre": None}, MACEDO, {"autoridad_id": 6, "nombre_cad": None})
+check("sin nombre toma el cargo del sello, no el de la persona", c == {"cad_autoridad_nombre": "GUSTAVO EMILIO MACEDO", "cad_autoridad_id": 6})
+c, _ = svc.completar_autoridad({"cad_autoridad_nombre": None}, MACEDO, {"autoridad_id": 5, "nombre_cad": "GUSTAVO EMILIO MACEDO IV 25358574"})
+check("sin nombre toma el nombre para el CAD del sello", c["cad_autoridad_nombre"] == "GUSTAVO EMILIO MACEDO IV 25358574" and c["cad_autoridad_id"] == 5)
+c, _ = svc.completar_autoridad({"cad_autoridad_nombre": None}, MACEDO, {"autoridad_id": None, "nombre_cad": None})
+check("un sello sin cargo deja el de la persona", c["cad_autoridad_id"] == 4)
+c, aviso = svc.completar_autoridad({"cad_autoridad_nombre": "GUSTAVO GIMENEZ", "cad_autoridad_id": 5}, MACEDO, {"autoridad_id": 6, "nombre_cad": None})
+check("con otro nombre y otro cargo no se pisa nada y avisa", c == {} and aviso is not None)
+
+uid = __import__("uuid").UUID
+base.tablas["flights"][0].update({"cad_autoridad_nombre": None, "cad_autoridad_id": None, "certificante_id": None})
+r = corre(asignar(ctl, pedido(YO), base, uid(P_YO), AsignarVuelos(vuelo_ids=[VA], sello_id=uid(S_IV))))
+check("asignar con sello lo guarda en el vuelo", vuelo(VA)["certificante_sello_id"] == S_IV)
+check("…y completa el nombre y el cargo de ese sello para el CAD", vuelo(VA)["cad_autoridad_nombre"] == "GUSTAVO EMILIO MACEDO IV 25358574" and vuelo(VA)["cad_autoridad_id"] == 5)
+corre(desasociar(ctl, pedido(YO), base, VA))
+check("desasociar también saca el sello", vuelo(VA)["certificante_sello_id"] is None)
+
+carga = {"cad_autoridad_nombre": None, "certificante_id": uid(P_YO), "certificante_sello_id": uid(S_JEFE)}
+resolver(base, YO, carga)
+check("un vuelo con persona y sello completa el cargo del sello", carga["cad_autoridad_id"] == 6)
+try:
+    resolver(base, YO, {"certificante_id": uid(P_YO), "certificante_sello_id": uid(S_AJENO)})
+    ok = False
+except NotFoundException:
+    ok = True
+check("un vuelo no admite el sello de otra persona", ok)
+cambios = {"certificante_id": uid(P_YO)}
+resolver(base, YO, cambios, {"cad_autoridad_nombre": "X", "certificante_id": str(P_OTRO)})
+check("cambiar de persona sin elegir sello borra el sello anterior", cambios["certificante_sello_id"] is None)
+cambios = {"certificante_firma": "si"}
+resolver(base, YO, {"certificante_id": uid(P_YO)}, {"cad_autoridad_nombre": "X", "certificante_id": P_YO})
+check("el alta con persona y sin sello no manda la columna nueva", True)
+alta = {"certificante_id": uid(P_YO), "cad_autoridad_nombre": "X"}
+resolver(base, YO, alta)
+check("…de verdad no la manda", "certificante_sello_id" not in alta)
+
+# Sellos de una persona: agregar (tope), editar, borrar; siempre del mismo piloto.
+agregar = FirmasController.agregar_sello.fn
+editar_sello = FirmasController.editar_sello.fn
+borrar_sello = FirmasController.borrar_sello.fn
+nuevo = corre(agregar(ctl, pedido(YO), base, uid(P_YO), SelloIn(etiqueta="Examinador", autoridad_id=7, png=PNG)))
+check("agrega un sello con el orden siguiente", nuevo.etiqueta == "Examinador" and nuevo.orden == 2)
+check("no se agrega un sello a la persona de otro", lanza(NotFoundException, agregar(ctl, pedido(YO), base, uid(P_OTRO), SelloIn(etiqueta="X", png=PNG))))
+for i in range(3):
+    corre(agregar(ctl, pedido(YO), base, uid(P_YO), SelloIn(etiqueta=f"Extra {i}", png=PNG)))
+check("hasta 6 sellos por persona", lanza(ClientException, agregar(ctl, pedido(YO), base, uid(P_YO), SelloIn(etiqueta="Uno más", png=PNG))))
+r = corre(editar_sello(ctl, pedido(YO), base, nuevo.id, SelloEdicion(etiqueta="Examinador de vuelo", autoridad_id=None)))
+check("edita la etiqueta y quita el cargo", r.etiqueta == "Examinador de vuelo" and r.autoridad_id is None)
+check("no se edita el sello de otro", lanza(NotFoundException, editar_sello(ctl, pedido(YO), base, uid(S_AJENO), SelloEdicion(etiqueta="X"))))
+check("una edición vacía falla", lanza(ClientException, editar_sello(ctl, pedido(YO), base, uid(S_JEFE), SelloEdicion())))
+check("la etiqueta no se puede quitar", lanza(ClientException, editar_sello(ctl, pedido(YO), base, uid(S_JEFE), SelloEdicion.model_construct(etiqueta=None, _fields_set={"etiqueta"}))))
+corre(borrar_sello(ctl, pedido(YO), base, nuevo.id))
+check("borra el sello", not any(x["id"] == str(nuevo.id) for x in base.tablas["certificante_sellos"]))
+check("no borra el de otro", lanza(NotFoundException, borrar_sello(ctl, pedido(YO), base, uid(S_AJENO))))
+
+lista = corre(FirmasController.listar_certificantes.fn(ctl, pedido(YO), base))
+check("la lista de personas trae sus sellos con imagen y por orden", [x.etiqueta for x in lista[0].sellos][:2] == ["Jefe de instructores", "Instructor de vuelo"] and lista[0].sellos[0].png == PNG)
+nom = corre(FirmasController.nombres_certificantes.fn(ctl, pedido(YO), base))
+check("la lista breve trae los sellos sin imagen y el cargo de la persona", len(nom[0].sellos) >= 2 and not hasattr(nom[0].sellos[0], "png") and nom[0].autoridad_id == 4)
+
+# Fotos del dorso: una por pedido, hasta 12, del libro propio.
+agregar_foto = FirmasController.agregar_foto_dorso.fn
+borrar_foto = FirmasController.borrar_foto_dorso.fn
+listar_dorsos = FirmasController.listar_dorsos.fn
+borrar_dorso = FirmasController.borrar_dorso.fn
+check("no se agrega una foto al libro de otro", lanza(NotFoundException, agregar_foto(ctl, pedido(YO), base, DorsoFotoIn(logbook_id=uid(LIBRO_AJENO), hoja=1, png=PNG))))
+fotos = [corre(agregar_foto(ctl, pedido(YO), base, DorsoFotoIn(logbook_id=uid(LIBRO), hoja=2, png=PNG))) for _ in range(3)]
+check("agrega varias fotos a una misma hoja, en orden", [f.orden for f in fotos] == [0, 1, 2])
+check("la hoja sin dorso lo recibe vacío para figurar en la lista", len(base.tablas["libro_hojas_dorso"]) == 1)
+corre(agregar_foto(ctl, pedido(YO), base, DorsoFotoIn(logbook_id=uid(LIBRO), hoja=2, png=PNG)))
+check("la segunda foto no duplica el dorso", len(base.tablas["libro_hojas_dorso"]) == 1)
+for _ in range(8):
+    corre(agregar_foto(ctl, pedido(YO), base, DorsoFotoIn(logbook_id=uid(LIBRO), hoja=2, png=PNG)))
+check("hasta 12 fotos por hoja", lanza(ClientException, agregar_foto(ctl, pedido(YO), base, DorsoFotoIn(logbook_id=uid(LIBRO), hoja=2, png=PNG))))
+check("otra hoja tiene su propio tope", corre(agregar_foto(ctl, pedido(YO), base, DorsoFotoIn(logbook_id=uid(LIBRO), hoja=3, png=PNG))).orden == 0)
+dorsos = corre(listar_dorsos(ctl, pedido(YO), base, uid(LIBRO)))
+check("el dorso lista todas sus fotos", [len(d.fotos) for d in dorsos if d.hoja == 2] == [12])
+corre(borrar_foto(ctl, pedido(YO), base, fotos[0].id))
+check("quita una foto", len([f for f in base.tablas["libro_hojas_dorso_fotos"] if f["hoja"] == 2]) == 11)
+check("no quita la foto de otro", lanza(NotFoundException, borrar_foto(ctl, pedido(YO), base, uid(str(uuid4())))))
+dorso2 = next(d for d in dorsos if d.hoja == 2)
+base.tablas["libro_hojas_dorso"][0]["id"] = str(dorso2.id)
+corre(borrar_dorso(ctl, pedido(YO), base, dorso2.id))
+check("quitar el dorso quita también todas sus fotos", not [f for f in base.tablas["libro_hojas_dorso_fotos"] if f["hoja"] == 2])
 
 if not all(resultados):
     print(f"\n{resultados.count(False)} fallaron")

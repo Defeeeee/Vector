@@ -57,6 +57,8 @@ class Flight(BaseModel):
     #: el PDF del libro: null = lo que diga la persona, "si" o "no".
     certificante_id: Optional[UUID] = None
     certificante_firma: Optional[Literal["si", "no"]] = None
+    #: Con qué sello/cargo de la persona certificó (migración 049, `certificante_sellos`).
+    certificante_sello_id: Optional[UUID] = None
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
@@ -103,6 +105,8 @@ class FlightCreate(BaseModel):
     #: Quién lo certificó (migración 048). El controlador verifica que sea del mismo piloto.
     certificante_id: Optional[UUID] = None
     certificante_firma: Optional[Literal["si", "no"]] = None
+    #: Con qué sello/cargo de la persona certificó (migración 049, `certificante_sellos`).
+    certificante_sello_id: Optional[UUID] = None
     
     model_config = ConfigDict(populate_by_name=True)
 
@@ -146,5 +150,7 @@ class FlightUpdate(BaseModel):
     #: Quién lo certificó (migración 048). Null lo desasocia.
     certificante_id: Optional[UUID] = None
     certificante_firma: Optional[Literal["si", "no"]] = None
+    #: Con qué sello/cargo de la persona certificó (migración 049, `certificante_sellos`).
+    certificante_sello_id: Optional[UUID] = None
 
     model_config = ConfigDict(populate_by_name=True)

@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.33.0 — Un dorso como el del papel
+
+_13 de noviembre de 2026_
+
+- **Varias firmas en el dorso, a tamaño real** — Cada hoja acepta varias fotos de firmas con sello, y se suman a los sellos que elijas. En el PDF salen a tamaño de papel, acomodadas sin pisarse.
+- **Un sello por cargo** — Una persona puede tener varios sellos, cada uno con su cargo del CAD (por ejemplo, Jefe de instructores e Instructor de vuelo). Al asociar sus vuelos, Vector elige el sello que corresponde al cargo de cada vuelo.
+
 ## v3.32.0 — Cada firma, con quien te certificó
 
 _13 de noviembre de 2026_

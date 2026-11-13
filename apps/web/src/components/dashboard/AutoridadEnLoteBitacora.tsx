@@ -8,8 +8,9 @@ import { Check, Loader2, X } from "lucide-react";
 import type { Aircraft, Flight } from "@/types";
 import { AUTORIDADES_CAD } from "@/lib/cad";
 import { asignarAutoridad } from "@/actions/cad";
-import { asignarCertificante, desasociarCertificante } from "@/actions/firmas";
-import type { CertificanteBreve } from "@/lib/firmas-libro";
+import { desasociarCertificante } from "@/actions/firmas";
+import { asignarPorSellos } from "@/lib/asignar-sellos";
+import { opcionesDeCertificante, type CertificanteBreve } from "@/lib/firmas-libro";
 
 /**
  * La autoridad certificante para varios vuelos de la Bitácora (3.17.0, Federico): se eligen los
@@ -74,9 +75,9 @@ export function BandaAutoridad({
   const asignarPersona = async () => {
     setAvisos([]);
     setEstado({ tipo: "guardando" });
-    const r = await asignarCertificante(persona, elegidos.map((f) => f.id), anula || null);
+    const r = await asignarPorSellos(persona, elegidos, certificantes.find((c) => c.id === persona.split("|")[0])?.sellos, anula || null);
     if ("error" in r) return setEstado({ tipo: "error", texto: r.error });
-    const nombre = certificantes.find((c) => c.id === persona)?.nombre ?? "esa persona";
+    const nombre = certificantes.find((c) => c.id === persona.split("|")[0])?.nombre ?? "esa persona";
     setAvisos(r.avisos.map((a) => a.mensaje));
     setEstado({
       tipo: "listo",
@@ -163,9 +164,9 @@ export function BandaAutoridad({
               className="h-10 min-w-0 rounded-xl bg-white/5 border border-white/10 px-3 text-sm text-white [color-scheme:dark]"
             >
               <option value="">Quién certificó…</option>
-              {certificantes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre}
+              {opcionesDeCertificante(certificantes, { segunCargo: true }).map((o) => (
+                <option key={o.valor} value={o.valor}>
+                  {o.texto}
                 </option>
               ))}
             </select>

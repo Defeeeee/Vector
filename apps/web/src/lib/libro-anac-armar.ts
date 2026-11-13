@@ -99,18 +99,20 @@ export async function armarPdfDelLibro(
     };
   }
 
-  // El dorso de cada hoja de este libro.
+  // El dorso de cada hoja de este libro: todas sus fotos más los sellos elegidos (migración 049).
   let dorsos: Map<number, DorsoParaPdf> | undefined;
   if (opciones.conDorsos) {
-    // Las firmas con sello de las personas elegidas para cada hoja (migración 048).
+    // Las imágenes de cada sello, por id: las personas traen sus sellos con la imagen.
     const sellos = new Map<string, Uint8Array>();
     const rf = await leer("/firmas/certificantes");
     if (!rf.ok) {
       return { ok: false, status: 502, error: "No se pudieron leer las firmas con sello para los dorsos. Probá de nuevo en un momento." };
     }
     for (const f of (await rf.json().catch(() => [])) as FirmaCertificante[]) {
-      const png = pngDeDataUrl(f.png_sello);
-      if (png) sellos.set(f.id, png);
+      for (const sello of f.sellos ?? []) {
+        const png = pngDeDataUrl(sello.png);
+        if (png) sellos.set(sello.id, png);
+      }
     }
     const r = await leer(`/firmas/dorsos${libro ? `?logbook_id=${encodeURIComponent(libro.id)}` : ""}`);
     if (!r.ok) {
@@ -119,8 +121,9 @@ export async function armarPdfDelLibro(
     const filas = (await r.json().catch(() => [])) as DorsoHoja[];
     dorsos = new Map();
     for (const [hoja, d] of dorsosPorHoja(filas, libro?.id)) {
-      const elegidos = (d.certificante_ids ?? []).map((id) => sellos.get(id)).filter((x): x is Uint8Array => !!x);
-      dorsos.set(hoja, { png: pngDeDataUrl(d.png), aclaracion: d.aclaracion, fecha: d.fecha, sellos: elegidos });
+      const fotos = (d.fotos ?? []).map((f) => pngDeDataUrl(f.png)).filter((x): x is Uint8Array => !!x);
+      const elegidos = (d.sello_ids ?? []).map((id) => sellos.get(id)).filter((x): x is Uint8Array => !!x);
+      dorsos.set(hoja, { fotos, aclaracion: d.aclaracion, fecha: d.fecha, sellos: elegidos });
     }
   }
 

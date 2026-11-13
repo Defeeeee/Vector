@@ -1,7 +1,7 @@
 "use client";
 
 import CertificanteDelVuelo from "@/components/dashboard/CertificanteDelVuelo";
-import { etiquetaFirma, type CertificanteBreve } from "@/lib/firmas-libro";
+import { etiquetaFirma, nombreDeSello, type CertificanteBreve } from "@/lib/firmas-libro";
 import RecorridoDelVuelo from "@/components/dashboard/RecorridoDelVuelo";
 import { DESDE_RECORRIDOS } from "@/lib/recorrido";
 import { esVueloDeAlumno } from "@/lib/licencias";
@@ -228,7 +228,7 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
                   </select>
                 </EditField>
                 <EditField label="Nombre y apellido (CAD)"><input name="cad_autoridad_nombre" maxLength={120} defaultValue={flight.cad_autoridad_nombre ?? ""} placeholder="Quien certifica el vuelo" className="w-full bg-transparent border-b border-zinc-300 dark:border-zinc-700 py-2 text-sm md:text-base text-zinc-900 dark:text-white outline-none font-bold focus:border-zinc-900 dark:focus:border-white transition-colors" /></EditField>
-                <CertificanteDelVuelo variante="tarjeta" certificantes={certificantes} certificanteId={flight.certificante_id} firma={flight.certificante_firma} />
+                <CertificanteDelVuelo variante="tarjeta" certificantes={certificantes} certificanteId={flight.certificante_id} selloId={flight.certificante_sello_id} autoridadId={flight.cad_autoridad_id} firma={flight.certificante_firma} />
               </>
             )}
           </div>
@@ -413,7 +413,10 @@ export default function FlightCard({ flight, aircraft, allAircraft, costo = null
                 {!alumno && flight.certificante_id && (
                   <DetailItem
                     label="Certificó"
-                    value={`${certificantes.find((c) => c.id === flight.certificante_id)?.nombre ?? "—"} · firma ${etiquetaFirma(flight.certificante_firma)}`}
+                    value={`${(() => {
+                      const p = certificantes.find((c) => c.id === flight.certificante_id);
+                      return p ? nombreDeSello(p, p.sellos?.find((x) => x.id === flight.certificante_sello_id)) : "—";
+                    })()} · firma ${etiquetaFirma(flight.certificante_firma)}`}
                   />
                 )}
                 {/* Sólo si hubo cobro: en modo `packs` el vuelo consume horas y no

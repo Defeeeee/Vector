@@ -18,10 +18,26 @@ export interface FirmaCertificante {
   png: string;
   /** Otros nombres con los que aparece en los vuelos (normalizados). */
   alias?: string[];
-  /** Su firma con sello o aclaración, para el dorso de las hojas. */
-  png_sello?: string | null;
   /** Si su firma se pone sola en la celda del PDF. Sin el dato (backend viejo), sí. */
   automatica?: boolean;
+  /** Sus firmas con sello (migración 049), una por cargo, con la imagen. */
+  sellos?: SelloCertificante[];
+}
+
+/** Un sello sin su imagen: para elegir con qué cargo certificó un vuelo. */
+export interface SelloBreve {
+  id: string;
+  /** "Jefe de instructores", "Instructor de vuelo"… */
+  etiqueta: string;
+  /** El cargo del CAD de este sello (`AUTORIDADES_CAD`). */
+  autoridad_id?: number | null;
+  /** Cómo va el nombre al CAD con este cargo; sin él, el de la persona. */
+  nombre_cad?: string | null;
+  orden?: number;
+}
+
+export interface SelloCertificante extends SelloBreve {
+  png: string;
 }
 
 /** Una persona sin sus imágenes (`GET /firmas/certificantes/nombres`): para elegirla en un vuelo. */
@@ -29,7 +45,9 @@ export interface CertificanteBreve {
   id: string;
   nombre: string;
   licencia?: string | null;
+  autoridad_id?: number | null;
   automatica?: boolean;
+  sellos?: SelloBreve[];
 }
 
 export interface SugerenciaCertificante {
@@ -38,17 +56,26 @@ export interface SugerenciaCertificante {
   vuelo_ids: string[];
   /** El nombre no es el de la persona ni un alias: al asociar se suma como alias. */
   sumar_alias: boolean;
+  /** El sello de la persona con el mismo cargo que esos vuelos, si lo hay (migración 049). */
+  sello_id?: string | null;
+}
+
+/** Una foto del dorso (migración 049): un dorso puede tener varias. */
+export interface DorsoFoto {
+  id: string;
+  png: string;
+  orden?: number;
 }
 
 export interface DorsoHoja {
   id: string;
   logbook_id: string;
   hoja: number;
-  png?: string | null;
   aclaracion?: string | null;
   fecha?: string | null;
-  /** Las personas cuyas firmas con sello van en este dorso si no tiene foto propia. */
-  certificante_ids?: string[];
+  /** Los sellos (de cualquier persona) que van en este dorso, junto a sus fotos. */
+  sello_ids?: string[];
+  fotos?: DorsoFoto[];
 }
 
 /** "  Pérez,  JUAN " y "juan perez" son la misma persona: sin acentos, en mayúsculas, sin puntuación. */
@@ -123,6 +150,78 @@ export function firmaDelRenglon(
   return firmaParaVuelo(certificante, firmas.filter((f) => f.automatica !== false));
 }
 
+/**
+ * El sello que le toca a un vuelo con ese cargo del CAD: el de **el mismo `autoridad_id`**; si
+ * ninguno lo tiene, el que no declara cargo; si tampoco, ninguno (no se elige uno "parecido").
+ * Es lo mismo que sugiere el backend (`sello_para_cargo`); sirve para preseleccionar en el vuelo.
+ */
+export function selloParaCargo<T extends { autoridad_id?: number | null; orden?: number }>(sellos: T[] | undefined, autoridadId: number | null | undefined): T | null {
+  const ordenados = [...(sellos ?? [])].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0));
+  if (autoridadId) {
+    const igual = ordenados.find((x) => x.autoridad_id === autoridadId);
+    if (igual) return igual;
+  }
+  return ordenados.find((x) => x.autoridad_id == null) ?? null;
+}
+
+/** "Gustavo Emilio Macedo · Jefe de instructores": cómo se nombra un sello en los selectores. */
+export function nombreDeSello(persona: { nombre: string; sellos?: SelloBreve[] }, sello: SelloBreve | null | undefined): string {
+  return sello && (persona.sellos?.length ?? 0) > 0 ? `${persona.nombre} · ${sello.etiqueta}` : persona.nombre;
+}
+
+/**
+ * Las opciones de un selector de "Certificó": una por persona sin sellos y **una por sello** si
+ * tiene (con el cargo en el nombre). `valor` es `personaId` o `personaId|selloId`.
+ */
+export const SEGUN_CARGO = "auto";
+
+export function opcionesDeCertificante(
+  personas: { id: string; nombre: string; sellos?: SelloBreve[] }[],
+  { segunCargo = false }: { segunCargo?: boolean } = {}
+): { valor: string; texto: string; personaId: string; selloId: string | null }[] {
+  return personas.flatMap((p) => {
+    if (!p.sellos?.length) return [{ valor: p.id, texto: p.nombre, personaId: p.id, selloId: null }];
+    const porSello = [...p.sellos].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0)).map((s) => ({ valor: `${p.id}|${s.id}`, texto: nombreDeSello(p, s), personaId: p.id, selloId: s.id as string | null }));
+    // Para varios vuelos a la vez: "según el cargo de cada vuelo" reparte cada uno con su sello.
+    return segunCargo && p.sellos.length > 1 ? [{ valor: `${p.id}|${SEGUN_CARGO}`, texto: `${p.nombre} · según el cargo de cada vuelo`, personaId: p.id, selloId: SEGUN_CARGO }, ...porSello] : porSello;
+  });
+}
+
+/**
+ * Reparte los vuelos entre los sellos de una persona para asignarlos de a un pedido por sello:
+ * con un sello elegido, todos con ése; con `SEGUN_CARGO`, cada vuelo con el sello de su cargo del
+ * CAD (`selloParaCargo`; sin uno que sirva, sin sello). Los grupos salen en el orden en que aparecen.
+ */
+export function repartirPorSello(
+  vuelos: { id: string; cad_autoridad_id?: number | null }[],
+  sellos: SelloBreve[] | undefined,
+  elegido: string | null | undefined
+): { selloId: string | null; ids: string[] }[] {
+  if (elegido !== SEGUN_CARGO) return [{ selloId: elegido || null, ids: vuelos.map((v) => v.id) }];
+  const grupos = new Map<string | null, string[]>();
+  for (const v of vuelos) {
+    const id = selloParaCargo(sellos, v.cad_autoridad_id)?.id ?? null;
+    grupos.set(id, [...(grupos.get(id) ?? []), v.id]);
+  }
+  return [...grupos].map(([selloId, ids]) => ({ selloId, ids }));
+}
+
+/** La opción de un selector que le toca a un vuelo: la de su sello, o la de su persona. */
+export function valorDeOpcion(personas: { id: string; sellos?: SelloBreve[] }[], personaId: string | null | undefined, selloId: string | null | undefined, autoridadId?: number | null): string {
+  if (!personaId) return "";
+  const p = personas.find((x) => x.id === personaId);
+  if (!p?.sellos?.length) return personaId;
+  const sello = p.sellos.find((x) => x.id === selloId) ?? selloParaCargo(p.sellos, autoridadId) ?? [...p.sellos].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))[0];
+  return `${p.id}|${sello.id}`;
+}
+
+/** Los sellos distintos de los vuelos de cada hoja, sin repetir y en orden de aparición (`/dashboard/settings`). */
+export function sellosDeLosVuelos(vuelosDeLaHoja: { certificante_sello_id?: string | null }[]): string[] {
+  const vistos: string[] = [];
+  for (const v of vuelosDeLaHoja) if (v.certificante_sello_id && !vistos.includes(v.certificante_sello_id)) vistos.push(v.certificante_sello_id);
+  return vistos;
+}
+
 /** Cuántos vuelos tiene asignada cada persona. */
 export function vuelosPorCertificante(vuelos: { certificante_id?: string | null }[]): Map<string, number> {
   const m = new Map<string, number>();
@@ -139,31 +238,51 @@ export function vuelosSinCertificante<T extends { certificante_id?: string | nul
 }
 
 /**
- * Las firmas con sello de un dorso, acomodadas en grilla de abajo a la derecha hacia arriba y
- * hacia la izquierda, sin superponerse. Las coordenadas son las de pdf-lib (origen abajo a la
- * izquierda): cada caja es `{ x, y, w, h }` de una imagen ya ajustada, en el orden recibido
- * (la primera, abajo a la derecha).
+ * **El tamaño real de un bloque de firma con sello en el dorso** (Federico, 2026-11-13: "aparece
+ * ENORME"): en el papel mide del orden de 7 × 3,5 cm, así que cada imagen entra en una caja de
+ * 70 × 35 mm, nunca más grande. Las fotos son de cualquier resolución, así que el tamaño no sale
+ * de sus píxeles sino de esta caja; una imagen chica no se agranda más que 1 pt por píxel
+ * (`ajustarEnCaja` sin `agrandar`).
+ */
+export const MM = 72 / 25.4;
+export const CAJA_SELLO = { ancho: 70 * MM, alto: 35 * MM };
+
+/**
+ * Las imágenes de un dorso (fotos y sellos), acomodadas **a tamaño real** en grilla desde abajo a
+ * la derecha hacia la izquierda y hacia arriba, sin superponerse. Las coordenadas son las de
+ * pdf-lib (origen abajo a la izquierda): cada caja es `{ x, y, w, h }` de la imagen ya ajustada,
+ * en el orden recibido (la primera, abajo a la derecha).
+ *
+ * Cada celda mide `CAJA_SELLO` (70 × 35 mm). Se elige la cantidad de columnas que deja las
+ * celdas más grandes (a igualdad, más columnas: la grilla queda más baja); si ni así entran
+ * todas en el espacio útil, las celdas se achican **lo mínimo** (nunca se agrandan). Con
+ * `reservaAbajo` se deja libre una franja abajo (para la línea de aclaración).
  */
 export function acomodarSellos(
   imagenes: { ancho: number; alto: number }[],
-  pagina: { ancho: number; alto: number; margen: number },
-  opciones: { celdaW?: number; celdaH?: number; hueco?: number; columnas?: number } = {}
+  pagina: { ancho: number; alto: number; margen: number; reservaAbajo?: number; reservaArriba?: number },
+  opciones: { celdaW?: number; celdaH?: number; hueco?: number } = {}
 ): { x: number; y: number; w: number; h: number }[] {
   const n = imagenes.length;
   if (!n) return [];
-  const hueco = opciones.hueco ?? 14;
+  const hueco = opciones.hueco ?? 10;
+  const baseW = opciones.celdaW ?? CAJA_SELLO.ancho;
+  const baseH = opciones.celdaH ?? CAJA_SELLO.alto;
   const utilW = pagina.ancho - 2 * pagina.margen;
-  const base = pagina.margen + 10; // el rótulo de la hoja va abajo a la izquierda
-  const utilH = pagina.alto - base - pagina.margen - 14; // y la fecha arriba
-  const columnas = Math.max(1, Math.min(opciones.columnas ?? (n === 1 ? 1 : n <= 4 ? 2 : 3), n));
-  const filas = Math.ceil(n / columnas);
-  // Cada celda cabe en el espacio útil: nunca se superponen, aunque sean 12.
-  const celdaW = Math.min(opciones.celdaW ?? 220, (utilW - hueco * (columnas - 1)) / columnas);
-  const celdaH = Math.min(opciones.celdaH ?? 150, (utilH - hueco * (filas - 1)) / filas);
+  const base = pagina.margen + (pagina.reservaAbajo ?? 10); // el rótulo de la hoja va abajo a la izquierda
+  const utilH = pagina.alto - base - pagina.margen - (pagina.reservaArriba ?? 14); // y la fecha arriba
+  let mejor = { columnas: 1, escala: 0 };
+  for (let c = 1; c <= n; c++) {
+    const f = Math.ceil(n / c);
+    const escala = Math.min(1, (utilW - hueco * (c - 1)) / c / baseW, (utilH - hueco * (f - 1)) / f / baseH);
+    if (escala >= mejor.escala - 1e-9) mejor = { columnas: c, escala };
+  }
+  const celdaW = baseW * mejor.escala;
+  const celdaH = baseH * mejor.escala;
   return imagenes.map((img, i) => {
-    const fila = Math.floor(i / columnas);
-    const col = i % columnas;
-    const caja = ajustarEnCaja(img.ancho, img.alto, celdaW, celdaH, true);
+    const fila = Math.floor(i / mejor.columnas);
+    const col = i % mejor.columnas;
+    const caja = ajustarEnCaja(img.ancho, img.alto, celdaW, celdaH);
     const xCelda = pagina.ancho - pagina.margen - (col + 1) * celdaW - col * hueco;
     const yCelda = base + fila * (celdaH + hueco);
     // Pegada a la derecha de su celda y apoyada abajo: el borde común queda alineado.
@@ -190,7 +309,7 @@ export function dorsosPorHoja(dorsos: DorsoHoja[], libroId: string | null | unde
   const m = new Map<number, DorsoHoja>();
   for (const d of dorsos) {
     if (libroId && d.logbook_id !== libroId) continue;
-    if (!d.png && !d.aclaracion?.trim() && !d.fecha && !d.certificante_ids?.length) continue;
+    if (!d.fotos?.length && !d.aclaracion?.trim() && !d.fecha && !d.sello_ids?.length) continue;
     m.set(d.hoja, d);
   }
   return m;
@@ -209,14 +328,16 @@ export function fechaDelDorso(iso: string | null | undefined): string {
  */
 export function certificanteDelFormulario(
   id: FormDataEntryValue | null,
-  firma: FormDataEntryValue | null
-): { certificante_id?: string | null; certificante_firma?: "si" | "no" | null } {
+  firma: FormDataEntryValue | null,
+  sello?: FormDataEntryValue | null
+): { certificante_id?: string | null; certificante_firma?: "si" | "no" | null; certificante_sello_id?: string | null } {
   if (id === null) return {};
   const limpio = String(id).trim();
-  if (!limpio) return { certificante_id: null, certificante_firma: null };
+  if (!limpio) return { certificante_id: null, certificante_firma: null, certificante_sello_id: null };
   if (!/^[0-9a-f-]{36}$/i.test(limpio)) return {};
   const f = String(firma ?? "");
-  return { certificante_id: limpio, certificante_firma: f === "si" || f === "no" ? f : null };
+  const s = String(sello ?? "").trim();
+  return { certificante_id: limpio, certificante_firma: f === "si" || f === "no" ? f : null, certificante_sello_id: /^[0-9a-f-]{36}$/i.test(s) ? s : null };
 }
 
 /** "automática" (lo que diga la persona), "sí" o "no": cómo se lee la anulación de un vuelo. */

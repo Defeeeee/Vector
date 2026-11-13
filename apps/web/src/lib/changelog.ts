@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.33.0",
+    fecha: "2026-11-13",
+    titulo: "Un dorso como el del papel",
+    novedades: [
+      {
+        icono: "camara",
+        titulo: "Varias firmas en el dorso, a tamaño real",
+        texto: "Cada hoja acepta varias fotos de firmas con sello, y se suman a los sellos que elijas. En el PDF salen a tamaño de papel, acomodadas sin pisarse.",
+        href: "/dashboard/settings",
+        cta: "Ir al Hangar",
+      },
+      {
+        icono: "camara",
+        titulo: "Un sello por cargo",
+        texto: "Una persona puede tener varios sellos, cada uno con su cargo del CAD (por ejemplo, Jefe de instructores e Instructor de vuelo). Al asociar sus vuelos, Vector elige el sello que corresponde al cargo de cada vuelo.",
+        href: "/dashboard/settings",
+        cta: "Ir al Hangar",
+      },
+    ],
+  },
+  {
     version: "3.32.0",
     fecha: "2026-11-13",
     titulo: "Cada firma, con quien te certificó",
