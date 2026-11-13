@@ -44,6 +44,8 @@ MAX_FOTOS_POR_DORSO = 12
 MAX_SELLOS_POR_PERSONA = 6
 #: Textos de un dorso (migración 050): constancias y habilitaciones, cada una con su firma.
 MAX_TEXTOS_POR_DORSO = 12
+#: Constancias en el frente (migración 051): fotos del sello real, por vuelo.
+MAX_CONSTANCIAS_POR_VUELO = 2
 MAX_LARGO_TEXTO_DORSO = 600
 
 
@@ -356,3 +358,25 @@ class DorsoHoja(BaseModel):
     sello_ids: List[UUID] = Field(default_factory=list)
     textos: List[DorsoTexto] = Field(default_factory=list)
     fotos: List[DorsoFoto] = Field(default_factory=list)
+
+
+class ConstanciaIn(BaseModel):
+    """
+    La foto del sello real de una autoridad (p. ej. el de ANAC en un examen) para el frente de
+    la hoja de un vuelo (migración 051). Vector nunca dibuja un sello: sólo estampa la foto.
+    """
+
+    flight_id: UUID
+    png: str = Field(max_length=MAX_DORSO_CHARS)
+
+    @field_validator("png")
+    @classmethod
+    def _png(cls, v: str) -> str:
+        return validar_png(v)
+
+
+class Constancia(BaseModel):
+    id: UUID
+    flight_id: UUID
+    png: str
+    orden: int = 0

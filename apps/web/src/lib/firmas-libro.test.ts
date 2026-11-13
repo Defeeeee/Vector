@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  acomodarConstancias,
   acomodarDorso,
   bloquesDelDorso,
+  CAJA_CONSTANCIA,
   CAJA_SELLO,
   MM,
   ajustarEnCaja,
@@ -216,6 +218,37 @@ describe("acomodarDorso: a tamaño real, desde arriba a la izquierda", () => {
   });
   it("sin bloques, nada", () => {
     expect(solo([])).toEqual([]);
+  });
+});
+
+describe("acomodarConstancias: el sello real, desde el renglón de su vuelo", () => {
+  const zona = { x: 600, w: 284, yPrimerRenglon: 100, altoRenglon: 18, renglones: 15 };
+  const sello = { ancho: 1200, alto: 700 };
+  const fondo = zona.yPrimerRenglon + zona.renglones * zona.altoRenglon;
+  it("arranca en el renglón de su vuelo, adentro de la zona y sin pasar de 10 × 5 cm", () => {
+    const [c] = acomodarConstancias([{ renglon: 0, ...sello }], zona);
+    expect(c.y).toBe(zona.yPrimerRenglon);
+    expect(c.x).toBeGreaterThanOrEqual(zona.x);
+    expect(c.x + c.w).toBeLessThanOrEqual(zona.x + zona.w + 1e-9);
+    expect(c.w).toBeLessThanOrEqual(CAJA_CONSTANCIA.ancho + 1e-9);
+    expect(c.h).toBeLessThanOrEqual(CAJA_CONSTANCIA.alto + 1e-9);
+    expect(c.w / c.h).toBeCloseTo(1200 / 700);
+  });
+  it("en el renglón 5, arranca en el 5", () => {
+    expect(acomodarConstancias([{ renglon: 5, ...sello }], zona)[0].y).toBe(zona.yPrimerRenglon + 5 * zona.altoRenglon);
+  });
+  it("cerca del final se achica para no salirse de la tabla", () => {
+    const [c] = acomodarConstancias([{ renglon: 12, ...sello }], zona);
+    expect(c.y + c.h).toBeLessThanOrEqual(fondo + 1e-9);
+  });
+  it("dos vuelos seguidos: la segunda baja hasta después de la primera", () => {
+    const [a, b] = acomodarConstancias([{ renglon: 0, ...sello }, { renglon: 1, ...sello }], zona);
+    expect(b.y).toBeGreaterThanOrEqual(a.y + a.h);
+    expect(b.y + b.h).toBeLessThanOrEqual(fondo + 1e-9);
+  });
+  it("una imagen chica no se agranda", () => {
+    const [c] = acomodarConstancias([{ renglon: 0, ancho: 80, alto: 40 }], zona);
+    expect(c.w).toBeCloseTo(80);
   });
 });
 

@@ -263,3 +263,14 @@ export async function quitarFotoDorso(id: string) {
 export async function borrarDorso(id: string) {
   return enviar(`/firmas/dorsos/${id}`, { method: "DELETE" }, "No se pudo borrar el dorso.");
 }
+
+/** La foto del sello real para el frente de la hoja de un vuelo (migración 051). Una por pedido. */
+export async function agregarConstancia(datos: { vueloId: string; png: string }) {
+  if (!UUID_RE.test(datos.vueloId)) return { error: "Elegí un vuelo." };
+  return enviar("/firmas/constancias", { method: "POST", body: JSON.stringify({ flight_id: datos.vueloId, png: datos.png }) }, "No se pudo guardar la constancia.");
+}
+
+export async function quitarConstancia(id: string) {
+  if (!UUID_RE.test(id)) return { error: "Esa constancia no existe." };
+  return enviar(`/firmas/constancias/${id}`, { method: "DELETE" }, "No se pudo quitar la constancia.");
+}

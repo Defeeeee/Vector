@@ -384,6 +384,49 @@ export function bloquesDelDorso(
   ];
 }
 
+/** Una constancia del frente (migración 051): la foto del sello real de una autoridad, por vuelo. */
+export interface ConstanciaVuelo {
+  id: string;
+  flight_id: string;
+  png: string;
+  orden?: number;
+}
+
+/** Como mucho, lo que mide un sello de examen en el papel: 10 × 5 cm. */
+export const CAJA_CONSTANCIA = { ancho: 100 * MM, alto: 50 * MM };
+
+/**
+ * Dónde va cada constancia en el frente de la hoja (coordenadas desde arriba, como `Dibujo`):
+ * **sobre las columnas de la discriminación, arrancando en el renglón de su vuelo** y hacia
+ * abajo, como el sello de ANAC en la hoja del examen. Encima de las líneas de la tabla (la foto
+ * es transparente: las líneas se ven a través).
+ *
+ * - Cada una entra en la zona (el ancho de esas columnas, hasta el fondo de la tabla) y en
+ *   `CAJA_CONSTANCIA`, sin deformarse ni agrandarse de más.
+ * - Si dos se pisarían (vuelos seguidos), la siguiente baja hasta después de la anterior; si ya
+ *   no queda lugar, se achica en lo que queda (nunca menos de 3 renglones: si no, va igual
+ *   desde su renglón, aunque tape a la de arriba, antes que perderla).
+ */
+export function acomodarConstancias(
+  items: { renglon: number; ancho: number; alto: number }[],
+  zona: { x: number; w: number; yPrimerRenglon: number; altoRenglon: number; renglones: number },
+  hueco = 3
+): { x: number; y: number; w: number; h: number }[] {
+  const fondo = zona.yPrimerRenglon + zona.renglones * zona.altoRenglon;
+  const orden = items.map((it, i) => ({ ...it, i })).sort((a, b) => a.renglon - b.renglon || a.i - b.i);
+  const salida: { x: number; y: number; w: number; h: number }[] = new Array(items.length);
+  let libreDesde = zona.yPrimerRenglon;
+  for (const it of orden) {
+    const suRenglon = zona.yPrimerRenglon + Math.max(0, Math.min(it.renglon, zona.renglones - 1)) * zona.altoRenglon;
+    let y = Math.max(suRenglon, libreDesde);
+    if (fondo - y < 3 * zona.altoRenglon) y = suRenglon;
+    const caja = ajustarEnCaja(it.ancho, it.alto, Math.min(zona.w, CAJA_CONSTANCIA.ancho), Math.min(fondo - y, CAJA_CONSTANCIA.alto));
+    salida[it.i] = { x: zona.x + (zona.w - caja.w) / 2, y, w: caja.w, h: caja.h };
+    libreDesde = Math.max(libreDesde, y + caja.h + hueco);
+  }
+  return salida;
+}
+
 /** El tamaño de una imagen ajustada a una caja, sin deformarla ni agrandarla de más. */
 export function ajustarEnCaja(
   ancho: number,

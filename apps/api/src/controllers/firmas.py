@@ -20,6 +20,8 @@ from src.models.firmas import (
     AsignarVuelos,
     AvisoVuelo,
     CertificanteBreve,
+    Constancia,
+    ConstanciaIn,
     DorsoFoto,
     DorsoFotoIn,
     DorsoHoja,
@@ -27,6 +29,7 @@ from src.models.firmas import (
     FirmaCertificante,
     FirmaCertificanteEdicion,
     FirmaCertificanteIn,
+    MAX_CONSTANCIAS_POR_VUELO,
     MAX_FOTOS_POR_DORSO,
     MAX_SELLOS_POR_PERSONA,
     Sello,
@@ -494,6 +497,72 @@ class FirmasController(Controller):
         supabase_client.table("libro_hojas_dorso_fotos").delete().eq("user_id", user_id).eq(
             "logbook_id", fila["logbook_id"]
         ).eq("hoja", fila["hoja"]).execute()
+
+    # ------------------------------------------------- constancias (051)
+
+    @get("/constancias")
+    async def listar_constancias(self, request: Request, supabase_client: Client) -> List[Constancia]:
+        """Las fotos de sellos reales para el frente de la hoja de cada vuelo (migración 051)."""
+        user_id = str(request.state.user.id)
+        filas = (
+            supabase_client.table("vuelo_constancias")
+            .select("id,flight_id,png,orden")
+            .eq("user_id", user_id)
+            .order("orden")
+            .limit(400)
+            .execute()
+        ).data or []
+        return [Constancia(**f) for f in filas]
+
+    @post("/constancias")
+    async def agregar_constancia(self, request: Request, supabase_client: Client, data: ConstanciaIn) -> Constancia:
+        """
+        Una foto del sello real para el frente de la hoja del vuelo. Hasta 2 por vuelo. **Es la
+        foto**: Vector no dibuja sellos de una autoridad a partir de datos.
+        """
+        user_id = str(request.state.user.id)
+        vuelo = (
+            supabase_client.table("flights").select("id").eq("id", str(data.flight_id)).eq("user_id", user_id).execute()
+        ).data
+        if not vuelo:
+            raise NotFoundException("Ese vuelo no existe.")
+        existentes = (
+            supabase_client.table("vuelo_constancias")
+            .select("id,orden")
+            .eq("user_id", user_id)
+            .eq("flight_id", str(data.flight_id))
+            .execute()
+        ).data or []
+        if len(existentes) >= MAX_CONSTANCIAS_POR_VUELO:
+            raise ClientException(detail=f"Hasta {MAX_CONSTANCIAS_POR_VUELO} constancias por vuelo.")
+        resp = (
+            supabase_client.table("vuelo_constancias")
+            .insert(
+                {
+                    "user_id": user_id,
+                    "flight_id": str(data.flight_id),
+                    "png": data.png,
+                    "orden": max((e["orden"] or 0 for e in existentes), default=-1) + 1,
+                }
+            )
+            .execute()
+        )
+        if not resp.data:
+            raise ClientException(detail="No se pudo guardar la constancia.")
+        return Constancia(**{k: resp.data[0][k] for k in ("id", "flight_id", "png", "orden")})
+
+    @delete("/constancias/{constancia_id:uuid}")
+    async def borrar_constancia(self, request: Request, supabase_client: Client, constancia_id: UUID) -> None:
+        user_id = str(request.state.user.id)
+        resp = (
+            supabase_client.table("vuelo_constancias")
+            .delete()
+            .eq("id", str(constancia_id))
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if not resp.data:
+            raise NotFoundException("Esa constancia no existe.")
 
 
 def _firmas_de_los_textos(supabase_client: Client, user_id: str, data: DorsoHojaIn, textos: list) -> None:

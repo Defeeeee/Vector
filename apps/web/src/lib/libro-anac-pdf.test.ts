@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { pngDeDataUrl } from "./libro-anac-armar";
 import { valoresDeApertura } from "./libro-anac";
 import { ALTO_HOJA, ANCHO_HOJA, MAX_IMAGENES_DORSO, pdfDelLibro } from "./libro-anac-pdf";
-import { CAJA_SELLO } from "./firmas-libro";
+import { CAJA_CONSTANCIA, CAJA_SELLO } from "./firmas-libro";
 
 const titular = { apellidoYNombre: "Ferrari, Lucía", licencia: "PPA", licenciaNumero: "12345678", legajo: "" };
 const apertura = valoresDeApertura(null);
@@ -143,6 +143,22 @@ describe("el dorso con varias fotos y sellos, a tamaño real", () => {
     const [img] = await imagenesDeLaPagina(bytes, 1);
     expect(Math.max(...ys)).toBeGreaterThan(img.y + img.h);
     if (process.env.LIBRO_PDF_DEMO) writeFileSync(process.env.LIBRO_PDF_DEMO.replace(/\.pdf$/, "-textos.pdf"), bytes);
+  });
+
+  it("la constancia del frente (el sello real) va sobre la discriminación, en el renglón de su vuelo", async () => {
+    const sello = new Uint8Array(await sharp({ create: { width: 900, height: 500, channels: 4, background: { r: 30, g: 30, b: 30, alpha: 1 } } }).png().toBuffer());
+    const renglon = (vueloId: string) => ({ vueloId, dia: "03", mes: "11", horaSalida: "", desde: "GEZ", hasta: "GEZ", horaLlegada: "", finalidad: "EXA", marcaModelo: "EV97", matricula: "LV-S153", potencia: "100", clase: "MONT-T", certificante: null, valores: apertura });
+    const hoja = { anio: 2025, capacidad: 15, cerrada: false, renglones: [renglon("v-exa"), renglon("v-otro")], anterior: apertura, siguiente: apertura };
+    const con = await pdfDelLibro([hoja], titular, { generado: "13/11/2026", apertura, constancias: new Map([["v-exa", [sello]]]) });
+    const sin = await pdfDelLibro([hoja], titular, { generado: "13/11/2026", apertura });
+    expect(cuenta(con)).toBe(1);
+    expect(cuenta(sin)).toBe(0);
+    const [c] = await imagenesDeLaPagina(con, 0);
+    // A la derecha de la mitad de la hoja (la discriminación), arriba (el primer renglón) y a tamaño de sello.
+    expect(c.x).toBeGreaterThan(ANCHO_HOJA / 2);
+    expect(c.y + c.h).toBeGreaterThan(ALTO_HOJA * 0.6);
+    expect(c.w).toBeLessThanOrEqual(CAJA_CONSTANCIA.ancho + 0.01);
+    if (process.env.LIBRO_PDF_DEMO) writeFileSync(process.env.LIBRO_PDF_DEMO.replace(/\.pdf$/, "-constancia.pdf"), con);
   });
 
   it("una foto ancha llena 7 cm de ancho, no la hoja entera", async () => {

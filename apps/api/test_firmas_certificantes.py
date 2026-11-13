@@ -22,6 +22,7 @@ from src.models.firmas import (
     DorsoFotoIn,
     DorsoHojaIn,
     DorsoTexto,
+    ConstanciaIn,
     FirmaCertificanteEdicion,
     FirmaCertificanteIn,
     SelloEdicion,
@@ -266,6 +267,7 @@ base = BaseFalsa(
     logbooks=[{"id": LIBRO, "user_id": YO}, {"id": LIBRO_AJENO, "user_id": OTRO}],
     libro_hojas_dorso=[],
     libro_hojas_dorso_fotos=[],
+    vuelo_constancias=[],
     firmas_certificantes=[
         {"id": P_YO, "user_id": YO, "nombre": "GUSTAVO EMILIO MACEDO", "licencia": None, "autoridad_id": 4, "alias": [], "automatica": True, "png": PNG},
         {"id": P_OTRO, "user_id": OTRO, "nombre": "OTRO INSTRUCTOR", "autoridad_id": None, "alias": [], "automatica": True, "png": PNG},
@@ -457,6 +459,21 @@ check("una web vieja (sin el campo textos) no los borra", len(fila3["textos"]) =
 corre(guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=3, aclaracion="Macedo", textos=[])))
 check("con la lista vacía, se quitan", fila3["textos"] == [])
 check("la lista trae los textos", any(d.hoja == 7 and d.textos[0].texto == "x" for d in corre(listar_dorsos(ctl, pedido(YO), base, uid(LIBRO)))))
+
+# 051: constancias en el frente (la foto del sello real), por vuelo.
+check("una constancia es un PNG de verdad", falla(lambda: ConstanciaIn(flight_id=uuid4(), png=JPG)))
+agregar_c = FirmasController.agregar_constancia.fn
+listar_c = FirmasController.listar_constancias.fn
+borrar_c = FirmasController.borrar_constancia.fn
+c1 = corre(agregar_c(ctl, pedido(YO), base, ConstanciaIn(flight_id=uid(VA), png=PNG)))
+check("agrega la constancia a un vuelo propio", str(c1.flight_id) == VA and c1.orden == 0)
+check("no se agrega al vuelo de otro", lanza(NotFoundException, agregar_c(ctl, pedido(YO), base, ConstanciaIn(flight_id=uid(VAJENO), png=PNG))))
+check("la segunda va después", corre(agregar_c(ctl, pedido(YO), base, ConstanciaIn(flight_id=uid(VA), png=PNG))).orden == 1)
+check("hasta 2 por vuelo", lanza(ClientException, agregar_c(ctl, pedido(YO), base, ConstanciaIn(flight_id=uid(VA), png=PNG))))
+check("la lista trae sólo las propias", len(corre(listar_c(ctl, pedido(YO), base))) == 2 and corre(listar_c(ctl, pedido(OTRO), base)) == [])
+check("otro no la puede borrar", lanza(NotFoundException, borrar_c(ctl, pedido(OTRO), base, c1.id)))
+corre(borrar_c(ctl, pedido(YO), base, c1.id))
+check("la borra", len(base.tablas["vuelo_constancias"]) == 1)
 
 if not all(resultados):
     print(f"\n{resultados.count(False)} fallaron")

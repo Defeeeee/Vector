@@ -1,5 +1,5 @@
 import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, degrees, rgb } from "pdf-lib";
-import { acomodarDorso, ajustarEnCaja, fechaDelDorso } from "./firmas-libro";
+import { acomodarConstancias, acomodarDorso, ajustarEnCaja, fechaDelDorso } from "./firmas-libro";
 import {
   COLUMNAS_LIBRO,
   RENGLONES_POR_HOJA,
@@ -62,7 +62,7 @@ const NEGRO = rgb(0, 0, 0);
 const GRIS = rgb(0.45, 0.45, 0.45);
 const LINEA = rgb(0.55, 0.55, 0.55);
 
-type ClaveTexto = Exclude<keyof RenglonLibro, "valores" | "certificante">;
+type ClaveTexto = Exclude<keyof RenglonLibro, "valores" | "certificante" | "vueloId">;
 type Clave = ClaveTexto | ColumnaLibro | "certificaciones";
 
 /** Anchos en puntos, en el orden del Adjunto A. Certificaciones se lleva lo que sobra. */
@@ -459,6 +459,7 @@ export async function pdfDelLibro(
     firmaPng,
     certificaciones,
     dorsos,
+    constancias,
   }: {
     generado: string;
     apertura: ValoresLibro;
@@ -478,6 +479,13 @@ export async function pdfDelLibro(
      * sea vacío), cada hoja va seguida de su dorso; la que no tiene nada, en blanco.
      */
     dorsos?: Map<number, DorsoParaPdf>;
+    /**
+     * Constancias del frente (migración 051), por id de vuelo: la foto del sello real de una
+     * autoridad (el de ANAC en un examen), que se estampa sobre las columnas de la
+     * discriminación desde el renglón de ese vuelo (`acomodarConstancias`). Vector no dibuja
+     * sellos: sólo estampa la foto que cargó el piloto.
+     */
+    constancias?: Map<string, Uint8Array[]>;
   }
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
@@ -530,6 +538,20 @@ export async function pdfDelLibro(
       }
     }
   }
+  // Las constancias del frente, embebidas una vez cada una.
+  const constanciasDe = new Map<string, PDFImage[]>();
+  for (const [vueloId, pngs] of constancias ?? []) {
+    const listas: PDFImage[] = [];
+    for (const png of pngs.slice(0, 2)) {
+      try {
+        listas.push(await doc.embedPng(png));
+      } catch {
+        /* una imagen ilegible se saltea */
+      }
+    }
+    if (listas.length) constanciasDe.set(vueloId, listas);
+  }
+
   const dorsoBloques = new Map<number, BloqueEmbebido[]>();
   if (dorsos) {
     for (const [hoja, dorso] of dorsos) {
@@ -578,6 +600,7 @@ export async function pdfDelLibro(
     let y = top + ALTO_ENCABEZADO;
     filaDeTotales(d, cols, y, altos.totales, "TOTALES PÁGINA ANTERIOR", hoja.anterior, "de la página anterior");
     y += altos.totales;
+    const yPrimerRenglon = y;
     let yPrimerVacio: number | null = null;
     for (let k = 0; k < hoja.capacidad; k++) {
       const r = hoja.renglones[k] ?? null;
@@ -595,6 +618,20 @@ export async function pdfDelLibro(
     filaDeTotales(d, cols, y, altos.totales, "TOTALES A LA PÁGINA SIGUIENTE", hoja.siguiente, "a la página siguiente");
     const fondo = y + altos.totales;
     d.caja(MARGEN, top, ANCHO_HOJA - 2 * MARGEN, fondo - top, 1, NEGRO);
+
+    // Las constancias (la foto del sello real), encima de la tabla, sobre la discriminación.
+    const sellos: { img: PDFImage; renglon: number }[] = [];
+    hoja.renglones.forEach((r, k) => {
+      for (const img of (r.vueloId && constanciasDe.get(r.vueloId)) || []) sellos.push({ img, renglon: k });
+    });
+    if (sellos.length) {
+      const xZona = cols.instructor.x;
+      const cajas = acomodarConstancias(
+        sellos.map((c) => ({ renglon: c.renglon, ancho: c.img.width, alto: c.img.height })),
+        { x: xZona, w: cols.simPilotoEnInstruccion.x + cols.simPilotoEnInstruccion.w - xZona, yPrimerRenglon, altoRenglon: altos.renglon, renglones: hoja.capacidad }
+      );
+      sellos.forEach((c, k) => page.drawImage(c.img, { x: cajas[k].x, y: ALTO_HOJA - (cajas[k].y + cajas[k].h), width: cajas[k].w, height: cajas[k].h }));
+    }
 
     // Pie: lo que aclara la hoja, y la firma del titular.
     const yPie = fondo + 9;

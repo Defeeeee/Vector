@@ -12,7 +12,7 @@ import LogbooksManager from "@/components/dashboard/LogbooksManager";
 import FirmasDelLibro from "@/components/dashboard/FirmasDelLibro";
 import { cantidadDeHojas, sellosPorHoja, vuelosDeUnLibro } from "@/lib/libro-anac";
 import { vuelosDesdeLaPpa } from "@/lib/licencias";
-import type { DorsoHoja, FirmaCertificante, SugerenciaCertificante } from "@/lib/firmas-libro";
+import type { ConstanciaVuelo, DorsoHoja, FirmaCertificante, SugerenciaCertificante } from "@/lib/firmas-libro";
 import HorasDeAntesAlumno from "@/components/dashboard/HorasDeAntesAlumno";
 import { esAlumno } from "@/lib/licencias";
 import WhatsAppMissingNotice from "@/components/dashboard/WhatsAppMissingNotice";
@@ -25,7 +25,7 @@ import AvisosPush from "@/components/social/AvisosPush";
 import ListaBloqueados from "@/components/social/ListaBloqueados";
 
 async function getSettingsData() {
-  const [profilesRes, aircraftRes, packsRes, documentsRes, logbooksRes, flightsRes, perfilPublicoRes, bloqueadosRes, clavePushRes, firmasRes, dorsosRes, sugerenciasRes] =
+  const [profilesRes, aircraftRes, packsRes, documentsRes, logbooksRes, flightsRes, perfilPublicoRes, bloqueadosRes, clavePushRes, firmasRes, dorsosRes, sugerenciasRes, constanciasRes] =
     await Promise.all([
       apiFetch("/profiles"),
       apiFetch("/aircraft"),
@@ -49,6 +49,8 @@ async function getSettingsData() {
       apiFetch("/firmas/dorsos", { cache: "no-store" }),
       // Los nombres de vuelos sin certificante que son de una persona guardada (migración 048).
       apiFetch("/firmas/certificantes/sugerencias", { cache: "no-store" }),
+      // Las constancias del frente (migración 051): la foto del sello real, por vuelo.
+      apiFetch("/firmas/constancias", { cache: "no-store" }),
     ]);
 
   if (profilesRes.status === 401 || aircraftRes.status === 401 || packsRes.status === 401) {
@@ -74,12 +76,13 @@ async function getSettingsData() {
   const firmas: FirmaCertificante[] = firmasRes.ok ? await firmasRes.json().catch(() => []) : [];
   const dorsos: DorsoHoja[] = dorsosRes.ok ? await dorsosRes.json().catch(() => []) : [];
   const sugerencias: SugerenciaCertificante[] = sugerenciasRes.ok ? await sugerenciasRes.json().catch(() => []) : [];
+  const constancias: ConstanciaVuelo[] = constanciasRes.ok ? await constanciasRes.json().catch(() => []) : [];
 
-  return { profile: profiles[0] || null, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, firmas, dorsos, sugerencias };
+  return { profile: profiles[0] || null, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, firmas, dorsos, sugerencias, constancias };
 }
 
 export default async function SettingsPage() {
-  const { profile, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, firmas, dorsos, sugerencias } =
+  const { profile, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, firmas, dorsos, sugerencias, constancias } =
     await getSettingsData();
   // Cuántas hojas tiene cada libro, numeradas igual que el PDF (el dorso se carga hoja por hoja).
   const vuelosDelPdf = vuelosDesdeLaPpa(flights, profile?.fecha_ppa);
@@ -119,7 +122,7 @@ export default async function SettingsPage() {
           </div>
           <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Firmas del libro</h3>
         </div>
-        <FirmasDelLibro firmas={firmas} dorsos={dorsos} libros={logbooks.map((l) => ({ id: l.id, name: l.name }))} hojasPorLibro={hojasPorLibro} sugerencias={sugerencias} vuelos={vuelosDelPdf} aviones={aircraft} sellosPorHoja={sellosDeLasHojas} />
+        <FirmasDelLibro firmas={firmas} dorsos={dorsos} libros={logbooks.map((l) => ({ id: l.id, name: l.name }))} hojasPorLibro={hojasPorLibro} sugerencias={sugerencias} vuelos={vuelosDelPdf} aviones={aircraft} sellosPorHoja={sellosDeLasHojas} constancias={constancias} />
       </section>}
 
       {/* El alumno no ve los libros, pero sí sus horas de antes (`lib/apertura-alumno.ts`). */}

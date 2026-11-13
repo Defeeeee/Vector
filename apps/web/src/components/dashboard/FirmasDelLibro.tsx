@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { ChevronDown, PenLine, Trash2, X } from "lucide-react";
 import {
+  agregarConstancia,
   agregarFotoDorso,
   agregarSello,
   asignarCertificante,
@@ -13,6 +14,7 @@ import {
   editarSello,
   guardarDorso,
   guardarFirmaCertificante,
+  quitarConstancia,
   quitarFotoDorso,
   quitarSello,
 } from "@/actions/firmas";
@@ -30,6 +32,7 @@ import {
   opcionesDeCertificante,
   vuelosPorCertificante,
   vuelosSinCertificante,
+  type ConstanciaVuelo,
   type DorsoHoja,
   type FirmaCertificante,
   type SelloCertificante,
@@ -52,6 +55,7 @@ export default function FirmasDelLibro({
   vuelos = [],
   aviones = [],
   sellosPorHoja = {},
+  constancias = [],
 }: {
   firmas: FirmaCertificante[];
   dorsos: DorsoHoja[];
@@ -65,11 +69,14 @@ export default function FirmasDelLibro({
   aviones?: Aircraft[];
   /** Por libro y hoja, los sellos de los vuelos que caen en ella (para ofrecer «Usar los sellos de los vuelos»). */
   sellosPorHoja?: Record<string, Record<number, string[]>>;
+  /** Las fotos de sellos reales para el frente de la hoja de cada vuelo (migración 051). */
+  constancias?: ConstanciaVuelo[];
 }) {
   return (
     <div className="space-y-10">
       <Certificantes firmas={firmas} sugerencias={sugerencias} vuelos={vuelos} aviones={aviones} />
       <Dorsos dorsos={dorsos} libros={libros} hojasPorLibro={hojasPorLibro} firmas={firmas} sellosPorHoja={sellosPorHoja} />
+      <Constancias constancias={constancias} vuelos={vuelos} />
     </div>
   );
 }
@@ -1101,6 +1108,81 @@ function EditorDeDorso({
             Quitar este dorso
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Constancias en el frente (migración 051): la foto del sello que una autoridad estampó en el
+ * frente de la hoja (el de ANAC en un examen), por vuelo. **Es la foto del sello real**: Vector no
+ * dibuja sellos. Sale en el PDF "Con las firmas de los certificantes".
+ */
+function Constancias({ constancias, vuelos }: { constancias: ConstanciaVuelo[]; vuelos: Flight[] }) {
+  // Los exámenes primero (donde suele haber un sello de la autoridad), después los más nuevos.
+  const ordenados = [...vuelos].sort((a, b) => Number(b.purpose === "EXA") - Number(a.purpose === "EXA") || b.date.localeCompare(a.date));
+  const [vueloId, setVueloId] = useState(ordenados[0]?.id ?? "");
+  const [nueva, setNueva] = useState<string | null>(null);
+  const [intento, setIntento] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [pendiente, empezar] = useTransition();
+  const nombre = (id: string) => {
+    const v = vuelos.find((x) => x.id === id);
+    return v ? [fechaDelDorso(v.date), v.route, v.purpose].filter(Boolean).join(" · ") : "Vuelo borrado";
+  };
+  if (!vuelos.length) return null;
+  const agregar = () =>
+    empezar(async () => {
+      if (!nueva || !vueloId) return;
+      setError(null);
+      const r = await agregarConstancia({ vueloId, png: nueva });
+      if ("error" in r) return setError(r.error);
+      setNueva(null);
+      setIntento((n) => n + 1);
+    });
+  const quitar = (id: string) =>
+    empezar(async () => {
+      const r = await quitarConstancia(id);
+      if ("error" in r) setError(r.error);
+    });
+  return (
+    <div className="space-y-4">
+      <div>
+        <h4 className="text-base md:text-lg font-bold text-zinc-900 dark:text-white">Constancias en el frente</h4>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+          La foto del sello que una autoridad estampó en el frente de la hoja, como el de ANAC en tu examen. En el PDF con las firmas de los certificantes va sobre las
+          columnas de discriminación, desde el renglón de ese vuelo, como en el papel. Tiene que ser la foto del sello real: Vector no dibuja sellos.
+        </p>
+      </div>
+      {constancias.length > 0 && (
+        <ul className="divide-y divide-white/10 border-y border-white/10">
+          {constancias.map((c) => (
+            <li key={c.id} className="py-3 flex items-center gap-3">
+              <Miniatura png={c.png} alto="h-12" />
+              <span className="flex-1 min-w-0 text-sm text-zinc-900 dark:text-white truncate">{nombre(c.flight_id)}</span>
+              <button type="button" onClick={() => quitar(c.id)} disabled={pendiente} className="min-h-11 px-2 text-sm font-semibold text-red-500 disabled:opacity-40">
+                Quitar
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="space-y-3">
+        <div className="space-y-1.5 max-w-md">
+          <label className={rotulo} htmlFor="constancia-vuelo">Vuelo</label>
+          <select id="constancia-vuelo" value={vueloId} onChange={(e) => setVueloId(e.target.value)} className={campo}>
+            {ordenados.map((v) => (
+              <option key={v.id} value={v.id}>{nombre(v.id)}</option>
+            ))}
+          </select>
+        </div>
+        <CapturaFirma key={intento} modo="dorso" alCambiar={setNueva} />
+        {nueva && (
+          <button type="button" onClick={agregar} disabled={pendiente || !vueloId} className={principal}>
+            {pendiente ? "Guardando…" : "Agregar al vuelo"}
+          </button>
+        )}
+        {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
       </div>
     </div>
   );

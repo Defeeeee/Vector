@@ -97,6 +97,8 @@ export const COLUMNAS_LIBRO: ColumnaLibro[] = [
 ];
 
 export interface RenglonLibro {
+  /** El id del vuelo (para buscar sus constancias del frente, migración 051). */
+  vueloId?: string;
   dia: string;
   mes: string;
   horaSalida: string;
@@ -238,6 +240,7 @@ function renglon(f: Flight, avion: Aircraft | undefined): RenglonLibro {
 
   const { desde, hasta } = itinerario(f.route, esSimulador);
   return {
+    vueloId: f.id,
     dia: dia ?? "",
     mes: mes ?? "",
     horaSalida: horaUtc(f.takeoff),

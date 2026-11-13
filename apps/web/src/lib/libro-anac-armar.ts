@@ -1,7 +1,7 @@
 import { esAlumno, vuelosDesdeLaPpa } from "@/lib/licencias";
 import { apellidoYNombre, armarLibro, fechaDeGeneracion, renglonesDeLaHoja, valoresDeApertura, vuelosDeUnLibro, type RenglonLibro } from "@/lib/libro-anac";
 import { pdfDelLibro, type CertificacionParaPdf, type DorsoParaPdf } from "@/lib/libro-anac-pdf";
-import { bloquesDelDorso, dorsosPorHoja, firmaDelRenglon, type DorsoHoja, type FirmaCertificante } from "@/lib/firmas-libro";
+import { bloquesDelDorso, dorsosPorHoja, firmaDelRenglon, type ConstanciaVuelo, type DorsoHoja, type FirmaCertificante } from "@/lib/firmas-libro";
 import type { Aircraft, Flight, Logbook, Profile } from "@/types";
 
 /**
@@ -83,6 +83,7 @@ export async function armarPdfDelLibro(
   // Las firmas de los certificantes: sólo si el piloto las pidió. Si las pidió y no hay
   // ninguna guardada, se le dice (un PDF "con firmas" sin firmas sería un engaño).
   let certificaciones: ((r: RenglonLibro) => CertificacionParaPdf | null) | undefined;
+  let constancias: Map<string, Uint8Array[]> | undefined;
   if (opciones.conCertificaciones) {
     const r = await leer("/firmas/certificantes");
     if (!r.ok) {
@@ -91,6 +92,17 @@ export async function armarPdfDelLibro(
     const firmas = ((await r.json().catch(() => [])) as FirmaCertificante[]).filter((f) => pngDeDataUrl(f.png));
     if (!firmas.length) {
       return { ok: false, status: 404, error: "Todavía no guardaste ninguna firma de certificante. Se cargan en el Hangar, en «Firmas del libro»." };
+    }
+    // Las constancias del frente (la foto del sello real de una autoridad, migración 051) van
+    // con "Con las firmas de los certificantes": también son marcas de otro.
+    const rc = await leer("/firmas/constancias");
+    if (!rc.ok) {
+      return { ok: false, status: 502, error: "No se pudieron leer las constancias de tus vuelos. Probá de nuevo en un momento." };
+    }
+    constancias = new Map();
+    for (const c of (await rc.json().catch(() => [])) as ConstanciaVuelo[]) {
+      const png = pngDeDataUrl(c.png);
+      if (png) constancias.set(c.flight_id, [...(constancias.get(c.flight_id) ?? []), png]);
     }
     certificaciones = (renglon) => {
       const f = firmaDelRenglon(renglon.certificante, firmas);
@@ -140,7 +152,7 @@ export async function armarPdfDelLibro(
       legajo: perfil?.legajo ?? "",
       libro: libros.length > 1 ? libro?.name : undefined,
     },
-    { generado: fechaDeGeneracion(ahora), apertura, renglonesPorHoja, firmaPng, certificaciones, dorsos }
+    { generado: fechaDeGeneracion(ahora), apertura, renglonesPorHoja, firmaPng, certificaciones, dorsos, constancias }
   );
 
   const apellido = (perfil?.last_name ?? "piloto")
