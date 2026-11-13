@@ -154,7 +154,7 @@ interface OpcionesPdf {
 /**
  * Las opciones del libro en PDF, juntas: qué firmas lleva. **Todo apagado por defecto**:
  * firmar es de quien firma, y el dorso sólo tiene sentido si se va a imprimir a doble faz.
- * Las firmas de los certificantes y el dorso se cargan en el Hangar («Firmas del libro»).
+ * Las firmas de los certificantes y el dorso se cargan en «Firmas del libro» (`/dashboard/history/firmas`).
  */
 function OpcionesLibro({
   libros,
@@ -209,13 +209,13 @@ function OpcionesLibro({
         )}
 
         <div className="divide-y divide-white/10 border-y border-white/10">
-          {fila("firma", "Con mi firma de titular", "La que guardaste al firmar un plan de vuelo, en cada hoja.")}
+          {fila("firma", "Con mi firma de titular", "«Tu firma», la misma de tus planes de vuelo, en cada hoja.")}
           {fila("certificaciones", "Con las firmas de los certificantes", "En la celda de certificaciones de cada vuelo, con su aclaración, y las constancias (la foto del sello real) en el frente de su hoja. Un vuelo sin certificante o sin firma guardada queda en blanco.")}
           {fila("dorsos", "Con el dorso de cada hoja", "Una página después de cada hoja, para imprimir a doble faz. La hoja sin dorso cargado lleva el dorso en blanco.")}
         </div>
 
         <p className="text-xs text-zinc-400">
-          Las firmas se cargan en el <Link href="/dashboard/settings#firmas-del-libro" className="underline text-aviation-cyan" onClick={alCerrar}>Hangar, en «Firmas del libro»</Link>.
+          Las firmas, los sellos y el dorso se cargan en <Link href="/dashboard/history/firmas" className="underline text-aviation-cyan" onClick={alCerrar}>Firmas del libro</Link>.
           Usá la de otra persona sólo con su autorización.
         </p>
 

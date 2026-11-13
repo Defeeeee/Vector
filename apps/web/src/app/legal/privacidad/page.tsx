@@ -88,7 +88,8 @@ export default function PrivacidadPage() {
           <li>
             <strong>Firmas del libro de vuelo:</strong> si las cargás, imágenes de la firma de
             quienes certifican tus vuelos (con su aclaración y su licencia) y de la firma con
-            sello de cada hoja. Las fotos se limpian en tu teléfono, sin ningún servicio de
+            sello de cada hoja, y fotos de los sellos que una autoridad estampó en tus hojas
+            (como el de un examen). Las fotos se limpian en tu teléfono, sin ningún servicio de
             afuera, y lo que guardamos es la imagen ya limpia. Se usan <strong>sólo para armar
             tu libro de vuelo en PDF</strong>, cuando lo pedís con esas opciones: no se
             publican, no se muestran a nadie y no salen de tu cuenta. Cargá la firma de otra

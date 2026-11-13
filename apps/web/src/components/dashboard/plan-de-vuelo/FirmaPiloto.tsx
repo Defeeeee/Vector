@@ -142,7 +142,7 @@ export default function FirmaPiloto({
         )}
         {estado === "error" && <span className="text-xs text-red-600">No se pudo guardar la firma.</span>}
       </div>
-      <p className="text-[11px] text-zinc-400 dark:text-zinc-500">Se guarda una vez y va en todos tus planes y demoras.</p>
+      <p className="text-[11px] text-zinc-400 dark:text-zinc-500">Se guarda una vez y va en tus planes de vuelo, tus demoras y tu libro en PDF.</p>
     </div>
   );
 }

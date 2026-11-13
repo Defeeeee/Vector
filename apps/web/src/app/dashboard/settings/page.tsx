@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { Aircraft, Profile, FlightPack, PilotDocument, Logbook, Flight, PerfilPublico, PilotoResumen } from "@/types";
-import { Plane, User, Package, CalendarClock, BookOpen, Download, AtSign, PenLine } from "lucide-react";
+import { Plane, User, Package, CalendarClock, BookOpen, Download, AtSign } from "lucide-react";
 import ProfileForm from "@/components/dashboard/ProfileForm";
 import AircraftCard from "@/components/dashboard/AircraftCard";
 import FlightPackCard from "@/components/dashboard/FlightPackCard";
@@ -9,10 +9,6 @@ import AircraftForm from "@/components/dashboard/AircraftForm";
 import FlightPackForm from "@/components/dashboard/FlightPackForm";
 import DocumentsManager from "@/components/dashboard/DocumentsManager";
 import LogbooksManager from "@/components/dashboard/LogbooksManager";
-import FirmasDelLibro from "@/components/dashboard/FirmasDelLibro";
-import { cantidadDeHojas, sellosPorHoja, vuelosDeUnLibro } from "@/lib/libro-anac";
-import { vuelosDesdeLaPpa } from "@/lib/licencias";
-import type { ConstanciaVuelo, DorsoHoja, FirmaCertificante, SugerenciaCertificante } from "@/lib/firmas-libro";
 import HorasDeAntesAlumno from "@/components/dashboard/HorasDeAntesAlumno";
 import { esAlumno } from "@/lib/licencias";
 import WhatsAppMissingNotice from "@/components/dashboard/WhatsAppMissingNotice";
@@ -25,7 +21,7 @@ import AvisosPush from "@/components/social/AvisosPush";
 import ListaBloqueados from "@/components/social/ListaBloqueados";
 
 async function getSettingsData() {
-  const [profilesRes, aircraftRes, packsRes, documentsRes, logbooksRes, flightsRes, perfilPublicoRes, bloqueadosRes, clavePushRes, firmasRes, dorsosRes, sugerenciasRes, constanciasRes] =
+  const [profilesRes, aircraftRes, packsRes, documentsRes, logbooksRes, flightsRes, perfilPublicoRes, bloqueadosRes, clavePushRes ] =
     await Promise.all([
       apiFetch("/profiles"),
       apiFetch("/aircraft"),
@@ -44,13 +40,6 @@ async function getSettingsData() {
       apiFetch("/social/bloqueados", { cache: "no-store" }),
       // La clave de los avisos push: `null` si el backend no los tiene configurados.
       apiFetch("/push/clave"),
-      // Las firmas del libro (migración 047): sin cache, se acaban de cargar desde esta pantalla.
-      apiFetch("/firmas/certificantes", { cache: "no-store" }),
-      apiFetch("/firmas/dorsos", { cache: "no-store" }),
-      // Los nombres de vuelos sin certificante que son de una persona guardada (migración 048).
-      apiFetch("/firmas/certificantes/sugerencias", { cache: "no-store" }),
-      // Las constancias del frente (migración 051): la foto del sello real, por vuelo.
-      apiFetch("/firmas/constancias", { cache: "no-store" }),
     ]);
 
   if (profilesRes.status === 401 || aircraftRes.status === 401 || packsRes.status === 401) {
@@ -73,26 +62,12 @@ async function getSettingsData() {
     ? ((await clavePushRes.json().catch(() => null)) as { clave?: string | null } | null)?.clave ?? null
     : null;
 
-  const firmas: FirmaCertificante[] = firmasRes.ok ? await firmasRes.json().catch(() => []) : [];
-  const dorsos: DorsoHoja[] = dorsosRes.ok ? await dorsosRes.json().catch(() => []) : [];
-  const sugerencias: SugerenciaCertificante[] = sugerenciasRes.ok ? await sugerenciasRes.json().catch(() => []) : [];
-  const constancias: ConstanciaVuelo[] = constanciasRes.ok ? await constanciasRes.json().catch(() => []) : [];
-
-  return { profile: profiles[0] || null, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, firmas, dorsos, sugerencias, constancias };
+  return { profile: profiles[0] || null, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush };
 }
 
 export default async function SettingsPage() {
-  const { profile, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, firmas, dorsos, sugerencias, constancias } =
+  const { profile, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush } =
     await getSettingsData();
-  // Cuántas hojas tiene cada libro, numeradas igual que el PDF (el dorso se carga hoja por hoja).
-  const vuelosDelPdf = vuelosDesdeLaPpa(flights, profile?.fecha_ppa);
-  const hojasPorLibro = Object.fromEntries(
-    logbooks.map((l) => [l.id, cantidadDeHojas(vuelosDeUnLibro(vuelosDelPdf, logbooks, l), aircraft, l)])
-  );
-  // Los sellos con que se certificaron los vuelos de cada hoja: «Usar los sellos de los vuelos» en el dorso.
-  const sellosDeLasHojas = Object.fromEntries(
-    logbooks.map((l) => [l.id, sellosPorHoja(vuelosDeUnLibro(vuelosDelPdf, logbooks, l), aircraft, l)])
-  );
   const cma = documents.find(doc => doc.kind === "cma");
 
   return (
@@ -111,18 +86,10 @@ export default async function SettingsPage() {
           <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">{logbooks.length > 1 ? "Libros de vuelo" : "Tu libro de vuelo"}</h3>
         </div>
         <LogbooksManager logbooks={logbooks} />
-      </section>}
-
-      {/* Las firmas del libro en PDF: las de quienes certifican y el dorso de cada hoja. El
-          alumno piloto no lleva libro (ver arriba): sin la sección. */}
-      {!esAlumno(profile?.license_type) && logbooks.length > 0 && <section id="firmas-del-libro" className="space-y-4 md:space-y-6 lg:border-t lg:border-white/10 lg:pt-9 scroll-mt-24">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex lg:hidden items-center justify-center shadow-lg">
-            <PenLine className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-zinc-900" />
-          </div>
-          <h3 className="text-lg md:text-xl lg:text-[30px] font-bold lg:font-extrabold font-display text-zinc-900 dark:text-white tracking-tight lg:tracking-[-0.03em]">Firmas del libro</h3>
-        </div>
-        <FirmasDelLibro firmas={firmas} dorsos={dorsos} libros={logbooks.map((l) => ({ id: l.id, name: l.name }))} hojasPorLibro={hojasPorLibro} sugerencias={sugerencias} vuelos={vuelosDelPdf} aviones={aircraft} sellosPorHoja={sellosDeLasHojas} constancias={constancias} />
+        {/* Las firmas del libro se mudaron a la Bitácora en la 3.36.0 (`/dashboard/history/firmas`). */}
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Las firmas y los sellos para el PDF están en la Bitácora, en <Link href="/dashboard/history/firmas" className="font-semibold text-aviation-cyan underline-offset-2 hover:underline">Firmas del libro</Link>.
+        </p>
       </section>}
 
       {/* El alumno no ve los libros, pero sí sus horas de antes (`lib/apertura-alumno.ts`). */}

@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.36.0",
+    fecha: "2026-11-13",
+    titulo: "Las firmas, ordenadas en tu Bitácora",
+    novedades: [
+      {
+        icono: "libro",
+        titulo: "Firmas del libro, al lado de tus vuelos",
+        texto: "Las firmas dejaron el Hangar: ahora están en Bitácora → Firmas, en el orden de la hoja. Tu firma, quienes certifican (su firma y sus sellos en una ficha), el dorso de cada hoja y las constancias del frente.",
+        href: "/dashboard/history/firmas",
+        cta: "Ver las firmas",
+      },
+    ],
+  },
+  {
     version: "3.35.0",
     fecha: "2026-11-13",
     titulo: "Constancias en el frente de la hoja",

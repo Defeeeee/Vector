@@ -118,6 +118,14 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
             </Link>
           )}
           <ExportarBitacora flights={sortedFlights} aircraft={aircraft} libros={libros} alumno={esAlumno(profile?.license_type)} variante="chip" />
+          {!esAlumno(profile?.license_type) && (
+            <Link
+              href="/dashboard/history/firmas"
+              className="h-9 px-3 rounded-full bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center text-[13px] font-bold text-zinc-900 dark:text-white"
+            >
+              Firmas
+            </Link>
+          )}
         </div>
         {!esAlumno(profile?.license_type) && sinPasarAlCad > 0 && (
           <Link
@@ -139,6 +147,15 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
         action={
           <>
             <ExportarBitacora flights={sortedFlights} aircraft={aircraft} libros={libros} alumno={esAlumno(profile?.license_type)} />
+            {/* Las firmas del libro (3.36.0): cuelgan de acá, al lado del PDF que las usa. */}
+            {!esAlumno(profile?.license_type) && (
+              <Link
+                href="/dashboard/history/firmas"
+                className="whitespace-nowrap border border-zinc-200 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-900 dark:text-white font-semibold text-sm px-5 py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+              >
+                Firmas
+              </Link>
+            )}
             {!esAlumno(profile?.license_type) && (
               <Link
                 href="/dashboard/history/cad"

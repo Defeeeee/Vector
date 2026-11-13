@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.36.0 — Las firmas, ordenadas en tu Bitácora
+
+_13 de noviembre de 2026_
+
+- **Firmas del libro, al lado de tus vuelos** — Las firmas dejaron el Hangar: ahora están en Bitácora → Firmas, en el orden de la hoja. Tu firma, quienes certifican (su firma y sus sellos en una ficha), el dorso de cada hoja y las constancias del frente.
+
 ## v3.35.0 — Constancias en el frente de la hoja
 
 _13 de noviembre de 2026_

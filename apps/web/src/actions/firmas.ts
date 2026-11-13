@@ -9,10 +9,11 @@ import { revalidarLoQueCambiaUnVuelo } from "@/lib/revalidar-vuelo";
 /**
  * Las firmas de los certificantes y el dorso de cada hoja del libro (`/firmas` del backend,
  * migración 047). **Sólo sirven para el PDF del libro del piloto**: nada de esto se publica ni
- * se comparte. Se revalida el Hangar, donde se leen (invariante 8); el PDF se pide sin cache.
+ * se comparte. Se revalida «Firmas del libro» (`/dashboard/history/firmas`, 3.36.0; antes en el
+ * Hangar), donde se leen (invariante 8); el PDF se pide sin cache.
  */
 
-const HANGAR = "/dashboard/settings";
+const FIRMAS = "/dashboard/history/firmas";
 const UUID_RE = /^[0-9a-f-]{36}$/i;
 
 /** Lo que el backend (Litestar) dice de un campo que no pasó la validación, en palabras del piloto. */
@@ -43,7 +44,7 @@ async function enviar(ruta: string, init: RequestInit, porDefecto: string): Prom
   try {
     const res = await apiFetch(ruta, init);
     if (!res.ok) return { error: await detalle(res, porDefecto) };
-    revalidatePath(HANGAR);
+    revalidatePath(FIRMAS);
     return { ok: true };
   } catch (e) {
     if (esErrorDeRedirect(e)) throw e;
@@ -57,9 +58,7 @@ export async function guardarFirmaCertificante(datos: {
   autoridadId: number | null;
   png: string;
   alias?: string[];
-  /** Su primer sello, si lo sacó en el alta (migración 049): va en un segundo pedido, una imagen por vez. */
-  sello?: { png: string; etiqueta: string; autoridadId: number | null; nombreCad?: string } | null;
-}): Promise<{ error: string } | { ok: true }> {
+}): Promise<{ error: string } | { ok: true; id: string | null }> {
   if (!datos.nombre.trim()) return { error: "Falta la aclaración: el nombre de quien certifica." };
   try {
     const res = await apiFetch("/firmas/certificantes", {
@@ -73,16 +72,10 @@ export async function guardarFirmaCertificante(datos: {
       }),
     });
     if (!res.ok) return { error: await detalle(res, "No se pudo guardar la firma.") };
+    // El id, para abrir su ficha y sumarle los sellos (cada imagen va en su propio pedido).
     const persona = (await res.json().catch(() => null)) as { id?: string } | null;
-    if (datos.sello && persona?.id) {
-      const r = await apiFetch(`/firmas/certificantes/${persona.id}/sellos`, { method: "POST", body: JSON.stringify(cuerpoDeSello(datos.sello)) });
-      if (!r.ok) {
-        revalidatePath(HANGAR);
-        return { error: `La firma quedó guardada, pero no el sello: ${await detalle(r, "No se pudo guardar el sello.")}` };
-      }
-    }
-    revalidatePath(HANGAR);
-    return { ok: true };
+    revalidatePath(FIRMAS);
+    return { ok: true, id: persona?.id ?? null };
   } catch (e) {
     if (esErrorDeRedirect(e)) throw e;
     return { error: "Error de conexión con el servidor." };
@@ -186,7 +179,7 @@ export async function asignarCertificante(
     return { error: "Error de conexión con el servidor." };
   }
   revalidarLoQueCambiaUnVuelo();
-  revalidatePath(HANGAR);
+  revalidatePath(FIRMAS);
   return { ok: true, ...total };
 }
 
@@ -204,7 +197,7 @@ export async function desasociarCertificante(vueloIds: string[]) {
     return { error: "Error de conexión con el servidor." };
   }
   revalidarLoQueCambiaUnVuelo();
-  revalidatePath(HANGAR);
+  revalidatePath(FIRMAS);
   return { ok: true as const };
 }
 

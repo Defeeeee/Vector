@@ -103,7 +103,7 @@ export async function armarPdfDelLibro(
     }
     // Un PDF "con firmas" sin ninguna firma ni constancia sería un engaño: se le dice.
     if (!firmas.length && !constancias.size) {
-      return { ok: false, status: 404, error: "Todavía no guardaste ninguna firma de certificante ni constancia. Se cargan en el Hangar, en «Firmas del libro»." };
+      return { ok: false, status: 404, error: "Todavía no guardaste ninguna firma de certificante ni constancia. Se cargan en Bitácora → Vuelos → Firmas del libro." };
     }
     certificaciones = (renglon) => {
       const f = firmaDelRenglon(renglon.certificante, firmas);

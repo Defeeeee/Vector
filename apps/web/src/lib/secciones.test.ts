@@ -38,6 +38,7 @@ const CUELGAN_DE_UNA_PESTANA: Record<string, string> = {
   "/dashboard/pilotos/[handle]": "tocar un piloto en cualquier lista, publicación o actividad",
   "/dashboard/plan-de-vuelo/[id]": "tocar un plan en la lista de Plan de vuelo, o armarlo desde el planificador",
   "/dashboard/history/cad": "el botón \"Pasar al CAD\" de la Bitácora",
+  "/dashboard/history/firmas": "el botón \"Firmas\" de la Bitácora y el link del libro en PDF (estaba en el Hangar hasta la 3.36.0)",
   "/dashboard/history/auditoria": "el aviso de la Auditoría arriba de los vuelos (era pestaña hasta la 3.12.0)",
   "/dashboard/mapa/planilla": "\"Planilla de navegación\" en la tarjeta de la ruta del Mapa (era el Planificador hasta la 3.12.0)",
   "/dashboard/pilotos/buscar": "\"Buscar pilotos\" en la Red y en la tarjeta \"Tu red\" del inicio (era pestaña hasta la 3.12.0)",
