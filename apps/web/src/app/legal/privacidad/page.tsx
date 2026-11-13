@@ -86,6 +86,15 @@ export default function PrivacidadPage() {
             la demora y la cancelación.
           </li>
           <li>
+            <strong>Firmas del libro de vuelo:</strong> si las cargás, imágenes de la firma de
+            quienes certifican tus vuelos (con su aclaración y su licencia) y de la firma con
+            sello de cada hoja. Las fotos se limpian en tu teléfono, sin ningún servicio de
+            afuera, y lo que guardamos es la imagen ya limpia. Se usan <strong>sólo para armar
+            tu libro de vuelo en PDF</strong>, cuando lo pedís con esas opciones: no se
+            publican, no se muestran a nadie y no salen de tu cuenta. Cargá la firma de otra
+            persona sólo si te autorizó, y podés borrarla cuando quieras.
+          </li>
+          <li>
             <strong>Pasar los vuelos al CAD de ANAC, y traerlos:</strong> si usás el marcador
             &quot;Vector → CAD&quot;, tus vuelos van de Vector a tu sesión del CAD, en tu navegador,
             y se cargan como si los escribieras vos; Vector guarda el número que el CAD le da a

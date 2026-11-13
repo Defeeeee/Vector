@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, Download, FileSpreadsheet, Loader2, PenLine } from "lucide-react";
+import { createPortal } from "react-dom";
+import Link from "next/link";
+import { BookOpen, Download, FileSpreadsheet, Loader2, X } from "lucide-react";
 import MenuAcciones, { type AccionDeMenu } from "@/components/MenuAcciones";
 import { useAvisos } from "@/components/dashboard/Avisos";
 import { horaUtc } from "@/lib/libro-anac";
@@ -35,13 +37,19 @@ export default function ExportarBitacora({
   variante?: "boton" | "chip";
 }) {
   const [armando, setArmando] = useState(false);
+  const [opciones, setOpciones] = useState(false);
   const { notificar } = useAvisos();
 
-  const descargarLibro = async (libro?: Logbook, conFirma = false) => {
+  const descargarLibro = async (libro: Logbook | undefined, o: OpcionesPdf) => {
     if (armando) return;
     setArmando(true);
     try {
-      const q = new URLSearchParams({ ...(libro ? { libro: libro.id } : {}), ...(conFirma ? { firma: "1" } : {}) }).toString();
+      const q = new URLSearchParams({
+        ...(libro ? { libro: libro.id } : {}),
+        ...(o.firma ? { firma: "1" } : {}),
+        ...(o.certificaciones ? { certificaciones: "1" } : {}),
+        ...(o.dorsos ? { dorsos: "1" } : {}),
+      }).toString();
       const res = await fetch(`/api/bitacora/libro-anac${q ? `?${q}` : ""}`);
       if (!res.ok) {
         const cuerpo = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -51,7 +59,12 @@ export default function ExportarBitacora({
       const nombre =
         /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "libro-de-vuelo.pdf";
       bajar(await res.blob(), nombre);
-      notificar({ tipo: "exito", titulo: "Libro descargado", detalle: conFirma ? "Con tu firma en cada hoja, listo para imprimir." : "Listo para imprimir y firmar." });
+      setOpciones(false);
+      notificar({
+        tipo: "exito",
+        titulo: "Libro descargado",
+        detalle: o.dorsos ? "Con el dorso de cada hoja: imprimilo a doble faz." : o.firma || o.certificaciones ? "Con las firmas que pediste, listo para imprimir." : "Listo para imprimir y firmar.",
+      });
     } catch {
       notificar({ tipo: "error", titulo: "Sin conexión: no se pudo armar el libro." });
     } finally {
@@ -88,25 +101,18 @@ export default function ExportarBitacora({
     );
   };
 
-  const detalleLibro = "La hoja del libro de vuelo, para imprimir y firmar";
-  const detalleFirmado = "Con la firma que guardaste en el plan de vuelo, en cada hoja";
   const acciones: AccionDeMenu[] = [
-    ...(alumno ? [] : libros.length > 1
-      ? libros.flatMap((l) => [
-          { etiqueta: `Libro «${l.name}» · PDF`, detalle: detalleLibro, icono: BookOpen, alElegir: () => void descargarLibro(l) },
-          { etiqueta: `Libro «${l.name}» · PDF firmado`, detalle: detalleFirmado, icono: PenLine, alElegir: () => void descargarLibro(l, true) },
-        ])
-      : [
-          { etiqueta: "Libro de vuelo · PDF", detalle: detalleLibro, icono: BookOpen, alElegir: () => void descargarLibro() },
-          { etiqueta: "Libro de vuelo · PDF firmado", detalle: detalleFirmado, icono: PenLine, alElegir: () => void descargarLibro(undefined, true) },
-        ]),
+    ...(alumno ? [] : [{ etiqueta: "Libro de vuelo · PDF…", detalle: "La hoja del libro, con las firmas y el dorso que elijas", icono: BookOpen, alElegir: () => setOpciones(true) }]),
     ...(flights.length > 0
       ? [{ etiqueta: "Planilla · CSV", detalle: "Todos los vuelos, para Excel o Sheets", icono: FileSpreadsheet, alElegir: descargarCsv }]
       : []),
   ];
 
+  const dialogo = opciones && !alumno ? <OpcionesLibro libros={libros} armando={armando} alCerrar={() => setOpciones(false)} alDescargar={descargarLibro} /> : null;
+
   if (variante === "chip") {
     return (
+      <>
       <MenuAcciones
         acciones={acciones}
         etiqueta={armando ? "Armando el libro…" : "Exportar"}
@@ -115,10 +121,13 @@ export default function ExportarBitacora({
         {armando && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />}
         {armando ? "Armando…" : alumno ? "Planilla" : "Libro en PDF"}
       </MenuAcciones>
+      {dialogo}
+      </>
     );
   }
 
   return (
+    <>
     <MenuAcciones
       acciones={acciones}
       etiqueta={armando ? "Armando el libro…" : "Exportar"}
@@ -131,6 +140,96 @@ export default function ExportarBitacora({
       )}
       <span className="hidden md:inline font-semibold text-sm">{armando ? "Armando…" : "Exportar"}</span>
     </MenuAcciones>
+    {dialogo}
+    </>
+  );
+}
+
+interface OpcionesPdf {
+  firma: boolean;
+  certificaciones: boolean;
+  dorsos: boolean;
+}
+
+/**
+ * Las opciones del libro en PDF, juntas: qué firmas lleva. **Todo apagado por defecto**:
+ * firmar es de quien firma, y el dorso sólo tiene sentido si se va a imprimir a doble faz.
+ * Las firmas de los certificantes y el dorso se cargan en el Hangar («Firmas del libro»).
+ */
+function OpcionesLibro({
+  libros,
+  armando,
+  alCerrar,
+  alDescargar,
+}: {
+  libros: Logbook[];
+  armando: boolean;
+  alCerrar: () => void;
+  alDescargar: (libro: Logbook | undefined, o: OpcionesPdf) => Promise<void>;
+}) {
+  const [libroId, setLibroId] = useState(libros.find((l) => l.is_default)?.id ?? libros[0]?.id ?? "");
+  const [o, setO] = useState<OpcionesPdf>({ firma: false, certificaciones: false, dorsos: false });
+  const libro = libros.length > 1 ? libros.find((l) => l.id === libroId) : undefined;
+  const fila = (clave: keyof OpcionesPdf, titulo: string, detalle: string) => (
+    <label className="flex items-start gap-3 min-h-11 py-2 cursor-pointer">
+      <input type="checkbox" checked={o[clave]} onChange={(e) => setO({ ...o, [clave]: e.target.checked })} className="w-5 h-5 mt-0.5 accent-[#2bd4ff] shrink-0" />
+      <span>
+        <span className="block text-sm font-semibold text-white">{titulo}</span>
+        <span className="block text-xs text-zinc-400 mt-0.5">{detalle}</span>
+      </span>
+    </label>
+  );
+
+  return createPortal(
+    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4" onClick={alCerrar}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Libro de vuelo en PDF"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.key === "Escape" && alCerrar()}
+        className="w-full sm:max-w-md bg-noche border border-white/10 rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 space-y-4 max-h-[92dvh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1.25rem)]"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white">Libro de vuelo en PDF</h2>
+          <button onClick={alCerrar} aria-label="Cerrar" className="w-11 h-11 -mr-2 flex items-center justify-center text-zinc-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {libros.length > 1 && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-zinc-400" htmlFor="pdf-libro">Libro</label>
+            <select id="pdf-libro" value={libroId} onChange={(e) => setLibroId(e.target.value)} className="w-full min-h-12 rounded-2xl bg-transparent border border-white/10 px-4 text-white [color-scheme:dark]">
+              {libros.map((l) => (
+                <option key={l.id} value={l.id}>{l.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className="divide-y divide-white/10 border-y border-white/10">
+          {fila("firma", "Con mi firma de titular", "La que guardaste al firmar un plan de vuelo, en cada hoja.")}
+          {fila("certificaciones", "Con las firmas de los certificantes", "En la celda de certificaciones de cada vuelo, con su aclaración. Un vuelo sin certificante o sin firma guardada queda en blanco.")}
+          {fila("dorsos", "Con el dorso de cada hoja", "Una página después de cada hoja, para imprimir a doble faz. La hoja sin dorso cargado lleva el dorso en blanco.")}
+        </div>
+
+        <p className="text-xs text-zinc-400">
+          Las firmas se cargan en el <Link href="/dashboard/settings#firmas-del-libro" className="underline text-aviation-cyan" onClick={alCerrar}>Hangar, en «Firmas del libro»</Link>.
+          Usá la de otra persona sólo con su autorización.
+        </p>
+
+        <button
+          onClick={() => void alDescargar(libro, o)}
+          disabled={armando}
+          className="w-full min-h-12 rounded-full bg-aviation-cyan text-noche font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          {armando ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Download className="w-4 h-4" aria-hidden="true" />}
+          {armando ? "Armando el libro…" : "Descargar el PDF"}
+        </button>
+      </div>
+    </div>,
+    document.body
   );
 }
 

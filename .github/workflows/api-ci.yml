@@ -102,6 +102,12 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: "dummy-key"
         run: python test_repaso_vuelo.py
 
+      - name: Firmas de certificantes y dorso del libro
+        env:
+          SUPABASE_URL: "https://dummy.supabase.co"
+          SUPABASE_PUBLISHABLE_KEY: "dummy-key"
+        run: python test_firmas_certificantes.py
+
       - name: Pasar al CAD desde Vector (login de ANAC falso, cifrado, Crear)
         env:
           SUPABASE_URL: "https://dummy.supabase.co"

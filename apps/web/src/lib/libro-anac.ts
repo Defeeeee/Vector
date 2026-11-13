@@ -108,6 +108,12 @@ export interface RenglonLibro {
   matricula: string;
   potencia: string;
   clase: string;
+  /**
+   * Quién certifica el vuelo, tal como lo cargó el piloto (`cad_autoridad_*`): el tipo de
+   * autoridad del CAD y el nombre. Con eso se busca su firma guardada para la columna
+   * "Certificaciones" (`lib/firmas-libro.ts`). Nada de acá se dibuja solo.
+   */
+  certificante: { autoridadId: number | null; nombre: string } | null;
   valores: ValoresLibro;
 }
 
@@ -233,6 +239,10 @@ function renglon(f: Flight, avion: Aircraft | undefined): RenglonLibro {
     matricula: avion?.registration ?? "",
     potencia: avion?.potencia_hp ? String(avion.potencia_hp) : "",
     clase: claseOficial(avion?.type_acft),
+    certificante:
+      f.cad_autoridad_id || f.cad_autoridad_nombre?.trim()
+        ? { autoridadId: f.cad_autoridad_id ?? null, nombre: (f.cad_autoridad_nombre ?? "").trim() }
+        : null,
     valores: v,
   };
 }
@@ -328,4 +338,26 @@ export function apellidoYNombre(nombre: string | null | undefined, apellido: str
   const a = (apellido ?? "").trim().toLocaleUpperCase("es-AR");
   const n = (nombre ?? "").trim();
   return a && n ? `${a}, ${n}` : a || n;
+}
+
+/**
+ * Los vuelos que van en un libro: con un solo libro, todos; con varios, los del libro
+ * elegido, y un vuelo sin libro asignado es del principal. Lo usan el PDF y la lista de
+ * hojas del dorso, para que las dos numeren igual.
+ */
+export function vuelosDeUnLibro(vuelos: Flight[], libros: Logbook[], libro: Logbook | null | undefined): Flight[] {
+  const principal = libros.find((l) => l.is_default) ?? libros[0] ?? null;
+  if (libros.length <= 1 || !libro) return vuelos;
+  return vuelos.filter((f) => (f.logbook_id ?? principal?.id) === libro.id);
+}
+
+/** Cuántas hojas tiene hoy el libro (la última, la que se está llenando, cuenta). Mínimo una. */
+export function cantidadDeHojas(vuelosDelLibro: Flight[], aeronaves: Aircraft[], libro: Logbook | null | undefined): number {
+  const hojas = armarLibro({
+    vuelos: vuelosDelLibro,
+    aeronaves,
+    apertura: valoresDeApertura(libro),
+    renglonesPorHoja: renglonesDeLaHoja(libro),
+  });
+  return Math.max(1, hojas.length);
 }

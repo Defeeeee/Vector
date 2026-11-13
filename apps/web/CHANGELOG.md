@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.31.0 — Las firmas, en tu libro
+
+_13 de noviembre de 2026_
+
+- **Firmas de quien certifica, en cada vuelo** — En el Hangar, sacale una foto a la firma de tu instructor: Vector saca el fondo del papel y la guarda. Al bajar el libro en PDF, "Con las firmas de los certificantes" la pone en la celda de certificaciones de cada vuelo que certificó, con su aclaración. Usala sólo con su autorización.
+- **El dorso de cada hoja** — Subí, hoja por hoja, la firma con el sello que va atrás: el sello conserva su color. El PDF "Con el dorso de cada hoja" lo agrega detrás de cada página, listo para imprimir doble faz.
+
 ## v3.30.0 — Tu familia se entera, y vos repasás el vuelo
 
 _12 de noviembre de 2026_

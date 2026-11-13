@@ -19,6 +19,9 @@ export const runtime = "nodejs";
  *   de un avión, el legajo— queda en blanco para completar a mano.
  *
  * - `?firma=1` estampa la firma que el piloto guardó al firmar un plan de vuelo en cada hoja.
+ * - `?certificaciones=1` estampa, en la celda de cada vuelo, la firma guardada de quien lo
+ *   certificó (con su aclaración). Apagado por defecto: certificar es del certificante.
+ * - `?dorsos=1` agrega, después de cada hoja, su dorso (firma con sello) para la doble faz.
  *
  * El armado está en `lib/libro-anac-armar.ts`, compartido con el copiloto de WhatsApp.
  */
@@ -30,6 +33,8 @@ export async function GET(req: NextRequest) {
     libroId: req.nextUrl.searchParams.get("libro"),
     // `?firma=1`: con la firma guardada en cada hoja ("PDF firmado").
     conFirma: req.nextUrl.searchParams.get("firma") === "1",
+    conCertificaciones: req.nextUrl.searchParams.get("certificaciones") === "1",
+    conDorsos: req.nextUrl.searchParams.get("dorsos") === "1",
   });
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
   return new NextResponse(Buffer.from(r.bytes), {

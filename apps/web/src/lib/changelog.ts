@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.31.0",
+    fecha: "2026-11-13",
+    titulo: "Las firmas, en tu libro",
+    novedades: [
+      {
+        icono: "camara",
+        titulo: "Firmas de quien certifica, en cada vuelo",
+        texto: "En el Hangar, sacale una foto a la firma de tu instructor: Vector saca el fondo del papel y la guarda. Al bajar el libro en PDF, \"Con las firmas de los certificantes\" la pone en la celda de certificaciones de cada vuelo que certificó, con su aclaración. Usala sólo con su autorización.",
+        href: "/dashboard/settings#firmas-del-libro",
+        cta: "Ir al Hangar",
+      },
+      {
+        icono: "camara",
+        titulo: "El dorso de cada hoja",
+        texto: "Subí, hoja por hoja, la firma con el sello que va atrás: el sello conserva su color. El PDF \"Con el dorso de cada hoja\" lo agrega detrás de cada página, listo para imprimir doble faz.",
+        href: "/dashboard/settings#firmas-del-libro",
+        cta: "Ir al Hangar",
+      },
+    ],
+  },
+  {
     version: "3.30.0",
     fecha: "2026-11-12",
     titulo: "Tu familia se entera, y vos repasás el vuelo",

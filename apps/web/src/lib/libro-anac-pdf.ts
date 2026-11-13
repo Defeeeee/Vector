@@ -1,4 +1,5 @@
-import { PDFDocument, PDFFont, PDFPage, StandardFonts, degrees, rgb } from "pdf-lib";
+import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, degrees, rgb } from "pdf-lib";
+import { ajustarEnCaja, fechaDelDorso } from "./firmas-libro";
 import {
   COLUMNAS_LIBRO,
   RENGLONES_POR_HOJA,
@@ -23,7 +24,16 @@ import {
  * - **El orden de las columnas es el de la hoja**, con su encabezado de cuatro niveles,
  *   la fila de "Totales página anterior" arriba, 15 renglones y la de "Totales a la
  *   página siguiente" abajo. La columna de certificaciones queda en blanco: la firma la
- *   ponen el instructor o la autoridad, no Vector.
+ *   ponen el instructor o la autoridad, no Vector. **Sólo si el piloto lo pide** ("Con las
+ *   firmas de los certificantes", `certificaciones`) se estampa en cada vuelo la firma
+ *   que guardó de quien lo certificó, con su aclaración; el vuelo sin certificante o sin
+ *   firma guardada sigue en blanco.
+ * - **El dorso de cada hoja** (`dorsos`, "Con el dorso de cada hoja"): después de cada hoja,
+ *   una página del mismo tamaño para imprimir doble faz, con la imagen de la firma y el
+ *   sello que el piloto cargó para esa hoja. **El dorso no lo define el Adjunto A de la
+ *   Res. 147/2013 que tenemos documentado: es la práctica que pidió Federico (firma con
+ *   sello o aclaración atrás de cada hoja), no algo de la norma** (invariante 6). Una
+ *   hoja sin dorso cargado va con su dorso en blanco, para que la doble faz no se corra.
  * - Sólo usa las fuentes estándar del PDF (Helvetica), así que no embebe nada: pesa poco
  *   y abre en cualquier lado. Esas fuentes sólo saben Latin-1: el texto pasa por
  *   `seguro()` antes de dibujarse, para que un emoji en un nombre no tire abajo el PDF.
@@ -52,7 +62,7 @@ const NEGRO = rgb(0, 0, 0);
 const GRIS = rgb(0.45, 0.45, 0.45);
 const LINEA = rgb(0.55, 0.55, 0.55);
 
-type ClaveTexto = Exclude<keyof RenglonLibro, "valores">;
+type ClaveTexto = Exclude<keyof RenglonLibro, "valores" | "certificante">;
 type Clave = ClaveTexto | ColumnaLibro | "certificaciones";
 
 /** Anchos en puntos, en el orden del Adjunto A. Certificaciones se lleva lo que sobra. */
@@ -194,6 +204,33 @@ class Dibujo {
     });
   }
 
+  /**
+   * La firma de quien certificó el vuelo, ajustada a la celda, y su aclaración en letra chica
+   * abajo (con la licencia, si la hay). Arriba la firma, abajo el texto: ninguna de las dos
+   * toca el borde. Si el renglón es muy bajo y el texto no entra, va sólo la firma.
+   */
+  firmaEnCelda(c: CertificacionLista, x: number, yArriba: number, w: number, h: number) {
+    const texto = seguro([c.nombre, c.licencia].filter(Boolean).join(" · "));
+    const tamano = Math.min(4.6, h * 0.22);
+    const conTexto = !!texto && tamano >= 3.2;
+    const altoTexto = conTexto ? tamano + 1.4 : 0;
+    const caja = ajustarEnCaja(c.imagen.width, c.imagen.height, w - 8, h - 3 - altoTexto);
+    if (caja.w <= 0) return;
+    const yImg = yArriba + 1.5 + (h - 3 - altoTexto - caja.h) / 2;
+    this.page.drawImage(c.imagen, { x: x + (w - caja.w) / 2, y: this.y(yImg + caja.h), width: caja.w, height: caja.h });
+    if (conTexto) {
+      const a = ajustar(this.normal, texto, w - 4, tamano, 3);
+      const ancho = this.normal.widthOfTextAtSize(a.texto, a.tamano);
+      this.page.drawText(a.texto, {
+        x: x + (w - ancho) / 2,
+        y: this.y(yArriba + h - 2),
+        size: a.tamano,
+        font: this.normal,
+        color: NEGRO,
+      });
+    }
+  }
+
   /** Un rótulo de encabezado: en negrita, partido en renglones si no entra en uno. */
   rotulo(t: string, x: number, yArriba: number, w: number, h: number, tamano = 5.2) {
     this.caja(x, yArriba, w, h, 0.5, NEGRO);
@@ -229,6 +266,21 @@ class Dibujo {
       });
     });
   }
+}
+
+export interface DorsoParaPdf {
+  png?: Uint8Array;
+  aclaracion?: string | null;
+  /** "AAAA-MM-DD". */
+  fecha?: string | null;
+}
+
+export interface CertificacionParaPdf {
+  /** Para no embeber dos veces la misma imagen. */
+  id: string;
+  png: Uint8Array;
+  nombre: string;
+  licencia?: string | null;
 }
 
 export interface DatosTitular {
@@ -335,7 +387,21 @@ function filaDeTotales(
   d.texto(leyenda, cert.x + 32, y + alto / 2 + 4.2, { tamano: 4.4, color: GRIS });
 }
 
-function renglon(d: Dibujo, cols: Record<Clave, Columna>, y: number, alto: number, r: RenglonLibro | null) {
+/** Una firma de certificante ya embebida en el PDF, con lo que va debajo. */
+interface CertificacionLista {
+  imagen: PDFImage;
+  nombre: string;
+  licencia: string;
+}
+
+function renglon(
+  d: Dibujo,
+  cols: Record<Clave, Columna>,
+  y: number,
+  alto: number,
+  r: RenglonLibro | null,
+  cert: CertificacionLista | null = null
+) {
   const textos: ClaveTexto[] = [
     "dia",
     "mes",
@@ -358,6 +424,7 @@ function renglon(d: Dibujo, cols: Record<Clave, Columna>, y: number, alto: numbe
     if (r) d.centrado(formatoLibro(r.valores[c], c, true), cols[c].x, y, cols[c].w, alto);
   }
   d.caja(cols.certificaciones.x, y, cols.certificaciones.w, alto);
+  if (cert) d.firmaEnCelda(cert, cols.certificaciones.x, y, cols.certificaciones.w, alto);
 }
 
 /**
@@ -372,6 +439,8 @@ export async function pdfDelLibro(
     apertura,
     renglonesPorHoja = RENGLONES_POR_HOJA,
     firmaPng,
+    certificaciones,
+    dorsos,
   }: {
     generado: string;
     apertura: ValoresLibro;
@@ -381,6 +450,16 @@ export async function pdfDelLibro(
      * la línea de la firma del titular. Sólo si la pidió ("PDF firmado"): firmar es suyo.
      */
     firmaPng?: Uint8Array;
+    /**
+     * "Con las firmas de los certificantes": de un renglón, la firma guardada de quien lo
+     * certificó, o `null` (la celda queda en blanco). Sin esta función no se estampa nada.
+     */
+    certificaciones?: (r: RenglonLibro) => CertificacionParaPdf | null;
+    /**
+     * "Con el dorso de cada hoja": lo cargado por número de hoja (desde 1). Si viene (aunque
+     * sea vacío), cada hoja va seguida de su dorso; la que no tiene nada, en blanco.
+     */
+    dorsos?: Map<number, DorsoParaPdf>;
   }
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
@@ -406,6 +485,44 @@ export async function pdfDelLibro(
           siguiente: apertura,
         },
       ];
+
+  // Las firmas de los certificantes se embeben una vez cada una, antes de dibujar.
+  const imagenes = new Map<string, CertificacionLista>();
+  const certDe = new Map<RenglonLibro, CertificacionLista | null>();
+  if (certificaciones) {
+    for (const hoja of paginas) {
+      for (const r of hoja.renglones) {
+        const c = certificaciones(r);
+        if (!c) {
+          certDe.set(r, null);
+          continue;
+        }
+        let lista = imagenes.get(c.id);
+        if (!lista) {
+          try {
+            lista = { imagen: await doc.embedPng(c.png), nombre: c.nombre, licencia: c.licencia ?? "" };
+          } catch {
+            // Un PNG que pdf-lib no entiende deja la celda en blanco, no tira abajo el libro.
+            certDe.set(r, null);
+            continue;
+          }
+          imagenes.set(c.id, lista);
+        }
+        certDe.set(r, lista);
+      }
+    }
+  }
+  const dorsoImagenes = new Map<number, PDFImage>();
+  if (dorsos) {
+    for (const [hoja, dorso] of dorsos) {
+      if (!dorso.png) continue;
+      try {
+        dorsoImagenes.set(hoja, await doc.embedPng(dorso.png));
+      } catch {
+        /* un dorso sin imagen legible va sin imagen */
+      }
+    }
+  }
 
   paginas.forEach((hoja, i) => {
     const page = doc.addPage([ANCHO_HOJA, ALTO_HOJA]);
@@ -436,7 +553,7 @@ export async function pdfDelLibro(
     for (let k = 0; k < hoja.capacidad; k++) {
       const r = hoja.renglones[k] ?? null;
       if (!r && yPrimerVacio === null) yPrimerVacio = y;
-      renglon(d, cols, y, altos.renglon, r);
+      renglon(d, cols, y, altos.renglon, r, r ? (certDe.get(r) ?? null) : null);
       y += altos.renglon;
     }
     /*
@@ -483,7 +600,61 @@ export async function pdfDelLibro(
       yPie + 19,
       { tamano: 4.6, color: GRIS }
     );
+
+    if (dorsos) dorsoDeLaHoja(doc, normal, negrita, i + 1, paginas.length, dorsos.get(i + 1) ?? null, dorsoImagenes.get(i + 1) ?? null);
   });
 
   return doc.save();
+}
+
+/**
+ * El dorso de una hoja: una página del mismo tamaño, para imprimir doble faz.
+ *
+ * - **Sin nada cargado, en blanco**: así la hoja siguiente no cae en el dorso de otra.
+ * - **La imagen es la firma con el sello o la aclaración** tal como queda en el papel
+ *   (no es la de la celda de certificaciones), grande, abajo a la derecha.
+ * - **La línea "FIRMA Y ACLARACIÓN" sólo va si el piloto cargó una aclaración en texto**: si no,
+ *   la imagen no tiene nada encima que le tape el sello. Con aclaración, la imagen apoya
+ *   sobre la línea y el texto va debajo.
+ */
+function dorsoDeLaHoja(
+  doc: PDFDocument,
+  normal: PDFFont,
+  negrita: PDFFont,
+  numero: number,
+  total: number,
+  dorso: DorsoParaPdf | null,
+  imagen: PDFImage | null
+) {
+  const page = doc.addPage([ANCHO_HOJA, ALTO_HOJA]);
+  const aclaracion = seguro(dorso?.aclaracion?.trim());
+  const fecha = fechaDelDorso(dorso?.fecha);
+  if (!imagen && !aclaracion && !fecha) return;
+  const d = new Dibujo(page, normal, negrita);
+
+  const ancho = 440;
+  const xBloque = ANCHO_HOJA - MARGEN - ancho;
+  const yBase = ALTO_HOJA - MARGEN - 18; // desde arriba: el pie del bloque
+  const yLinea = aclaracion ? yBase - 30 : yBase;
+  const altoMax = 300;
+
+  if (imagen) {
+    const caja = ajustarEnCaja(imagen.width, imagen.height, ancho, altoMax, true);
+    // Apoyada en la línea (o en el pie, sin línea), pegada a la derecha.
+    page.drawImage(imagen, {
+      x: ANCHO_HOJA - MARGEN - caja.w - (aclaracion ? (ancho - caja.w) / 2 : 0),
+      y: ALTO_HOJA - (yLinea - 3),
+      width: caja.w,
+      height: caja.h,
+    });
+  }
+  if (aclaracion) {
+    d.linea(xBloque, yLinea, ANCHO_HOJA - MARGEN, yLinea, 0.6, NEGRO);
+    const a = ajustar(negrita, aclaracion, ancho, 9, 5);
+    const aw = negrita.widthOfTextAtSize(a.texto, a.tamano);
+    page.drawText(a.texto, { x: xBloque + (ancho - aw) / 2, y: ALTO_HOJA - (yLinea + 11), size: a.tamano, font: negrita, color: NEGRO });
+    d.texto("FIRMA Y ACLARACIÓN", xBloque + ancho / 2 - 38, yLinea + 20, { tamano: 5.6, color: GRIS });
+  }
+  if (fecha) d.texto(fecha, xBloque, yBase + 10, { tamano: 7 });
+  d.texto(`Dorso de la hoja ${numero} de ${total}`, MARGEN, ALTO_HOJA - MARGEN, { tamano: 5, color: GRIS });
 }

@@ -1,6 +1,7 @@
 import { esAlumno, vuelosDesdeLaPpa } from "@/lib/licencias";
-import { apellidoYNombre, armarLibro, fechaDeGeneracion, renglonesDeLaHoja, valoresDeApertura } from "@/lib/libro-anac";
-import { pdfDelLibro } from "@/lib/libro-anac-pdf";
+import { apellidoYNombre, armarLibro, fechaDeGeneracion, renglonesDeLaHoja, valoresDeApertura, vuelosDeUnLibro, type RenglonLibro } from "@/lib/libro-anac";
+import { pdfDelLibro, type CertificacionParaPdf, type DorsoParaPdf } from "@/lib/libro-anac-pdf";
+import { dorsosPorHoja, firmaParaVuelo, type DorsoHoja, type FirmaCertificante } from "@/lib/firmas-libro";
 import type { Aircraft, Flight, Logbook, Profile } from "@/types";
 
 /**
@@ -26,7 +27,14 @@ export type ResultadoLibro =
 
 export async function armarPdfDelLibro(
   leer: (ruta: string) => Promise<Response>,
-  opciones: { libroId?: string | null; libroNombre?: string | null; ahora?: Date; conFirma?: boolean } = {}
+  opciones: { libroId?: string | null; libroNombre?: string | null;
+    ahora?: Date;
+    conFirma?: boolean;
+    /** Las firmas de los certificantes en la celda de cada vuelo (`?certificaciones=1`). */
+    conCertificaciones?: boolean;
+    /** El dorso de cada hoja, página por página (`?dorsos=1`). */
+    conDorsos?: boolean;
+  } = {}
 ): Promise<ResultadoLibro> {
   const [perfilesRes, vuelosRes, avionesRes, librosRes] = await Promise.all([leer("/profiles"), leer("/flights"), leer("/aircraft"), leer("/logbooks")]);
   if ([perfilesRes, vuelosRes, avionesRes, librosRes].some((r) => r.status === 401)) {
@@ -53,7 +61,7 @@ export async function armarPdfDelLibro(
     libros.find((l) => l.id === opciones.libroId) ??
     (porNombre ? libros.find((l) => l.name?.trim().toLowerCase() === porNombre) : undefined) ??
     principal;
-  const delLibro = libros.length <= 1 || !libro ? vuelos : vuelos.filter((f) => (f.logbook_id ?? principal?.id) === libro.id);
+  const delLibro = vuelosDeUnLibro(vuelos, libros, libro);
 
   const apertura = valoresDeApertura(libro);
   // Cada libro corta la hoja donde la corta el de papel (Hangar → Libros de vuelo).
@@ -72,6 +80,39 @@ export async function armarPdfDelLibro(
     }
   }
 
+  // Las firmas de los certificantes: sólo si el piloto las pidió. Si las pidió y no hay
+  // ninguna guardada, se le dice (un PDF "con firmas" sin firmas sería un engaño).
+  let certificaciones: ((r: RenglonLibro) => CertificacionParaPdf | null) | undefined;
+  if (opciones.conCertificaciones) {
+    const r = await leer("/firmas/certificantes");
+    if (!r.ok) {
+      return { ok: false, status: 502, error: "No se pudieron leer las firmas de los certificantes. Probá de nuevo en un momento." };
+    }
+    const firmas = ((await r.json().catch(() => [])) as FirmaCertificante[]).filter((f) => pngDeDataUrl(f.png));
+    if (!firmas.length) {
+      return { ok: false, status: 404, error: "Todavía no guardaste ninguna firma de certificante. Se cargan en el Hangar, en «Firmas del libro»." };
+    }
+    certificaciones = (renglon) => {
+      const f = firmaParaVuelo(renglon.certificante, firmas);
+      const png = f ? pngDeDataUrl(f.png) : undefined;
+      return f && png ? { id: f.id, png, nombre: f.nombre, licencia: f.licencia } : null;
+    };
+  }
+
+  // El dorso de cada hoja de este libro.
+  let dorsos: Map<number, DorsoParaPdf> | undefined;
+  if (opciones.conDorsos) {
+    const r = await leer(`/firmas/dorsos${libro ? `?logbook_id=${encodeURIComponent(libro.id)}` : ""}`);
+    if (!r.ok) {
+      return { ok: false, status: 502, error: "No se pudieron leer los dorsos de las hojas. Probá de nuevo en un momento." };
+    }
+    const filas = (await r.json().catch(() => [])) as DorsoHoja[];
+    dorsos = new Map();
+    for (const [hoja, d] of dorsosPorHoja(filas, libro?.id)) {
+      dorsos.set(hoja, { png: pngDeDataUrl(d.png), aclaracion: d.aclaracion, fecha: d.fecha });
+    }
+  }
+
   const bytes = await pdfDelLibro(
     hojas,
     {
@@ -81,7 +122,7 @@ export async function armarPdfDelLibro(
       legajo: perfil?.legajo ?? "",
       libro: libros.length > 1 ? libro?.name : undefined,
     },
-    { generado: fechaDeGeneracion(ahora), apertura, renglonesPorHoja, firmaPng }
+    { generado: fechaDeGeneracion(ahora), apertura, renglonesPorHoja, firmaPng, certificaciones, dorsos }
   );
 
   const apellido = (perfil?.last_name ?? "piloto")
@@ -93,7 +134,7 @@ export async function armarPdfDelLibro(
   return {
     ok: true,
     bytes,
-    archivo: `libro-de-vuelo-${apellido || "piloto"}-${ahora.toISOString().slice(0, 10)}${firmaPng ? "-firmado" : ""}.pdf`,
+    archivo: `libro-de-vuelo-${apellido || "piloto"}-${ahora.toISOString().slice(0, 10)}${firmaPng ? "-firmado" : ""}${certificaciones ? "-certificado" : ""}${dorsos ? "-con-dorsos" : ""}.pdf`,
     libro: libros.length > 1 ? (libro?.name ?? null) : null,
     vuelos: delLibro.length,
   };

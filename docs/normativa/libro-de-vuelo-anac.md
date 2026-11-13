@@ -56,7 +56,11 @@
 - **Totales:** la suma de las columnas "Tiempos de vuelo". La primera hoja arrastra las
   horas del libro de papel (`logbooks.opening_*`).
 - **Certificaciones:** quedan en blanco. Las firma el instructor o la autoridad, sobre la
-  hoja impresa.
+  hoja impresa. Sólo si el piloto lo pide ("Con las firmas de los certificantes") se estampa la
+  firma que guardó de quien certificó cada vuelo, con su aclaración; sin firma guardada, en blanco.
+- **El dorso de cada hoja** (firma con sello o aclaración, opción "Con el dorso de cada hoja"):
+  **no lo define el Adjunto A que tenemos documentado**; es la práctica que pidió Federico
+  (2026-11-13), no algo de la norma. Una hoja sin dorso cargado va con su dorso en blanco.
 
 ## Lo que el PDF no es
 

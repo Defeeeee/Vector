@@ -3,6 +3,8 @@ import {
   RENGLONES_POR_HOJA,
   apellidoYNombre,
   armarLibro,
+  cantidadDeHojas,
+  vuelosDeUnLibro,
   claseOficial,
   fechaDeGeneracion,
   formatoLibro,
@@ -343,5 +345,36 @@ describe("renglones por hoja", () => {
       const a = altosDeLaHoja(n);
       expect(2 * a.totales + n * a.renglon).toBeLessThanOrEqual(17 * 20 + 1e-9);
     }
+  });
+});
+
+describe("el certificante y las hojas del dorso", () => {
+  it("cada renglón lleva el certificante que cargó el piloto, o ninguno", () => {
+    const [hoja] = armarLibro({
+      vuelos: [
+        vuelo({ cad_autoridad_id: 5, cad_autoridad_nombre: "  Juan Pérez " }),
+        vuelo({ cad_autoridad_id: 7, cad_autoridad_nombre: null }),
+        vuelo({}),
+      ],
+      aeronaves: [avion()],
+      apertura: valoresEnCero(),
+    });
+    expect(hoja.renglones[0].certificante).toEqual({ autoridadId: 5, nombre: "Juan Pérez" });
+    expect(hoja.renglones[1].certificante).toEqual({ autoridadId: 7, nombre: "" });
+    expect(hoja.renglones[2].certificante).toBeNull();
+  });
+
+  it("cuenta las hojas como las numera el PDF, y al menos una", () => {
+    const muchos = Array.from({ length: RENGLONES_POR_HOJA + 1 }, () => vuelo({}));
+    expect(cantidadDeHojas(muchos, [avion()], null)).toBe(2);
+    expect(cantidadDeHojas([], [avion()], null)).toBe(1);
+  });
+
+  it("con varios libros, un vuelo sin libro es del principal", () => {
+    const libros = [{ id: "A", is_default: true }, { id: "B", is_default: false }] as Logbook[];
+    const vs = [vuelo({ logbook_id: "B" }), vuelo({}), vuelo({ logbook_id: "A" })];
+    expect(vuelosDeUnLibro(vs, libros, libros[0])).toHaveLength(2);
+    expect(vuelosDeUnLibro(vs, libros, libros[1])).toHaveLength(1);
+    expect(vuelosDeUnLibro(vs, [libros[0]], libros[0])).toHaveLength(3);
   });
 });

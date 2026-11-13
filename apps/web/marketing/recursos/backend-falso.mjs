@@ -262,6 +262,48 @@ function repasoDemo(id) {
     aterrizajes_estimados: 1, minutos_sin_senal: 5, cerca_del_destino: !parcial, recorrido: pts,
   };
 }
+// Las firmas de los certificantes y el dorso de las hojas (migración 047), en memoria.
+// `LIBRO=1` siembra un libro y pone certificante a algunos vuelos, para probar el PDF.
+const firmasCert = new Map();
+const dorsosFalsos = new Map();
+if (process.env.LIBRO) {
+  libros.push({ id: "l1", user_id: "u1", name: "Mi libro", is_default: true, created_at: new Date().toISOString(), renglones_por_hoja: 15, apertura_ppa: null,
+    opening_pic_day_loc: 12, opening_pic_day_tra: 3, opening_landings: 40 });
+  vuelos.forEach((f, i) => {
+    if (i % 3 === 0) { f.cad_autoridad_id = 5; f.cad_autoridad_nombre = "Juan Pérez"; }
+    else if (i % 3 === 1) { f.cad_autoridad_id = 5; f.cad_autoridad_nombre = "PEDRO SIN FIRMA"; }
+  });
+}
+function rutaFirmas(req, res, ruta, url, json) {
+  const dar = (cod, cuerpo) => { res.writeHead(cod, { "Content-Type": "application/json" }); res.end(cuerpo === undefined ? "" : JSON.stringify(cuerpo)); };
+  const esPng = (v) => typeof v === "string" && v.startsWith("data:image/png;base64,") && v.length <= 450000;
+  if (ruta === "/api/firmas/certificantes" && req.method === "GET") return dar(200, [...firmasCert.values()]);
+  if (ruta === "/api/firmas/certificantes" && req.method === "PUT") {
+    if (!esPng(json.png) || !json.nombre?.trim()) return dar(400, { detail: "La firma tiene que ser un PNG." });
+    const nombre = json.nombre.trim().replace(/\s+/g, " ").toUpperCase();
+    const previa = [...firmasCert.values()].find((x) => x.nombre === nombre);
+    const f = { id: previa?.id ?? `f${firmasCert.size + 1}-0000-4000-8000-000000000000`, nombre, licencia: json.licencia ? json.licencia.toUpperCase() : null, autoridad_id: json.autoridad_id ?? null, png: json.png, updated_at: new Date().toISOString() };
+    firmasCert.set(f.id, f);
+    return dar(200, f);
+  }
+  if (ruta.startsWith("/api/firmas/certificantes/") && req.method === "DELETE") { firmasCert.delete(ruta.split("/").pop()); return dar(204); }
+  if (ruta === "/api/firmas/dorsos" && req.method === "GET") {
+    const lb = url.searchParams.get("logbook_id");
+    return dar(200, [...dorsosFalsos.values()].filter((d) => !lb || d.logbook_id === lb).sort((a, b) => a.hoja - b.hoja));
+  }
+  if (ruta === "/api/firmas/dorsos" && req.method === "PUT") {
+    if (json.png && !esPng(json.png)) return dar(400, { detail: "La firma tiene que ser un PNG." });
+    const k = `${json.logbook_id}:${json.hoja}`;
+    const d = { id: dorsosFalsos.get(k)?.id ?? `d${dorsosFalsos.size + 1}-0000-4000-8000-000000000000`, logbook_id: json.logbook_id, hoja: json.hoja, png: json.png ?? null, aclaracion: json.aclaracion ? json.aclaracion.toUpperCase() : null, fecha: json.fecha ?? null };
+    dorsosFalsos.set(k, d);
+    return dar(200, d);
+  }
+  if (ruta.startsWith("/api/firmas/dorsos/") && req.method === "DELETE") {
+    for (const [k, d] of dorsosFalsos) if (d.id === ruta.split("/").pop()) dorsosFalsos.delete(k);
+    return dar(204);
+  }
+  return dar(404, { detail: "No existe." });
+}
 function planesDeVuelo(req, ruta, json) {
   const ahora = new Date().toISOString();
   if (ruta === "/api/planes-de-vuelo/firma") {
@@ -606,6 +648,7 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     res.writeHead(a ? 200 : 404, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(a ?? {}));
   }
+  if (ruta.startsWith("/api/firmas/")) return rutaFirmas(req, res, ruta, new URL(req.url, "http://x"), json);
   if (ruta.startsWith("/api/cad/")) return rutaCad(req, res, ruta, json);
   let cuerpo = typeof rutasFijas[ruta] === "function" ? rutasFijas[ruta]() : rutasFijas[ruta];
   if (ruta === "/api/admin/estadisticas" && existsSync(DIR + "admin-estadisticas.json")) cuerpo = JSON.parse(readFileSync(DIR + "admin-estadisticas.json", "utf8"));
