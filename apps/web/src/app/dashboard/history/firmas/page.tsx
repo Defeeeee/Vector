@@ -6,6 +6,7 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import ExportarBitacora from "@/components/dashboard/ExportarBitacora";
 import { Parte } from "@/components/dashboard/firmas/comun";
 import TuFirma from "@/components/dashboard/firmas/TuFirma";
+import VistaPreviaHoja from "@/components/dashboard/firmas/VistaPreviaHoja";
 import Personas from "@/components/dashboard/firmas/Personas";
 import Dorsos from "@/components/dashboard/firmas/Dorsos";
 import Constancias from "@/components/dashboard/firmas/Constancias";
@@ -28,11 +29,23 @@ export const metadata = { title: "Firmas del libro | Vector" };
 const FRESCO = { cache: "no-store" } as const;
 
 const PARTES = [
+  { id: "vista", titulo: "Cómo queda" },
   { id: "tu-firma", titulo: "Tu firma" },
   { id: "certifican", titulo: "Quienes certifican" },
   { id: "dorso", titulo: "Dorso de cada hoja" },
   { id: "constancias", titulo: "Constancias" },
 ];
+
+/**
+ * Una huella corta de todo lo que cambia cómo sale una hoja: si el server vuelve a dibujar la
+ * pantalla con otra huella (se guardó algo), la vista previa se vuelve a pedir.
+ */
+function huella(datos: unknown): string {
+  const texto = JSON.stringify(datos);
+  let h = 5381;
+  for (let i = 0; i < texto.length; i++) h = ((h << 5) + h + texto.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
 
 async function leer<T>(res: Response, porDefecto: T): Promise<T> {
   return res.ok ? ((await res.json().catch(() => porDefecto)) as T) : porDefecto;
@@ -72,6 +85,13 @@ export default async function FirmasPage() {
   const vuelosDelPdf = vuelosDesdeLaPpa(vuelos, perfil?.fecha_ppa);
   const hojasPorLibro = Object.fromEntries(libros.map((l) => [l.id, cantidadDeHojas(vuelosDeUnLibro(vuelosDelPdf, libros, l), aviones, l)]));
   const firmasDeLasHojas = Object.fromEntries(libros.map((l) => [l.id, firmasPorHoja(vuelosDeUnLibro(vuelosDelPdf, libros, l), aviones, l, firmas)]));
+  const version = huella([
+    dorsos.map((d) => [d.id, d.hoja, d.aclaracion, d.fecha, d.sello_ids, d.textos, d.firmas_de_los_vuelos, (d.fotos ?? []).map((f) => f.id)]),
+    firmas.map((f) => [f.id, f.nombre, f.licencia, f.automatica, f.png.length, (f.sellos ?? []).map((x) => [x.id, x.png?.length])]),
+    constancias.map((c) => c.id),
+    vuelos.map((v) => [v.id, v.certificante_id, v.certificante_sello_id, v.certificante_firma, v.cad_autoridad_id, v.cad_autoridad_nombre]),
+    firmaTitular?.length ?? 0,
+  ]);
   const vuelosOrdenados = [...vuelos].sort((a, b) => new Date(b.takeoff).getTime() - new Date(a.takeoff).getTime());
 
   return (
@@ -94,6 +114,16 @@ export default async function FirmasPage() {
           </nav>
         </PageHeader>
       </div>
+
+      {libros.length > 0 && (
+        <Parte
+          id="vista"
+          titulo="Cómo queda la hoja"
+          explicacion="El frente y el dorso de cada hoja tal como salen en el PDF, con todas las firmas que cargaste. Se actualiza al guardar algo acá abajo."
+        >
+          <VistaPreviaHoja libros={libros.map((l) => ({ id: l.id, name: l.name }))} hojasPorLibro={hojasPorLibro} version={version} />
+        </Parte>
+      )}
 
       <Parte id="tu-firma" titulo="Tu firma" explicacion="La de titular del libro: va al pie de cada hoja con «Con mi firma de titular». Es la misma que firma tus planes de vuelo.">
         <TuFirma inicial={firmaTitular} />

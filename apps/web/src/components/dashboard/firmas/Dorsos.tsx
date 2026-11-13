@@ -16,6 +16,7 @@ import {
   type FirmaCertificante,
 } from "@/lib/firmas-libro";
 import { ayuda, campo, cuenta, enlace, Miniatura, peligro, principal, rotulo, subtitulo, unaFila } from "./comun";
+import { verHoja } from "./VistaPreviaHoja";
 
 /** Cuántas imágenes entran en un dorso (fotos más sellos): lo mismo que el PDF y el backend. */
 const MAX_IMAGENES = 12;
@@ -109,7 +110,11 @@ export default function Dorsos({
                 <span className="font-mono text-xs tracking-wider text-zinc-500 dark:text-zinc-400 w-16 shrink-0">HOJA {hoja}</span>
                 {fotos[0] ? <Miniatura png={fotos[0].png} alto="h-9" /> : null}
                 <span className="flex-1 min-w-0 text-sm text-zinc-900 dark:text-white truncate">
-                  {resumen || <span className="text-zinc-500">En blanco</span>}
+                  {resumen || (
+                    <span className="text-zinc-500">
+                      {d?.firmas_de_los_vuelos === false && (firmasPorHoja[libroId]?.[hoja]?.length ?? 0) > 0 ? "En blanco (sin las firmas de los vuelos)" : "En blanco"}
+                    </span>
+                  )}
                 </span>
                 <span className="text-xs font-semibold text-aviation-cyan">{abierta === hoja ? "Cerrar" : resumen ? "Abrir" : "Cargar"}</span>
               </button>
@@ -253,6 +258,10 @@ function EditorDeDorso({
 
   return (
     <div className="space-y-8 pt-5 pb-2">
+      <button type="button" onClick={() => verHoja(libroId, hoja)} className={enlace}>
+        Ver cómo queda la hoja {hoja} ↑
+      </button>
+
       {/* 0. Las firmas de los vuelos de la hoja: solas, se recalculan con cada vuelo. */}
       <div className="space-y-3">
         <p className={subtitulo}>De los vuelos de esta hoja</p>

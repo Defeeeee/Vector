@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.38.0 — Mirá la hoja antes de imprimirla
+
+_13 de noviembre de 2026_
+
+- **Cómo queda cada hoja, en la pantalla** — En Firmas del libro ves el frente y el dorso de cada hoja tal como salen en el PDF, con las firmas, los sellos y las constancias. Se actualiza solo al guardar algo, y desde cada dorso hay un «Ver cómo queda».
+
 ## v3.37.0 — El dorso se firma solo
 
 _13 de noviembre de 2026_

@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.38.0",
+    fecha: "2026-11-13",
+    titulo: "Mirá la hoja antes de imprimirla",
+    novedades: [
+      {
+        icono: "libro",
+        titulo: "Cómo queda cada hoja, en la pantalla",
+        texto: "En Firmas del libro ves el frente y el dorso de cada hoja tal como salen en el PDF, con las firmas, los sellos y las constancias. Se actualiza solo al guardar algo, y desde cada dorso hay un «Ver cómo queda».",
+        href: "/dashboard/history/firmas",
+        cta: "Ver la hoja",
+      },
+    ],
+  },
+  {
     version: "3.37.0",
     fecha: "2026-11-13",
     titulo: "El dorso se firma solo",

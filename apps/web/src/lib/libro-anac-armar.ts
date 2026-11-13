@@ -1,3 +1,4 @@
+import { PDFDocument } from "pdf-lib";
 import { esAlumno, vuelosDesdeLaPpa } from "@/lib/licencias";
 import { apellidoYNombre, armarLibro, fechaDeGeneracion, renglonesDeLaHoja, valoresDeApertura, vuelosDeUnLibro, type RenglonLibro } from "@/lib/libro-anac";
 import { pdfDelLibro, type CertificacionParaPdf, type DorsoParaPdf } from "@/lib/libro-anac-pdf";
@@ -22,7 +23,7 @@ export function pngDeDataUrl(dataUrl: string | null | undefined): Uint8Array | u
 }
 
 export type ResultadoLibro =
-  | { ok: true; bytes: Uint8Array; archivo: string; libro: string | null; vuelos: number }
+  | { ok: true; bytes: Uint8Array; archivo: string; libro: string | null; vuelos: number; hojas?: number }
   | { ok: false; status: 401 | 404 | 502; error: string };
 
 export async function armarPdfDelLibro(
@@ -34,6 +35,17 @@ export async function armarPdfDelLibro(
     conCertificaciones?: boolean;
     /** El dorso de cada hoja, página por página (`?dorsos=1`). */
     conDorsos?: boolean;
+    /**
+     * Sólo esa hoja (1 = la primera), con su dorso si `conDorsos`: la vista previa de «Firmas
+     * del libro». Se arma el libro entero (los totales de la hoja anterior dependen de todas) y
+     * se recortan sus páginas.
+     */
+    hoja?: number;
+    /**
+     * Para mirar, no para presentar: lo que falte (tu firma, ninguna firma de certificante)
+     * queda en blanco en vez de cortar con un error.
+     */
+    vistaPrevia?: boolean;
   } = {}
 ): Promise<ResultadoLibro> {
   const [perfilesRes, vuelosRes, avionesRes, librosRes] = await Promise.all([leer("/profiles"), leer("/flights"), leer("/aircraft"), leer("/logbooks")]);
@@ -75,7 +87,7 @@ export async function armarPdfDelLibro(
     const r = await leer("/planes-de-vuelo/firma");
     const png = r.ok ? ((await r.json().catch(() => null)) as { png?: string } | null)?.png : undefined;
     firmaPng = pngDeDataUrl(png);
-    if (!firmaPng) {
+    if (!firmaPng && !opciones.vistaPrevia) {
       return { ok: false, status: 404, error: "Todavía no guardaste tu firma. Se guarda la primera vez que firmás un plan de vuelo." };
     }
   }
@@ -102,7 +114,7 @@ export async function armarPdfDelLibro(
       if (png) constancias.set(c.flight_id, [...(constancias.get(c.flight_id) ?? []), png]);
     }
     // Un PDF "con firmas" sin ninguna firma ni constancia sería un engaño: se le dice.
-    if (!firmas.length && !constancias.size) {
+    if (!firmas.length && !constancias.size && !opciones.vistaPrevia) {
       return { ok: false, status: 404, error: "Todavía no guardaste ninguna firma de certificante ni constancia. Se cargan en Bitácora → Vuelos → Firmas del libro." };
     }
     certificaciones = (renglon) => {
@@ -173,6 +185,20 @@ export async function armarPdfDelLibro(
     },
     { generado: fechaDeGeneracion(ahora), apertura, renglonesPorHoja, firmaPng, certificaciones, dorsos, constancias }
   );
+
+  // Una sola hoja: sus páginas (la hoja y, con dorsos, el dorso que va justo después).
+  if (opciones.hoja !== undefined) {
+    if (!Number.isInteger(opciones.hoja) || opciones.hoja < 1 || opciones.hoja > hojas.length) {
+      return { ok: false, status: 404, error: `Ese libro tiene ${hojas.length === 1 ? "una hoja" : `${hojas.length} hojas`}.` };
+    }
+    const porHoja = dorsos ? 2 : 1;
+    const entero = await PDFDocument.load(bytes);
+    const una = await PDFDocument.create();
+    const desde = (opciones.hoja - 1) * porHoja;
+    const paginas = await una.copyPages(entero, Array.from({ length: porHoja }, (_, k) => desde + k).filter((i) => i < entero.getPageCount()));
+    paginas.forEach((p) => una.addPage(p));
+    return { ok: true, bytes: await una.save(), archivo: `hoja-${opciones.hoja}.pdf`, libro: libros.length > 1 ? (libro?.name ?? null) : null, vuelos: hojas[opciones.hoja - 1].renglones.length, hojas: hojas.length };
+  }
 
   const apellido = (perfil?.last_name ?? "piloto")
     .normalize("NFD")

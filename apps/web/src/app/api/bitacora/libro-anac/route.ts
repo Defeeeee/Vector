@@ -22,6 +22,9 @@ export const runtime = "nodejs";
  * - `?certificaciones=1` estampa, en la celda de cada vuelo, la firma guardada de quien lo
  *   certificó (con su aclaración). Apagado por defecto: certificar es del certificante.
  * - `?dorsos=1` agrega, después de cada hoja, su dorso (firma con sello) para la doble faz.
+ * - `?hoja=N&vista=1` (3.38.0): la vista previa de «Firmas del libro». Sólo esa hoja con su
+ *   dorso y todas las firmas que haya, para mirar en la pantalla (`inline`), sin cortar si falta
+ *   alguna. Dice cuántas hojas tiene el libro en `X-Hojas`.
  *
  * El armado está en `lib/libro-anac-armar.ts`, compartido con el copiloto de WhatsApp.
  */
@@ -29,19 +32,25 @@ export async function GET(req: NextRequest) {
   if (!(await getSessionToken())) {
     return NextResponse.json({ error: "Tu sesión venció. Volvé a entrar." }, { status: 401 });
   }
+  const q = req.nextUrl.searchParams;
+  const vista = q.get("vista") === "1";
+  const hoja = q.get("hoja");
   const r = await armarPdfDelLibro((ruta) => apiFetch(ruta, { cache: "no-store" }), {
-    libroId: req.nextUrl.searchParams.get("libro"),
-    // `?firma=1`: con la firma guardada en cada hoja ("PDF firmado").
-    conFirma: req.nextUrl.searchParams.get("firma") === "1",
-    conCertificaciones: req.nextUrl.searchParams.get("certificaciones") === "1",
-    conDorsos: req.nextUrl.searchParams.get("dorsos") === "1",
+    libroId: q.get("libro"),
+    // `?firma=1`: con la firma guardada en cada hoja ("PDF firmado"). La vista previa lleva todo lo que haya.
+    conFirma: vista || q.get("firma") === "1",
+    conCertificaciones: vista || q.get("certificaciones") === "1",
+    conDorsos: vista || q.get("dorsos") === "1",
+    hoja: hoja ? Number(hoja) : undefined,
+    vistaPrevia: vista,
   });
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
   return new NextResponse(Buffer.from(r.bytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${r.archivo}"`,
+      "Content-Disposition": `${vista ? "inline" : "attachment"}; filename="${r.archivo}"`,
       "Cache-Control": "private, no-store",
+      ...(r.hojas ? { "X-Hojas": String(r.hojas) } : {}),
     },
   });
 }
