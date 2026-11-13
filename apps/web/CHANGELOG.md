@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.35.0 — Constancias en el frente de la hoja
+
+_13 de noviembre de 2026_
+
+- **El sello de tu examen, en su hoja** — Sacale una foto al sello que una autoridad estampó en el frente de la hoja, como el de ANAC en tu examen, y asocialo al vuelo. En el PDF con las firmas de los certificantes va sobre las columnas de discriminación, desde el renglón de ese vuelo, como en el papel.
+
 ## v3.34.0 — Textos con su firma en el dorso
 
 _13 de noviembre de 2026_

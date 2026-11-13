@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.35.0",
+    fecha: "2026-11-13",
+    titulo: "Constancias en el frente de la hoja",
+    novedades: [
+      {
+        icono: "camara",
+        titulo: "El sello de tu examen, en su hoja",
+        texto: "Sacale una foto al sello que una autoridad estampó en el frente de la hoja, como el de ANAC en tu examen, y asocialo al vuelo. En el PDF con las firmas de los certificantes va sobre las columnas de discriminación, desde el renglón de ese vuelo, como en el papel.",
+        href: "/dashboard/settings",
+        cta: "Ir al Hangar",
+      },
+    ],
+  },
+  {
     version: "3.34.0",
     fecha: "2026-11-13",
     titulo: "Textos con su firma en el dorso",

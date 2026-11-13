@@ -269,6 +269,7 @@ const dorsosFalsos = new Map();
 // Migración 049: los sellos de cada persona (con su cargo) y las fotos de cada dorso.
 const sellosFalsos = new Map();
 const fotosDorsoFalsas = [];
+const constanciasFalsas = [];
 if (process.env.LIBRO || process.env.CERT) {
   libros.push({ id: "l1", user_id: "u1", name: "Mi libro", is_default: true, created_at: new Date().toISOString(), renglones_por_hoja: 15, apertura_ppa: null,
     opening_pic_day_loc: 12, opening_pic_day_tra: 3, opening_landings: 40 });
@@ -448,6 +449,23 @@ function rutaFirmas(req, res, ruta, url, json) {
     Object.assign(d, { aclaracion: json.aclaracion ? json.aclaracion.toUpperCase() : null, fecha: json.fecha ?? null, sello_ids: json.sello_ids ?? [] });
     if (json.textos) d.textos = json.textos.map((t) => ({ texto: t.texto.split(/\s+/).join(" "), firma: t.firma ?? null }));
     return dar(200, { ...d, fotos: fotosDe(d) });
+  }
+  // Constancias del frente (051): la foto del sello real, por vuelo; hasta 2.
+  if (ruta === "/api/firmas/constancias" && req.method === "GET") return dar(200, constanciasFalsas);
+  if (ruta === "/api/firmas/constancias" && req.method === "POST") {
+    if (!esPng(json.png)) return dar(400, { detail: "La firma tiene que ser un PNG." });
+    if (!vuelos.some((v) => v.id === json.flight_id)) return dar(404, { detail: "Ese vuelo no existe." });
+    const propias = constanciasFalsas.filter((c) => c.flight_id === json.flight_id);
+    if (propias.length >= 2) return dar(400, { detail: "Hasta 2 constancias por vuelo." });
+    const c = { id: `c0510${String(constanciasFalsas.length + 1).padStart(3, "0")}-0000-4000-8000-000000000000`, flight_id: json.flight_id, png: json.png, orden: propias.length };
+    constanciasFalsas.push(c);
+    return dar(201, c);
+  }
+  if ((m = /^\/api\/firmas\/constancias\/([^/]+)$/.exec(ruta)) && req.method === "DELETE") {
+    const i = constanciasFalsas.findIndex((c) => c.id === m[1]);
+    if (i < 0) return dar(404, { detail: "Esa constancia no existe." });
+    constanciasFalsas.splice(i, 1);
+    return dar(204);
   }
   if (ruta === "/api/firmas/dorsos/fotos" && req.method === "POST") {
     if (!esPng(json.png)) return dar(400, { detail: "La firma tiene que ser un PNG." });

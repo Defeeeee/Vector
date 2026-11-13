@@ -90,9 +90,6 @@ export async function armarPdfDelLibro(
       return { ok: false, status: 502, error: "No se pudieron leer las firmas de los certificantes. Probá de nuevo en un momento." };
     }
     const firmas = ((await r.json().catch(() => [])) as FirmaCertificante[]).filter((f) => pngDeDataUrl(f.png));
-    if (!firmas.length) {
-      return { ok: false, status: 404, error: "Todavía no guardaste ninguna firma de certificante. Se cargan en el Hangar, en «Firmas del libro»." };
-    }
     // Las constancias del frente (la foto del sello real de una autoridad, migración 051) van
     // con "Con las firmas de los certificantes": también son marcas de otro.
     const rc = await leer("/firmas/constancias");
@@ -103,6 +100,10 @@ export async function armarPdfDelLibro(
     for (const c of (await rc.json().catch(() => [])) as ConstanciaVuelo[]) {
       const png = pngDeDataUrl(c.png);
       if (png) constancias.set(c.flight_id, [...(constancias.get(c.flight_id) ?? []), png]);
+    }
+    // Un PDF "con firmas" sin ninguna firma ni constancia sería un engaño: se le dice.
+    if (!firmas.length && !constancias.size) {
+      return { ok: false, status: 404, error: "Todavía no guardaste ninguna firma de certificante ni constancia. Se cargan en el Hangar, en «Firmas del libro»." };
     }
     certificaciones = (renglon) => {
       const f = firmaDelRenglon(renglon.certificante, firmas);
