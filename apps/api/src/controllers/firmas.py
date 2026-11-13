@@ -336,7 +336,7 @@ class FirmasController(Controller):
         user_id = str(request.state.user.id)
         q = (
             supabase_client.table("libro_hojas_dorso")
-            .select("id,logbook_id,hoja,aclaracion,fecha,sello_ids,textos")
+            .select("id,logbook_id,hoja,aclaracion,fecha,sello_ids,textos,firmas_de_los_vuelos")
             .eq("user_id", user_id)
         )
         qf = (
@@ -364,7 +364,9 @@ class FirmasController(Controller):
         _libro_propio(supabase_client, user_id, data.logbook_id)
         elegidos = [str(c) for c in dict.fromkeys(data.sello_ids or [])]
         textos = [t.model_dump() for t in (data.textos or [])]
-        if not data.aclaracion and not data.fecha and not elegidos and not textos:
+        # Elegir si la hoja suma las firmas de sus vuelos (migración 052) también es algo que guardar.
+        eligio = "firmas_de_los_vuelos" in data.model_fields_set and data.firmas_de_los_vuelos is not None
+        if not data.aclaracion and not data.fecha and not elegidos and not textos and not eligio:
             # Sin nada de esto, el dorso sólo existe si tiene fotos (o ya existía): se acepta
             # para que "guardar" con las fotos recién cargadas no falle.
             hay = (
@@ -399,6 +401,8 @@ class FirmasController(Controller):
         }
         if data.textos is not None:
             fila_nueva["textos"] = textos
+        if "firmas_de_los_vuelos" in data.model_fields_set:
+            fila_nueva["firmas_de_los_vuelos"] = data.firmas_de_los_vuelos
         resp = (
             supabase_client.table("libro_hojas_dorso")
             .upsert(fila_nueva, on_conflict="logbook_id,hoja")

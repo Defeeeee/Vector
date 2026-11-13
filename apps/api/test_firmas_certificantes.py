@@ -460,6 +460,15 @@ corre(guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=3, 
 check("con la lista vacía, se quitan", fila3["textos"] == [])
 check("la lista trae los textos", any(d.hoja == 7 and d.textos[0].texto == "x" for d in corre(listar_dorsos(ctl, pedido(YO), base, uid(LIBRO)))))
 
+# 052: si la hoja suma las firmas de sus vuelos.
+check("apagar las firmas de los vuelos alcanza para guardar un dorso vacío", corre(guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=9, firmas_de_los_vuelos=False))).firmas_de_los_vuelos is False)
+fila9 = next(d for d in base.tablas["libro_hojas_dorso"] if d["hoja"] == 9)
+corre(guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=9, aclaracion="X")))
+check("una web vieja (sin el campo) no la cambia", fila9["firmas_de_los_vuelos"] is False)
+corre(guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=9, aclaracion="X", firmas_de_los_vuelos=None)))
+check("con null vuelve a lo de siempre", fila9["firmas_de_los_vuelos"] is None)
+check("sin nada y con null, no hay nada que guardar", lanza(ClientException, guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=11, firmas_de_los_vuelos=None))))
+
 # 051: constancias en el frente (la foto del sello real), por vuelo.
 check("una constancia es un PNG de verdad", falla(lambda: ConstanciaIn(flight_id=uuid4(), png=JPG)))
 agregar_c = FirmasController.agregar_constancia.fn

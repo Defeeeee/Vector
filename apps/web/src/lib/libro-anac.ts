@@ -1,4 +1,5 @@
 import type { Aircraft, Flight, Logbook } from "@/types";
+import { firmasDeLosRenglones, type FirmaAutomatica, type FirmaCertificante } from "@/lib/firmas-libro";
 
 /**
  * El libro de vuelo con la hoja de siempre: qué va en cada renglón, en qué hoja y con qué
@@ -374,24 +375,26 @@ export function vuelosDeUnLibro(vuelos: Flight[], libros: Logbook[], libro: Logb
 
 /** Cuántas hojas tiene hoy el libro (la última, la que se está llenando, cuenta). Mínimo una. */
 /**
- * Los sellos distintos con que se certificaron los vuelos de cada hoja de un libro, numeradas como el
- * PDF (hoja 1 = la primera). Para ofrecer «Usar los sellos de los vuelos de esta hoja» en el dorso.
+ * Las firmas que el dorso de cada hoja suma solo (migración 052): por hoja, numeradas como el PDF,
+ * el sello o la firma de cada persona que certificó sus vuelos (`firmasDeLosRenglones`). Para
+ * mostrarlas en «Firmas del libro»; el PDF hace la misma cuenta al armarse.
  */
-export function sellosPorHoja(vuelosDelLibro: Flight[], aeronaves: Aircraft[], libro: Logbook | null | undefined): Record<number, string[]> {
+export function firmasPorHoja(
+  vuelosDelLibro: Flight[],
+  aeronaves: Aircraft[],
+  libro: Logbook | null | undefined,
+  firmas: FirmaCertificante[]
+): Record<number, FirmaAutomatica[]> {
   const hojas = armarLibro({
     vuelos: vuelosDelLibro,
     aeronaves,
     apertura: valoresDeApertura(libro),
     renglonesPorHoja: renglonesDeLaHoja(libro),
   });
-  const salida: Record<number, string[]> = {};
+  const salida: Record<number, FirmaAutomatica[]> = {};
   hojas.forEach((h, i) => {
-    const ids: string[] = [];
-    for (const r of h.renglones) {
-      const id = r.certificante?.selloId;
-      if (id && !ids.includes(id)) ids.push(id);
-    }
-    if (ids.length) salida[i + 1] = ids;
+    const deLaHoja = firmasDeLosRenglones(h.renglones, firmas);
+    if (deLaHoja.length) salida[i + 1] = deLaHoja;
   });
   return salida;
 }

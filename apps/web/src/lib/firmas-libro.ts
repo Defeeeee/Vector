@@ -93,6 +93,11 @@ export interface DorsoHoja {
   /** Los textos con su firma (migración 050). */
   textos?: DorsoTexto[];
   fotos?: DorsoFoto[];
+  /**
+   * Si la hoja suma sola las firmas de quienes certificaron sus vuelos (migración 052). `null` =
+   * sí, salvo que tenga fotos (`sumaFirmasDeLosVuelos`).
+   */
+  firmas_de_los_vuelos?: boolean | null;
 }
 
 /** "  Pérez,  JUAN " y "juan perez" son la misma persona: sin acentos, en mayúsculas, sin puntuación. */
@@ -271,6 +276,8 @@ export const TEXTO_DORSO = { tamano: 7.5, interlineado: 1.3, minimo: 4.5 };
 export interface BloqueDorso {
   imagen?: { ancho: number; alto: number } | null;
   texto?: string | null;
+  /** La aclaración **abajo** de la firma: la de una persona sin sello (su nombre y licencia). */
+  pie?: string | null;
 }
 
 export interface BloqueDorsoUbicado {
@@ -315,10 +322,12 @@ export function acomodarDorso(
     const columnas = Math.max(1, Math.min(bloques.length, Math.floor((utilW + hueco) / (celdaW + hueco))));
     const medidos = bloques.map((b) => {
       const lineas = b.texto?.trim() ? medir(b.texto.trim(), celdaW, tamano) : [];
+      const pie = b.pie?.trim() ? medir(b.pie.trim(), celdaW, tamano) : [];
       const img = b.imagen ? ajustarEnCaja(b.imagen.ancho, b.imagen.alto, celdaW, celdaH) : null;
       const altoTexto = lineas.length * paso;
       const separacion = lineas.length && img ? 3 : 0;
-      return { lineas, img, altoTexto, separacion, alto: altoTexto + separacion + (img?.h ?? 0) };
+      const altoPie = pie.length ? 2 + pie.length * paso : 0;
+      return { lineas, pie, img, altoTexto, separacion, altoPie, alto: altoTexto + separacion + (img?.h ?? 0) + altoPie };
     });
     const filas: number[] = [];
     medidos.forEach((m, i) => {
@@ -346,6 +355,9 @@ export function acomodarDorso(
     // La primera línea de base, a una letra del borde de arriba (la parte que sobresale de la letra).
     const renglones = m.lineas.map((texto, k) => ({ texto, x, y: tope - r.tamano * 0.85 - k * r.paso }));
     const imagen = m.img ? { x, y: tope - m.altoTexto - m.separacion - m.img.h, w: m.img.w, h: m.img.h } : null;
+    // La aclaración, debajo de la firma (o del texto, si no hay imagen).
+    const bajoLaFirma = tope - m.altoTexto - m.separacion - (m.img?.h ?? 0) - (m.pie.length ? 2 : 0);
+    m.pie.forEach((texto, k) => renglones.push({ texto, x, y: bajoLaFirma - r.tamano * 0.85 - k * r.paso }));
     return { imagen, renglones, tamano: r.tamano };
   });
 }
@@ -360,7 +372,14 @@ export function acomodarDorso(
 export function bloquesDelDorso(
   d: Pick<DorsoHoja, "fotos" | "sello_ids" | "textos">,
   sellosQueHay: Set<string>,
-  maxImagenes = 12
+  maxImagenes = 12,
+  /**
+   * Las firmas de los vuelos de la hoja (`firmasDeLosRenglones`, migración 052), después de las
+   * elegidas. Se saltea a una persona que ya está en el dorso por un sello suyo elegido a mano
+   * (`personaDeSello`): no va dos veces.
+   */
+  automaticas: FirmaAutomatica[] = [],
+  personaDeSello: Map<string, string> = new Map()
 ): { firma: string | null; texto: string | null }[] {
   const firmas: string[] = [];
   for (const f of [...(d.fotos ?? [])].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))) firmas.push(`foto:${f.id}`);
@@ -368,6 +387,13 @@ export function bloquesDelDorso(
   for (const t of d.textos ?? []) {
     const f = t.firma ?? "";
     if (f.startsWith("sello:") && sellosQueHay.has(f.slice(6)) && !firmas.includes(f)) firmas.push(f);
+  }
+  const presentes = new Set(firmas.filter((f) => f.startsWith("sello:")).map((f) => personaDeSello.get(f.slice(6))).filter(Boolean));
+  for (const a of automaticas) {
+    if (presentes.has(a.personaId) || firmas.includes(a.firma)) continue;
+    if (a.firma.startsWith("sello:") && !sellosQueHay.has(a.firma.slice(6))) continue;
+    firmas.push(a.firma);
+    presentes.add(a.personaId);
   }
   const usadas = firmas.filter((f, i) => firmas.indexOf(f) === i).slice(0, maxImagenes);
   const textosDe = new Map<string, string[]>();
@@ -382,6 +408,54 @@ export function bloquesDelDorso(
     ...usadas.map((firma) => ({ firma, texto: textosDe.get(firma)?.join("\n") ?? null })),
     ...sueltos.map((texto) => ({ firma: null, texto })),
   ];
+}
+
+/** Una firma que el dorso suma solo: el sello de la persona (`sello:<id>`) o su firma con su nombre (`persona:<id>`). */
+export interface FirmaAutomatica {
+  firma: string;
+  personaId: string;
+}
+
+/**
+ * Si el dorso de una hoja suma las firmas de sus vuelos (migración 052): lo que eligió el piloto
+ * o, si no eligió, **sí, salvo que la hoja tenga fotos**: un dorso fotografiado ya trae sus firmas.
+ */
+export function sumaFirmasDeLosVuelos(d: Pick<DorsoHoja, "firmas_de_los_vuelos" | "fotos"> | null | undefined): boolean {
+  if (d?.firmas_de_los_vuelos != null) return d.firmas_de_los_vuelos;
+  return !d?.fotos?.length;
+}
+
+/**
+ * Las firmas que van al dorso por los vuelos de una hoja (Federico, 2026-11-13: "al agregar un
+ * vuelo o una autoridad a un vuelo se debe autoagregar la firma con sello o en su defecto … la
+ * firma y el nombre… al dorso eso"). Una por persona, en el orden de los renglones.
+ *
+ * - **Quién:** la misma persona que firma la celda del renglón (`firmaDelRenglon`): la asignada o,
+ *   sin asignar, la que coincide por nombre o alias; un «Firma: no» no suma a nadie.
+ * - **Con qué:** el sello del vuelo; si no, el de su cargo (`selloParaCargo`); si no, su único
+ *   sello. Sin sello que le toque, **su firma con su nombre** abajo (`persona:<id>`).
+ */
+export function firmasDeLosRenglones(
+  renglones: { certificante: (Parameters<typeof firmaDelRenglon>[0] & { selloId?: string | null }) | null | undefined }[],
+  firmas: FirmaCertificante[]
+): FirmaAutomatica[] {
+  const salida: FirmaAutomatica[] = [];
+  for (const r of renglones) {
+    const persona = firmaDelRenglon(r.certificante, firmas);
+    if (!persona || salida.some((a) => a.personaId === persona.id)) continue;
+    const sellos = persona.sellos ?? [];
+    const sello =
+      sellos.find((x) => x.id === r.certificante?.selloId) ??
+      selloParaCargo(sellos, r.certificante?.autoridadId) ??
+      (sellos.length === 1 ? sellos[0] : null);
+    salida.push({ firma: sello ? `sello:${sello.id}` : `persona:${persona.id}`, personaId: persona.id });
+  }
+  return salida;
+}
+
+/** La aclaración de una persona sin sello en el dorso: su nombre y, abajo, su licencia. */
+export function aclaracionDePersona(p: Pick<FirmaCertificante, "nombre" | "licencia">): string {
+  return [p.nombre, p.licencia?.trim()].filter(Boolean).join("\n");
 }
 
 /** Una constancia del frente (migración 051): la foto del sello real de una autoridad, por vuelo. */
@@ -446,7 +520,7 @@ export function dorsosPorHoja(dorsos: DorsoHoja[], libroId: string | null | unde
   const m = new Map<number, DorsoHoja>();
   for (const d of dorsos) {
     if (libroId && d.logbook_id !== libroId) continue;
-    if (!d.fotos?.length && !d.aclaracion?.trim() && !d.fecha && !d.sello_ids?.length && !d.textos?.length) continue;
+    if (!d.fotos?.length && !d.aclaracion?.trim() && !d.fecha && !d.sello_ids?.length && !d.textos?.length && d.firmas_de_los_vuelos == null) continue;
     m.set(d.hoja, d);
   }
   return m;

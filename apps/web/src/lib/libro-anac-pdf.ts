@@ -287,11 +287,11 @@ export interface DorsoParaPdf {
    * Los bloques en orden (migración 050): cada firma con el texto que avala arriba, o un texto
    * solo. Si viene, manda sobre `fotos` y `sellos` (`bloquesDelDorso` arma la lista).
    */
-  bloques?: { png?: Uint8Array | null; texto?: string | null }[];
+  bloques?: { png?: Uint8Array | null; texto?: string | null; pie?: string | null }[];
 }
 
 /** Un bloque del dorso ya embebido: la imagen (si la hay y se pudo leer) y su texto. */
-type BloqueEmbebido = { imagen: PDFImage | null; texto: string | null };
+type BloqueEmbebido = { imagen: PDFImage | null; texto: string | null; pie?: string | null };
 
 export interface CertificacionParaPdf {
   /** Para no embeber dos veces la misma imagen. */
@@ -553,6 +553,8 @@ export async function pdfDelLibro(
   }
 
   const dorsoBloques = new Map<number, BloqueEmbebido[]>();
+  // La misma imagen (la firma de una persona en muchas hojas) se embebe una vez.
+  const yaEmbebidas = new Map<Uint8Array, PDFImage>();
   if (dorsos) {
     for (const [hoja, dorso] of dorsos) {
       const crudos = dorso.bloques ?? [...(dorso.fotos ?? []), ...(dorso.sellos ?? [])].map((png) => ({ png, texto: null }));
@@ -562,14 +564,17 @@ export async function pdfDelLibro(
         let imagen: PDFImage | null = null;
         if (b.png && imagenes < MAX_IMAGENES_DORSO) {
           try {
-            imagen = await doc.embedPng(b.png);
+            imagen = yaEmbebidas.get(b.png) ?? (await doc.embedPng(b.png));
+            yaEmbebidas.set(b.png, imagen);
             imagenes++;
           } catch {
             /* una imagen ilegible se saltea; su texto queda */
           }
         }
         const texto = b.texto?.trim() || null;
-        if (imagen || texto) listos.push({ imagen, texto });
+        // La aclaración de abajo sólo tiene sentido con su firma.
+        const pie = (imagen && "pie" in b && b.pie?.trim()) || null;
+        if (imagen || texto) listos.push({ imagen, texto, pie });
       }
       if (listos.length) dorsoBloques.set(hoja, listos);
     }
@@ -712,7 +717,7 @@ function dorsoDeLaHoja(
         return limpio ? renglonesDe(normal, limpio, w, tamano) : [];
       });
     const ubicados = acomodarDorso(
-      bloques.map((b) => ({ imagen: b.imagen ? { ancho: b.imagen.width, alto: b.imagen.height } : null, texto: b.texto })),
+      bloques.map((b) => ({ imagen: b.imagen ? { ancho: b.imagen.width, alto: b.imagen.height } : null, texto: b.texto, pie: b.pie })),
       { ancho: ANCHO_HOJA, alto: ALTO_HOJA, margen: MARGEN, reservaAbajo },
       medir
     );

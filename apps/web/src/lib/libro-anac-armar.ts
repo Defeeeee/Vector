@@ -1,7 +1,7 @@
 import { esAlumno, vuelosDesdeLaPpa } from "@/lib/licencias";
 import { apellidoYNombre, armarLibro, fechaDeGeneracion, renglonesDeLaHoja, valoresDeApertura, vuelosDeUnLibro, type RenglonLibro } from "@/lib/libro-anac";
 import { pdfDelLibro, type CertificacionParaPdf, type DorsoParaPdf } from "@/lib/libro-anac-pdf";
-import { bloquesDelDorso, dorsosPorHoja, firmaDelRenglon, type ConstanciaVuelo, type DorsoHoja, type FirmaCertificante } from "@/lib/firmas-libro";
+import { aclaracionDePersona, bloquesDelDorso, dorsosPorHoja, firmaDelRenglon, firmasDeLosRenglones, sumaFirmasDeLosVuelos, type ConstanciaVuelo, type DorsoHoja, type FirmaCertificante } from "@/lib/firmas-libro";
 import type { Aircraft, Flight, Logbook, Profile } from "@/types";
 
 /**
@@ -112,36 +112,54 @@ export async function armarPdfDelLibro(
     };
   }
 
-  // El dorso de cada hoja de este libro: todas sus fotos más los sellos elegidos (migración 049).
+  // El dorso de cada hoja de este libro: sus fotos, los sellos elegidos (migración 049) y, solas,
+  // las firmas de quienes certificaron sus vuelos (migración 052): el sello de cada persona o, si
+  // no tiene, su firma con su nombre abajo.
   let dorsos: Map<number, DorsoParaPdf> | undefined;
   if (opciones.conDorsos) {
-    // Las imágenes de cada sello, por id: las personas traen sus sellos con la imagen.
-    const sellos = new Map<string, Uint8Array>();
     const rf = await leer("/firmas/certificantes");
     if (!rf.ok) {
       return { ok: false, status: 502, error: "No se pudieron leer las firmas con sello para los dorsos. Probá de nuevo en un momento." };
     }
-    for (const f of (await rf.json().catch(() => [])) as FirmaCertificante[]) {
+    const personas = (await rf.json().catch(() => [])) as FirmaCertificante[];
+    // Las imágenes por id (una sola vez cada una: la misma persona firma muchas hojas).
+    const sellos = new Map<string, Uint8Array>();
+    const personaDeSello = new Map<string, string>();
+    const deLaPersona = new Map<string, { png: Uint8Array; pie: string }>();
+    for (const f of personas) {
+      const png = pngDeDataUrl(f.png);
+      if (png) deLaPersona.set(f.id, { png, pie: aclaracionDePersona(f) });
       for (const sello of f.sellos ?? []) {
-        const png = pngDeDataUrl(sello.png);
-        if (png) sellos.set(sello.id, png);
+        const s = pngDeDataUrl(sello.png);
+        if (s) sellos.set(sello.id, s);
+        personaDeSello.set(sello.id, f.id);
       }
     }
+    // Sólo cuenta una persona cuya firma se pueda dibujar: si no, ni el sello ni la firma.
+    const conImagen = personas.filter((f) => deLaPersona.has(f.id) || (f.sellos ?? []).some((x) => sellos.has(x.id)));
     const r = await leer(`/firmas/dorsos${libro ? `?logbook_id=${encodeURIComponent(libro.id)}` : ""}`);
     if (!r.ok) {
       return { ok: false, status: 502, error: "No se pudieron leer los dorsos de las hojas. Probá de nuevo en un momento." };
     }
-    const filas = (await r.json().catch(() => [])) as DorsoHoja[];
+    const porHoja = dorsosPorHoja((await r.json().catch(() => [])) as DorsoHoja[], libro?.id);
     dorsos = new Map();
-    for (const [hoja, d] of dorsosPorHoja(filas, libro?.id)) {
-      // Cada firma (foto o sello) con el texto que avala arriba, y los textos sueltos al final (migración 050).
-      const fotos = new Map((d.fotos ?? []).map((f) => [`foto:${f.id}`, pngDeDataUrl(f.png)]));
-      const bloques = bloquesDelDorso(d, new Set(sellos.keys())).map((b) => ({
-        png: b.firma ? (b.firma.startsWith("foto:") ? fotos.get(b.firma) : sellos.get(b.firma.slice(6))) ?? null : null,
-        texto: b.texto,
-      }));
-      dorsos.set(hoja, { bloques, aclaracion: d.aclaracion, fecha: d.fecha });
-    }
+    hojas.forEach((h, i) => {
+      const numero = i + 1;
+      const d = porHoja.get(numero);
+      const automaticas = sumaFirmasDeLosVuelos(d) ? firmasDeLosRenglones(h.renglones, conImagen) : [];
+      if (!d && !automaticas.length) return;
+      // Cada firma (foto, sello o persona) con el texto que avala arriba, y los textos sueltos al final (migración 050).
+      const fotos = new Map((d?.fotos ?? []).map((f) => [`foto:${f.id}`, pngDeDataUrl(f.png)]));
+      const bloques = bloquesDelDorso(d ?? {}, new Set(sellos.keys()), 12, automaticas, personaDeSello).flatMap((b) => {
+        if (b.firma?.startsWith("persona:")) {
+          const p = deLaPersona.get(b.firma.slice(8));
+          return p ? [{ png: p.png, texto: b.texto, pie: p.pie }] : b.texto ? [{ png: null, texto: b.texto }] : [];
+        }
+        const png = b.firma ? (b.firma.startsWith("foto:") ? fotos.get(b.firma) : sellos.get(b.firma.slice(6))) ?? null : null;
+        return [{ png, texto: b.texto }];
+      });
+      dorsos!.set(numero, { bloques, aclaracion: d?.aclaracion, fecha: d?.fecha });
+    });
   }
 
   const bytes = await pdfDelLibro(

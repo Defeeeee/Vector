@@ -10,7 +10,9 @@ import {
   MAX_LARGO_TEXTO_DORSO,
   MAX_TEXTOS_DORSO,
   nombreDeSello,
+  sumaFirmasDeLosVuelos,
   type DorsoHoja,
+  type FirmaAutomatica,
   type FirmaCertificante,
 } from "@/lib/firmas-libro";
 import { ayuda, campo, cuenta, enlace, Miniatura, peligro, principal, rotulo, subtitulo, unaFila } from "./comun";
@@ -19,24 +21,43 @@ import { ayuda, campo, cuenta, enlace, Miniatura, peligro, principal, rotulo, su
 const MAX_IMAGENES = 12;
 
 /**
- * El dorso de cada hoja (migraciones 047, 049 y 050): lo que va atrás de la hoja, en una página
- * aparte del PDF para imprimir a doble faz. Una hoja por fila; al abrirla, en el orden en que se
- * arma: las fotos, los sellos de tus certificantes, los textos que firman y, al pie, la aclaración
- * y la fecha.
+ * El dorso de cada hoja (migraciones 047, 049, 050 y 052): lo que va atrás de la hoja, en una
+ * página aparte del PDF para imprimir a doble faz. Una hoja por fila; al abrirla, en el orden en
+ * que se arma: las firmas de los vuelos de la hoja (solas), las fotos, otros sellos, los textos que
+ * firman y, al pie, la aclaración y la fecha.
  */
+
+/** "MACEDO · Jefe de instructores", o "MACEDO (firma y nombre)" si no tiene sello. */
+function nombreDeAutomatica(a: FirmaAutomatica, firmas: FirmaCertificante[]): string {
+  const p = firmas.find((f) => f.id === a.personaId);
+  if (!p) return "";
+  if (a.firma.startsWith("sello:")) return nombreDeSello({ nombre: p.nombre, sellos: p.sellos }, p.sellos?.find((x) => `sello:${x.id}` === a.firma));
+  return `${p.nombre} (firma y nombre)`;
+}
+
+/** Las de los vuelos que de verdad suma: no repite a quien ya está por un sello elegido a mano. */
+function efectivas(auto: FirmaAutomatica[], elegidos: Iterable<string>, firmas: FirmaCertificante[]): FirmaAutomatica[] {
+  const presentes = new Set<string>();
+  for (const id of elegidos) {
+    const p = firmas.find((f) => f.sellos?.some((x) => x.id === id));
+    if (p) presentes.add(p.id);
+  }
+  return auto.filter((a) => !presentes.has(a.personaId));
+}
 export default function Dorsos({
   dorsos,
   libros,
   hojasPorLibro,
   firmas,
-  sellosPorHoja,
+  firmasPorHoja,
 }: {
   dorsos: DorsoHoja[];
   libros: { id: string; name: string }[];
   hojasPorLibro: Record<string, number>;
   /** Las personas: cada sello suyo se puede elegir para el dorso. */
   firmas: FirmaCertificante[];
-  sellosPorHoja: Record<string, Record<number, string[]>>;
+  /** Por libro y hoja, las firmas que el dorso suma solo por sus vuelos (`firmasPorHoja`). */
+  firmasPorHoja: Record<string, Record<number, FirmaAutomatica[]>>;
 }) {
   const [libroId, setLibroId] = useState(libros[0]?.id ?? "");
   const [abierta, setAbierta] = useState<number | null>(null);
@@ -63,13 +84,16 @@ export default function Dorsos({
           const d = delLibro.get(hoja);
           const fotos = d?.fotos ?? [];
           const sellos = d ? cuantosSellos(d) : 0;
-          const resumen = d
+          const auto = sumaFirmasDeLosVuelos(d) ? efectivas(firmasPorHoja[libroId]?.[hoja] ?? [], d?.sello_ids ?? [], firmas) : [];
+          const resumen =
+            d || auto.length
             ? [
+                auto.length ? (auto.length === 1 ? "1 firma de los vuelos" : `${auto.length} firmas de los vuelos`) : "",
                 fotos.length ? cuenta(fotos.length, "foto", "fotos") : "",
                 sellos ? cuenta(sellos, "sello", "sellos") : "",
-                d.textos?.length ? cuenta(d.textos.length, "texto", "textos") : "",
-                d.aclaracion,
-                fechaDelDorso(d.fecha),
+                d?.textos?.length ? cuenta(d.textos.length, "texto", "textos") : "",
+                d?.aclaracion,
+                fechaDelDorso(d?.fecha),
               ]
                 .filter(Boolean)
                 .join(" · ")
@@ -85,9 +109,9 @@ export default function Dorsos({
                 <span className="font-mono text-xs tracking-wider text-zinc-500 dark:text-zinc-400 w-16 shrink-0">HOJA {hoja}</span>
                 {fotos[0] ? <Miniatura png={fotos[0].png} alto="h-9" /> : null}
                 <span className="flex-1 min-w-0 text-sm text-zinc-900 dark:text-white truncate">
-                  {d ? resumen || "Vacío" : <span className="text-zinc-500">En blanco</span>}
+                  {resumen || <span className="text-zinc-500">En blanco</span>}
                 </span>
-                <span className="text-xs font-semibold text-aviation-cyan">{abierta === hoja ? "Cerrar" : d ? "Abrir" : "Cargar"}</span>
+                <span className="text-xs font-semibold text-aviation-cyan">{abierta === hoja ? "Cerrar" : resumen ? "Abrir" : "Cargar"}</span>
               </button>
               {abierta === hoja && (
                 <EditorDeDorso
@@ -96,7 +120,7 @@ export default function Dorsos({
                   hoja={hoja}
                   actual={d ?? null}
                   firmas={firmas}
-                  selloIdsDeLosVuelos={sellosPorHoja[libroId]?.[hoja] ?? []}
+                  deLosVuelos={firmasPorHoja[libroId]?.[hoja] ?? []}
                   alTerminar={() => setAbierta(null)}
                 />
               )}
@@ -113,15 +137,15 @@ function EditorDeDorso({
   hoja,
   actual,
   firmas,
-  selloIdsDeLosVuelos,
+  deLosVuelos,
   alTerminar,
 }: {
   libroId: string;
   hoja: number;
   actual: DorsoHoja | null;
   firmas: FirmaCertificante[];
-  /** Los sellos de los vuelos que caen en esta hoja, para ofrecer usarlos de un toque. */
-  selloIdsDeLosVuelos: string[];
+  /** Las firmas de quienes certificaron los vuelos de esta hoja: el dorso las suma solo. */
+  deLosVuelos: FirmaAutomatica[];
   alTerminar: () => void;
 }) {
   const [nueva, setNueva] = useState<string | null>(null);
@@ -138,8 +162,11 @@ function EditorDeDorso({
   const sellos = firmas.flatMap((f) => (f.sellos ?? []).map((x) => ({ sello: x, texto: nombreDeSello({ nombre: f.nombre, sellos: f.sellos }, x) })));
   const existentes = new Set(sellos.map((x) => x.sello.id));
   const [elegidos, setElegidos] = useState<Set<string>>(() => new Set((actual?.sello_ids ?? []).filter((id) => existentes.has(id))));
-  const deLosVuelos = selloIdsDeLosVuelos.filter((id) => existentes.has(id));
-  const total = fotos.length + elegidos.size;
+  // Si suma las firmas de los vuelos (migración 052): lo guardado o, si nunca se eligió, sí salvo con fotos.
+  const sumaAntes = sumaFirmasDeLosVuelos(actual);
+  const [sumar, setSumar] = useState(sumaAntes);
+  const automaticas = sumar ? efectivas(deLosVuelos, elegidos, firmas) : [];
+  const total = fotos.length + elegidos.size + automaticas.length;
   // Los textos del dorso (migración 050), cada uno con la firma que lo avala. `clave` es sólo para React.
   const [textos, setTextos] = useState<{ clave: number; texto: string; firma: string }[]>(() =>
     (actual?.textos ?? []).map((t, i) => ({ clave: i, texto: t.texto, firma: t.firma ?? "" }))
@@ -171,6 +198,7 @@ function EditorDeDorso({
   const hayCambios =
     aclaracion !== (actual?.aclaracion ?? "") ||
     fecha !== (actual?.fecha ?? "") ||
+    sumar !== sumaAntes ||
     [...elegidos].sort().join() !== sellosIniciales ||
     JSON.stringify(textos.map((t) => [t.texto, t.firma])) !== textosIniciales;
   const puede = !pendiente && hayCambios && !textoLargo && !aclaracionLarga;
@@ -202,6 +230,8 @@ function EditorDeDorso({
         aclaracion,
         fecha,
         selloIds: [...elegidos],
+        // Se guarda sólo si se cambió: así una hoja que nunca se tocó sigue con la regla de siempre.
+        firmasDeLosVuelos: sumar !== sumaAntes ? sumar : (actual?.firmas_de_los_vuelos ?? null),
         // Una firma que ya no está (se quitó la foto) deja el texto solo.
         textos: textos.map((t) => ({ texto: t.texto, firma: opcionesDeFirma.some((o) => o.valor === t.firma) ? t.firma : null })),
       });
@@ -223,6 +253,42 @@ function EditorDeDorso({
 
   return (
     <div className="space-y-8 pt-5 pb-2">
+      {/* 0. Las firmas de los vuelos de la hoja: solas, se recalculan con cada vuelo. */}
+      <div className="space-y-3">
+        <p className={subtitulo}>De los vuelos de esta hoja</p>
+        <label className="flex items-start gap-3 text-sm text-zinc-900 dark:text-white cursor-pointer">
+          <input type="checkbox" checked={sumar} onChange={(e) => setSumar(e.target.checked)} className="w-5 h-5 mt-0.5 accent-[#2bd4ff] shrink-0" />
+          <span>
+            <strong>Sumar solas las firmas de quienes certificaron sus vuelos.</strong>{" "}
+            <span className="text-zinc-500 dark:text-zinc-400">
+              El sello de cada persona para su cargo o, si no tiene, su firma con su nombre. Un vuelo nuevo, o una autoridad nueva en un vuelo de esta hoja, se suma sin hacer nada.
+              {fotos.length > 0 && sumaAntes === false && actual?.firmas_de_los_vuelos == null ? " Con fotos viene apagado: un dorso fotografiado ya trae sus firmas." : ""}
+            </span>
+          </span>
+        </label>
+        {sumar &&
+          (automaticas.length ? (
+            <ul className="flex flex-wrap gap-2">
+              {automaticas.map((a) => {
+                const p = firmas.find((f) => f.id === a.personaId);
+                const sello = a.firma.startsWith("sello:") ? p?.sellos?.find((x) => `sello:${x.id}` === a.firma) : null;
+                return (
+                  <li key={a.firma} className="inline-flex items-center gap-2 rounded-full border border-aviation-cyan/40 bg-aviation-cyan/10 pl-1 pr-3 py-1 text-sm text-aviation-cyan">
+                    <Miniatura png={sello?.png ?? p?.png ?? ""} alto="h-8" />
+                    {nombreDeAutomatica(a, firmas)}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className={ayuda}>
+              {deLosVuelos.length
+                ? "Quienes certificaron sus vuelos ya están en este dorso."
+                : "Ningún vuelo de esta hoja tiene quien lo certifique con firma guardada: asociálo arriba, en «Quienes certifican»."}
+            </p>
+          ))}
+      </div>
+
       {/* 1. Las fotos: cada una se guarda al agregarla (una imagen por pedido). */}
       <div className="space-y-3">
         <p className={subtitulo}>Fotos ({fotos.length})</p>
@@ -259,8 +325,8 @@ function EditorDeDorso({
       {/* 2. Los sellos de las personas. */}
       {sellos.length > 0 && (
         <fieldset className="space-y-3">
-          <legend className={subtitulo}>Sellos</legend>
-          <p className={ayuda}>Las firmas con sello que guardaste en cada persona. Ya traen la aclaración.</p>
+          <legend className={subtitulo}>Otros sellos</legend>
+          <p className={ayuda}>Para sumar a alguien que no certificó vuelos de esta hoja (una habilitación, por ejemplo). Ya traen la aclaración.</p>
           <ul className="flex flex-wrap gap-2">
             {sellos.map(({ sello, texto }) => (
               <li key={sello.id}>
@@ -271,11 +337,6 @@ function EditorDeDorso({
               </li>
             ))}
           </ul>
-          {elegidos.size === 0 && deLosVuelos.length > 0 && (
-            <button type="button" onClick={() => setElegidos(new Set(deLosVuelos.slice(0, MAX_IMAGENES - fotos.length)))} className={enlace}>
-              Usar los de los vuelos de esta hoja ({deLosVuelos.length})
-            </button>
-          )}
         </fieldset>
       )}
 
@@ -355,17 +416,17 @@ function EditorDeDorso({
       {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
       <div className="flex flex-wrap gap-3 items-center">
         <button type="button" onClick={guardar} disabled={!puede} className={principal}>
-          {pendiente ? "Guardando…" : "Guardar sellos, textos y pie"}
+          {pendiente ? "Guardando…" : "Guardar el dorso"}
         </button>
         {actual && !confirmando && (
           <button type="button" onClick={() => setConfirmando(true)} disabled={pendiente} className={peligro}>
-            Dejar esta hoja en blanco
+            Borrar lo cargado en esta hoja
           </button>
         )}
         {actual && confirmando && (
           <span className="flex flex-wrap items-center gap-2 text-sm text-zinc-900 dark:text-white">
             Se borra todo lo de esta hoja{fotos.length ? `, también ${cuenta(fotos.length, "foto", "fotos")}` : ""}.
-            <button type="button" onClick={vaciar} disabled={pendiente} className={peligro}>Sí, dejarla en blanco</button>
+            <button type="button" onClick={vaciar} disabled={pendiente} className={peligro}>Sí, borrarlo</button>
             <button type="button" onClick={() => setConfirmando(false)} className="min-h-11 px-3 text-sm font-semibold text-zinc-500">No</button>
           </span>
         )}

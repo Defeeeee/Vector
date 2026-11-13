@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.37.0 — El dorso se firma solo
+
+_13 de noviembre de 2026_
+
+- **Las firmas de tus vuelos, solas en el dorso** — El dorso de cada hoja suma solo a quien certificó sus vuelos: su firma con sello para ese cargo o, si no tiene, su firma con el nombre abajo. Al cargar un vuelo o ponerle la autoridad, aparece sin hacer nada. Una hoja con fotos del dorso real no las suma, salvo que lo prendas.
+
 ## v3.36.0 — Las firmas, ordenadas en tu Bitácora
 
 _13 de noviembre de 2026_

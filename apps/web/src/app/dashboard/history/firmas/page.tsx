@@ -9,7 +9,7 @@ import TuFirma from "@/components/dashboard/firmas/TuFirma";
 import Personas from "@/components/dashboard/firmas/Personas";
 import Dorsos from "@/components/dashboard/firmas/Dorsos";
 import Constancias from "@/components/dashboard/firmas/Constancias";
-import { cantidadDeHojas, sellosPorHoja, vuelosDeUnLibro } from "@/lib/libro-anac";
+import { cantidadDeHojas, firmasPorHoja, vuelosDeUnLibro } from "@/lib/libro-anac";
 import { esAlumno, vuelosDesdeLaPpa } from "@/lib/licencias";
 import { firmaGuardada } from "@/lib/plan-de-vuelo-servidor";
 import type { ConstanciaVuelo, DorsoHoja, FirmaCertificante, SugerenciaCertificante } from "@/lib/firmas-libro";
@@ -42,8 +42,10 @@ export default async function FirmasPage() {
   const [perfilRes, avionesRes, librosRes, vuelosRes, firmasRes, dorsosRes, sugerenciasRes, constanciasRes, firmaTitular] = await Promise.all([
     apiFetch("/profiles"),
     apiFetch("/aircraft"),
-    apiFetch("/logbooks"),
-    apiFetch("/flights"),
+    // Sin cache también los libros y los vuelos: desde acá se les asigna quién los certificó, y
+    // las hojas del dorso salen de los dos.
+    apiFetch("/logbooks", FRESCO),
+    apiFetch("/flights", FRESCO),
     apiFetch("/firmas/certificantes", FRESCO),
     apiFetch("/firmas/dorsos", FRESCO),
     // Los nombres de vuelos sin certificante que son de una persona guardada (migración 048).
@@ -65,11 +67,11 @@ export default async function FirmasPage() {
   const sugerencias = await leer<SugerenciaCertificante[]>(sugerenciasRes, []);
   const constancias = await leer<ConstanciaVuelo[]>(constanciasRes, []);
 
-  // Las hojas, numeradas igual que el PDF (el dorso se carga hoja por hoja), y los sellos con que
-  // se certificaron los vuelos de cada una («Usar los de los vuelos de esta hoja»).
+  // Las hojas, numeradas igual que el PDF (el dorso se carga hoja por hoja), y las firmas que el
+  // dorso de cada una suma solo por sus vuelos (migración 052): la misma cuenta que hace el PDF.
   const vuelosDelPdf = vuelosDesdeLaPpa(vuelos, perfil?.fecha_ppa);
   const hojasPorLibro = Object.fromEntries(libros.map((l) => [l.id, cantidadDeHojas(vuelosDeUnLibro(vuelosDelPdf, libros, l), aviones, l)]));
-  const sellosDeLasHojas = Object.fromEntries(libros.map((l) => [l.id, sellosPorHoja(vuelosDeUnLibro(vuelosDelPdf, libros, l), aviones, l)]));
+  const firmasDeLasHojas = Object.fromEntries(libros.map((l) => [l.id, firmasPorHoja(vuelosDeUnLibro(vuelosDelPdf, libros, l), aviones, l, firmas)]));
   const vuelosOrdenados = [...vuelos].sort((a, b) => new Date(b.takeoff).getTime() - new Date(a.takeoff).getTime());
 
   return (
@@ -113,10 +115,10 @@ export default async function FirmasPage() {
       <Parte
         id="dorso"
         titulo="Dorso de cada hoja"
-        explicacion="Lo que va atrás de cada hoja, en una página aparte para imprimir a doble faz: fotos de las firmas, sellos de tus certificantes y los textos que firman. Salen a tamaño real, 7 × 3,5 cm cada una, desde arriba a la izquierda. Una hoja sin nada sale en blanco, para que la doble faz no se corra."
+        explicacion="Lo que va atrás de cada hoja, en una página aparte para imprimir a doble faz. Solo, el sello de cada persona que certificó un vuelo de la hoja (o su firma con su nombre, si no tiene sello); además, las fotos, los sellos y los textos que agregues. Salen a tamaño real, 7 × 3,5 cm cada una, desde arriba a la izquierda. Una hoja sin nada sale en blanco, para que la doble faz no se corra."
       >
         {libros.length ? (
-          <Dorsos dorsos={dorsos} libros={libros.map((l) => ({ id: l.id, name: l.name }))} hojasPorLibro={hojasPorLibro} firmas={firmas} sellosPorHoja={sellosDeLasHojas} />
+          <Dorsos dorsos={dorsos} libros={libros.map((l) => ({ id: l.id, name: l.name }))} hojasPorLibro={hojasPorLibro} firmas={firmas} firmasPorHoja={firmasDeLasHojas} />
         ) : (
           <p className="text-sm text-zinc-500">Primero creá tu libro en el Hangar.</p>
         )}

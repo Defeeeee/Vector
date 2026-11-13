@@ -210,6 +210,8 @@ export async function guardarDorso(datos: {
   selloIds?: string[];
   /** Los textos con la firma que los avala (migración 050): `foto:<id>`, `sello:<id>` o nada. */
   textos?: { texto: string; firma: string | null }[];
+  /** Si suma las firmas de los vuelos de la hoja (migración 052); `null` = lo de siempre. */
+  firmasDeLosVuelos?: boolean | null;
 }) {
   if (datos.aclaracion.trim().length > MAX_ACLARACION_DORSO) {
     return { error: `La aclaración puede tener hasta ${MAX_ACLARACION_DORSO} letras. Para un texto más largo (una habilitación, una constancia), agregalo en «Textos del dorso».` };
@@ -230,6 +232,7 @@ export async function guardarDorso(datos: {
         fecha: datos.fecha || null,
         sello_ids: (datos.selloIds ?? []).filter((i) => UUID_RE.test(i)),
         ...(datos.textos ? { textos } : {}),
+        ...(datos.firmasDeLosVuelos !== undefined ? { firmas_de_los_vuelos: datos.firmasDeLosVuelos } : {}),
       }),
     },
     "No se pudo guardar el dorso."

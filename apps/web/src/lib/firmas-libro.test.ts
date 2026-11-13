@@ -11,6 +11,9 @@ import {
   dorsosPorHoja,
   fechaDelDorso,
   firmaDelRenglon,
+  firmasDeLosRenglones,
+  sumaFirmasDeLosVuelos,
+  aclaracionDePersona,
   firmaParaVuelo,
   nombreDeSello,
   normalizarNombre,
@@ -397,5 +400,77 @@ describe("certificanteDelFormulario", () => {
   });
   it("un id raro no se manda", () => {
     expect(certificanteDelFormulario("../x", "si")).toEqual({});
+  });
+});
+
+describe("las firmas de los vuelos en el dorso (migración 052)", () => {
+  const conSellos = (id: string, nombre: string, sellos: { id: string; autoridad_id?: number | null }[], automatica = true): FirmaCertificante => ({
+    ...f(id, nombre),
+    automatica,
+    sellos: sellos.map((x, i) => ({ id: x.id, etiqueta: x.id, autoridad_id: x.autoridad_id ?? null, png: "x", orden: i })),
+  });
+  const r = (c: Partial<{ autoridadId: number | null; nombre: string; certificanteId: string | null; firma: "si" | "no" | null; selloId: string | null }>) => ({
+    certificante: { autoridadId: null, nombre: "", ...c },
+  });
+  const macedo = conSellos("P1", "MACEDO", [{ id: "S-JEFE", autoridad_id: 6 }, { id: "S-IV", autoridad_id: 5 }]);
+  const perez = { ...f("P2", "PEREZ"), licencia: "INA 12345" };
+  const unico = conSellos("P3", "GOMEZ", [{ id: "S-G", autoridad_id: 6 }]);
+
+  it("el sello del vuelo; si no, el de su cargo; si no, su único sello; si no, su firma con el nombre", () => {
+    expect(firmasDeLosRenglones([r({ certificanteId: "P1", selloId: "S-JEFE" })], [macedo])).toEqual([{ firma: "sello:S-JEFE", personaId: "P1" }]);
+    expect(firmasDeLosRenglones([r({ certificanteId: "P1", autoridadId: 5 })], [macedo])).toEqual([{ firma: "sello:S-IV", personaId: "P1" }]);
+    expect(firmasDeLosRenglones([r({ certificanteId: "P3", autoridadId: 5 })], [unico])).toEqual([{ firma: "sello:S-G", personaId: "P3" }]);
+    // Dos sellos y ninguno de su cargo: no se elige uno "parecido", va su firma.
+    expect(firmasDeLosRenglones([r({ certificanteId: "P1", autoridadId: 9 })], [macedo])).toEqual([{ firma: "persona:P1", personaId: "P1" }]);
+    expect(firmasDeLosRenglones([r({ certificanteId: "P2" })], [perez])).toEqual([{ firma: "persona:P2", personaId: "P2" }]);
+  });
+
+  it("una vez por persona, en el orden de los renglones; también la que coincide por nombre", () => {
+    const renglones = [r({ nombre: "PEREZ" }), r({ certificanteId: "P1", selloId: "S-IV" }), r({ certificanteId: "P1", selloId: "S-JEFE" }), r({})];
+    expect(firmasDeLosRenglones(renglones, [macedo, perez])).toEqual([
+      { firma: "persona:P2", personaId: "P2" },
+      { firma: "sello:S-IV", personaId: "P1" },
+    ]);
+  });
+
+  it("como la celda: «Firma: no» no suma, y una persona apagada sólo con «Firma: sí»", () => {
+    expect(firmasDeLosRenglones([r({ certificanteId: "P1", firma: "no" })], [macedo])).toEqual([]);
+    const apagada = conSellos("P4", "LOPEZ", [], false);
+    expect(firmasDeLosRenglones([r({ certificanteId: "P4" })], [apagada])).toEqual([]);
+    expect(firmasDeLosRenglones([r({ certificanteId: "P4", firma: "si" })], [apagada])).toEqual([{ firma: "persona:P4", personaId: "P4" }]);
+  });
+
+  it("suma sola salvo que la hoja tenga fotos, y lo elegido manda", () => {
+    expect(sumaFirmasDeLosVuelos(null)).toBe(true);
+    expect(sumaFirmasDeLosVuelos({ fotos: [] })).toBe(true);
+    expect(sumaFirmasDeLosVuelos({ fotos: [{ id: "f", png: "" }] })).toBe(false);
+    expect(sumaFirmasDeLosVuelos({ fotos: [{ id: "f", png: "" }], firmas_de_los_vuelos: true })).toBe(true);
+    expect(sumaFirmasDeLosVuelos({ firmas_de_los_vuelos: false })).toBe(false);
+  });
+
+  it("en el dorso van después de lo elegido, sin repetir a quien ya está por un sello suyo", () => {
+    const personaDeSello = new Map([["S-JEFE", "P1"], ["S-IV", "P1"]]);
+    const auto = [{ firma: "sello:S-IV", personaId: "P1" }, { firma: "persona:P2", personaId: "P2" }];
+    const b = bloquesDelDorso({ sello_ids: ["S-JEFE"] }, new Set(["S-JEFE", "S-IV"]), 12, auto, personaDeSello);
+    expect(b.map((x) => x.firma)).toEqual(["sello:S-JEFE", "persona:P2"]);
+    // Sin nada elegido, van las dos; un sello sin imagen no se suma.
+    expect(bloquesDelDorso({}, new Set(["S-IV"]), 12, auto, personaDeSello).map((x) => x.firma)).toEqual(["sello:S-IV", "persona:P2"]);
+    expect(bloquesDelDorso({}, new Set(), 12, auto, personaDeSello).map((x) => x.firma)).toEqual(["persona:P2"]);
+  });
+
+  it("la aclaración de quien no tiene sello: el nombre y la licencia", () => {
+    expect(aclaracionDePersona(perez)).toBe("PEREZ\nINA 12345");
+    expect(aclaracionDePersona(f("P", "SOLO"))).toBe("SOLO");
+  });
+});
+
+describe("acomodarDorso: la aclaración debajo de la firma", () => {
+  const pagina = { ancho: 1000, alto: 470, margen: 14 };
+  const medir = (texto: string) => texto.split("\n");
+  it("los renglones del pie van debajo de la imagen, y el bloque es más alto", () => {
+    const [con] = acomodarDorso([{ imagen: { ancho: 800, alto: 300 }, pie: "PEREZ\nINA 12345" }], pagina, medir);
+    expect(con.renglones.map((x) => x.texto)).toEqual(["PEREZ", "INA 12345"]);
+    for (const x of con.renglones) expect(x.y).toBeLessThan(con.imagen!.y);
+    expect(con.renglones[1].y).toBeLessThan(con.renglones[0].y);
   });
 });

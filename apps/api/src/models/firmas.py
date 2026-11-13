@@ -317,6 +317,9 @@ class DorsoHojaIn(BaseModel):
     sello_ids: Optional[List[UUID]] = Field(default=None, max_length=MAX_SELLOS_POR_DORSO)
     #: Los textos del dorso con su firma (migración 050). Sin el campo (web vieja), no se tocan.
     textos: Optional[List[DorsoTexto]] = Field(default=None, max_length=MAX_TEXTOS_POR_DORSO)
+    #: Si suma las firmas de los vuelos de la hoja (migración 052). `None` = lo de siempre
+    #: (sí, salvo que la hoja tenga fotos). Sin el campo (web vieja), no se toca.
+    firmas_de_los_vuelos: Optional[bool] = None
 
     @field_validator("aclaracion")
     @classmethod
@@ -357,6 +360,7 @@ class DorsoHoja(BaseModel):
     fecha: Optional[str] = None
     sello_ids: List[UUID] = Field(default_factory=list)
     textos: List[DorsoTexto] = Field(default_factory=list)
+    firmas_de_los_vuelos: Optional[bool] = None
     fotos: List[DorsoFoto] = Field(default_factory=list)
 
 

@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.37.0",
+    fecha: "2026-11-13",
+    titulo: "El dorso se firma solo",
+    novedades: [
+      {
+        icono: "libro",
+        titulo: "Las firmas de tus vuelos, solas en el dorso",
+        texto: "El dorso de cada hoja suma solo a quien certificó sus vuelos: su firma con sello para ese cargo o, si no tiene, su firma con el nombre abajo. Al cargar un vuelo o ponerle la autoridad, aparece sin hacer nada. Una hoja con fotos del dorso real no las suma, salvo que lo prendas.",
+        href: "/dashboard/history/firmas",
+        cta: "Ver los dorsos",
+      },
+    ],
+  },
+  {
     version: "3.36.0",
     fecha: "2026-11-13",
     titulo: "Las firmas, ordenadas en tu Bitácora",

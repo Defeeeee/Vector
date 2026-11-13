@@ -438,7 +438,8 @@ function rutaFirmas(req, res, ruta, url, json) {
     // Como Litestar: un campo inválido es un 400 con `extra` (el texto de la 3.33 que falló: aclaración de 163).
     if ((json.aclaracion ?? "").length > 160) return dar(400, { status_code: 400, detail: "Validation failed for PUT /api/firmas/dorsos", extra: [{ message: "String should have at most 160 characters", key: "aclaracion", source: "body" }] });
     if ((json.textos ?? []).some((t) => !t.texto || t.texto.length > 600) || (json.textos ?? []).length > 12) return dar(400, { status_code: 400, detail: "Validation failed for PUT /api/firmas/dorsos", extra: [{ message: "invalid", key: "textos", source: "body" }] });
-    if (!json.aclaracion && !json.fecha && !(json.sello_ids ?? []).length && !(json.textos ?? []).length && !hayFotos) return dar(400, { detail: "No hay nada para guardar en el dorso." });
+    const eligio = json.firmas_de_los_vuelos === true || json.firmas_de_los_vuelos === false;
+    if (!json.aclaracion && !json.fecha && !(json.sello_ids ?? []).length && !(json.textos ?? []).length && !hayFotos && !eligio) return dar(400, { detail: "No hay nada para guardar en el dorso." });
     if ((json.sello_ids ?? []).some((id) => !sellosFalsos.has(id))) return dar(404, { detail: "Alguno de esos sellos no existe." });
     for (const t of json.textos ?? []) {
       const [tipo, id] = (t.firma ?? "").split(":");
@@ -448,6 +449,8 @@ function rutaFirmas(req, res, ruta, url, json) {
     const d = dorsoDe(json.logbook_id, json.hoja);
     Object.assign(d, { aclaracion: json.aclaracion ? json.aclaracion.toUpperCase() : null, fecha: json.fecha ?? null, sello_ids: json.sello_ids ?? [] });
     if (json.textos) d.textos = json.textos.map((t) => ({ texto: t.texto.split(/\s+/).join(" "), firma: t.firma ?? null }));
+    // 052: si la hoja suma las firmas de sus vuelos (sin el campo, no se toca).
+    if ("firmas_de_los_vuelos" in json) d.firmas_de_los_vuelos = json.firmas_de_los_vuelos;
     return dar(200, { ...d, fotos: fotosDe(d) });
   }
   // Constancias del frente (051): la foto del sello real, por vuelo; hasta 2.

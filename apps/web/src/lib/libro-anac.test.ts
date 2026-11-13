@@ -1,10 +1,11 @@
+import type { FirmaCertificante } from "@/lib/firmas-libro";
 import { describe, expect, it } from "vitest";
 import {
   RENGLONES_POR_HOJA,
   apellidoYNombre,
   armarLibro,
   cantidadDeHojas,
-  sellosPorHoja,
+  firmasPorHoja,
   vuelosDeUnLibro,
   claseOficial,
   fechaDeGeneracion,
@@ -381,19 +382,26 @@ describe("el certificante y las hojas del dorso", () => {
     expect(cantidadDeHojas([], [avion()], null)).toBe(1);
   });
 
-  it("los sellos de cada hoja son los distintos de sus vuelos, numeradas como el PDF", () => {
+  it("las firmas del dorso de cada hoja: una por persona, con su sello o su firma, numeradas como el PDF", () => {
+    const persona = (id: string, sellos: { id: string; autoridad_id?: number | null }[] = []) =>
+      ({ id, nombre: id, png: "x", sellos: sellos.map((x) => ({ ...x, etiqueta: x.id, png: "x" })) }) as FirmaCertificante;
+    const firmas = [persona("P1", [{ id: "S-JEFE", autoridad_id: 6 }, { id: "S-IV", autoridad_id: 5 }]), persona("P2")];
     const vs = [
       ...Array.from({ length: RENGLONES_POR_HOJA }, () => vuelo({ certificante_id: "P1", certificante_sello_id: "S-JEFE" })),
-      vuelo({ certificante_id: "P1", certificante_sello_id: "S-IV" }),
-      vuelo({ certificante_id: "P1", certificante_sello_id: "S-JEFE" }),
+      vuelo({ certificante_id: "P1", cad_autoridad_id: 5 }),
+      vuelo({ certificante_id: "P2" }),
       vuelo({}),
     ];
     // Fechas distintas para que el orden sea el de la lista.
     vs.forEach((v, i) => (v.date = `2026-01-${String(i + 1).padStart(2, "0")}`));
-    const porHoja = sellosPorHoja(vs, [avion()], null);
-    expect(porHoja[1]).toEqual(["S-JEFE"]);
-    expect(porHoja[2]).toEqual(["S-IV", "S-JEFE"]);
-    expect(sellosPorHoja([vuelo({})], [avion()], null)).toEqual({});
+    const porHoja = firmasPorHoja(vs, [avion()], null, firmas);
+    expect(porHoja[1]).toEqual([{ firma: "sello:S-JEFE", personaId: "P1" }]);
+    // P1 sin sello en el vuelo: el de su cargo. P2 sin sellos: su firma con el nombre.
+    expect(porHoja[2]).toEqual([
+      { firma: "sello:S-IV", personaId: "P1" },
+      { firma: "persona:P2", personaId: "P2" },
+    ]);
+    expect(firmasPorHoja([vuelo({})], [avion()], null, firmas)).toEqual({});
   });
 
   it("con varios libros, un vuelo sin libro es del principal", () => {
