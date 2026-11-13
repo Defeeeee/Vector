@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/api";
 import { esErrorDeRedirect } from "@/lib/redirect-error";
+import { MAX_ACLARACION_DORSO, MAX_LARGO_TEXTO_DORSO, MAX_TEXTOS_DORSO } from "@/lib/firmas-libro";
 import { revalidarLoQueCambiaUnVuelo } from "@/lib/revalidar-vuelo";
 
 /**
@@ -14,9 +15,28 @@ import { revalidarLoQueCambiaUnVuelo } from "@/lib/revalidar-vuelo";
 const HANGAR = "/dashboard/settings";
 const UUID_RE = /^[0-9a-f-]{36}$/i;
 
+/** Lo que el backend (Litestar) dice de un campo que no pasó la validación, en palabras del piloto. */
+const CAMPOS: Record<string, string> = {
+  aclaracion: "La aclaración puede tener hasta 160 letras. Para un texto más largo (una habilitación, una constancia), agregalo en «Textos del dorso».",
+  textos: "Cada texto del dorso puede tener hasta 600 letras, y van hasta 12 por hoja.",
+  nombre: "El nombre es demasiado largo.",
+  etiqueta: "El nombre del sello es demasiado largo (hasta 60 letras).",
+  nombre_cad: "El nombre para el CAD es demasiado largo (hasta 160 letras).",
+};
+
 async function detalle(res: Response, porDefecto: string): Promise<string> {
   const err = await res.json().catch(() => ({}));
-  return typeof err?.detail === "string" ? err.detail : porDefecto;
+  if (typeof err?.detail !== "string") return porDefecto;
+  // "Validation failed for PUT /api/…" no le dice nada al piloto: se traduce el campo que falló.
+  if (err.detail.startsWith("Validation failed")) {
+    const extra = Array.isArray(err.extra) ? err.extra : [];
+    for (const e of extra) {
+      const clave = String(e?.key ?? "").split(/[.[]/)[0];
+      if (CAMPOS[clave]) return CAMPOS[clave];
+    }
+    return `${porDefecto} Algún dato no es válido: revisá lo que escribiste.`;
+  }
+  return err.detail;
 }
 
 async function enviar(ruta: string, init: RequestInit, porDefecto: string): Promise<{ error: string } | { ok: true }> {
@@ -188,14 +208,24 @@ export async function desasociarCertificante(vueloIds: string[]) {
   return { ok: true as const };
 }
 
-/** Aclaración, fecha y sellos del dorso. **Las fotos van aparte** (`agregarFotoDorso`), una por pedido. */
+/** Aclaración, fecha, sellos y textos del dorso. **Las fotos van aparte** (`agregarFotoDorso`), una por pedido. */
 export async function guardarDorso(datos: {
   logbookId: string;
   hoja: number;
   aclaracion: string;
   fecha: string;
   selloIds?: string[];
+  /** Los textos con la firma que los avala (migración 050): `foto:<id>`, `sello:<id>` o nada. */
+  textos?: { texto: string; firma: string | null }[];
 }) {
+  if (datos.aclaracion.trim().length > MAX_ACLARACION_DORSO) {
+    return { error: `La aclaración puede tener hasta ${MAX_ACLARACION_DORSO} letras. Para un texto más largo (una habilitación, una constancia), agregalo en «Textos del dorso».` };
+  }
+  const textos = (datos.textos ?? [])
+    .map((t) => ({ texto: t.texto.trim(), firma: t.firma && /^(foto|sello):[0-9a-f-]{36}$/i.test(t.firma) ? t.firma : null }))
+    .filter((t) => t.texto);
+  if (textos.some((t) => t.texto.length > MAX_LARGO_TEXTO_DORSO)) return { error: `Cada texto del dorso puede tener hasta ${MAX_LARGO_TEXTO_DORSO} letras.` };
+  if (textos.length > MAX_TEXTOS_DORSO) return { error: `Van hasta ${MAX_TEXTOS_DORSO} textos por dorso.` };
   return enviar(
     "/firmas/dorsos",
     {
@@ -206,6 +236,7 @@ export async function guardarDorso(datos: {
         aclaracion: datos.aclaracion.trim() || null,
         fecha: datos.fecha || null,
         sello_ids: (datos.selloIds ?? []).filter((i) => UUID_RE.test(i)),
+        ...(datos.textos ? { textos } : {}),
       }),
     },
     "No se pudo guardar el dorso."

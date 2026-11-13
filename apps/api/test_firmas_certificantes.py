@@ -21,6 +21,7 @@ from src.models.firmas import (
     AsignarVuelos,
     DorsoFotoIn,
     DorsoHojaIn,
+    DorsoTexto,
     FirmaCertificanteEdicion,
     FirmaCertificanteIn,
     SelloEdicion,
@@ -86,6 +87,18 @@ check("un nombre vacío en la edición no pasa", falla(lambda: FirmaCertificante
 check("firma 'quizás' no existe", falla(lambda: AsignarVuelos(vuelo_ids=[uuid4()], firma="quizas")))
 check("hay que elegir al menos un vuelo", falla(lambda: AsignarVuelos(vuelo_ids=[])))
 check("el dorso toma los sellos", len(DorsoHojaIn(logbook_id=lb, hoja=1, sello_ids=[uuid4(), uuid4()]).sello_ids) == 2)
+# 050: textos del dorso con su firma.
+LARGO = "EN EL DÍA DE LA FECHA 12/03/26 EL TITULAR DEL PRESENTE LIBRO, FEDERICO DIAZ NEMETH TITULAR DE LA LICENCIA PPA 48225513 QUEDA HABILITAD0 PARA TRANSPORTAR PASAJEROS"
+check("un texto de 163 letras entra (el que falló como aclaración)", DorsoHojaIn(logbook_id=lb, hoja=4, textos=[{"texto": LARGO}]).textos[0].texto == LARGO)
+check("un texto respeta lo escrito y junta los espacios", DorsoTexto(texto="  Habilitado   para  pasajeros ").texto == "Habilitado para pasajeros")
+check("un texto de más de 600 letras no pasa", falla(lambda: DorsoTexto(texto="x" * 601)))
+check("un texto vacío no pasa", falla(lambda: DorsoTexto(texto="   ")))
+u = uuid4()
+check("la firma de un texto es foto:<id> o sello:<id>", DorsoTexto(texto="x", firma=f"sello:{u}").firma == f"sello:{u}" and DorsoTexto(texto="x", firma=f"foto:{u}").firma == f"foto:{u}")
+check("sin firma, el texto va solo", DorsoTexto(texto="x", firma="").firma is None)
+check("otra cosa como firma no pasa", falla(lambda: DorsoTexto(texto="x", firma=f"persona:{u}")) and falla(lambda: DorsoTexto(texto="x", firma="foto:123")))
+check("más de 12 textos en un dorso no pasan", falla(lambda: DorsoHojaIn(logbook_id=lb, hoja=1, textos=[{"texto": "x"}] * 13)))
+check("la aclaración sigue con su tope de 160", falla(lambda: DorsoHojaIn(logbook_id=lb, hoja=1, aclaracion=LARGO)))
 check("más de 12 sellos en un dorso no pasan", falla(lambda: DorsoHojaIn(logbook_id=lb, hoja=1, sello_ids=[uuid4() for _ in range(13)])))
 
 # --------------------------------------------------------------- 049: modelos
@@ -161,7 +174,8 @@ class Consulta:
         self.modo, self.valores = "update", valores
         return self
 
-    def upsert(self, *_a, **_k):
+    def upsert(self, valores, on_conflict="", **_k):
+        self.modo, self.valores, self.conflicto = "upsert", valores, [c for c in on_conflict.split(",") if c]
         return self
 
     def insert(self, valores):
@@ -192,6 +206,14 @@ class Consulta:
         return self
 
     def execute(self):
+        if self.modo == "upsert":
+            igual = next((f for f in self.filas if self.conflicto and all(str(f.get(c)) == str(self.valores.get(c)) for c in self.conflicto)), None)
+            if igual is None:
+                igual = {"id": str(uuid4()), "textos": [], **self.valores}
+                self.filas.append(igual)
+            else:
+                igual.update(self.valores)
+            return SimpleNamespace(data=[dict(igual)], count=1)
         if self.modo == "insert":
             fila = {"id": str(uuid4()), **self.valores}
             self.filas.append(fila)
@@ -416,6 +438,25 @@ dorso2 = next(d for d in dorsos if d.hoja == 2)
 base.tablas["libro_hojas_dorso"][0]["id"] = str(dorso2.id)
 corre(borrar_dorso(ctl, pedido(YO), base, dorso2.id))
 check("quitar el dorso quita también todas sus fotos", not [f for f in base.tablas["libro_hojas_dorso_fotos"] if f["hoja"] == 2])
+
+# 050: guardar textos con su firma. La hoja 3 tiene una foto (la de "otra hoja tiene su propio tope").
+guardar = FirmasController.guardar_dorso.fn
+foto3 = next(f for f in base.tablas["libro_hojas_dorso_fotos"] if f["hoja"] == 3)
+r = corre(guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=3, textos=[
+    {"texto": LARGO, "firma": f"foto:{foto3['id']}"},
+    {"texto": "Readaptación", "firma": f"sello:{S_JEFE}"},
+    {"texto": "Sin firma"},
+])))
+check("guarda los textos con su firma, en orden", [t.firma for t in r.textos] == [f"foto:{foto3['id']}", f"sello:{S_JEFE}", None])
+check("un dorso sólo con textos se puede guardar", corre(guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=7, textos=[{"texto": "x"}]))).hoja == 7)
+check("un texto no puede apuntar a una foto de otra hoja", lanza(NotFoundException, guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=5, textos=[{"texto": "x", "firma": f"foto:{foto3['id']}"}]))))
+check("un texto no puede apuntar al sello de otro", lanza(NotFoundException, guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=3, textos=[{"texto": "x", "firma": f"sello:{S_AJENO}"}]))))
+corre(guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=3, aclaracion="Macedo")))
+fila3 = next(d for d in base.tablas["libro_hojas_dorso"] if d["hoja"] == 3)
+check("una web vieja (sin el campo textos) no los borra", len(fila3["textos"]) == 3 and fila3["aclaracion"] == "MACEDO")
+corre(guardar(ctl, pedido(YO), base, DorsoHojaIn(logbook_id=uid(LIBRO), hoja=3, aclaracion="Macedo", textos=[])))
+check("con la lista vacía, se quitan", fila3["textos"] == [])
+check("la lista trae los textos", any(d.hoja == 7 and d.textos[0].texto == "x" for d in corre(listar_dorsos(ctl, pedido(YO), base, uid(LIBRO)))))
 
 if not all(resultados):
     print(f"\n{resultados.count(False)} fallaron")

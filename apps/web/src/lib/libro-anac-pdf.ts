@@ -1,5 +1,5 @@
 import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, degrees, rgb } from "pdf-lib";
-import { acomodarSellos, ajustarEnCaja, fechaDelDorso } from "./firmas-libro";
+import { acomodarDorso, ajustarEnCaja, fechaDelDorso } from "./firmas-libro";
 import {
   COLUMNAS_LIBRO,
   RENGLONES_POR_HOJA,
@@ -275,7 +275,7 @@ export interface DorsoParaPdf {
   /**
    * Las fotos del dorso (varias, migración 049) y, después, los sellos elegidos: todos van
    * juntos en la misma grilla, hasta `MAX_IMAGENES_DORSO`, **a tamaño real** (cada bloque en
-   * una caja de 70 × 35 mm, `acomodarSellos`).
+   * una caja de 70 × 35 mm, `acomodarDorso`).
    */
   fotos?: Uint8Array[];
   aclaracion?: string | null;
@@ -283,7 +283,15 @@ export interface DorsoParaPdf {
   fecha?: string | null;
   /** Las firmas con sello elegidas (de cualquier persona), después de las fotos. */
   sellos?: Uint8Array[];
+  /**
+   * Los bloques en orden (migración 050): cada firma con el texto que avala arriba, o un texto
+   * solo. Si viene, manda sobre `fotos` y `sellos` (`bloquesDelDorso` arma la lista).
+   */
+  bloques?: { png?: Uint8Array | null; texto?: string | null }[];
 }
+
+/** Un bloque del dorso ya embebido: la imagen (si la hay y se pudo leer) y su texto. */
+type BloqueEmbebido = { imagen: PDFImage | null; texto: string | null };
 
 export interface CertificacionParaPdf {
   /** Para no embeber dos veces la misma imagen. */
@@ -522,18 +530,26 @@ export async function pdfDelLibro(
       }
     }
   }
-  const dorsoImagenes = new Map<number, PDFImage[]>();
+  const dorsoBloques = new Map<number, BloqueEmbebido[]>();
   if (dorsos) {
     for (const [hoja, dorso] of dorsos) {
-      const listas: PDFImage[] = [];
-      for (const png of [...(dorso.fotos ?? []), ...(dorso.sellos ?? [])].slice(0, MAX_IMAGENES_DORSO)) {
-        try {
-          listas.push(await doc.embedPng(png));
-        } catch {
-          /* una imagen ilegible se saltea */
+      const crudos = dorso.bloques ?? [...(dorso.fotos ?? []), ...(dorso.sellos ?? [])].map((png) => ({ png, texto: null }));
+      const listos: BloqueEmbebido[] = [];
+      let imagenes = 0;
+      for (const b of crudos) {
+        let imagen: PDFImage | null = null;
+        if (b.png && imagenes < MAX_IMAGENES_DORSO) {
+          try {
+            imagen = await doc.embedPng(b.png);
+            imagenes++;
+          } catch {
+            /* una imagen ilegible se saltea; su texto queda */
+          }
         }
+        const texto = b.texto?.trim() || null;
+        if (imagen || texto) listos.push({ imagen, texto });
       }
-      if (listas.length) dorsoImagenes.set(hoja, listas);
+      if (listos.length) dorsoBloques.set(hoja, listos);
     }
   }
 
@@ -614,7 +630,7 @@ export async function pdfDelLibro(
       { tamano: 4.6, color: GRIS }
     );
 
-    if (dorsos) dorsoDeLaHoja(doc, normal, negrita, i + 1, paginas.length, dorsos.get(i + 1) ?? null, dorsoImagenes.get(i + 1) ?? []);
+    if (dorsos) dorsoDeLaHoja(doc, normal, negrita, i + 1, paginas.length, dorsos.get(i + 1) ?? null, dorsoBloques.get(i + 1) ?? []);
   });
 
   return doc.save();
@@ -625,9 +641,9 @@ export async function pdfDelLibro(
  *
  * - **Sin nada cargado, en blanco**: así la hoja siguiente no cae en el dorso de otra.
  * - **Las imágenes son las firmas con el sello o la aclaración** tal como quedan en el papel
- *   (no son la de la celda de certificaciones): todas las fotos de la hoja y los sellos elegidos,
- *   **a tamaño real** (7 × 3,5 cm cada una, nunca estiradas al espacio libre), en grilla desde
- *   abajo a la derecha. Si no entran todas así, se achican lo mínimo (`acomodarSellos`).
+ *   (no son la de la celda de certificaciones), **a tamaño real** (7 × 3,5 cm como mucho), en
+ *   grilla **desde arriba a la izquierda** (`acomodarDorso`). El texto que avala cada firma (una
+ *   habilitación, una constancia; migración 050) va arriba de ella.
  * - **La línea "FIRMA Y ACLARACIÓN" sólo va si el piloto cargó una aclaración en texto**: va abajo
  *   a la derecha y la grilla queda arriba de ella, sin taparla. La fecha va debajo de la línea o,
  *   sin aclaración, arriba a la derecha.
@@ -639,24 +655,35 @@ function dorsoDeLaHoja(
   numero: number,
   total: number,
   dorso: DorsoParaPdf | null,
-  imagenes: PDFImage[] = []
+  bloques: BloqueEmbebido[] = []
 ) {
   const page = doc.addPage([ANCHO_HOJA, ALTO_HOJA]);
   const aclaracion = seguro(dorso?.aclaracion?.trim());
   const fecha = fechaDelDorso(dorso?.fecha);
-  if (!imagenes.length && !aclaracion && !fecha) return;
+  if (!bloques.length && !aclaracion && !fecha) return;
   const d = new Dibujo(page, normal, negrita);
 
   const ancho = 440;
   const xBloque = ANCHO_HOJA - MARGEN - ancho;
   // Con aclaración: la línea a 62 pt del borde de abajo, el texto, el rótulo y la fecha debajo.
   const reservaAbajo = aclaracion ? 68 : 10;
-  if (imagenes.length) {
-    const cajas = acomodarSellos(
-      imagenes.map((s) => ({ ancho: s.width, alto: s.height })),
-      { ancho: ANCHO_HOJA, alto: ALTO_HOJA, margen: MARGEN, reservaAbajo }
+  if (bloques.length) {
+    // Un texto puede traer varios párrafos (varios textos para la misma firma): cada uno en su renglón.
+    const medir = (texto: string, w: number, tamano: number) =>
+      texto.split("\n").flatMap((p) => {
+        const limpio = seguro(p);
+        return limpio ? renglonesDe(normal, limpio, w, tamano) : [];
+      });
+    const ubicados = acomodarDorso(
+      bloques.map((b) => ({ imagen: b.imagen ? { ancho: b.imagen.width, alto: b.imagen.height } : null, texto: b.texto })),
+      { ancho: ANCHO_HOJA, alto: ALTO_HOJA, margen: MARGEN, reservaAbajo },
+      medir
     );
-    imagenes.forEach((s, i) => page.drawImage(s, { x: cajas[i].x, y: cajas[i].y, width: cajas[i].w, height: cajas[i].h }));
+    bloques.forEach((b, i) => {
+      const u = ubicados[i];
+      for (const r of u.renglones) page.drawText(r.texto, { x: r.x, y: r.y, size: u.tamano, font: normal, color: NEGRO });
+      if (b.imagen && u.imagen) page.drawImage(b.imagen, { x: u.imagen.x, y: u.imagen.y, width: u.imagen.w, height: u.imagen.h });
+    });
   }
 
   if (aclaracion) {
@@ -668,7 +695,7 @@ function dorsoDeLaHoja(
     d.texto("FIRMA Y ACLARACIÓN", xBloque + ancho / 2 - 38, yLinea + 20, { tamano: 5.6, color: GRIS });
   }
   if (fecha) {
-    // Con aclaración, debajo de la línea; si no, arriba a la derecha (abajo está la grilla).
+    // Con aclaración, debajo de la línea; si no, arriba a la derecha (en la franja que la grilla deja libre).
     if (aclaracion) d.texto(fecha, xBloque, ALTO_HOJA - 22, { tamano: 7 });
     else d.texto(fecha, ANCHO_HOJA - MARGEN - 48, MARGEN + 8, { tamano: 7 });
   }

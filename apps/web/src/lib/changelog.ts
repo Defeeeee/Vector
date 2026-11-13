@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.34.0",
+    fecha: "2026-11-13",
+    titulo: "Textos con su firma en el dorso",
+    novedades: [
+      {
+        icono: "camara",
+        titulo: "Habilitaciones y constancias en el dorso",
+        texto: "Cada hoja acepta textos largos, como «queda habilitado para transportar pasajeros», y cada uno se asocia a la firma o el sello que lo avala. En el PDF el texto va arriba de esa firma, y las firmas arrancan arriba a la izquierda, como en el papel.",
+        href: "/dashboard/settings",
+        cta: "Ir al Hangar",
+      },
+    ],
+  },
+  {
     version: "3.33.0",
     fecha: "2026-11-13",
     titulo: "Un dorso como el del papel",

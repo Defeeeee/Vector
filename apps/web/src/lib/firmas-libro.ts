@@ -67,6 +67,21 @@ export interface DorsoFoto {
   orden?: number;
 }
 
+/**
+ * Un texto del dorso (migración 050): una constancia o habilitación ("QUEDA HABILITADO PARA
+ * TRANSPORTAR PASAJEROS") y la firma que lo avala, `foto:<id>` o `sello:<id>`. Sin firma, va solo.
+ */
+export interface DorsoTexto {
+  texto: string;
+  firma?: string | null;
+}
+
+/** Topes de un texto del dorso: los mismos del backend (`DorsoTexto`). */
+export const MAX_TEXTOS_DORSO = 12;
+export const MAX_LARGO_TEXTO_DORSO = 600;
+/** El tope de la aclaración (`DorsoHojaIn.aclaracion`). */
+export const MAX_ACLARACION_DORSO = 160;
+
 export interface DorsoHoja {
   id: string;
   logbook_id: string;
@@ -75,6 +90,8 @@ export interface DorsoHoja {
   fecha?: string | null;
   /** Los sellos (de cualquier persona) que van en este dorso, junto a sus fotos. */
   sello_ids?: string[];
+  /** Los textos con su firma (migración 050). */
+  textos?: DorsoTexto[];
   fotos?: DorsoFoto[];
 }
 
@@ -247,47 +264,124 @@ export function vuelosSinCertificante<T extends { certificante_id?: string | nul
 export const MM = 72 / 25.4;
 export const CAJA_SELLO = { ancho: 70 * MM, alto: 35 * MM };
 
+/** La letra de los textos del dorso, a escala 1. */
+export const TEXTO_DORSO = { tamano: 7.5, interlineado: 1.3, minimo: 4.5 };
+
+/** Un bloque del dorso: una firma (foto o sello), con o sin texto arriba, o un texto solo. */
+export interface BloqueDorso {
+  imagen?: { ancho: number; alto: number } | null;
+  texto?: string | null;
+}
+
+export interface BloqueDorsoUbicado {
+  /** La imagen, en coordenadas de pdf-lib (origen abajo a la izquierda). */
+  imagen: { x: number; y: number; w: number; h: number } | null;
+  /** Los renglones del texto, cada uno con su línea de base. */
+  renglones: { texto: string; x: number; y: number }[];
+  tamano: number;
+}
+
 /**
- * Las imágenes de un dorso (fotos y sellos), acomodadas **a tamaño real** en grilla desde abajo a
- * la derecha hacia la izquierda y hacia arriba, sin superponerse. Las coordenadas son las de
- * pdf-lib (origen abajo a la izquierda): cada caja es `{ x, y, w, h }` de la imagen ya ajustada,
- * en el orden recibido (la primera, abajo a la derecha).
+ * Los bloques de un dorso (firmas con sello y textos) **desde arriba a la izquierda**, de
+ * izquierda a derecha y después hacia abajo, como se firma el papel (Federico, 2026-11-13: "poné
+ * las firmas del dorso iniciando por el borde superior izquierdo"). Coordenadas de pdf-lib.
  *
- * Cada celda mide `CAJA_SELLO` (70 × 35 mm). Se elige la cantidad de columnas que deja las
- * celdas más grandes (a igualdad, más columnas: la grilla queda más baja); si ni así entran
- * todas en el espacio útil, las celdas se achican **lo mínimo** (nunca se agrandan). Con
- * `reservaAbajo` se deja libre una franja abajo (para la línea de aclaración).
+ * - Cada columna mide lo que una firma con sello en el papel, `CAJA_SELLO` (70 mm), y cada imagen
+ *   entra **a tamaño real** en una caja de 70 × 35 mm (`ajustarEnCaja`, sin agrandar).
+ * - El texto de un bloque va **arriba** de su firma, partido en renglones del ancho de la columna
+ *   (`medir`, que sabe del ancho de la letra), y la firma lo avala debajo.
+ * - Cada fila es tan alta como su bloque más alto; las imágenes arrancan arriba de su celda.
+ * - Si no entra todo, se achica todo junto (cajas y letra) lo mínimo, en pasos de 5 %.
+ * - `reservaArriba` y `reservaAbajo` dejan libres la fecha y la línea de aclaración.
  */
-export function acomodarSellos(
-  imagenes: { ancho: number; alto: number }[],
+export function acomodarDorso(
+  bloques: BloqueDorso[],
   pagina: { ancho: number; alto: number; margen: number; reservaAbajo?: number; reservaArriba?: number },
-  opciones: { celdaW?: number; celdaH?: number; hueco?: number } = {}
-): { x: number; y: number; w: number; h: number }[] {
-  const n = imagenes.length;
-  if (!n) return [];
+  medir: (texto: string, ancho: number, tamano: number) => string[],
+  opciones: { hueco?: number } = {}
+): BloqueDorsoUbicado[] {
+  if (!bloques.length) return [];
   const hueco = opciones.hueco ?? 10;
-  const baseW = opciones.celdaW ?? CAJA_SELLO.ancho;
-  const baseH = opciones.celdaH ?? CAJA_SELLO.alto;
   const utilW = pagina.ancho - 2 * pagina.margen;
-  const base = pagina.margen + (pagina.reservaAbajo ?? 10); // el rótulo de la hoja va abajo a la izquierda
-  const utilH = pagina.alto - base - pagina.margen - (pagina.reservaArriba ?? 14); // y la fecha arriba
-  let mejor = { columnas: 1, escala: 0 };
-  for (let c = 1; c <= n; c++) {
-    const f = Math.ceil(n / c);
-    const escala = Math.min(1, (utilW - hueco * (c - 1)) / c / baseW, (utilH - hueco * (f - 1)) / f / baseH);
-    if (escala >= mejor.escala - 1e-9) mejor = { columnas: c, escala };
+  const arriba = pagina.alto - pagina.margen - (pagina.reservaArriba ?? 14);
+  const abajo = pagina.margen + (pagina.reservaAbajo ?? 10);
+  const utilH = arriba - abajo;
+
+  const armar = (escala: number) => {
+    const celdaW = Math.min(utilW, CAJA_SELLO.ancho * escala);
+    const celdaH = CAJA_SELLO.alto * escala;
+    const tamano = Math.max(TEXTO_DORSO.minimo, TEXTO_DORSO.tamano * escala);
+    const paso = tamano * TEXTO_DORSO.interlineado;
+    const columnas = Math.max(1, Math.min(bloques.length, Math.floor((utilW + hueco) / (celdaW + hueco))));
+    const medidos = bloques.map((b) => {
+      const lineas = b.texto?.trim() ? medir(b.texto.trim(), celdaW, tamano) : [];
+      const img = b.imagen ? ajustarEnCaja(b.imagen.ancho, b.imagen.alto, celdaW, celdaH) : null;
+      const altoTexto = lineas.length * paso;
+      const separacion = lineas.length && img ? 3 : 0;
+      return { lineas, img, altoTexto, separacion, alto: altoTexto + separacion + (img?.h ?? 0) };
+    });
+    const filas: number[] = [];
+    medidos.forEach((m, i) => {
+      const f = Math.floor(i / columnas);
+      filas[f] = Math.max(filas[f] ?? 0, m.alto);
+    });
+    const total = filas.reduce((a, h) => a + h, 0) + hueco * (filas.length - 1);
+    return { celdaW, tamano, paso, columnas, medidos, filas, total };
+  };
+
+  let r = armar(1);
+  for (let escala = 0.95; r.total > utilH && escala >= 0.3 - 1e-9; escala -= 0.05) r = armar(escala);
+
+  const topeDeFila: number[] = [];
+  let y = arriba;
+  for (const h of r.filas) {
+    topeDeFila.push(y);
+    y -= h + hueco;
   }
-  const celdaW = baseW * mejor.escala;
-  const celdaH = baseH * mejor.escala;
-  return imagenes.map((img, i) => {
-    const fila = Math.floor(i / mejor.columnas);
-    const col = i % mejor.columnas;
-    const caja = ajustarEnCaja(img.ancho, img.alto, celdaW, celdaH);
-    const xCelda = pagina.ancho - pagina.margen - (col + 1) * celdaW - col * hueco;
-    const yCelda = base + fila * (celdaH + hueco);
-    // Pegada a la derecha de su celda y apoyada abajo: el borde común queda alineado.
-    return { x: xCelda + (celdaW - caja.w), y: yCelda, w: caja.w, h: caja.h };
+  return r.medidos.map((m, i) => {
+    const fila = Math.floor(i / r.columnas);
+    const col = i % r.columnas;
+    const x = pagina.margen + col * (r.celdaW + hueco);
+    const tope = topeDeFila[fila];
+    // La primera línea de base, a una letra del borde de arriba (la parte que sobresale de la letra).
+    const renglones = m.lineas.map((texto, k) => ({ texto, x, y: tope - r.tamano * 0.85 - k * r.paso }));
+    const imagen = m.img ? { x, y: tope - m.altoTexto - m.separacion - m.img.h, w: m.img.w, h: m.img.h } : null;
+    return { imagen, renglones, tamano: r.tamano };
   });
+}
+
+/**
+ * Qué bloques lleva un dorso y en qué orden: sus fotos, después sus sellos elegidos, cada uno con
+ * los textos que lo nombran como firma (uno abajo del otro, en el orden cargado), y al final los
+ * textos sin firma. **Un texto avalado por un sello que no está entre los elegidos suma ese
+ * sello**: el texto sin su firma no tendría sentido. Una firma que ya no existe (la foto o el
+ * sello se borraron) no pierde el texto: va solo. `sellosQueHay` son los sellos con imagen.
+ */
+export function bloquesDelDorso(
+  d: Pick<DorsoHoja, "fotos" | "sello_ids" | "textos">,
+  sellosQueHay: Set<string>,
+  maxImagenes = 12
+): { firma: string | null; texto: string | null }[] {
+  const firmas: string[] = [];
+  for (const f of [...(d.fotos ?? [])].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))) firmas.push(`foto:${f.id}`);
+  for (const id of d.sello_ids ?? []) if (sellosQueHay.has(id)) firmas.push(`sello:${id}`);
+  for (const t of d.textos ?? []) {
+    const f = t.firma ?? "";
+    if (f.startsWith("sello:") && sellosQueHay.has(f.slice(6)) && !firmas.includes(f)) firmas.push(f);
+  }
+  const usadas = firmas.filter((f, i) => firmas.indexOf(f) === i).slice(0, maxImagenes);
+  const textosDe = new Map<string, string[]>();
+  const sueltos: string[] = [];
+  for (const t of d.textos ?? []) {
+    const texto = t.texto?.trim();
+    if (!texto) continue;
+    if (t.firma && usadas.includes(t.firma)) textosDe.set(t.firma, [...(textosDe.get(t.firma) ?? []), texto]);
+    else sueltos.push(texto);
+  }
+  return [
+    ...usadas.map((firma) => ({ firma, texto: textosDe.get(firma)?.join("\n") ?? null })),
+    ...sueltos.map((texto) => ({ firma: null, texto })),
+  ];
 }
 
 /** El tamaño de una imagen ajustada a una caja, sin deformarla ni agrandarla de más. */
@@ -309,7 +403,7 @@ export function dorsosPorHoja(dorsos: DorsoHoja[], libroId: string | null | unde
   const m = new Map<number, DorsoHoja>();
   for (const d of dorsos) {
     if (libroId && d.logbook_id !== libroId) continue;
-    if (!d.fotos?.length && !d.aclaracion?.trim() && !d.fecha && !d.sello_ids?.length) continue;
+    if (!d.fotos?.length && !d.aclaracion?.trim() && !d.fecha && !d.sello_ids?.length && !d.textos?.length) continue;
     m.set(d.hoja, d);
   }
   return m;

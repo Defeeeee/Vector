@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  acomodarSellos,
+  acomodarDorso,
+  bloquesDelDorso,
   CAJA_SELLO,
   MM,
   ajustarEnCaja,
@@ -109,89 +110,143 @@ describe("contar y listar vuelos", () => {
   });
 });
 
-describe("acomodarSellos: a tamaño real", () => {
+describe("acomodarDorso: a tamaño real, desde arriba a la izquierda", () => {
   // La hoja del libro: 35,5 × 16,5 cm, margen de 0,5 cm.
   const CM = 28.3465;
   const pagina = { ancho: 35.5 * CM, alto: 16.5 * CM, margen: 0.5 * CM };
   type Caja = { x: number; y: number; w: number; h: number };
-  const chocan = (a: Caja, b: Caja) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  const chocan = (a: Caja, b: Caja) => a.x < b.x + b.w - 1e-6 && b.x < a.x + a.w - 1e-6 && a.y < b.y + b.h - 1e-6 && b.y < a.y + a.h - 1e-6;
   const mm = (pt: number) => pt / MM;
-  // Una foto del celular: 1200 × 500 px (más ancha que la caja de 70 × 35 mm).
-  const foto = { ancho: 1200, alto: 500 };
+  // Una medida de mentira: 0,5 × tamaño por letra, partido por palabras.
+  const medir = (texto: string, ancho: number, tamano: number) => {
+    const lineas: string[] = [];
+    let actual = "";
+    for (const p of texto.split(/\s+/)) {
+      const prueba = actual ? `${actual} ${p}` : p;
+      if (prueba.length * tamano * 0.5 <= ancho || !actual) actual = prueba;
+      else (lineas.push(actual), (actual = p));
+    }
+    if (actual) lineas.push(actual);
+    return lineas;
+  };
+  const foto = { imagen: { ancho: 1200, alto: 500 } };
+  const solo = (bloques: Parameters<typeof acomodarDorso>[0], pag = pagina) => acomodarDorso(bloques, pag, medir);
+  // La caja de un bloque entero (texto e imagen), para ver que no se pisen.
+  const cajaDe = (b: ReturnType<typeof acomodarDorso>[number]): Caja => {
+    const ys = [...b.renglones.map((r) => r.y), ...(b.imagen ? [b.imagen.y, b.imagen.y + b.imagen.h] : [])];
+    const tope = b.renglones.length ? b.renglones[0].y + b.tamano : b.imagen!.y + b.imagen!.h;
+    const x = b.imagen?.x ?? b.renglones[0].x;
+    // El ancho: el de la imagen o el del renglón más largo (con la medida de mentira).
+    const w = Math.max(b.imagen?.w ?? 0, ...b.renglones.map((r) => r.texto.length * b.tamano * 0.5));
+    return { x, y: Math.min(...ys) - (b.renglones.length && !b.imagen ? b.tamano * 0.3 : 0), w, h: tope - Math.min(...ys) };
+  };
 
-  it("la caja de un bloque es de 70 × 35 mm", () => {
+  it("la caja de una firma es de 70 × 35 mm", () => {
     expect(mm(CAJA_SELLO.ancho)).toBeCloseTo(70);
     expect(mm(CAJA_SELLO.alto)).toBeCloseTo(35);
   });
-  it("una sola firma va abajo a la derecha y no pasa de 7 × 3,5 cm", () => {
-    const [c] = acomodarSellos([foto], pagina);
-    expect(c.x + c.w).toBeCloseTo(pagina.ancho - pagina.margen);
-    expect(c.y).toBeLessThan(pagina.alto / 4);
-    expect(mm(c.w)).toBeLessThanOrEqual(70 + 1e-6);
-    expect(mm(c.h)).toBeLessThanOrEqual(35 + 1e-6);
-    // Se ajusta a la caja: la proporción (12:5) hace que el ancho llene los 7 cm.
-    expect(mm(c.w)).toBeCloseTo(70);
-    expect(c.w / c.h).toBeCloseTo(foto.ancho / foto.alto);
+  it("una sola firma va arriba a la izquierda y no pasa de 7 × 3,5 cm", () => {
+    const [b] = solo([foto]);
+    expect(b.imagen!.x).toBeCloseTo(pagina.margen);
+    expect(b.imagen!.y + b.imagen!.h).toBeGreaterThan(pagina.alto * 0.8);
+    expect(mm(b.imagen!.w)).toBeCloseTo(70);
+    expect(b.imagen!.w / b.imagen!.h).toBeCloseTo(1200 / 500);
   });
-  it("una imagen alta se ajusta por el alto, sin pasar de 3,5 cm", () => {
-    const [c] = acomodarSellos([{ ancho: 400, alto: 800 }], pagina);
-    expect(mm(c.h)).toBeCloseTo(35);
-    expect(mm(c.w)).toBeCloseTo(17.5);
+  it("una imagen alta se ajusta por el alto, y una chica no se agranda", () => {
+    expect(mm(solo([{ imagen: { ancho: 400, alto: 800 } }])[0].imagen!.h)).toBeCloseTo(35);
+    expect(solo([{ imagen: { ancho: 60, alto: 25 } }])[0].imagen!.w).toBeCloseTo(60);
   });
-  it("una imagen chica no se agranda de más: a lo sumo 1 pt por píxel", () => {
-    const [c] = acomodarSellos([{ ancho: 60, alto: 25 }], pagina);
-    expect(c.w).toBeCloseTo(60);
-    expect(c.h).toBeCloseTo(25);
-    expect(mm(c.w)).toBeLessThan(70);
+  it("la segunda va a la derecha de la primera, a la misma altura; cuando no entran, la fila sigue abajo", () => {
+    const bs = solo(Array(6).fill(foto));
+    expect(bs[1].imagen!.x).toBeGreaterThan(bs[0].imagen!.x);
+    expect(bs[1].imagen!.y).toBeCloseTo(bs[0].imagen!.y);
+    const abajo = bs.find((b) => b.imagen!.y < bs[0].imagen!.y - 1)!;
+    expect(abajo).toBeDefined();
+    expect(abajo.imagen!.x).toBeCloseTo(pagina.margen);
   });
-  it("la primera abajo a la derecha, las siguientes a la izquierda y hacia arriba", () => {
-    const cajas = acomodarSellos(Array(6).fill(foto), pagina);
-    expect(cajas[1].x).toBeLessThan(cajas[0].x);
-    expect(cajas[0].y).toBeCloseTo(cajas[1].y);
-    const arriba = cajas.find((c) => c.y > cajas[0].y + 1);
-    expect(arriba).toBeDefined();
-    expect(cajas[0].x + cajas[0].w).toBeCloseTo(pagina.ancho - pagina.margen);
+  it("el texto va arriba de su firma, en el ancho de la columna", () => {
+    const texto = "EN EL DÍA DE LA FECHA 12/03/26 EL TITULAR DEL PRESENTE LIBRO QUEDA HABILITADO PARA TRANSPORTAR PASAJEROS";
+    const [b, c] = solo([{ ...foto, texto }, foto]);
+    expect(b.renglones.length).toBeGreaterThan(1);
+    for (const r of b.renglones) {
+      expect(r.y).toBeGreaterThan(b.imagen!.y + b.imagen!.h);
+      expect(r.texto.length * b.tamano * 0.5).toBeLessThanOrEqual(CAJA_SELLO.ancho + 1e-6);
+    }
+    // La firma de al lado, sin texto, arranca arriba de su celda: más alta que la que lleva texto.
+    expect(c.imagen!.y + c.imagen!.h).toBeGreaterThan(b.imagen!.y + b.imagen!.h);
   });
-  it("1, 2, 6 y 12 bloques: ninguno pasa de 7 × 3,5 cm, no se superponen y entran en la hoja", () => {
-    for (const n of [1, 2, 3, 6, 9, 12]) {
-      const cajas = acomodarSellos(
-        Array.from({ length: n }, (_, i) => (i % 2 ? { ancho: 900, alto: 400 + 60 * (i % 3) } : { ancho: 1400, alto: 560 })),
-        pagina
-      );
-      expect(cajas).toHaveLength(n);
+  it("un texto sin firma ocupa su lugar en la grilla", () => {
+    const [a, b] = solo([foto, { texto: "Readaptación en vuelo nocturno" }]);
+    expect(b.imagen).toBeNull();
+    expect(b.renglones[0].x).toBeGreaterThan(a.imagen!.x);
+  });
+  it("de 1 a 16 bloques, con y sin texto: entran en la hoja y no se pisan", () => {
+    for (const n of [1, 2, 4, 5, 8, 12, 16]) {
+      const bs = solo(Array.from({ length: n }, (_, i) => (i % 3 === 0 ? { ...foto, texto: "Habilitado para transportar pasajeros ".repeat(1 + (i % 2)) } : i % 3 === 1 ? foto : { imagen: { ancho: 900, alto: 460 } })));
+      expect(bs).toHaveLength(n);
+      const cajas = bs.map(cajaDe);
       for (let i = 0; i < n; i++) {
-        expect(mm(cajas[i].w)).toBeLessThanOrEqual(70 + 1e-6);
-        expect(mm(cajas[i].h)).toBeLessThanOrEqual(35 + 1e-6);
+        if (bs[i].imagen) {
+          expect(mm(bs[i].imagen!.w)).toBeLessThanOrEqual(70 + 1e-6);
+          expect(mm(bs[i].imagen!.h)).toBeLessThanOrEqual(35 + 1e-6);
+          expect(bs[i].imagen!.y).toBeGreaterThanOrEqual(pagina.margen - 1e-6);
+        }
         expect(cajas[i].x).toBeGreaterThanOrEqual(pagina.margen - 1e-9);
-        expect(cajas[i].x + cajas[i].w).toBeLessThanOrEqual(pagina.ancho - pagina.margen + 1e-9);
-        expect(cajas[i].y).toBeGreaterThanOrEqual(pagina.margen - 1e-9);
-        expect(cajas[i].y + cajas[i].h).toBeLessThanOrEqual(pagina.alto - pagina.margen + 1e-9);
+        expect(cajas[i].x + cajas[i].w).toBeLessThanOrEqual(pagina.ancho - pagina.margen + 1e-6);
+        expect(cajas[i].y + cajas[i].h).toBeLessThanOrEqual(pagina.alto - pagina.margen + 1e-6);
         for (let j = i + 1; j < n; j++) expect(chocan(cajas[i], cajas[j])).toBe(false);
       }
     }
   });
-  it("en una hoja de este tamaño, 12 bloques entran sin achicarse", () => {
-    const cajas = acomodarSellos(Array(12).fill({ ancho: 1400, alto: 560 }), pagina);
-    expect(Math.max(...cajas.map((c) => c.w))).toBeCloseTo(CAJA_SELLO.ancho);
+  it("en esta hoja, 12 firmas sin texto entran sin achicarse", () => {
+    const bs = solo(Array(12).fill(foto));
+    expect(Math.max(...bs.map((b) => b.imagen!.w))).toBeCloseTo(CAJA_SELLO.ancho);
   });
-  it("si no entran, se achican lo mínimo: nunca se agrandan y siguen sin superponerse", () => {
-    const chica = { ancho: 300, alto: 150, margen: 10 }; // un papel de 300 × 150 pt
-    const cajas = acomodarSellos(Array(12).fill({ ancho: 2000, alto: 1000 }), chica);
-    for (const c of cajas) expect(c.w).toBeLessThan(CAJA_SELLO.ancho);
-    for (let i = 0; i < 12; i++) {
-      expect(cajas[i].x).toBeGreaterThanOrEqual(chica.margen - 1e-9);
-      expect(cajas[i].x + cajas[i].w).toBeLessThanOrEqual(chica.ancho - chica.margen + 1e-9);
-      expect(cajas[i].y + cajas[i].h).toBeLessThanOrEqual(chica.alto - chica.margen + 1e-9);
-      for (let j = i + 1; j < 12; j++) expect(chocan(cajas[i], cajas[j])).toBe(false);
+  it("si no entran, se achica todo junto (nunca se agranda)", () => {
+    const chica = { ancho: 300, alto: 150, margen: 10 };
+    const bs = solo(Array(12).fill(foto), chica);
+    for (const b of bs) {
+      expect(b.imagen!.w).toBeLessThan(CAJA_SELLO.ancho);
+      expect(b.imagen!.y).toBeGreaterThanOrEqual(0);
     }
   });
-  it("con una franja reservada abajo, la grilla arranca más arriba", () => {
-    const [a] = acomodarSellos([foto], pagina);
-    const [b] = acomodarSellos([foto], { ...pagina, reservaAbajo: 70 });
-    expect(b.y).toBeGreaterThan(a.y + 50);
+  it("con una franja reservada abajo, nada baja de ella", () => {
+    const bs = acomodarDorso(Array(12).fill(foto), { ...pagina, reservaAbajo: 70 }, medir);
+    for (const b of bs) expect(b.imagen!.y).toBeGreaterThanOrEqual(pagina.margen + 70 - 1e-6);
   });
-  it("sin imágenes, nada", () => {
-    expect(acomodarSellos([], pagina)).toEqual([]);
+  it("sin bloques, nada", () => {
+    expect(solo([])).toEqual([]);
+  });
+});
+
+describe("bloquesDelDorso: cada texto arriba de su firma", () => {
+  const S1 = "11111111-1111-1111-1111-111111111111";
+  const S2 = "22222222-2222-2222-2222-222222222222";
+  const fotos = [{ id: "f2", png: "", orden: 1 }, { id: "f1", png: "", orden: 0 }];
+  it("fotos por orden, después los sellos elegidos, y los textos sin firma al final", () => {
+    const b = bloquesDelDorso({ fotos, sello_ids: [S1], textos: [{ texto: "Suelto" }, { texto: "Con la foto", firma: "foto:f1" }] }, new Set([S1]));
+    expect(b).toEqual([
+      { firma: "foto:f1", texto: "Con la foto" },
+      { firma: "foto:f2", texto: null },
+      { firma: `sello:${S1}`, texto: null },
+      { firma: null, texto: "Suelto" },
+    ]);
+  });
+  it("un texto avalado por un sello no elegido suma ese sello", () => {
+    const b = bloquesDelDorso({ textos: [{ texto: "Habilitado", firma: `sello:${S2}` }] }, new Set([S1, S2]));
+    expect(b).toEqual([{ firma: `sello:${S2}`, texto: "Habilitado" }]);
+  });
+  it("dos textos con la misma firma van juntos, uno abajo del otro", () => {
+    const b = bloquesDelDorso({ fotos: [fotos[1]], textos: [{ texto: "Uno", firma: "foto:f1" }, { texto: "Dos", firma: "foto:f1" }] }, new Set());
+    expect(b).toEqual([{ firma: "foto:f1", texto: "Uno\nDos" }]);
+  });
+  it("si la firma ya no existe, el texto no se pierde: va solo", () => {
+    const b = bloquesDelDorso({ textos: [{ texto: "Sin su foto", firma: "foto:borrada" }, { texto: "Sin su sello", firma: `sello:${S2}` }] }, new Set([S1]));
+    expect(b).toEqual([{ firma: null, texto: "Sin su foto" }, { firma: null, texto: "Sin su sello" }]);
+  });
+  it("no pasa de 12 firmas", () => {
+    const muchas = Array.from({ length: 14 }, (_, i) => ({ id: `f${i}`, png: "", orden: i }));
+    expect(bloquesDelDorso({ fotos: muchas }, new Set()).filter((b) => b.firma)).toHaveLength(12);
   });
 });
 

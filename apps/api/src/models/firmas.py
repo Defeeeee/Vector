@@ -42,6 +42,9 @@ MAX_CERTIFICANTES_POR_DORSO = 12
 MAX_SELLOS_POR_DORSO = 12
 MAX_FOTOS_POR_DORSO = 12
 MAX_SELLOS_POR_PERSONA = 6
+#: Textos de un dorso (migración 050): constancias y habilitaciones, cada una con su firma.
+MAX_TEXTOS_POR_DORSO = 12
+MAX_LARGO_TEXTO_DORSO = 600
 
 
 def limpiar_alias(v: Optional[List[str]]) -> Optional[List[str]]:
@@ -264,6 +267,38 @@ class SugerenciaCertificante(BaseModel):
     sello_id: Optional[UUID] = None
 
 
+class DorsoTexto(BaseModel):
+    """
+    Un texto del dorso (migración 050), p. ej. "QUEDA HABILITADO PARA TRANSPORTAR PASAJEROS", y la
+    firma que lo avala: `foto:<id>` (una foto de ese dorso) o `sello:<id>` (un sello de una
+    persona). Sin firma, va solo. Se respeta lo que escribió el piloto (no se pasa a mayúsculas).
+    """
+
+    texto: str = Field(min_length=1, max_length=MAX_LARGO_TEXTO_DORSO)
+    firma: Optional[str] = Field(default=None, max_length=60)
+
+    @field_validator("texto")
+    @classmethod
+    def _texto(cls, v: str) -> str:
+        v = limpiar_texto(v)
+        if not v:
+            raise ValueError("El texto está vacío.")
+        return v
+
+    @field_validator("firma")
+    @classmethod
+    def _firma(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        tipo, _, ident = v.partition(":")
+        if tipo not in ("foto", "sello"):
+            raise ValueError("La firma de un texto es una foto o un sello del dorso.")
+        try:
+            return f"{tipo}:{UUID(ident)}"
+        except ValueError:
+            raise ValueError("La firma de un texto es una foto o un sello del dorso.")
+
+
 class DorsoHojaIn(BaseModel):
     """
     El dorso de una hoja: aclaración, fecha y los sellos elegidos. **Las fotos van aparte**
@@ -278,6 +313,8 @@ class DorsoHojaIn(BaseModel):
     fecha: Optional[dt.date] = None
     #: Los sellos (de cualquier persona) que van en este dorso, junto a sus fotos.
     sello_ids: Optional[List[UUID]] = Field(default=None, max_length=MAX_SELLOS_POR_DORSO)
+    #: Los textos del dorso con su firma (migración 050). Sin el campo (web vieja), no se tocan.
+    textos: Optional[List[DorsoTexto]] = Field(default=None, max_length=MAX_TEXTOS_POR_DORSO)
 
     @field_validator("aclaracion")
     @classmethod
@@ -317,4 +354,5 @@ class DorsoHoja(BaseModel):
     aclaracion: Optional[str] = None
     fecha: Optional[str] = None
     sello_ids: List[UUID] = Field(default_factory=list)
+    textos: List[DorsoTexto] = Field(default_factory=list)
     fotos: List[DorsoFoto] = Field(default_factory=list)

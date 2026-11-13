@@ -22,6 +22,9 @@ import { AUTORIDADES_CAD } from "@/lib/cad";
 import { asignarPorSellos } from "@/lib/asignar-sellos";
 import {
   fechaDelDorso,
+  MAX_ACLARACION_DORSO,
+  MAX_LARGO_TEXTO_DORSO,
+  MAX_TEXTOS_DORSO,
   nombreDeSello,
   normalizarNombre,
   opcionesDeCertificante,
@@ -781,7 +784,7 @@ function Dorsos({
         <h4 className="text-base md:text-lg font-bold text-zinc-900 dark:text-white">Firmas del dorso de cada hoja</h4>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
           Las firmas con su sello o aclaración que van atrás de cada hoja del libro. Son otras imágenes que la de la celda de certificaciones:
-          fotografialas tal como quedan en el papel (todas las que quieras por hoja) y sumá los sellos de tus certificantes. Salen a tamaño real, 7 × 3,5 cm cada una, como en el papel.
+          fotografialas tal como quedan en el papel (todas las que quieras por hoja), sumá los sellos de tus certificantes y los textos que firman (una habilitación, una constancia). Salen a tamaño real, 7 × 3,5 cm cada una, desde arriba a la izquierda, como en el papel.
           Una hoja sin dorso cargado sale con su dorso en blanco, para que la doble faz no se corra.
         </p>
       </div>
@@ -806,6 +809,7 @@ function Dorsos({
             ? [
                 fotos.length ? (fotos.length === 1 ? "1 foto" : `${fotos.length} fotos`) : "",
                 sellos ? (sellos === 1 ? "1 sello" : `${sellos} sellos`) : "",
+                d.textos?.length ? (d.textos.length === 1 ? "1 texto" : `${d.textos.length} textos`) : "",
                 d.aclaracion,
                 fechaDelDorso(d.fecha),
               ]
@@ -880,7 +884,28 @@ function EditorDeDorso({
   const [elegidos, setElegidos] = useState<Set<string>>(() => new Set((actual?.sello_ids ?? []).filter((id) => existentes.has(id))));
   const deLosVuelos = selloIdsDeLosVuelos.filter((id) => existentes.has(id));
   const total = fotos.length + elegidos.size;
-  const puede = !pendiente && (fotos.length > 0 || aclaracion.trim().length > 0 || !!fecha || elegidos.size > 0);
+  // Los textos del dorso (migración 050), cada uno con la firma que lo avala. `clave` es sólo para React.
+  const [textos, setTextos] = useState<{ clave: number; texto: string; firma: string }[]>(() =>
+    (actual?.textos ?? []).map((t, i) => ({ clave: i, texto: t.texto, firma: t.firma ?? "" }))
+  );
+  const [proximaClave, setProximaClave] = useState(() => (actual?.textos?.length ?? 0) + 1);
+  const opcionesDeFirma = [
+    ...fotos.map((f, i) => ({ valor: `foto:${f.id}`, texto: `Foto ${i + 1} de este dorso` })),
+    ...sellos.map(({ sello, texto }) => ({ valor: `sello:${sello.id}`, texto })),
+  ];
+  const cambiarTexto = (clave: number, cambio: Partial<{ texto: string; firma: string }>) => {
+    setTextos((ts) => ts.map((t) => (t.clave === clave ? { ...t, ...cambio } : t)));
+    // Un texto avalado por un sello suma ese sello al dorso: el texto va arriba de esa firma.
+    const id = cambio.firma?.startsWith("sello:") ? cambio.firma.slice(6) : null;
+    if (id && !elegidos.has(id) && total < MAX_IMAGENES) setElegidos((e) => new Set(e).add(id));
+  };
+  const textoLargo = textos.some((t) => t.texto.trim().length > MAX_LARGO_TEXTO_DORSO);
+  const aclaracionLarga = aclaracion.trim().length > MAX_ACLARACION_DORSO;
+  const puede =
+    !pendiente &&
+    !textoLargo &&
+    !aclaracionLarga &&
+    (fotos.length > 0 || aclaracion.trim().length > 0 || !!fecha || elegidos.size > 0 || textos.some((t) => t.texto.trim()));
 
   const agregarFoto = () =>
     empezar(async () => {
@@ -902,7 +927,15 @@ function EditorDeDorso({
   const guardar = () =>
     empezar(async () => {
       setError(null);
-      const r = await guardarDorso({ logbookId: libroId, hoja, aclaracion, fecha, selloIds: [...elegidos] });
+      const r = await guardarDorso({
+        logbookId: libroId,
+        hoja,
+        aclaracion,
+        fecha,
+        selloIds: [...elegidos],
+        // Una firma que ya no está (se quitó la foto) deja el texto solo.
+        textos: textos.map((t) => ({ texto: t.texto, firma: opcionesDeFirma.some((o) => o.valor === t.firma) ? t.firma : null })),
+      });
       if ("error" in r) {
         setError(r.error);
         return;
@@ -987,10 +1020,71 @@ function EditorDeDorso({
         </fieldset>
       )}
 
+      <div className="space-y-3">
+        <div>
+          <p className={rotulo}>Textos del dorso ({textos.length})</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 ml-1">
+            Una habilitación o una constancia (&laquo;queda habilitado para transportar pasajeros&raquo;) con la firma que la avala: en el PDF el texto va arriba de esa firma.
+          </p>
+        </div>
+        {textos.map((t, i) => {
+          const largo = t.texto.trim().length;
+          return (
+            <div key={t.clave} className="rounded-2xl border border-white/10 p-3 space-y-2">
+              <div className="space-y-1.5">
+                <label className={rotulo} htmlFor={`dorso-texto-${hoja}-${t.clave}`}>Texto {i + 1}</label>
+                <textarea
+                  id={`dorso-texto-${hoja}-${t.clave}`}
+                  value={t.texto}
+                  onChange={(e) => cambiarTexto(t.clave, { texto: e.target.value })}
+                  rows={3}
+                  placeholder="En el día de la fecha el titular del presente libro queda habilitado para…"
+                  className={`${campo} resize-y`}
+                />
+                <p className={`text-xs ml-1 font-mono ${largo > MAX_LARGO_TEXTO_DORSO ? "text-red-500" : "text-zinc-500"}`}>
+                  {largo}/{MAX_LARGO_TEXTO_DORSO}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="space-y-1.5 flex-1 min-w-[12rem]">
+                  <label className={rotulo} htmlFor={`dorso-firma-${hoja}-${t.clave}`}>Firma que lo avala</label>
+                  <select id={`dorso-firma-${hoja}-${t.clave}`} value={opcionesDeFirma.some((o) => o.valor === t.firma) ? t.firma : ""} onChange={(e) => cambiarTexto(t.clave, { firma: e.target.value })} className={campo}>
+                    <option value="">Sin firma (el texto solo)</option>
+                    {opcionesDeFirma.map((o) => (
+                      <option key={o.valor} value={o.valor}>{o.texto}</option>
+                    ))}
+                  </select>
+                </div>
+                <button type="button" onClick={() => setTextos((ts) => ts.filter((x) => x.clave !== t.clave))} className="min-h-12 px-3 text-sm font-semibold text-red-500">
+                  Quitar
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {textos.length < MAX_TEXTOS_DORSO && (
+          <button
+            type="button"
+            onClick={() => {
+              setTextos((ts) => [...ts, { clave: proximaClave, texto: "", firma: "" }]);
+              setProximaClave((n) => n + 1);
+            }}
+            className="min-h-11 text-sm font-semibold text-aviation-cyan text-left"
+          >
+            + Agregar un texto
+          </button>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <label className={rotulo} htmlFor={`dorso-acl-${hoja}`}>Aclaración en texto (opcional)</label>
           <input id={`dorso-acl-${hoja}`} value={aclaracion} onChange={(e) => setAclaracion(e.target.value)} placeholder="Si el sello ya la trae, dejala vacía" autoComplete="off" className={campo} />
+          {aclaracionLarga && (
+            <p className="text-xs text-red-500 ml-1">
+              Hasta {MAX_ACLARACION_DORSO} letras ({aclaracion.trim().length}). Para un texto más largo, agregalo en &laquo;Textos del dorso&raquo;.
+            </p>
+          )}
         </div>
         <div className="space-y-1.5">
           <label className={rotulo} htmlFor={`dorso-fecha-${hoja}`}>Fecha (opcional)</label>

@@ -1,7 +1,7 @@
 import { esAlumno, vuelosDesdeLaPpa } from "@/lib/licencias";
 import { apellidoYNombre, armarLibro, fechaDeGeneracion, renglonesDeLaHoja, valoresDeApertura, vuelosDeUnLibro, type RenglonLibro } from "@/lib/libro-anac";
 import { pdfDelLibro, type CertificacionParaPdf, type DorsoParaPdf } from "@/lib/libro-anac-pdf";
-import { dorsosPorHoja, firmaDelRenglon, type DorsoHoja, type FirmaCertificante } from "@/lib/firmas-libro";
+import { bloquesDelDorso, dorsosPorHoja, firmaDelRenglon, type DorsoHoja, type FirmaCertificante } from "@/lib/firmas-libro";
 import type { Aircraft, Flight, Logbook, Profile } from "@/types";
 
 /**
@@ -121,9 +121,13 @@ export async function armarPdfDelLibro(
     const filas = (await r.json().catch(() => [])) as DorsoHoja[];
     dorsos = new Map();
     for (const [hoja, d] of dorsosPorHoja(filas, libro?.id)) {
-      const fotos = (d.fotos ?? []).map((f) => pngDeDataUrl(f.png)).filter((x): x is Uint8Array => !!x);
-      const elegidos = (d.sello_ids ?? []).map((id) => sellos.get(id)).filter((x): x is Uint8Array => !!x);
-      dorsos.set(hoja, { fotos, aclaracion: d.aclaracion, fecha: d.fecha, sellos: elegidos });
+      // Cada firma (foto o sello) con el texto que avala arriba, y los textos sueltos al final (migración 050).
+      const fotos = new Map((d.fotos ?? []).map((f) => [`foto:${f.id}`, pngDeDataUrl(f.png)]));
+      const bloques = bloquesDelDorso(d, new Set(sellos.keys())).map((b) => ({
+        png: b.firma ? (b.firma.startsWith("foto:") ? fotos.get(b.firma) : sellos.get(b.firma.slice(6))) ?? null : null,
+        texto: b.texto,
+      }));
+      dorsos.set(hoja, { bloques, aclaracion: d.aclaracion, fecha: d.fecha });
     }
   }
 

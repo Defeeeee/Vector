@@ -37,6 +37,23 @@ describe("el dorso con varias fotos y sellos, a tamaño real", () => {
   const cuenta = (bytes: Uint8Array) => (Buffer.from(bytes).toString("latin1").match(/\/Subtype \/Image/g) ?? []).length;
   const png = async (texto: string) => new Uint8Array(await QRCode.toBuffer(texto, { type: "png" }));
 
+  /** El contenido (operadores) de una página, descomprimido. */
+  async function contenidoDeLaPagina(bytes: Uint8Array, pagina: number) {
+    const doc = await PDFDocument.load(bytes);
+    const contenido = doc.getPage(pagina).node.Contents();
+    const streams = contenido instanceof PDFArray ? contenido.asArray().map((r) => doc.context.lookup(r)) : [contenido];
+    return streams
+      .map((st) => {
+        const crudo = (st as PDFRawStream).getContents();
+        try {
+          return inflateSync(crudo).toString("latin1");
+        } catch {
+          return Buffer.from(crudo).toString("latin1");
+        }
+      })
+      .join("\n");
+  }
+
   /** Los rectángulos `w h x y` de las imágenes dibujadas en una página (operador `cm` de cada `Do`). */
   async function imagenesDeLaPagina(bytes: Uint8Array, pagina: number) {
     const doc = await PDFDocument.load(bytes);
@@ -98,6 +115,34 @@ describe("el dorso con varias fotos y sellos, a tamaño real", () => {
       expect(c.x + c.w).toBeLessThanOrEqual(ANCHO_HOJA);
       expect(c.y + c.h).toBeLessThanOrEqual(ALTO_HOJA);
     }
+  });
+
+  it("las firmas arrancan arriba a la izquierda", async () => {
+    const cuadrada = await png("cuadrada");
+    const bytes = await pdfDelLibro([], titular, { generado: "26/10/2026", apertura, dorsos: new Map([[1, { fotos: [cuadrada, cuadrada] }]]) });
+    const [a, b] = await imagenesDeLaPagina(bytes, 1);
+    expect(a.x).toBeLessThan(ANCHO_HOJA / 4);
+    expect(a.y + a.h).toBeGreaterThan(ALTO_HOJA * 0.8);
+    expect(b.x).toBeGreaterThan(a.x);
+    expect(b.y).toBeCloseTo(a.y);
+  });
+
+  it("el texto que avala una firma va arriba de ella, y un texto sin firma también sale", async () => {
+    const firma = await png("firma");
+    const texto = "EN EL DIA DE LA FECHA 12/03/26 EL TITULAR DEL PRESENTE LIBRO QUEDA HABILITADO PARA TRANSPORTAR PASAJEROS";
+    const dorsos = new Map([[1, { bloques: [{ png: firma, texto }, { texto: "READAPTACION" }] }]]);
+    const bytes = await pdfDelLibro([], titular, { generado: "26/10/2026", apertura, dorsos });
+    expect(cuenta(bytes)).toBe(1);
+    const contenido = await contenidoDeLaPagina(bytes, 1);
+    const hex = (t: string) => Buffer.from(t, "latin1").toString("hex").toUpperCase();
+    // pdf-lib escribe cada renglón como <hex> Tj: buscamos palabras del texto.
+    expect(contenido.toUpperCase()).toContain(hex("HABILITADO"));
+    expect(contenido.toUpperCase()).toContain(hex("READAPTACION"));
+    // El primer renglón está más arriba que la imagen.
+    const ys = [...contenido.matchAll(/1 0 0 1 ([-\d.]+) ([-\d.]+) Tm/g)].map((m) => Number(m[2]));
+    const [img] = await imagenesDeLaPagina(bytes, 1);
+    expect(Math.max(...ys)).toBeGreaterThan(img.y + img.h);
+    if (process.env.LIBRO_PDF_DEMO) writeFileSync(process.env.LIBRO_PDF_DEMO.replace(/\.pdf$/, "-textos.pdf"), bytes);
   });
 
   it("una foto ancha llena 7 cm de ancho, no la hoja entera", async () => {

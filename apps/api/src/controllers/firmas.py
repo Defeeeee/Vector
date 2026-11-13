@@ -333,7 +333,7 @@ class FirmasController(Controller):
         user_id = str(request.state.user.id)
         q = (
             supabase_client.table("libro_hojas_dorso")
-            .select("id,logbook_id,hoja,aclaracion,fecha,sello_ids")
+            .select("id,logbook_id,hoja,aclaracion,fecha,sello_ids,textos")
             .eq("user_id", user_id)
         )
         qf = (
@@ -353,11 +353,15 @@ class FirmasController(Controller):
 
     @put("/dorsos")
     async def guardar_dorso(self, request: Request, supabase_client: Client, data: DorsoHojaIn) -> DorsoHoja:
-        """Aclaración, fecha y sellos del dorso. Las fotos se agregan y se quitan una por una."""
+        """
+        Aclaración, fecha, sellos y textos del dorso (cada texto con la firma que lo avala,
+        migración 050). Las fotos se agregan y se quitan una por una.
+        """
         user_id = str(request.state.user.id)
         _libro_propio(supabase_client, user_id, data.logbook_id)
         elegidos = [str(c) for c in dict.fromkeys(data.sello_ids or [])]
-        if not data.aclaracion and not data.fecha and not elegidos:
+        textos = [t.model_dump() for t in (data.textos or [])]
+        if not data.aclaracion and not data.fecha and not elegidos and not textos:
             # Sin nada de esto, el dorso sólo existe si tiene fotos (o ya existía): se acepta
             # para que "guardar" con las fotos recién cargadas no falle.
             hay = (
@@ -381,19 +385,20 @@ class FirmasController(Controller):
             ).data or []
             if len(propios) != len(elegidos):
                 raise NotFoundException("Alguno de esos sellos no existe.")
+        _firmas_de_los_textos(supabase_client, user_id, data, textos)
+        fila_nueva = {
+            "user_id": user_id,
+            "logbook_id": str(data.logbook_id),
+            "hoja": data.hoja,
+            "aclaracion": data.aclaracion,
+            "fecha": data.fecha.isoformat() if data.fecha else None,
+            "sello_ids": elegidos,
+        }
+        if data.textos is not None:
+            fila_nueva["textos"] = textos
         resp = (
             supabase_client.table("libro_hojas_dorso")
-            .upsert(
-                {
-                    "user_id": user_id,
-                    "logbook_id": str(data.logbook_id),
-                    "hoja": data.hoja,
-                    "aclaracion": data.aclaracion,
-                    "fecha": data.fecha.isoformat() if data.fecha else None,
-                    "sello_ids": elegidos,
-                },
-                on_conflict="logbook_id,hoja",
-            )
+            .upsert(fila_nueva, on_conflict="logbook_id,hoja")
             .execute()
         )
         if not resp.data:
@@ -489,6 +494,37 @@ class FirmasController(Controller):
         supabase_client.table("libro_hojas_dorso_fotos").delete().eq("user_id", user_id).eq(
             "logbook_id", fila["logbook_id"]
         ).eq("hoja", fila["hoja"]).execute()
+
+
+def _firmas_de_los_textos(supabase_client: Client, user_id: str, data: DorsoHojaIn, textos: list) -> None:
+    """
+    Cada texto avalado por una firma tiene que apuntar a una foto **de ese mismo dorso** o a un
+    sello del piloto (migración 050); si no, 404. Se pregunta una vez por tipo.
+    """
+    fotos = {t["firma"].split(":", 1)[1] for t in textos if (t.get("firma") or "").startswith("foto:")}
+    sellos = {t["firma"].split(":", 1)[1] for t in textos if (t.get("firma") or "").startswith("sello:")}
+    if fotos:
+        propias = (
+            supabase_client.table("libro_hojas_dorso_fotos")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("logbook_id", str(data.logbook_id))
+            .eq("hoja", data.hoja)
+            .in_("id", sorted(fotos))
+            .execute()
+        ).data or []
+        if len(propias) != len(fotos):
+            raise NotFoundException("Un texto apunta a una foto que no es de este dorso.")
+    if sellos:
+        propios = (
+            supabase_client.table("certificante_sellos")
+            .select("id")
+            .eq("user_id", user_id)
+            .in_("id", sorted(sellos))
+            .execute()
+        ).data or []
+        if len(propios) != len(sellos):
+            raise NotFoundException("Un texto apunta a un sello que no existe.")
 
 
 def _libro_propio(supabase_client: Client, user_id: str, logbook_id: UUID) -> None:

@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.34.0 — Textos con su firma en el dorso
+
+_13 de noviembre de 2026_
+
+- **Habilitaciones y constancias en el dorso** — Cada hoja acepta textos largos, como «queda habilitado para transportar pasajeros», y cada uno se asocia a la firma o el sello que lo avala. En el PDF el texto va arriba de esa firma, y las firmas arrancan arriba a la izquierda, como en el papel.
+
 ## v3.33.0 — Un dorso como el del papel
 
 _13 de noviembre de 2026_
