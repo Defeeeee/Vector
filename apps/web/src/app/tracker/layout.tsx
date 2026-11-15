@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { getSessionToken } from "@/actions/auth";
-import { Isotipo } from "@/components/Marca";
+import { LogoTracker } from "@/components/MarcaTracker";
+import InstalarTracker from "@/components/tracker/InstalarTracker";
 import { apiFetch } from "@/lib/api";
 
 /**
@@ -21,6 +22,10 @@ export const metadata: Metadata = {
   title: { default: "Vector Tracker", template: "%s | Vector Tracker" },
   description: "Seguí los vuelos de tu piloto en vivo, con aviso cuando despega y cuando aterriza.",
   applicationName: "Vector Tracker",
+  // Explícito: las páginas que no lo cambian (todas menos la invitación) usan el manifest de siempre.
+  manifest: "/manifest.webmanifest",
+  // La flecha con la estela (`generar-tracker.mjs`), no la de Vector: es otra app en el inicio del teléfono.
+  icons: { icon: [{ url: "/marca/tracker-icono-app.svg", type: "image/svg+xml" }], apple: "/tracker/apple-touch-icon.png" },
   robots: { index: false, follow: false },
   appleWebApp: { capable: true, title: "Vector Tracker", statusBarStyle: "black-translucent" },
   openGraph: { title: "Vector Tracker", description: "Seguí los vuelos de tu piloto en vivo.", siteName: "Vector Tracker", locale: "es_AR", type: "website" },
@@ -44,12 +49,12 @@ export default async function TrackerLayout({ children }: { children: React.Reac
   const nombre = hayCuenta ? await nombreDeLaCuenta() : null;
 
   return (
-    <div className="dark flex min-h-dvh w-full flex-col bg-noche text-white">
+    <div className="dark min-h-dvh w-full bg-noche text-white">
+      {/* En el teléfono fuera de la app instalada se ve InstalarTracker en vez de esto (globals.css). */}
+      <div className="tracker-app flex min-h-dvh w-full flex-col">
       <header className="sticky top-0 z-[600] flex h-14 shrink-0 items-center justify-between gap-4 border-b border-white/10 bg-noche/95 px-5 pt-[env(safe-area-inset-top)] backdrop-blur" style={{ height: "calc(3.5rem + env(safe-area-inset-top))" }}>
-        <Link href="/" className="flex items-center gap-2.5" aria-label="Vector Tracker, inicio">
-          <Isotipo sobreOscuro className="h-6 w-6" />
-          <span className="font-display text-lg font-extrabold tracking-tight">vector</span>
-          <span className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-aviation-cyan">Tracker</span>
+        <Link href="/" className="flex items-center" aria-label="Vector Tracker, inicio">
+          <LogoTracker className="h-6 w-auto" />
         </Link>
         {hayCuenta && (
           <div className="flex items-center gap-4 text-sm">
@@ -61,6 +66,8 @@ export default async function TrackerLayout({ children }: { children: React.Reac
         )}
       </header>
       <div className="flex w-full flex-1 flex-col">{children}</div>
+      </div>
+      <InstalarTracker />
     </div>
   );
 }

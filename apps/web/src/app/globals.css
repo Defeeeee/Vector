@@ -10,6 +10,26 @@
 @custom-variant app (@media (display-mode: standalone) and (width < 64rem));
 
 /*
+  Vector Tracker: en el teléfono sólo funciona instalado. El layout del tracker dibuja la app
+  (`tracker-app`) y la pantalla de instalar (`tracker-instalar`); acá se elige una. Es CSS puro por lo
+  mismo que `app:`: el server no sabe cómo se abrió. En la compu (puntero fino o más de 1023 px) no se
+  bloquea nada: Firefox de escritorio no instala PWA. Instalada, `display-mode` es standalone (o
+  fullscreen / minimal-ui según el manifest y el sistema) y vuelve la app. Va fuera de las capas
+  para ganarle a las utilidades (`flex`) del contenedor.
+*/
+.tracker-instalar {
+  display: none;
+}
+@media (pointer: coarse) and (max-width: 1023px) and (not (display-mode: standalone)) and (not (display-mode: fullscreen)) and (not (display-mode: minimal-ui)) {
+  .tracker-app {
+    display: none;
+  }
+  .tracker-instalar {
+    display: flex;
+  }
+}
+
+/*
   Sólo oscuro (3.11.0, Federico, 2026-11-05): la escala de grises de Tailwind, redefinida con la
   paleta de la marca. Así cada `dark:text-zinc-400` o `dark:bg-zinc-900` de la app toma un gris
   azulado con más contraste sin tocar las clases: el negro puro pasa a la noche (#0B0D10) y el

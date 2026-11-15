@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import AvisosTracker from "@/components/tracker/AvisosTracker";
+import PegarInvitacion from "@/components/tracker/PegarInvitacion";
 import ListaDeVuelos from "@/components/tracker/ListaDeVuelos";
 import { nombreConHandle, resumenDeLista } from "@/lib/tracker";
 import { leerTracker } from "@/lib/tracker-servidor";
@@ -32,6 +33,7 @@ export default async function InicioTracker() {
             Pedile al piloto que te mande el link de invitación. Lo genera desde Vector, en &ldquo;Compartir tu vuelo&rdquo;, y te lo manda por WhatsApp. Lo abrís, entrás con Google y listo.
           </p>
           <p className="text-base leading-snug text-white/60">Después, el piloto elige qué vuelos ves. Cuando te asigne uno, aparece acá y te avisamos.</p>
+          <PegarInvitacion />
         </div>
       ) : (
         <>

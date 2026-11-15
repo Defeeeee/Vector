@@ -1,11 +1,19 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getSessionToken } from "@/actions/auth";
 import AceptarInvitacion from "@/components/tracker/AceptarInvitacion";
 import BotonGoogleTracker from "@/components/tracker/BotonGoogleTracker";
 import { apiFetch } from "@/lib/api";
+import { desdeValido } from "@/lib/tracker-instalar";
 import { tokenValido } from "@/lib/seguimiento";
+import { LogoTrackerApilado } from "@/components/MarcaTracker";
 
-export const metadata = { title: "Invitación" };
+/** Instalada desde acá, la app abre en esta invitación (el manifest lleva `?desde=`, ver `manifest.webmanifest/route.ts`). */
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
+  const { token } = await params;
+  const desde = desdeValido(`/invitacion/${token}`);
+  return { title: "Invitación", manifest: desde ? `/manifest.webmanifest?desde=${encodeURIComponent(desde)}` : "/manifest.webmanifest" };
+}
 export const dynamic = "force-dynamic";
 
 /**
@@ -43,7 +51,7 @@ export default async function InvitacionTracker({ params }: { params: Promise<{ 
   return (
     <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center space-y-8 px-5 py-12">
       <div className="space-y-4">
-        <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-aviation-cyan">Vector Tracker</p>
+        <LogoTrackerApilado className="h-14 w-auto" />
         <h1 className="text-4xl font-bold leading-tight tracking-tight">{piloto} te invitó a seguir sus vuelos</h1>
         <p className="text-lg leading-snug text-white/80">Vas a ver en un mapa dónde está el avión y a qué hora llega, y te avisamos cuando despega y cuando aterriza. {piloto} elige qué vuelos ves, y te puede quitar cuando quiera.</p>
       </div>

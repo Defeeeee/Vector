@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.43.0",
+    fecha: "2026-11-15",
+    titulo: "Vector Tracker, como app",
+    novedades: [
+      {
+        icono: "campana",
+        titulo: "Vector Tracker se instala en el teléfono",
+        texto: "Quien sigue tus vuelos instala Vector Tracker en el inicio del teléfono antes de entrar: así le llegan los avisos de despegue y aterrizaje, también en iPhone. La pantalla le explica cómo, paso a paso, y si lo invitaste con un link, la app abre directo en tu invitación. Además, Vector Tracker tiene logo propio.",
+        href: "/dashboard/mapa/compartir",
+        cta: "Invitar",
+      },
+    ],
+  },
+  {
     version: "3.42.0",
     fecha: "2026-11-15",
     titulo: "Vector Tracker",

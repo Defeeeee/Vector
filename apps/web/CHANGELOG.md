@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.43.0 — Vector Tracker, como app
+
+_15 de noviembre de 2026_
+
+- **Vector Tracker se instala en el teléfono** — Quien sigue tus vuelos instala Vector Tracker en el inicio del teléfono antes de entrar: así le llegan los avisos de despegue y aterrizaje, también en iPhone. La pantalla le explica cómo, paso a paso, y si lo invitaste con un link, la app abre directo en tu invitación. Además, Vector Tracker tiene logo propio.
+
 ## v3.42.0 — Vector Tracker
 
 _15 de noviembre de 2026_

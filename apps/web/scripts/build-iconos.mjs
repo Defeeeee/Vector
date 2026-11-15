@@ -63,6 +63,13 @@ async function main() {
   }
   await escribir("icono-512-maskable.png", await sharp(pieza("icono-app-maskable"), { density: 300 }).resize(512, 512).png().toBuffer());
   await escribir("apple-touch-icon.png", await sharp(pieza("icono-app-cuadrado"), { density: 300 }).resize(180, 180).flatten({ background: FONDO }).png().toBuffer());
+  // Vector Tracker (3.43.0): sus íconos, de las piezas `tracker-*` (`marketing/marca/generar-tracker.mjs`).
+  fs.mkdirSync(path.join(SALIDA, "tracker"), { recursive: true });
+  for (const lado of [192, 512]) {
+    await escribir(`tracker/icono-${lado}.png`, await sharp(pieza("tracker-icono-app"), { density: 300 }).resize(lado, lado).png().toBuffer());
+  }
+  await escribir("tracker/icono-512-maskable.png", await sharp(pieza("tracker-icono-app-maskable"), { density: 300 }).resize(512, 512).png().toBuffer());
+  await escribir("tracker/apple-touch-icon.png", await sharp(pieza("tracker-icono-app-cuadrado"), { density: 300 }).resize(180, 180).flatten({ background: FONDO }).png().toBuffer());
   // Las imágenes de arranque de iOS (3.16.0): la marca centrada sobre la noche, del mismo tamaño
   // que en la página de arranque del service worker, para que el paso de una a otra no se note.
   fs.mkdirSync(path.join(SALIDA, "arranque"), { recursive: true });
