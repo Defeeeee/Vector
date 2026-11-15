@@ -552,7 +552,22 @@ function planesDeVuelo(req, ruta, json) {
 }
 // Los recorridos ADS-B (2.30.0): con `ADSB_DEMO=<puntos.json>` (fuera del repo: es un vuelo
 // real), un vuelo del 24/10 con ese recorrido y los vuelos detectados de ese día.
-const ADSB_DEMO = process.env.ADSB_DEMO && existsSync(process.env.ADSB_DEMO) ? JSON.parse(readFileSync(process.env.ADSB_DEMO, "utf8")) : null;
+// `ADSB_DEMO=generado` arma uno sintético para probar "Repasar el vuelo": ~40 min de San Fernando a
+// Morón y vuelta al circuito, una posición cada 10 s, con 2 minutos sin señal a mitad del recorrido.
+function vueloSintetico() {
+  const SADF_ = [-34.4532, -58.5896], SADM_ = [-34.6763, -58.6428];
+  const t0 = Math.floor(Date.UTC(2026, 9, 24, 14, 0, 0) / 1000), P = [];
+  for (let s = 0; s <= 2400; s += 10) {
+    if (s > 1000 && s < 1120) continue; // el corte de señal
+    const f = s / 2400, ida = f < 0.5 ? f * 2 : (1 - f) * 2; // ida y vuelta
+    const sube = Math.min(1, s / 420), baja = Math.min(1, (2400 - s) / 360), perfil = Math.min(sube, baja);
+    const lat = SADF_[0] + (SADM_[0] - SADF_[0]) * ida + 0.012 * Math.sin(f * Math.PI * 4);
+    const lon = SADF_[1] + (SADM_[1] - SADF_[1]) * ida + 0.02 * Math.sin(f * Math.PI * 2);
+    P.push([t0 + s, +lat.toFixed(5), +lon.toFixed(5), Math.round(300 + 2200 * perfil + 80 * Math.sin(s / 90)), Math.round(55 + 45 * perfil)]);
+  }
+  return P;
+}
+const ADSB_DEMO = process.env.ADSB_DEMO === "generado" ? vueloSintetico() : process.env.ADSB_DEMO && existsSync(process.env.ADSB_DEMO) ? JSON.parse(readFileSync(process.env.ADSB_DEMO, "utf8")) : null;
 const VUELO_ADSB = "00000000-0000-4000-8000-0000000a0b50";
 if (ADSB_DEMO) {
   const [t0] = ADSB_DEMO[0], [t1] = ADSB_DEMO.at(-1);

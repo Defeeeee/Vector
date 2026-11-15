@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Loader2, Radio, Share } from "lucide-react";
+import { Loader2, Play, Radio, Share } from "lucide-react";
 import { compartirImagen } from "@/components/dashboard/compartir-imagen";
+import { desdeRecorrido, diaMesArgentina } from "@/lib/reproducir-vuelo";
 import { recorridoDelVuelo, type RecorridoDelVuelo as Datos } from "@/actions/recorrido";
 
 /** Leaflet toca `window` al importarse: entra por `dynamic`, como los otros mapas. */
@@ -11,6 +12,9 @@ const RecorridoMapaInner = dynamic(() => import("./RecorridoMapaInner"), {
   ssr: false,
   loading: () => <div className="w-full h-[280px] md:h-[360px] rounded-2xl bg-zinc-100 dark:bg-carbon" />,
 });
+
+/** El repaso lleva Leaflet: no entra al bundle de la bitácora hasta que se abre. */
+const ReproducirVuelo = dynamic(() => import("./repaso/ReproducirVuelo"), { ssr: false });
 
 const num = (n: number, d = 0) => n.toFixed(d).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
@@ -24,6 +28,8 @@ export default function RecorridoDelVuelo({ flightId }: { flightId: string }) {
   const [datos, setDatos] = useState<Datos | null>(null);
   const [compartiendo, setCompartiendo] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [repasando, setRepasando] = useState(false);
+  const serie = useMemo(() => (datos ? desdeRecorrido(datos.recorrido) : null), [datos]);
 
   // La imagen la arma `/api/recorrido/[id]` con la sesión: el mapa, el recorrido y estos números.
   async function compartir() {
@@ -103,11 +109,32 @@ export default function RecorridoDelVuelo({ flightId }: { flightId: string }) {
           {compartiendo ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Share className="w-4 h-4" aria-hidden="true" />}
           {compartiendo ? "Armando la imagen…" : "Compartir la imagen"}
         </button>
+        {serie && serie.muestras.length > 1 && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setRepasando(true);
+            }}
+            className="inline-flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-aviation-cyan text-noche text-sm font-semibold"
+          >
+            <Play className="w-4 h-4" fill="currentColor" aria-hidden="true" />
+            Repasar el vuelo
+          </button>
+        )}
         {aviso && <p className="text-xs text-red-600 dark:text-red-400">{aviso}</p>}
       </div>
       <p className="text-[11px] text-zinc-400 leading-relaxed">
         Grabado por Vector con ADS-B mientras el avión transmitía. Las horas son de la primera y la última posición en el aire, segundos después de despegar y antes de aterrizar: la carrera en tierra no llega a los receptores.
       </p>
+      {repasando && serie && (
+        <ReproducirVuelo
+          serie={serie}
+          titulo={`${datos.origen ?? "?"} → ${datos.destino ?? "?"} · ${diaMesArgentina(serie.muestras[0].t)}`}
+          variacionW={datos.variacionW}
+          onCerrar={() => setRepasando(false)}
+        />
+      )}
     </section>
   );
 }

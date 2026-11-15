@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import ChecklistEnVuelo from "./ChecklistEnVuelo";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { AlertTriangle, Layers, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Download, Loader2, MapPin, Minus, Navigation, NotebookPen, Plus, Radio, Square, Trash2, Undo2, X } from "lucide-react";
+import { AlertTriangle, Layers, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Download, Loader2, MapPin, Minus, Navigation, NotebookPen, Play, Plus, Radio, Square, Trash2, Undo2, X } from "lucide-react";
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { EspacioAereo } from "@/lib/espacios-aereos";
 import { aMagnetico } from "@/lib/navegacion";
@@ -29,6 +29,7 @@ import {
 import type { ApiMapa, CapasMapa, Posicion } from "./MapaLeaflet";
 import { CLAVE_TRACK, fechaArgentina, gpxDelTrack, leerTrack, nombreDelGpx, resumenTrack, sigueElTrack, sumarPunto, type TrackVuelo } from "@/lib/track-vuelo";
 import MenuCapas from "./MenuCapas";
+import { desdeTrack, diaMesArgentina, hayMovimiento } from "@/lib/reproducir-vuelo";
 import { alternarCapa, CAPAS_POR_DEFECTO, CLAVE_CAPAS, leerCapas, OPACIDAD_CARTA_POR_DEFECTO, VERSION_CAPAS, type IdCapa } from "@/lib/capas-mapa";
 import BriefingRuta from "../BriefingRuta";
 import { SECCIONES } from "@/lib/secciones";
@@ -88,6 +89,9 @@ const CLAVE_ORIENTACION = "vector-mapa-orientacion";
 const CLAVE_SONIDO_AVISO = "vector-mapa-aviso-sonido";
 /** Un mismo espacio no vuelve a sonar antes de esto (el aviso que se va y vuelve con el ruido del GPS). */
 const REAVISO_MS = 120_000;
+/** El repaso se carga recién al abrirlo. */
+const ReproducirVuelo = dynamic(() => import("../repaso/ReproducirVuelo"), { ssr: false });
+
 const ROTULO = "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400";
 const ANCHO_TARJETA = 380;
 const clave = (c: { q: string; desde: string; hasta: string }) => `${c.q}|${c.desde}|${c.hasta}`;
@@ -656,7 +660,7 @@ export default function MapaClient({
       </div>
 
       <div className={`${plegada ? "hidden" : "flex"} flex-col min-h-0 overflow-y-auto custom-scrollbar px-4 pb-4 gap-4`}>
-        {track && track.puntos.length > 1 && <VueloGrabado track={track} avionId={avionId} onBorrar={() => {
+        {track && track.puntos.length > 1 && <VueloGrabado track={track} avionId={avionId} variacion={variacion} onBorrar={() => {
           setTrack(null);
           guardarTrack(null);
         }} />}
@@ -1485,8 +1489,11 @@ function Instrumento({ rotulo, valor, unidad }: { rotulo: string; valor: string;
  * GPX o ir a Registrar vuelo con la ruta, el avión y la fecha (sin horarios: el libro va con las
  * del tacómetro, como con el plan de vuelo).
  */
-function VueloGrabado({ track, avionId, onBorrar }: { track: TrackVuelo; avionId: string; onBorrar: () => void }) {
+function VueloGrabado({ track, avionId, variacion, onBorrar }: { track: TrackVuelo; avionId: string; variacion: number | null; onBorrar: () => void }) {
   const r = resumenTrack(track.puntos);
+  const [repasando, setRepasando] = useState(false);
+  const serie = useMemo(() => desdeTrack(track), [track]);
+  const sePuedeRepasar = useMemo(() => hayMovimiento(serie), [serie]);
   const bajar = () => {
     const url = URL.createObjectURL(new Blob([gpxDelTrack(track)], { type: "application/gpx+xml" }));
     const a = document.createElement("a");
@@ -1527,7 +1534,20 @@ function VueloGrabado({ track, avionId, onBorrar }: { track: TrackVuelo; avionId
         <button onClick={bajar} className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
           <Download className="w-3.5 h-3.5" /> Bajar el track (GPX)
         </button>
+        {sePuedeRepasar && (
+          <button onClick={() => setRepasando(true)} className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+            <Play className="w-3.5 h-3.5" fill="currentColor" /> Repasar
+          </button>
+        )}
       </div>
+      {repasando && (
+        <ReproducirVuelo
+          serie={serie}
+          titulo={`${track.ruta.trim() ? track.ruta.trim().split(/\s+/).join(" → ") : "Vuelo grabado"} · ${diaMesArgentina(serie.muestras[0].t)}`}
+          variacionW={variacion}
+          onCerrar={() => setRepasando(false)}
+        />
+      )}
     </section>
   );
 }

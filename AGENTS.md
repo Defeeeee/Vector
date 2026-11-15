@@ -598,6 +598,11 @@ importa es el del backend (`request_max_body_size`, 30 MB).
   - **el vuelo compartido lo usa de respaldo** (3.24.0): sólo dentro de la ventana del seguimiento, ver la fila del Mapa;
   - adsb.fi es "para uso no comercial" y pide cita: si Vector cobra, hay que escribirles o
     tener un receptor propio;
+  - **«Repasar el vuelo»** (3.40.0, `lib/reproducir-vuelo.ts`, `components/dashboard/repaso/`): el
+    vuelo reproducido a pantalla completa (portal sobre `body`) con hora, altura, GS, vario y rumbo, y
+    el perfil de altura tocable. Sale del recorrido ADS-B (botón en `RecorridoDelVuelo`) y del track
+    del teléfono (`VueloGrabado` del Mapa). **El track del teléfono no se sube**: `vuelo_recorridos`
+    y su resumen asumen ADS-B (en el aire, barométrica), y el GPS trae el rodaje;
   - **la imagen para compartir** (2.37.0, `/api/recorrido/[id]`, `lib/recorrido-imagen.ts`): satori
     con los tiles de OSM armados a mano (al doble, cache de una semana, atribución en la imagen),
     sin la matrícula, desde "Compartir la imagen" en la tarjeta del vuelo;

@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.40.0",
+    fecha: "2026-11-15",
+    titulo: "Repasá tu vuelo",
+    novedades: [
+      {
+        icono: "reloj",
+        titulo: "Repasar el vuelo",
+        texto: "Mirá tu vuelo otra vez: el avión recorre su camino sobre el mapa con la hora, la altura, la velocidad, el vario y el rumbo, y tocás el perfil de altura para saltar a cualquier momento. Sale del recorrido ADS-B de cada vuelo en la Bitácora y del track que graba el Mapa. Ideal para el debrief con tu instructor.",
+        href: "/dashboard/history",
+        cta: "Ver mis vuelos",
+      },
+    ],
+  },
+  {
     version: "3.39.0",
     fecha: "2026-11-15",
     titulo: "Checklists y tu año en vuelo",

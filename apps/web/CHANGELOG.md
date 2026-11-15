@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.40.0 — Repasá tu vuelo
+
+_15 de noviembre de 2026_
+
+- **Repasar el vuelo** — Mirá tu vuelo otra vez: el avión recorre su camino sobre el mapa con la hora, la altura, la velocidad, el vario y el rumbo, y tocás el perfil de altura para saltar a cualquier momento. Sale del recorrido ADS-B de cada vuelo en la Bitácora y del track que graba el Mapa. Ideal para el debrief con tu instructor.
+
 ## v3.39.0 — Checklists y tu año en vuelo
 
 _15 de noviembre de 2026_

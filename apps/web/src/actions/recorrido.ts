@@ -13,6 +13,8 @@ export interface RecorridoDelVuelo {
   aterrizajeTexto: string;
   origen: string | null;
   destino: string | null;
+  /** Variación magnética del aeródromo de origen (° al oeste), para el rumbo del repaso. */
+  variacionW: number | null;
 }
 
 export interface VueloDetectado {
@@ -27,7 +29,7 @@ export interface VueloDetectado {
   destino: string | null;
 }
 
-let argentinos: { icao: string; lat?: number | null; lon?: number | null }[] | null = null;
+let argentinos: { icao: string; lat?: number | null; lon?: number | null; variacionW?: number | null }[] | null = null;
 const aerodromos = () => (argentinos ??= allAirports().filter((a) => a.country === "AR"));
 
 /**
@@ -43,13 +45,16 @@ export async function recorridoDelVuelo(flightId: string): Promise<RecorridoDelV
     if (!r.ok) return null;
     const { recorrido, resumen } = (await r.json()) as { recorrido: RecorridoCompacto | null; resumen?: ResumenRecorrido };
     if (!recorrido || !resumen) return null;
+    const origen = aerodromoCercano(resumen.inicio, aerodromos());
+    const variacion = origen ? aerodromos().find((a) => a.icao === origen)?.variacionW : null;
     return {
       recorrido,
       resumen,
       despegueTexto: hhmmArgentina(resumen.despegue),
       aterrizajeTexto: hhmmArgentina(resumen.aterrizaje),
-      origen: aerodromoCercano(resumen.inicio, aerodromos()),
+      origen,
       destino: aerodromoCercano(resumen.fin, aerodromos()),
+      variacionW: typeof variacion === "number" && Number.isFinite(variacion) ? variacion : null,
     };
   } catch (e) {
     if (esErrorDeRedirect(e)) throw e;

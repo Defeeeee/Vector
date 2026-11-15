@@ -11,6 +11,15 @@
       "port": 7599
     },
     {
+      "name": "backend-falso-adsb",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "ADSB_DEMO=generado node \"$(git rev-parse --show-toplevel)/apps/web/marketing/recursos/backend-falso.mjs\""
+      ],
+      "port": 7599
+    },
+    {
       "name": "backend-falso-vivo",
       "runtimeExecutable": "sh",
       "runtimeArgs": [
