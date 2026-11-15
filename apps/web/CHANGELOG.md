@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.41.0 — Compartí tu vuelo sin plan
+
+_15 de noviembre de 2026_
+
+- **Un link para tu familia, aunque no armes plan** — Elegí el avión, de dónde salís, adónde vas y a qué hora, y mandá el link: tu familia ve el horario y, si el avión tiene ADS-B, lo ve volar y aterrizar. Si salís más tarde, cambiás el horario y el link sigue siendo el mismo. Está en Preparar vuelo → Mapa → «Compartir tu vuelo con tu familia».
+- **Varios vuelos compartidos a la vez** — Ahora podés compartir más de un vuelo al mismo tiempo (hasta cinco): el plan de la mañana, el de la tarde y el que estás volando. Todos están juntos en «Compartir tu vuelo», con su link y quién lo mira.
+
 ## v3.40.0 — Repasá tu vuelo
 
 _15 de noviembre de 2026_

@@ -100,7 +100,11 @@ export default function SeguimientoMapaInner({
 
     c.ruta.clearLayers();
     const prevista = datos.puntos.map(([la, lo]) => [la, lo] as L.LatLngTuple);
-    if (prevista.length > 1) L.polyline(prevista, { color: "#ffffff", weight: 2, opacity: 0.55, dashArray: "6 6", interactive: false }).addTo(c.ruta);
+    // Sin ruta cargada (migración 055) la línea es directa entre origen y destino: de puntos y tenue,
+    // para que no parezca el camino que se va a volar.
+    const orientativa = datos.ruta_orientativa === true;
+    if (prevista.length > 1)
+      L.polyline(prevista, { color: "#ffffff", weight: orientativa ? 3 : 2, opacity: orientativa ? 0.5 : 0.55, dashArray: orientativa ? "1 7" : "6 6", lineCap: "round", interactive: false }).addTo(c.ruta);
     datos.puntos.forEach(([la, lo, codigo, nombre], i) => {
       const extremo = i === 0 || i === datos.puntos.length - 1;
       const punto = L.circleMarker([la, lo], {

@@ -39,8 +39,14 @@ import {
  * - Una lectura con más de 150 m de error no se manda (`posicionDeLectura`).
  * - **Se adopta el link del plan** (`adoptar`): si el Mapa se abrió desde un plan de vuelo que ya se
  *   compartía ("Compartir este vuelo"), ese seguimiento es el activo: al tocar Volar el teléfono
- *   le manda el GPS **al mismo token**, sin crear otro. El backend admite uno solo por piloto, y el
- *   GPS se suma al ADS-B. Terminar el vuelo lo termina, como siempre.
+ *   le manda el GPS **al mismo token**, sin crear otro, y el GPS se suma al ADS-B. Terminar el
+ *   vuelo lo termina, como siempre.
+ * - **Se puede usar un link ya mandado** (`usarLinkPrevio`, 3.41.0): el de un vuelo "sin plan"
+ *   (`/dashboard/mapa/compartir`) que sale por estas horas. Es lo mismo que adoptar el del plan, pero
+ *   lo elige el piloto al tocar "Compartir mi vuelo". Desde la migración 055 se pueden compartir
+ *   varios vuelos a la vez (hasta 5): crear uno nuevo ya no devuelve "el activo" y el teléfono
+ *   retoma el suyo sólo por `localStorage`. Al mandar una ruta de verdad, el link deja de decir
+ *   "la línea es orientativa".
  */
 
 export type EstadoCompartir = "apagado" | "creando" | "compartiendo";
@@ -62,6 +68,10 @@ export interface SeguimientoEnVivo {
   vistas: VistasDelLink | null;
   /** El link que se comparte es el de un plan de vuelo (el piloto lo mandó desde el plan). */
   delPlan: boolean;
+  /** El link que se comparte es uno que el piloto ya había mandado, de un vuelo sin plan. */
+  linkPrevio: boolean;
+  /** Sigue con un link que ya mandó (el GPS se suma a ese mismo token). */
+  usarLinkPrevio: (guardado: SeguimientoGuardado) => void;
   /** Empieza (o retoma el activo) y devuelve el link, o `null` si falló (el motivo queda en `error`). */
   compartir: () => Promise<string | null>;
   /** Deja de compartir: el link pasa a "El vuelo terminó". */
@@ -139,14 +149,14 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, rutaLista
   }, []);
 
   // El link del plan: queda como el activo (y en el teléfono, para retomarlo si se recarga en vuelo).
-  // Va después de retomar, así que le gana: el backend sólo admite un seguimiento por piloto.
+  // Va después de retomar, así que le gana: el link del plan es el que se está compartiendo.
   const adoptarId = adoptar?.id ?? null;
-  const [delPlan, setDelPlan] = useState(false);
+  const [adoptado, setAdoptado] = useState<null | "plan" | "previo">(null);
   useEffect(() => {
     if (!adoptar) return;
     setActivo(adoptar);
     setMostrarMatricula(adoptar.mostrarMatricula);
-    setDelPlan(true);
+    setAdoptado("plan");
     guardar(adoptar);
     activoRef.current = adoptar;
     // El backend tiene la ruta del plan: la del Mapa se manda al empezar a volar.
@@ -155,7 +165,7 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, rutaLista
   }, [adoptarId]);
 
   const cerrar = useCallback(() => {
-    setDelPlan(false);
+    setAdoptado(null);
     guardar(null);
     setActivo(null);
     setMostrarMatricula(false); // el próximo vuelo vuelve a empezar apagado
@@ -163,6 +173,19 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, rutaLista
     setVistas(null);
     ultimaEnviada.current = null;
     ultimoIntento.current = null;
+    rutaEnviada.current = null;
+  }, []);
+
+  const usarLinkPrevio = useCallback((g: SeguimientoGuardado) => {
+    setError(null);
+    setActivo(g);
+    setMostrarMatricula(g.mostrarMatricula);
+    setAdoptado("previo");
+    guardar(g);
+    activoRef.current = g;
+    ultimaEnviada.current = null;
+    ultimoIntento.current = null;
+    // El backend tiene origen y destino: la ruta del Mapa se manda al empezar a volar.
     rutaEnviada.current = null;
   }, []);
 
@@ -334,7 +357,9 @@ export function useSeguimientoEnVivo({ lectura, volando, ruta, puntos, rutaLista
     cambiarMostrarMatricula,
     sinSenal,
     vistas,
-    delPlan: delPlan && activo !== null,
+    delPlan: adoptado === "plan" && activo !== null,
+    linkPrevio: adoptado === "previo" && activo !== null,
+    usarLinkPrevio,
     compartir,
     dejarDeCompartir,
   };

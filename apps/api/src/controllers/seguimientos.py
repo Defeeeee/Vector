@@ -14,6 +14,11 @@ Seguir el vuelo en vivo (migración 041, `services/seguimientos.py`).
   `adsb_posiciones` de su ventana y se las junta con las del teléfono (`services/seguimientos.py`).
   Si un plan aterrizó, el primero que mira lo termina.
 
+- **Varios a la vez** (migración 055): hasta `TOPE_ACTIVOS` por cuenta. `POST /seguimientos` crea siempre
+  uno nuevo (la web retoma el suyo por `localStorage`); `desde-plan` busca el existente por `plan_id`;
+  `POST /seguimientos/sin-plan` comparte un vuelo sin ruta (origen, destino y horario); y
+  `GET /seguimientos/activos` lista los del piloto para su pantalla.
+
 Una posición es de pantalla prendida: el teléfono no le da el GPS a una página en segundo plano.
 """
 
@@ -37,13 +42,18 @@ from src.services.seguimientos import (
     RutaNueva,
     SeguimientoCrear,
     SeguimientoDesdePlan,
+    SeguimientoSinPlan,
     agregar_al_recorrido,
     anotar_vista,
     duracion_del_plan,
     esta_activo,
     evaluar_vuelo,
     matricula_para_adsb,
+    mensaje_del_tope,
     nombre_de_pila,
+    puntos_sin_plan,
+    resumen_de_activo,
+    ruta_sin_plan,
     nuevo_token,
     puede_aceptar_posicion,
     resumen_de_vistas,
@@ -96,6 +106,20 @@ class PosicionAceptada(BaseModel):
     ahora: Optional[str] = None
 
 
+def _cerrar_vencidos(tabla: Any, user_id: str, ahora: datetime) -> None:
+    tabla().update({"terminado_at": ahora.isoformat()}).eq("user_id", user_id).is_("terminado_at", "null").lte(
+        "vence_at", ahora.isoformat()
+    ).execute()
+
+
+def _controlar_tope(tabla: Any, user_id: str) -> None:
+    """Un 400 claro si la cuenta ya tiene `TOPE_ACTIVOS` sin terminar (los vencidos ya se cerraron)."""
+    cuenta = tabla().select("id", count="exact", head=True).eq("user_id", user_id).is_("terminado_at", "null").execute()
+    motivo = mensaje_del_tope(cuenta.count or 0)
+    if motivo:
+        raise ClientException(detail=motivo, status_code=400)
+
+
 class SeguimientosController(Controller):
     path = "/seguimientos"
     guards = [auth_guard]
@@ -107,24 +131,11 @@ class SeguimientosController(Controller):
 
         def _crear() -> SeguimientoCreado:
             tabla = lambda: supabase_client.table("seguimientos_en_vivo")  # noqa: E731
-            # Un seguimiento vencido que nadie terminó sigue "sin terminar" para el índice único:
-            # se cierra acá, antes de mirar si hay uno activo.
-            tabla().update({"terminado_at": ahora.isoformat()}).eq("user_id", user_id).is_(
-                "terminado_at", "null"
-            ).lte("vence_at", ahora.isoformat()).execute()
+            # Un seguimiento vencido que nadie terminó sigue "sin terminar" en la base: se cierra
+            # acá, antes de contar los activos para el tope.
+            _cerrar_vencidos(tabla, user_id, ahora)
 
-            def _activo() -> List[Dict[str, Any]]:
-                return (
-                    tabla().select("id,token,vence_at,mostrar_matricula").eq("user_id", user_id).is_("terminado_at", "null").limit(1).execute().data
-                    or []
-                )
-
-            existente = _activo()
-            if existente:
-                f = existente[0]
-                return SeguimientoCreado(
-                    id=f["id"], token=f["token"], vence_at=f["vence_at"], ya_existia=True, mostrar_matricula=bool(f.get("mostrar_matricula"))
-                )
+            _controlar_tope(tabla, user_id)
 
             matricula = (data.avion.matricula if data.avion else "") or None
             # Para buscar el avión en ADS-B (migración 045): interna, nunca pública, aunque el
@@ -148,20 +159,7 @@ class SeguimientosController(Controller):
                 "matricula_adsb": matricula_adsb,
                 "vence_at": vence_en(ahora).isoformat(),
             }
-            try:
-                r = tabla().insert(fila).execute()
-            except APIError:
-                # Dos pedidos a la vez: ganó el otro (índice único). Se devuelve el suyo.
-                otra = _activo()
-                if otra:
-                    return SeguimientoCreado(
-                        id=otra[0]["id"],
-                        token=otra[0]["token"],
-                        vence_at=otra[0]["vence_at"],
-                        ya_existia=True,
-                        mostrar_matricula=bool(otra[0].get("mostrar_matricula")),
-                    )
-                raise
+            r = tabla().insert(fila).execute()
             if not r.data:
                 raise ClientException(detail="No se pudo empezar a compartir el vuelo.")
             f = r.data[0]
@@ -176,7 +174,8 @@ class SeguimientosController(Controller):
         demás: un plan ajeno es un 404). El plan necesita matrícula (casilla 7) y salida; con
         ADS-B el link muestra el vuelo cuando el avión despega. Si ya hay un seguimiento de este
         plan sin terminar se lo actualiza con el plan de ahora (la salida pudo cambiar con una
-        demora); si hay otro, es un 409. El vencimiento es la salida más la duración más un margen.
+        demora). Desde la 055 el "ya existe" es por plan: otro vuelo en marcha no lo impide (hay un tope de
+        `TOPE_ACTIVOS` por cuenta). El vencimiento es la salida más la duración más un margen.
         """
         user_id = str(request.state.user.id)
         ahora = _ahora()
@@ -212,9 +211,7 @@ class SeguimientosController(Controller):
             vence = vencimiento_desde_plan(salida, duracion, ahora)
             mostrar = bool(data.mostrar_matricula)
             tabla = lambda: supabase_client.table("seguimientos_en_vivo")  # noqa: E731
-            tabla().update({"terminado_at": ahora.isoformat()}).eq("user_id", user_id).is_(
-                "terminado_at", "null"
-            ).lte("vence_at", ahora.isoformat()).execute()
+            _cerrar_vencidos(tabla, user_id, ahora)
 
             cuerpo = {
                 "ruta": data.ruta,
@@ -223,6 +220,7 @@ class SeguimientosController(Controller):
                 "avion_icao": (data.avion.icao if data.avion else "") or None,
                 "matricula_adsb": matricula_adsb,
                 "plan_id": str(data.plan_id),
+                "ruta_orientativa": False,
                 "salida_prevista": salida.isoformat(),
                 "duracion_prevista_min": duracion,
                 "vence_at": vence.isoformat(),
@@ -233,6 +231,7 @@ class SeguimientosController(Controller):
                     tabla()
                     .select("id,token,vence_at,mostrar_matricula,plan_id")
                     .eq("user_id", user_id)
+                    .eq("plan_id", str(data.plan_id))
                     .is_("terminado_at", "null")
                     .limit(1)
                     .execute()
@@ -253,17 +252,13 @@ class SeguimientosController(Controller):
             existente = _activo()
             if existente:
                 f = existente[0]
-                if f.get("plan_id") != str(data.plan_id):
-                    raise ClientException(
-                        detail="Ya estás compartiendo otro vuelo. Dejá de compartirlo antes de compartir éste.",
-                        status_code=409,
-                    )
                 cambios = dict(cuerpo)
                 if f.get("mostrar_matricula"):
                     cambios["avion_matricula"] = texto_matricula[:12] or None
                 r = tabla().update(cambios).eq("id", f["id"]).eq("user_id", user_id).execute()
                 return _respuesta({**f, **(r.data[0] if r.data else cuerpo)}, True)
 
+            _controlar_tope(tabla, user_id)
             fila = {
                 "user_id": user_id,
                 "token": nuevo_token(),
@@ -277,8 +272,9 @@ class SeguimientosController(Controller):
             try:
                 r = tabla().insert(fila).execute()
             except APIError:
+                # Dos pedidos a la vez para el mismo plan: se devuelve el que ganó.
                 otra = _activo()
-                if otra and otra[0].get("plan_id") == str(data.plan_id):
+                if otra:
                     return _respuesta(otra[0], True)
                 raise
             if not r.data:
@@ -286,6 +282,132 @@ class SeguimientosController(Controller):
             return _respuesta(r.data[0], False)
 
         return await asyncio.to_thread(_crear)
+
+    @post("/sin-plan", status_code=200)
+    async def sin_plan(self, request: Request, supabase_client: Client, data: SeguimientoSinPlan) -> SeguimientoCreado:
+        """
+        Comparte un vuelo **sin plan ni ruta** (migración 055): origen, destino y horario, para que la
+        familia sepa más o menos qué esperar. El avión se lee de la base con la sesión del piloto
+        (uno ajeno es un 404, un simulador un 400); la matrícula nunca viene del pedido. Con
+        `seguimiento_id` se actualiza ese link —el token no cambia— si es del piloto, sigue sin
+        terminar y es de los de sin plan. Si el avión tiene ADS-B, la familia lo ve volar.
+        """
+        user_id = str(request.state.user.id)
+        ahora = _ahora()
+
+        def _crear() -> SeguimientoCreado:
+            avion = (
+                supabase_client.table("aircraft")
+                .select("id,registration,icao,type,is_simulator")
+                .eq("id", str(data.aircraft_id))
+                .eq("user_id", user_id)
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+            if not avion:
+                raise NotFoundException("Ese avión no existe.")
+            avion = avion[0]
+            if avion.get("is_simulator"):
+                raise ClientException(detail="Un simulador no se comparte: no vuela.", status_code=400)
+            texto_matricula = (avion.get("registration") or "").strip()
+            matricula_adsb = matricula_para_adsb(texto_matricula)
+            motivo = salida_aceptable(data.salida, ahora)
+            if motivo:
+                raise ClientException(detail=motivo, status_code=400)
+            vence = vencimiento_desde_plan(data.salida, data.duracion_min, ahora)
+            mostrar = bool(data.mostrar_matricula and texto_matricula)
+            tabla = lambda: supabase_client.table("seguimientos_en_vivo")  # noqa: E731
+            _cerrar_vencidos(tabla, user_id, ahora)
+
+            cuerpo = {
+                "ruta": ruta_sin_plan(data.origen, data.destino),
+                "puntos": puntos_sin_plan(data.origen, data.destino),
+                "ruta_orientativa": True,
+                "plan_id": None,
+                "avion_tipo": ((avion.get("type") or "")[:60]) or None,
+                "avion_icao": ((avion.get("icao") or "")[:8]) or None,
+                "matricula_adsb": matricula_adsb,
+                "mostrar_matricula": mostrar,
+                "avion_matricula": (texto_matricula[:12] or None) if mostrar else None,
+                "salida_prevista": data.salida.isoformat(),
+                "duracion_prevista_min": data.duracion_min,
+                "vence_at": vence.isoformat(),
+            }
+
+            def _respuesta(f: Dict[str, Any], ya: bool) -> SeguimientoCreado:
+                return SeguimientoCreado(
+                    id=f["id"],
+                    token=f["token"],
+                    vence_at=f["vence_at"],
+                    ya_existia=ya,
+                    mostrar_matricula=bool(f.get("mostrar_matricula")),
+                    salida_prevista=f.get("salida_prevista") or data.salida.isoformat(),
+                )
+
+            if data.seguimiento_id:
+                previo = (
+                    tabla()
+                    .select("id,token,ruta_orientativa")
+                    .eq("id", str(data.seguimiento_id))
+                    .eq("user_id", user_id)
+                    .is_("terminado_at", "null")
+                    .limit(1)
+                    .execute()
+                    .data
+                    or []
+                )
+                if not previo or not previo[0].get("ruta_orientativa"):
+                    raise NotFoundException(_NO_EXISTE)
+                r = tabla().update(cuerpo).eq("id", str(data.seguimiento_id)).eq("user_id", user_id).execute()
+                if not r.data:
+                    raise NotFoundException(_NO_EXISTE)
+                return _respuesta(r.data[0], True)
+
+            _controlar_tope(tabla, user_id)
+            perfil = supabase_client.table("profiles").select("first_name").eq("id", user_id).limit(1).execute().data or []
+            fila = {
+                "user_id": user_id,
+                "token": nuevo_token(),
+                "nombre": nombre_de_pila(perfil[0].get("first_name") if perfil else None),
+                **cuerpo,
+            }
+            r = tabla().insert(fila).execute()
+            if not r.data:
+                raise ClientException(detail="No se pudo empezar a compartir el vuelo.")
+            return _respuesta(r.data[0], False)
+
+        return await asyncio.to_thread(_crear)
+
+    @get("/activos")
+    async def activos(self, request: Request, supabase_client: Client) -> List[Dict[str, Any]]:
+        """
+        Los seguimientos del piloto que siguen sin terminar ni vencer (migración 055), para su pantalla
+        "Compartir tu vuelo": link, ruta, salida, de dónde vienen y quién los mira. Sólo los suyos
+        (`user_id` más el RLS), con la sesión; nada de esto sale a un link público.
+        """
+        user_id = str(request.state.user.id)
+        ahora = _ahora()
+
+        def _leer() -> List[Dict[str, Any]]:
+            filas = (
+                supabase_client.table("seguimientos_en_vivo")
+                .select(
+                    "id,token,ruta,puntos,salida_prevista,duracion_prevista_min,vence_at,terminado_at,plan_id,ruta_orientativa,"
+                    "mostrar_matricula,avion_tipo,aterrizo_at,created_at,vistas,vistos_total,ultima_vista_at"
+                )
+                .eq("user_id", user_id)
+                .is_("terminado_at", "null")
+                .order("created_at", desc=True)
+                .limit(50)
+                .execute()
+                .data
+                or []
+            )
+            return [resumen_de_activo(f, ahora) for f in filas if esta_activo(f, ahora)]
+
+        return await asyncio.to_thread(_leer)
 
     @get("/de-plan/{plan_id:uuid}")
     async def de_plan(self, request: Request, supabase_client: Client, plan_id: UUID) -> Dict[str, Any]:
@@ -388,7 +510,8 @@ class SeguimientosController(Controller):
             if not esta_activo(filas[0], ahora):
                 raise ClientException(detail="Este seguimiento ya terminó.", status_code=410)
             tabla.update(
-                {"ruta": data.ruta, "puntos": [[p.lat, p.lon, p.codigo, p.nombre] for p in data.puntos]}
+                # Con una ruta de verdad cargada (el Mapa en vuelo), deja de ser "orientativa" (055).
+                {"ruta": data.ruta, "puntos": [[p.lat, p.lon, p.codigo, p.nombre] for p in data.puntos], "ruta_orientativa": False}
             ).eq("id", str(seguimiento_id)).eq("user_id", user_id).execute()
 
         await asyncio.to_thread(_cambiar)
@@ -497,7 +620,7 @@ class SeguimientosPublicosController(Controller):
             cliente = SupabaseManager.get_service_client()
             filas = (
                 cliente.table("seguimientos_en_vivo")
-                .select("nombre,ruta,puntos,created_at,avion_tipo,avion_icao,avion_matricula,mostrar_matricula,vence_at,terminado_at,ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido,vistas,vistos_total,matricula_adsb,salida_prevista,aterrizo_at")
+                .select("nombre,ruta,puntos,created_at,avion_tipo,avion_icao,avion_matricula,mostrar_matricula,vence_at,terminado_at,ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido,vistas,vistos_total,matricula_adsb,salida_prevista,aterrizo_at,ruta_orientativa")
                 .eq("token", token)
                 .limit(1)
                 .execute()

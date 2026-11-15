@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { detalleDeVistas } from "@/lib/seguimiento";
+import { seguimientoParaAdoptar } from "@/actions/seguimiento";
+import { detalleDeVistas, type SeguimientoGuardado } from "@/lib/seguimiento";
 import type { SeguimientoEnVivo } from "./useSeguimientoEnVivo";
 
 /**
@@ -11,6 +12,11 @@ import type { SeguimientoEnVivo } from "./useSeguimientoEnVivo";
  *
  * El estado es del hook (`useSeguimientoEnVivo`), que vive arriba, en el Mapa, junto al GPS: acá
  * sólo se dibuja. Estética de la pantalla de vuelo: rótulos en mono y cian, sin caja.
+ *
+ * **Con varios links a la vez** (3.41.0): si el piloto ya mandó el de un vuelo "sin plan" que sale por
+ * estas horas, al tocar "Compartir mi vuelo" se le ofrece **usar ese** (el GPS se manda al mismo token
+ * y la familia no recibe otro) o crear uno nuevo. La búsqueda es un pedido al tocar, nunca al dibujar
+ * (invariante 15).
  *
  * Qué ve la familia está dicho antes de compartir: ahí mismo, en una línea. **La matrícula no sale a
  * menos que el piloto prenda "Mostrar la matrícula"**: apagado por defecto, y se puede cambiar
@@ -59,11 +65,33 @@ export async function mandarLink(url: string): Promise<"compartido" | "cancelado
 }
 
 export default function CompartirSeguimiento({ seguimiento, className = "" }: { seguimiento: SeguimientoEnVivo; className?: string }) {
-  const { estado, url, error, sinSenal, vistas, delPlan, compartir, dejarDeCompartir } = seguimiento;
+  const { estado, url, error, sinSenal, vistas, delPlan, linkPrevio, usarLinkPrevio, compartir, dejarDeCompartir } = seguimiento;
   const [aviso, setAviso] = useState<Aviso>(null);
+  const [buscando, setBuscando] = useState(false);
+  const [oferta, setOferta] = useState<{ guardado: SeguimientoGuardado; trayecto: string } | null>(null);
+
+  // Al tocar: si hay un link sin plan de este vuelo, se ofrece usarlo; si no (o no se pudo leer), uno nuevo.
+  const alTocar = async () => {
+    setAviso(null);
+    setBuscando(true);
+    let previo: { guardado: SeguimientoGuardado; trayecto: string } | null = null;
+    try {
+      previo = await seguimientoParaAdoptar();
+    } catch {
+      previo = null;
+    } finally {
+      setBuscando(false);
+    }
+    if (previo) {
+      setOferta(previo);
+      return;
+    }
+    await alCompartir();
+  };
 
   const alCompartir = async () => {
     setAviso(null);
+    setOferta(null);
     const link = await compartir();
     if (!link) return;
     const r = await mandarLink(link);
@@ -83,12 +111,30 @@ export default function CompartirSeguimiento({ seguimiento, className = "" }: { 
       <div className={className}>
         <button
           type="button"
-          onClick={alCompartir}
-          disabled={estado === "creando"}
+          onClick={alTocar}
+          disabled={estado === "creando" || buscando || oferta !== null}
           className="flex w-full items-center justify-center gap-2 rounded-full bg-aviation-cyan px-4 py-2.5 text-sm font-bold text-noche transition-colors hover:bg-sky-300 disabled:opacity-50"
         >
-          {estado === "creando" ? "Creando el link…" : "Compartir mi vuelo"}
+          {estado === "creando" ? "Creando el link…" : buscando ? "Un momento…" : "Compartir mi vuelo"}
         </button>
+        {oferta && (
+          <div className="mt-2 space-y-1.5 border-t border-white/10 pt-2">
+            <p className="text-xs text-white/70">Ya le mandaste a tu familia el link de este vuelo.</p>
+            <button
+              type="button"
+              onClick={() => {
+                usarLinkPrevio(oferta.guardado);
+                setOferta(null);
+              }}
+              className="w-full rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-white/20"
+            >
+              Usar el link que ya mandaste ({oferta.trayecto})
+            </button>
+            <button type="button" onClick={() => void alCompartir()} className={`${rotulo} w-full py-2 text-white/60 hover:text-white`}>
+              Uno nuevo
+            </button>
+          </div>
+        )}
         <p className="mt-1.5 text-center text-[11px] leading-snug text-white/50">
           Quien tenga el link ve dónde vas, tu ruta, el modelo del avión y el clima del destino, sin cuenta, hasta que toques Terminar.
         </p>
@@ -116,6 +162,9 @@ export default function CompartirSeguimiento({ seguimiento, className = "" }: { 
       </div>
       {delPlan && (
         <p className="mt-1.5 text-xs text-white/70">Tu familia ya tiene el link de este vuelo, el del plan: el GPS del teléfono se suma al ADS-B en el mismo link.</p>
+      )}
+      {linkPrevio && (
+        <p className="mt-1.5 text-xs text-white/70">Estás usando el link que ya mandaste: el GPS del teléfono se suma y la ruta que volás reemplaza la línea directa.</p>
       )}
       {detalleDeVistas(vistas) && <p className="mt-1.5 text-xs text-white/70">{detalleDeVistas(vistas)}</p>}
       <InterruptorMatricula seguimiento={seguimiento} />

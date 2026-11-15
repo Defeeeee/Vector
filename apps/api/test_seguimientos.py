@@ -19,6 +19,13 @@ from src.services.seguimientos import (
     RutaNueva,
     SeguimientoCrear,
     SeguimientoDesdePlan,
+    SeguimientoSinPlan,
+    PuntoRuta,
+    TOPE_ACTIVOS,
+    mensaje_del_tope,
+    puntos_sin_plan,
+    resumen_de_activo,
+    ruta_sin_plan,
     SEGUNDOS_ENTRE_VISTAS,
     TOPE_RECORRIDO,
     TOPE_VISITANTES,
@@ -197,7 +204,7 @@ check("la última posición dice de dónde salió", v["ultima"]["fuente"] == "gp
 check("los puntos con nombre", vista_publica({**fila, "puntos": [[-34.45, -58.59, "SADF", "San Fernando"]]}, T0)["puntos"] == [[-34.45, -58.59, "SADF", "San Fernando"]])
 check("la hora de inicio", v["inicio"] == T0.isoformat())
 check("el avión, sin matrícula", v["avion"] == {"tipo": "Cessna 152", "icao": "C152"})
-CLAVES_PUBLICAS = {"nombre", "ruta", "puntos", "avion", "inicio", "estado", "fase", "salida_prevista", "con_adsb", "ultima", "recorrido", "ahora"}
+CLAVES_PUBLICAS = {"nombre", "ruta", "puntos", "avion", "inicio", "estado", "fase", "salida_prevista", "con_adsb", "ultima", "recorrido", "ahora", "ruta_orientativa"}
 check("las claves son exactamente las permitidas", set(v) == CLAVES_PUBLICAS)
 check("las claves de la última posición", set(v["ultima"]) == {"lat", "lon", "alt_ft", "gs_kt", "track", "hora", "fuente"})
 # La matrícula: sólo con el interruptor prendido. Apagado no sale aunque la fila la tuviera.
@@ -461,6 +468,35 @@ for etiqueta, vv in (("plan", v2), ("mapa", v3)):
     check(f"({etiqueta}) la matrícula de ADS-B no sale en ningún campo", "LVABC" not in repr(vv) and "LV-ABC" not in repr(vv))
 con_matricula = vista_publica({**fila_plan, "avion_matricula": "LV-ABC", "mostrar_matricula": True}, AHORA, [])
 check("la visible sigue siendo sólo con el interruptor", con_matricula["avion"]["matricula"] == "LV-ABC" and "matricula" not in v0["avion"])
+
+# --- varios a la vez y compartir sin plan (migración 055) ---
+check("el tope de activos es 5", TOPE_ACTIVOS == 5)
+check("con 4 activos cabe uno más", mensaje_del_tope(4) is None)
+check("con 5 no cabe y el mensaje es claro", "máximo" in (mensaje_del_tope(5) or "") and mensaje_del_tope(9) is not None)
+_o = PuntoRuta(lat=-34.56, lon=-58.96, codigo="SADM", nombre="Morón")
+_d = PuntoRuta(lat=-34.8, lon=-58.5, codigo="SAEZ", nombre="Ezeiza")
+check("la ruta sin plan son los dos códigos", ruta_sin_plan(_o, _d) == "SADM SAEZ")
+check("sin código, el nombre", ruta_sin_plan(PuntoRuta(lat=0, lon=0, nombre="Campo"), _d) == "Campo SAEZ")
+check("los puntos sin plan son origen y destino, con nombre", puntos_sin_plan(_o, _d) == [[-34.56, -58.96, "SADM", "Morón"], [-34.8, -58.5, "SAEZ", "Ezeiza"]])
+_base = {"aircraft_id": "11111111-1111-1111-1111-111111111111", "origen": _o.model_dump(), "destino": _d.model_dump(), "salida": "2026-11-15T15:30:00Z", "duracion_min": 90}
+sp = SeguimientoSinPlan(**_base)
+check("sin plan: la salida queda en UTC y la matrícula apagada por defecto", sp.salida.utcoffset() == timedelta(0) and sp.mostrar_matricula is False and sp.seguimiento_id is None)
+check("sin plan: una hora con otra zona se pasa a UTC", SeguimientoSinPlan(**{**_base, "salida": "2026-11-15T12:30:00-03:00"}).salida == sp.salida)
+check("sin plan: una hora sin zona se rechaza", falla(lambda: SeguimientoSinPlan(**{**_base, "salida": "2026-11-15T12:30:00"})))
+check("sin plan: menos de 10 minutos se rechaza", falla(lambda: SeguimientoSinPlan(**{**_base, "duracion_min": 9})))
+check("sin plan: más de 12 horas se rechaza", falla(lambda: SeguimientoSinPlan(**{**_base, "duracion_min": 721})))
+check("sin plan: sin avión se rechaza", falla(lambda: SeguimientoSinPlan(**{k: x for k, x in _base.items() if k != "aircraft_id"})))
+check("sin plan: vence a la salida más la duración más el margen", vencimiento_desde_plan(sp.salida, 90, sp.salida - timedelta(hours=1)) == sp.salida + timedelta(minutes=90) + MARGEN_DE_VENCIMIENTO)
+check("sin plan: vale la misma regla de salida que un plan", salida_aceptable(sp.salida + timedelta(hours=30), sp.salida) is not None and salida_aceptable(sp.salida, sp.salida) is None)
+_fila_sp = {"nombre": "Lucía", "ruta": "SADM SAEZ", "puntos": puntos_sin_plan(_o, _d), "ruta_orientativa": True, "salida_prevista": sp.salida.isoformat(), "matricula_adsb": "LVABC", "avion_matricula": None, "mostrar_matricula": False,
+            "vence_at": (sp.salida + timedelta(hours=4)).isoformat(), "terminado_at": None, "created_at": T0.isoformat(), "plan_id": None, "user_id": "u-secreto"}
+_vsp = vista_publica(_fila_sp, sp.salida - timedelta(minutes=20))
+check("público: marca la ruta como orientativa", _vsp["ruta_orientativa"] is True and vista_publica({**_fila_sp, "ruta_orientativa": False}, T0)["ruta_orientativa"] is False)
+check("público: un vuelo sin plan sale 'antes de salir' y sin nada de más", _vsp["fase"] == "antes_de_salir" and set(_vsp) == CLAVES_PUBLICAS and "u-secreto" not in repr(_vsp) and "LVABC" not in repr(_vsp))
+check("público: sin ruta_orientativa en la fila (viejos) es falso", vista_publica({k: x for k, x in _fila_sp.items() if k != "ruta_orientativa"}, T0)["ruta_orientativa"] is False)
+_act = resumen_de_activo({**_fila_sp, "id": "i1", "token": "t1", "vistas": {"abcdefghijklmnop": int(T0.timestamp())}, "vistos_total": 2, "duracion_prevista_min": 90, "avion_tipo": "Tecnam P2008"}, T0 + timedelta(seconds=10))
+check("activo: trae lo que necesita la pantalla del piloto", _act["id"] == "i1" and _act["token"] == "t1" and _act["ruta_orientativa"] is True and _act["plan_id"] is None and _act["duracion_prevista_min"] == 90 and _act["mirando_ahora"] == 1 and _act["vistos_total"] == 2)
+check("activo: no filtra la matrícula de ADS-B ni el user_id", "LVABC" not in repr(_act) and "u-secreto" not in repr(_act))
 
 # --- el borrado ---
 check("se borra a los 30 días", limite_de_retencion(T0).startswith("2026-10-12T12:00:00") and DIAS_DE_RETENCION == 30)

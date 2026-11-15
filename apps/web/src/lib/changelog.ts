@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.41.0",
+    fecha: "2026-11-15",
+    titulo: "Compartí tu vuelo sin plan",
+    novedades: [
+      {
+        icono: "compartir",
+        titulo: "Un link para tu familia, aunque no armes plan",
+        texto: "Elegí el avión, de dónde salís, adónde vas y a qué hora, y mandá el link: tu familia ve el horario y, si el avión tiene ADS-B, lo ve volar y aterrizar. Si salís más tarde, cambiás el horario y el link sigue siendo el mismo. Está en Preparar vuelo → Mapa → «Compartir tu vuelo con tu familia».",
+        href: "/dashboard/mapa/compartir",
+        cta: "Compartir un vuelo",
+      },
+      {
+        icono: "avion",
+        titulo: "Varios vuelos compartidos a la vez",
+        texto: "Ahora podés compartir más de un vuelo al mismo tiempo (hasta cinco): el plan de la mañana, el de la tarde y el que estás volando. Todos están juntos en «Compartir tu vuelo», con su link y quién lo mira.",
+        href: "/dashboard/mapa/compartir",
+        cta: "Ver lo que comparto",
+      },
+    ],
+  },
+  {
     version: "3.40.0",
     fecha: "2026-11-15",
     titulo: "Repasá tu vuelo",

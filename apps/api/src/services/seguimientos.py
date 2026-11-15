@@ -123,6 +123,12 @@ DURACION_POR_DEFECTO_MIN = 120
 SALIDA_MAXIMA_ADELANTO = timedelta(hours=24)
 SALIDA_MAXIMA_ATRASO = timedelta(hours=12)
 
+#: Migración 055: cuántos seguimientos sin terminar (y sin vencer) puede tener una cuenta a la vez.
+TOPE_ACTIVOS = 5
+#: Compartir un vuelo sin plan: la duración que se acepta, en minutos.
+DURACION_MINIMA_SIN_PLAN_MIN = 10
+DURACION_MAXIMA_SIN_PLAN_MIN = 720
+
 #: Migración 044: quién mira el link. Un id al azar del navegador de quien mira; nada más.
 VENTANA_MIRANDO_S = 45
 #: Una consulta del mismo id se anota como mucho cada tanto (la página pregunta cada ~15 s).
@@ -227,6 +233,31 @@ class SeguimientoDesdePlan(BaseModel):
     @classmethod
     def _sin_espacios_de_mas(cls, v: str) -> str:
         return " ".join(v.split())
+
+
+class SeguimientoSinPlan(BaseModel):
+    """
+    Compartir un vuelo **sin plan ni ruta** (migración 055): origen, destino, salida y duración
+    estimada. **El avión no viene con su matrícula**: el backend lee el `aircraft` del piloto con su
+    sesión (un avión ajeno es un 404) y de ahí salen la matrícula, el tipo y el ICAO. Con
+    `seguimiento_id` se actualiza ese link (el piloto sale más tarde) sin cambiar el token.
+    """
+
+    aircraft_id: UUID
+    origen: PuntoRuta
+    destino: PuntoRuta
+    #: ISO con zona; se pasa a UTC. Una hora sin zona no se acepta: sería adivinar.
+    salida: datetime
+    duracion_min: int = Field(ge=DURACION_MINIMA_SIN_PLAN_MIN, le=DURACION_MAXIMA_SIN_PLAN_MIN)
+    mostrar_matricula: bool = False
+    seguimiento_id: Optional[UUID] = None
+
+    @field_validator("salida")
+    @classmethod
+    def _con_zona(cls, v: datetime) -> datetime:
+        if v.tzinfo is None:
+            raise ValueError("La salida necesita zona horaria (UTC).")
+        return v.astimezone(timezone.utc)
 
 
 class RutaNueva(BaseModel):
@@ -487,6 +518,45 @@ def salida_aceptable(salida: datetime, ahora: datetime) -> Optional[str]:
     if ahora - salida > SALIDA_MAXIMA_ATRASO:
         return "La salida de ese plan fue hace más de 12 horas."
     return None
+
+
+def mensaje_del_tope(activos: int) -> Optional[str]:
+    """`None` si cabe uno más; si no, qué decirle al piloto (migración 055)."""
+    if activos >= TOPE_ACTIVOS:
+        return f"Ya estás compartiendo {TOPE_ACTIVOS} vuelos a la vez, que es el máximo. Dejá de compartir alguno para sumar otro."
+    return None
+
+
+def ruta_sin_plan(origen: "PuntoRuta", destino: "PuntoRuta") -> str:
+    """"SADM SAZS": los códigos de los dos puntos (o el nombre si no hay código)."""
+    return " ".join(x for x in ((origen.codigo or origen.nombre), (destino.codigo or destino.nombre)) if x)[:600]
+
+
+def puntos_sin_plan(origen: "PuntoRuta", destino: "PuntoRuta") -> List[List[Any]]:
+    return [[p.lat, p.lon, p.codigo, p.nombre] for p in (origen, destino)]
+
+
+def resumen_de_activo(fila: Dict[str, Any], ahora: datetime) -> Dict[str, Any]:
+    """
+    Un seguimiento activo para **la pantalla del propio piloto** (`GET /seguimientos/activos`): su
+    link, de dónde viene, cuándo sale y quién lo mira. Nunca sale de acá a un link público.
+    """
+    return {
+        "id": fila.get("id"),
+        "token": fila.get("token"),
+        "ruta": fila.get("ruta") or "",
+        "puntos": _puntos_publicos(fila.get("puntos")),
+        "salida_prevista": fila.get("salida_prevista"),
+        "duracion_prevista_min": fila.get("duracion_prevista_min"),
+        "vence_at": fila.get("vence_at"),
+        "plan_id": fila.get("plan_id"),
+        "ruta_orientativa": bool(fila.get("ruta_orientativa")),
+        "mostrar_matricula": bool(fila.get("mostrar_matricula")),
+        "avion_tipo": fila.get("avion_tipo"),
+        "aterrizo_at": fila.get("aterrizo_at"),
+        "created_at": fila.get("created_at"),
+        **resumen_de_vistas(fila, ahora),
+    }
 
 
 def matricula_para_adsb(crudo: Optional[str]) -> Optional[str]:
@@ -905,6 +975,8 @@ def vista_publica(fila: Dict[str, Any], ahora: datetime, adsb: Any = None) -> Di
         "nombre": fila.get("nombre") or "Un piloto",
         "ruta": fila.get("ruta") or "",
         "puntos": _puntos_publicos(fila.get("puntos")),
+        # Migración 055: el piloto no cargó la ruta; la línea entre origen y destino es directa.
+        "ruta_orientativa": bool(fila.get("ruta_orientativa")),
         "avion": _avion_publico(fila),
         "inicio": inicio.astimezone(timezone.utc).isoformat() if inicio else None,
         "estado": estado_de(fila, ahora),

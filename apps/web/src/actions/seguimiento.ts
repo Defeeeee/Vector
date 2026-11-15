@@ -1,16 +1,22 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/api";
 import { esErrorDeRedirect } from "@/lib/redirect-error";
+import { activosDeRespuesta, candidatoParaAdoptar, trayectoDeActivo, type SeguimientoActivo } from "@/lib/seguimientos-activos";
+import type { SeguimientoGuardado } from "@/lib/seguimiento";
 
 /**
  * Seguir el vuelo en vivo (`/seguimientos` del backend, migración 041): empezar y terminar. La
  * posición cada ~15 s no va por acá sino por `/api/seguimiento/posicion`: las server actions de
  * Next se encolan de a una y se cortan si la página navega.
  *
- * No hay `revalidatePath`: ninguna pantalla del dashboard muestra un seguimiento, y el estado
- * "Compartiendo" es del Mapa (invariante 8, que pide revalidar donde se muestra el dato).
+ * Desde la 3.41.0 hay una pantalla que lista los vuelos que se comparten (`/dashboard/mapa/compartir`,
+ * migración 055): lo que crea o termina un seguimiento la revalida (invariante 8). El resto del
+ * dashboard no los muestra; el estado "Compartiendo" del Mapa es del Mapa.
  */
+
+const PANTALLA_COMPARTIR = "/dashboard/mapa/compartir";
 
 async function detalle(res: Response, porDefecto: string): Promise<string> {
   try {
@@ -32,7 +38,7 @@ export interface SeguimientoCreado {
   salidaPrevista?: string | null;
 }
 
-/** Empieza a compartir (o devuelve el seguimiento que el piloto ya tenía activo). */
+/** Empieza a compartir. Desde la 055 crea siempre uno nuevo (la web retoma el suyo por `localStorage`). */
 export async function crearSeguimiento(datos: {
   ruta: string;
   puntos: { lat: number; lon: number; codigo: string; nombre?: string }[];
@@ -60,6 +66,7 @@ export async function crearSeguimiento(datos: {
       cache: "no-store",
     });
     if (!res.ok) return { error: await detalle(res, "No se pudo empezar a compartir el vuelo.") };
+    revalidatePath(PANTALLA_COMPARTIR);
     const j = (await res.json()) as { id: string; token: string; vence_at: string; ya_existia?: boolean; mostrar_matricula?: boolean; salida_prevista?: string | null };
     return {
       seguimiento: { id: j.id, token: j.token, venceAt: j.vence_at, yaExistia: Boolean(j.ya_existia), mostrarMatricula: Boolean(j.mostrar_matricula), salidaPrevista: j.salida_prevista ?? null },
@@ -76,6 +83,7 @@ export async function terminarSeguimiento(id: string): Promise<{ ok: true } | { 
     const res = await apiFetch(`/seguimientos/${encodeURIComponent(id)}/terminar`, { method: "POST", cache: "no-store" });
     // Un 404 es un seguimiento que ya no está: para el piloto, lo mismo que terminado.
     if (!res.ok && res.status !== 404) return { error: await detalle(res, "No se pudo dejar de compartir.") };
+    revalidatePath(PANTALLA_COMPARTIR);
     return { ok: true };
   } catch (e) {
     if (esErrorDeRedirect(e)) throw e;
@@ -128,7 +136,7 @@ export async function cambiarMatriculaVisible(id: string, mostrar: boolean, matr
  * Comparte un plan de vuelo sin el teléfono (migración 045, `POST /seguimientos/desde-plan`). **La
  * matrícula, la salida y la duración las toma el backend del plan guardado**: del navegador sólo van
  * la ruta con sus puntos ya ubicados y el tipo de avión. Si el plan ya se compartía, lo actualiza
- * (la salida pudo cambiar con una demora). 409 si el piloto ya comparte otro vuelo.
+ * (la salida pudo cambiar con una demora). Desde la 055 se puede compartir más de un vuelo a la vez.
  */
 export async function compartirPlanDeVuelo(datos: {
   planId: string;
@@ -150,6 +158,7 @@ export async function compartirPlanDeVuelo(datos: {
       cache: "no-store",
     });
     if (!res.ok) return { error: await detalle(res, "No se pudo compartir el vuelo.") };
+    revalidatePath(PANTALLA_COMPARTIR);
     const j = (await res.json()) as { id: string; token: string; vence_at: string; ya_existia?: boolean; mostrar_matricula?: boolean; salida_prevista?: string | null };
     return {
       seguimiento: { id: j.id, token: j.token, venceAt: j.vence_at, yaExistia: Boolean(j.ya_existia), mostrarMatricula: Boolean(j.mostrar_matricula), salidaPrevista: j.salida_prevista ?? null },
@@ -207,4 +216,76 @@ export async function leerSeguimientoDelPlan(planId: string): Promise<Seguimient
     if (esErrorDeRedirect(e)) throw e;
     return null;
   }
+}
+
+
+/**
+ * Los vuelos que el piloto está compartiendo (`GET /seguimientos/activos`, migración 055). `null` si
+ * no se pudo leer: la pantalla no dice "no estás compartiendo nada" de lo que no sabe (invariante 2).
+ */
+export async function leerSeguimientosActivos(): Promise<SeguimientoActivo[] | null> {
+  try {
+    const res = await apiFetch("/seguimientos/activos", { cache: "no-store" });
+    if (!res.ok) return null;
+    return activosDeRespuesta(await res.json().catch(() => null));
+  } catch (e) {
+    if (esErrorDeRedirect(e)) throw e;
+    return null;
+  }
+}
+
+/**
+ * Compartir un vuelo **sin plan ni ruta** (`POST /seguimientos/sin-plan`, migración 055): origen,
+ * destino, salida (ISO en UTC, ya convertida de la hora argentina) y duración estimada. El avión va
+ * por id: el backend lee de la base la matrícula, el tipo y el ICAO. Con `seguimientoId` actualiza ese
+ * link (el piloto sale más tarde) sin cambiar el token.
+ */
+export async function compartirSinPlan(datos: {
+  aircraftId: string;
+  origen: { lat: number; lon: number; codigo: string; nombre: string };
+  destino: { lat: number; lon: number; codigo: string; nombre: string };
+  salida: string;
+  duracionMin: number;
+  mostrarMatricula: boolean;
+  seguimientoId?: string | null;
+}): Promise<{ seguimiento: SeguimientoCreado } | { error: string }> {
+  try {
+    const punto = (p: { lat: number; lon: number; codigo: string; nombre: string }) => ({ lat: p.lat, lon: p.lon, codigo: p.codigo.slice(0, 20), nombre: p.nombre.slice(0, 60) });
+    const res = await apiFetch("/seguimientos/sin-plan", {
+      method: "POST",
+      body: JSON.stringify({
+        aircraft_id: datos.aircraftId,
+        origen: punto(datos.origen),
+        destino: punto(datos.destino),
+        salida: datos.salida,
+        duracion_min: datos.duracionMin,
+        mostrar_matricula: datos.mostrarMatricula,
+        seguimiento_id: datos.seguimientoId ?? null,
+      }),
+      cache: "no-store",
+    });
+    if (!res.ok) return { error: await detalle(res, "No se pudo compartir el vuelo.") };
+    revalidatePath(PANTALLA_COMPARTIR);
+    const j = (await res.json()) as { id: string; token: string; vence_at: string; ya_existia?: boolean; mostrar_matricula?: boolean; salida_prevista?: string | null };
+    return {
+      seguimiento: { id: j.id, token: j.token, venceAt: j.vence_at, yaExistia: Boolean(j.ya_existia), mostrarMatricula: Boolean(j.mostrar_matricula), salidaPrevista: j.salida_prevista ?? null },
+    };
+  } catch (e) {
+    if (esErrorDeRedirect(e)) throw e;
+    return { error: "Error de conexión con el servidor." };
+  }
+}
+
+/**
+ * Al tocar "Compartir mi vuelo" en Volar: el link "sin plan" que el piloto ya mandó para este vuelo
+ * (salida entre 1 h antes y 3 h después de ahora), para ofrecer usarlo en vez de crear otro. Es una
+ * lectura, y se pide al tocar, no al dibujar (invariante 15). `null` si no hay o no se pudo leer: el
+ * Mapa crea uno nuevo, como siempre.
+ */
+export async function seguimientoParaAdoptar(): Promise<{ guardado: SeguimientoGuardado; trayecto: string } | null> {
+  const lista = await leerSeguimientosActivos();
+  if (!lista) return null;
+  const c = candidatoParaAdoptar(lista, Date.now());
+  if (!c) return null;
+  return { guardado: { id: c.id, token: c.token, venceAt: c.venceAt, mostrarMatricula: c.mostrarMatricula }, trayecto: trayectoDeActivo(c) };
 }

@@ -336,6 +336,7 @@ export function normalizar(d: SeguimientoPublico): SeguimientoPublico {
     recorrido: (d.recorrido ?? []).map((p) => [p[0], p[1], p[2] ?? null, p[3] ?? null, p[4] ?? "gps"] as PuntoRecorrido),
     fase: d.fase,
     salida_prevista: d.salida_prevista ?? null,
+    ruta_orientativa: d.ruta_orientativa ?? false,
     con_adsb: d.con_adsb ?? false,
     ultima: d.ultima ? { ...d.ultima, fuente: d.ultima.fuente ?? "gps" } : null,
   };

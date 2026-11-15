@@ -34,6 +34,7 @@ const OTRAS: { titulo: string; detalle: string; href: string; palabras: string }
   { titulo: "Hangar", detalle: "Tu perfil, licencia, CMA, aviones y libros", href: "/dashboard/settings", palabras: "perfil ajustes configuracion licencia cma avion aviones libros whatsapp cuenta" },
   { titulo: "Novedades", detalle: "Lo nuevo en Vector", href: "/dashboard/novedades", palabras: "cambios version changelog" },
   { titulo: "Auditoría", detalle: "Lo que conviene revisar en tu libro", href: "/dashboard/history/auditoria", palabras: "auditoria errores revisar salud libro" },
+  { titulo: "Compartir tu vuelo", detalle: "Un link para tu familia: origen, destino y horario, sin plan", href: "/dashboard/mapa/compartir", palabras: "compartir seguir vuelo familia link whatsapp seguimiento sin plan avisar" },
   { titulo: "Planilla de navegación", detalle: "Rumbos, tiempos y combustible de la ruta", href: "/dashboard/mapa/planilla", palabras: "planificador planilla navegacion combustible viento rumbo" },
   { titulo: "Buscar pilotos", detalle: "Encontrá a alguien por su @ o su nombre", href: "/dashboard/pilotos/buscar", palabras: "buscar pilotos seguir amigos" },
   { titulo: "Publicar en la red", detalle: "Una foto o un vuelo para tu red", href: "/dashboard/pilotos/publicar", palabras: "publicacion foto compartir" },

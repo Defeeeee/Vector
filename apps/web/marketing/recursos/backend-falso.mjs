@@ -175,6 +175,30 @@ function vistaPlan(tipo) {
   const ultima = { lat: u[0], lon: u[1], alt_ft: aterrizo ? null : u[2], gs_kt: aterrizo ? 4 : 96, track: 330, hora: iso(u[3] * 1000), fuente: "adsb" };
   return { ...base, inicio: iso(ahora - 3 * 3600e3), estado: aterrizo ? "terminado" : "en_vuelo", fase: aterrizo ? "aterrizo" : "volando", salida_prevista: iso(t0 - 5 * 60e3), ultima, recorrido };
 }
+// Varios seguimientos a la vez y "sin plan" (migración 055), en memoria. `compartidos` son los links que el piloto
+// tiene andando (los que lista GET /seguimientos/activos): arranca con uno de plan y uno sin plan. Tokens de 32
+// caracteres para abrir /seguir/<token> a mano; los sin plan nuevos son tokenSinPlan...N. Tope de 5, como el real.
+const tokenCompartido = (n) => `tokenSinPlan${String(n).padStart(20, "0")}`;
+const compartidos = new Map();
+{
+  const ahora = Date.now();
+  const alta = (e) => compartidos.set(e.id, e);
+  alta({ id: "c0000000-0000-4000-8000-000000000001", token: TOKENS_PLAN.antes, plan_id: "d0000000-0000-4000-8000-000000000001", ruta_orientativa: false, ruta: "SADF VM SAAV", puntos: puntosDemo,
+    salida: ahora + 40 * 60e3, duracion: 75, tipo: "Cessna 152", mostrar: false, creado: ahora - 3600e3 });
+  alta({ id: "c0000000-0000-4000-8000-000000000002", token: tokenCompartido(1), plan_id: null, ruta_orientativa: true, ruta: "SADM SAZS",
+    puntos: [[-34.6762, -58.6428, "SADM", "Morón"], [-37.2374, -59.2279, "SAZT", "Tandil"]],
+    salida: ahora + 90 * 60e3, duracion: 100, tipo: "Cessna 152", mostrar: false, creado: ahora - 600e3 });
+}
+let contadorCompartidos = 1;
+const activoDe = (e) => ({
+  id: e.id, token: e.token, ruta: e.ruta, puntos: e.puntos, salida_prevista: iso(e.salida), duracion_prevista_min: e.duracion,
+  vence_at: iso(e.salida + (e.duracion + 120) * 60e3), plan_id: e.plan_id, ruta_orientativa: e.ruta_orientativa, mostrar_matricula: e.mostrar,
+  avion_tipo: e.tipo, aterrizo_at: null, created_at: iso(e.creado), mirando_ahora: e.plan_id ? 1 : 0, vistos_total: e.plan_id ? 3 : 0, ultima_vista_at: e.plan_id ? iso(Date.now() - 60e3) : null, ahora: iso(Date.now()),
+});
+function vistaCompartido(e) {
+  return { nombre: "Lucía", ruta: e.ruta, puntos: e.puntos, ruta_orientativa: e.ruta_orientativa, avion: { tipo: e.tipo, icao: "C152", ...(e.mostrar ? { matricula: "LV-ABC" } : {}) },
+    inicio: iso(e.creado), estado: "en_vuelo", fase: "antes_de_salir", salida_prevista: iso(e.salida), con_adsb: true, ultima: null, recorrido: [], ahora: iso(Date.now()) };
+}
 const arranquePlan = Date.now();
 // `ADSB_VIVO=LV-HQG`: el token "volando" muestra ese avión con sus posiciones reales de la API abierta de
 // adsb.fi (uso no comercial), pedidas como mucho cada 10 s y sólo mientras alguien mira. Sólo para probar en
@@ -662,6 +686,36 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     res.writeHead(ok ? 200 : 404, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(ok ? { id: sp.id, token: sp.token, vence_at: sp.vence.toISOString(), activo: !sp.terminado, aterrizo_at: null, terminado_at: null, mostrar_matricula: sp.mostrar, salida_prevista: sp.salida.toISOString(), mirando_ahora: 1, vistos_total: 2, ultima_vista_at: new Date().toISOString(), ahora: new Date().toISOString() } : { detail: "Ese seguimiento no existe." }));
   }
+  // Varios seguimientos a la vez y compartir sin plan (migración 055).
+  if (ruta === "/api/seguimientos/activos" && req.method === "GET") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify([...compartidos.values()].sort((a, b) => b.creado - a.creado).map(activoDe)));
+  }
+  if (ruta === "/api/seguimientos/sin-plan" && req.method === "POST") {
+    const responder = (estado, cuerpo) => { res.writeHead(estado, { "Content-Type": "application/json" }); return res.end(JSON.stringify(cuerpo)); };
+    const avion = aviones.find((a) => a.id === json.aircraft_id);
+    if (!avion) return responder(404, { detail: "Ese avión no existe." });
+    if (avion.is_simulator) return responder(400, { detail: "Un simulador no se comparte: no vuela." });
+    const salida = Date.parse(json.salida ?? "");
+    if (Number.isNaN(salida)) return responder(422, { detail: "La salida necesita zona horaria (UTC)." });
+    if (salida - Date.now() > 24 * 3600e3) return responder(400, { detail: "Ese vuelo sale dentro de más de 24 horas: compartilo más cerca de la salida." });
+    if (Date.now() - salida > 12 * 3600e3) return responder(400, { detail: "La salida de ese plan fue hace más de 12 horas." });
+    if (!(json.duracion_min >= 10 && json.duracion_min <= 720)) return responder(422, { detail: "La duración tiene que estar entre 10 minutos y 12 horas." });
+    const campos = { ruta_orientativa: true, plan_id: null, ruta: [json.origen.codigo, json.destino.codigo].filter(Boolean).join(" "),
+      puntos: [json.origen, json.destino].map((p) => [p.lat, p.lon, p.codigo ?? "", p.nombre ?? ""]), salida, duracion: json.duracion_min, tipo: avion.type, mostrar: Boolean(json.mostrar_matricula) };
+    let e = json.seguimiento_id ? compartidos.get(json.seguimiento_id) : null;
+    if (json.seguimiento_id && (!e || !e.ruta_orientativa)) return responder(404, { detail: "Ese seguimiento no existe." });
+    if (!e && compartidos.size >= 5) return responder(400, { detail: "Ya estás compartiendo 5 vuelos a la vez, que es el máximo. Dejá de compartir alguno para sumar otro." });
+    const ya = Boolean(e);
+    if (!e) { e = { id: crypto.randomUUID(), token: tokenCompartido(++contadorCompartidos), creado: Date.now() }; compartidos.set(e.id, e); }
+    Object.assign(e, campos);
+    return responder(200, { id: e.id, token: e.token, vence_at: iso(salida + (json.duracion_min + 120) * 60e3), ya_existia: ya, mostrar_matricula: e.mostrar, salida_prevista: iso(salida) });
+  }
+  if (/^\/api\/seguimientos\/[^/]+\/terminar$/.test(ruta) && req.method === "POST" && compartidos.has(ruta.split("/")[3])) {
+    compartidos.delete(ruta.split("/")[3]);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ terminado: true }));
+  }
   if (ruta === "/api/seguimientos" && req.method === "POST") {
     const sg = seguimiento && !seguimiento.terminado && new Date() < seguimiento.vence ? seguimiento : nuevoSeguimiento(json);
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -740,6 +794,11 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
   }
   if (ruta.startsWith("/api/publico/seguimientos/") && req.method === "GET") {
     const token = ruta.split("/").pop();
+    const compartido = [...compartidos.values()].find((c) => c.token === token && c.ruta_orientativa);
+    if (compartido) {
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+      return res.end(JSON.stringify(vistaCompartido(compartido)));
+    }
     const tipoPlan = Object.entries(TOKENS_PLAN).find(([, t]) => t === token)?.[0];
     if (tipoPlan) {
       const vista = ADSB_VIVO && tipoPlan === "volando" ? await vistaVivo() : vistaPlan(tipoPlan);

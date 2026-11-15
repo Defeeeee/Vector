@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Bookmark, ClipboardList, CloudOff, FileDown, FileText, Loader2, Printer, Trash2, X } from "lucide-react";
+import { Bookmark, ClipboardList, CloudOff, FileDown, FileText, Loader2, Printer, Share2, Trash2, X } from "lucide-react";
 import type { Aircraft } from "@/types";
 import type { PuntoResuelto } from "@/lib/resolucion-puntos";
 import type { PilotoParaPlan } from "@/lib/formulario-plan";
@@ -14,6 +14,7 @@ import { MAX_NOMBRE_RUTA, nombreSugerido, type RutaGuardada } from "@/lib/rutas-
 import { armarPiernera, nombrePiernera, type DatosPiernera } from "@/lib/piernera";
 import { CAPAS_CARTAS, teselasDeRuta } from "@/lib/cartas-aip";
 import { resumenDelPiloto } from "@/actions/briefing";
+import { enlaceCompartirSinPlan } from "@/lib/compartir-sin-plan";
 import { MAX_AERODROMOS_BRIEFING, nombreBriefing, type EspacioBriefing } from "@/lib/briefing-pdf-datos";
 
 /**
@@ -333,6 +334,14 @@ export default function RutaAcciones({
           <Printer className="w-3.5 h-3.5" /> Planilla con viento y combustible, para imprimir
         </Link>
       )}
+
+      {/* Compartir con la familia un vuelo sin plan (3.41.0): origen, destino y horario. */}
+      <Link
+        href={enlaceCompartirSinPlan(tokens)}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-aviation-blue hover:underline"
+      >
+        <Share2 className="w-3.5 h-3.5" /> Compartir tu vuelo con tu familia
+      </Link>
 
       {planes && planes.length > 0 && (
         <div>

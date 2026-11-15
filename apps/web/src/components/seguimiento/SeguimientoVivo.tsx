@@ -233,6 +233,9 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
           {terminado ? estado.titulo : `${datos.nombre} · ${estado.titulo.toLowerCase().replace(/^./, (c) => c.toUpperCase())}`}
         </h1>
         {datos.ruta && <p className="mt-1 font-mono text-sm text-white/75">{datos.ruta}</p>}
+        {datos.ruta_orientativa && !terminado && (
+          <p className="mt-1.5 text-xs text-white/60">No cargó la ruta: la línea es directa y sólo orientativa.</p>
+        )}
         {estado.clave === "antes_de_salir" && (
           <div className="mt-3 border-t border-white/10 pt-3">
             {salidaTexto && <p className="text-lg font-bold text-white">{salidaTexto}</p>}
