@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.39.0 — Checklists y tu año en vuelo
+
+_15 de noviembre de 2026_
+
+- **Tu año en vuelo** — Tus horas, vuelos, aeródromos, millas, tus aviones y tus hitos del año, en historias como las de Instagram. Al final, una foto para compartir en cuatro colores, con el mapa de todos tus vuelos.
+- **La checklist de tu avión** — Cargá la checklist de tu escuela o tu avión tal cual está en papel y usala tildando ítem por ítem, con letra grande para la pierna. Está en Herramientas y en la pantalla de vuelo del Mapa, y anda sin señal.
+
 ## v3.38.0 — Mirá la hoja antes de imprimirla
 
 _13 de noviembre de 2026_

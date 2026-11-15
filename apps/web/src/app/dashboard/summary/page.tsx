@@ -7,7 +7,9 @@ import SummaryClient from "@/components/dashboard/SummaryClient";
 import ComoVenisVolando from "@/components/dashboard/ComoVenisVolando";
 import GraficosDeHoras from "@/components/dashboard/GraficosDeHorasLazy";
 import ActivityHeatmap from "@/components/dashboard/ActivityHeatmap";
+import Link from "next/link";
 import { getAirport } from "@/lib/airports";
+import { anioActualArgentina } from "@/lib/tu-ano";
 import { openingTotals, splitRoute } from "@/lib/summary";
 import { soloVolados } from "@/lib/simulador";
 import { buildActivityHeatmap } from "@/lib/utils";
@@ -85,7 +87,18 @@ export default async function SummaryPage() {
       <PageHeader
         eyebrow="Tu carrera como piloto, narrada por los datos"
         title="Resumen de horas"
-        action={<CompartirTarjeta />}
+        action={
+          <>
+            {/* Tu año en vuelo (3.39.0): el año en curso, en hora argentina, decidido acá. */}
+            <Link
+              href="/dashboard/summary/tu-ano"
+              className="inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-aviation-cyan text-noche font-bold text-sm"
+            >
+              {`Tu ${anioActualArgentina(new Date())} en vuelo`}
+            </Link>
+            <CompartirTarjeta />
+          </>
+        }
       />
 
       {/* Lo reciente primero: la racha y este mes contra tu promedio. Se mudó desde

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import ChecklistEnVuelo from "./ChecklistEnVuelo";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { AlertTriangle, Layers, ChevronDown, ChevronLeft, ChevronRight, CloudSun, Crosshair, Download, Loader2, MapPin, Minus, Navigation, NotebookPen, Plus, Radio, Square, Trash2, Undo2, X } from "lucide-react";
@@ -991,6 +992,7 @@ export default function MapaClient({
           puedeDeshacer={historia.length > 0}
           onDeshacer={deshacerEnVuelo}
           onDirecto={() => setHoja({ toque: null })}
+          avionId={avionId || null}
         />
       ) : (
         tarjeta
@@ -1146,6 +1148,8 @@ function PantallaDeVuelo(p: {
   puedeDeshacer: boolean;
   onDeshacer: () => void;
   onDirecto: () => void;
+  /** El avión elegido, para su checklist (3.39.0). */
+  avionId: string | null;
 }) {
   // Lo que se está escribiendo en la ruta; `null` es "nada pendiente" y se muestra la ruta de ahora
   // (así un directo o un deshacer actualiza el campo, y lo escrito a medias no se pisa).
@@ -1332,6 +1336,7 @@ function PantallaDeVuelo(p: {
       <div ref={abajo} className="pointer-events-auto bg-noche/90 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
         {p.detalles && (
           <div className="max-h-[36vh] overflow-y-auto custom-scrollbar px-4 pt-4 pb-2 space-y-4 border-b border-white/10">
+            <ChecklistEnVuelo aircraftId={p.avionId} />
             <CompartirSeguimiento seguimiento={p.seguimiento} />
             <div>
               <p className={`${ROTULO} mb-1.5`}>Estás dentro de</p>

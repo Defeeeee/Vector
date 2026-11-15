@@ -108,6 +108,12 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: "dummy-key"
         run: python test_firmas_certificantes.py
 
+      - name: Checklists del avión
+        env:
+          SUPABASE_URL: "https://dummy.supabase.co"
+          SUPABASE_PUBLISHABLE_KEY: "dummy-key"
+        run: python test_checklists.py
+
       - name: Pasar al CAD desde Vector (login de ANAC falso, cifrado, Crear)
         env:
           SUPABASE_URL: "https://dummy.supabase.co"

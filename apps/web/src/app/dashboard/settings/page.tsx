@@ -21,7 +21,7 @@ import AvisosPush from "@/components/social/AvisosPush";
 import ListaBloqueados from "@/components/social/ListaBloqueados";
 
 async function getSettingsData() {
-  const [profilesRes, aircraftRes, packsRes, documentsRes, logbooksRes, flightsRes, perfilPublicoRes, bloqueadosRes, clavePushRes ] =
+  const [profilesRes, aircraftRes, packsRes, documentsRes, logbooksRes, flightsRes, perfilPublicoRes, bloqueadosRes, clavePushRes, checklistsRes ] =
     await Promise.all([
       apiFetch("/profiles"),
       apiFetch("/aircraft"),
@@ -40,6 +40,8 @@ async function getSettingsData() {
       apiFetch("/social/bloqueados", { cache: "no-store" }),
       // La clave de los avisos push: `null` si el backend no los tiene configurados.
       apiFetch("/push/clave"),
+      // Sólo los nombres: la tarjeta del avión dice cuál checklist tiene asignada.
+      apiFetch("/checklists"),
     ]);
 
   if (profilesRes.status === 401 || aircraftRes.status === 401 || packsRes.status === 401) {
@@ -57,16 +59,17 @@ async function getSettingsData() {
     ? ((await perfilPublicoRes.json()) as { perfil: PerfilPublico | null }).perfil
     : null;
 
+  const checklists: { id: string; nombre: string }[] = checklistsRes.ok ? await checklistsRes.json() : [];
   const bloqueados: PilotoResumen[] = bloqueadosRes.ok ? await bloqueadosRes.json() : [];
   const clavePush: string | null = clavePushRes.ok
     ? ((await clavePushRes.json().catch(() => null)) as { clave?: string | null } | null)?.clave ?? null
     : null;
 
-  return { profile: profiles[0] || null, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush };
+  return { profile: profiles[0] || null, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, checklists };
 }
 
 export default async function SettingsPage() {
-  const { profile, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush } =
+  const { profile, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, checklists } =
     await getSettingsData();
   const cma = documents.find(doc => doc.kind === "cma");
 
@@ -182,7 +185,7 @@ export default async function SettingsPage() {
           <div className="grid grid-cols-2 gap-3 md:gap-4">
             {aircraft.length > 0 ? (
               aircraft.map(ac => (
-                <AircraftCard key={ac.id} aircraft={ac} />
+                <AircraftCard key={ac.id} aircraft={ac} checklist={checklists.find((c) => c.id === ac.checklist_id) ?? null} />
               ))
             ) : (
               <div className="col-span-full bg-white dark:bg-carbon p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] text-center border border-dashed border-zinc-200 dark:border-white/10 shadow-sm dark:shadow-none hover:shadow-md dark:hover:bg-white/[0.04] transition-all">

@@ -230,6 +230,7 @@ function puntoDemo(i, cuando) {
   const track = Math.round((Math.atan2((lo - plo) * Math.cos((la * Math.PI) / 180), la - pla) * 180) / Math.PI + 360) % 360 || 330;
   return { la: Math.round(la * 1e5) / 1e5, lo: Math.round(lo * 1e5) / 1e5, alt, track, epoch: Math.floor(+cuando / 1000), hora: cuando.toISOString() };
 }
+const checklistsFalsas = [];
 const rutasGuardadas = [{ id: "r1", nombre: "SADF → SAAK por BENAVIDEZ", ruta: "SADF BENAVIDEZ SAAK", aircraft_id: null, created_at: "2026-11-09T12:00:00Z", updated_at: "2026-11-09T12:00:00Z" }];
 let firma = null;
 const resumenPlan = (p) => {
@@ -838,6 +839,65 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     if (a) Object.assign(a, json);
     res.writeHead(a ? 200 : 404, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(a ?? {}));
+  }
+  // Las checklists del avión (migración 054), en memoria, con los mismos topes que el backend real.
+  if (ruta.startsWith("/api/checklists")) {
+    const dar = (cod, cuerpo) => { res.writeHead(cod, { "Content-Type": "application/json" }); res.end(cuerpo === undefined ? "" : JSON.stringify(cuerpo)); };
+    const [, , , id, sub] = ruta.split("/");
+    const invalido = (m) => dar(400, { status_code: 400, detail: "Validation failed for " + req.method + " " + ruta, extra: [{ message: "Value error, " + m, key: "texto", source: "body" }] });
+    const motivo = (nombre, texto) => {
+      const n = (nombre ?? "").trim().replace(/\s+/g, " ");
+      if (!n) return "Ponele un nombre a la checklist.";
+      if (n.length > 80) return "El nombre pasa de 80 letras.";
+      if ((texto ?? "").length > 40000) return "La checklist es demasiado larga (máximo 40000 letras).";
+      let secs = 0, elems = 0;
+      for (const cruda of (texto ?? "").replace(/\r/g, "").split("\n")) {
+        const l = cruda.trim();
+        if (!l) continue;
+        if (l.startsWith("#")) { secs++; elems = 0; continue; }
+        if (/^( {2}|\t)/.test(cruda) && l.startsWith("- ")) { if (l.length > 302) return "Un paso o nota pasa de 300 letras."; continue; }
+        if (++elems > 80) return "Una sección tiene más de 80 elementos.";
+        if (l.length > 302) return "Un paso o nota pasa de 300 letras.";
+      }
+      if (secs > 40) return "Hay demasiadas secciones (máximo 40).";
+      return null;
+    };
+    const breve = ({ texto, ...r }) => r;
+    if (!id && req.method === "GET") return dar(200, checklistsFalsas.map(breve));
+    if (!id && req.method === "POST") {
+      const m = motivo(json.nombre, json.texto ?? "");
+      if (m) return invalido(m);
+      const ahora = new Date().toISOString();
+      const c = { id: crypto.randomUUID(), nombre: json.nombre.trim().replace(/\s+/g, " "), texto: json.texto ?? "", updated_at: ahora };
+      checklistsFalsas.push(c);
+      return dar(201, c);
+    }
+    const c = checklistsFalsas.find((x) => x.id === id);
+    if (!c) return dar(404, { status_code: 404, detail: "Esa checklist no existe." });
+    if (!sub && req.method === "GET") return dar(200, c);
+    if (!sub && req.method === "PUT") {
+      const m = motivo(json.nombre, json.texto);
+      if (m) return invalido(m);
+      Object.assign(c, { nombre: json.nombre.trim().replace(/\s+/g, " "), texto: json.texto, updated_at: new Date().toISOString() });
+      return dar(200, c);
+    }
+    if (!sub && req.method === "DELETE") {
+      checklistsFalsas.splice(checklistsFalsas.indexOf(c), 1);
+      for (const a of aviones) if (a.checklist_id === id) a.checklist_id = null;
+      return dar(204);
+    }
+    if (sub === "aviones" && req.method === "PUT") {
+      const ids = [...new Set(json.aircraft_ids ?? [])];
+      if (ids.some((x) => !aviones.some((a) => a.id === x))) return dar(404, { status_code: 404, detail: "Alguno de esos aviones no es tuyo." });
+      for (const a of aviones) { if (a.checklist_id === id && !ids.includes(a.id)) a.checklist_id = null; if (ids.includes(a.id)) a.checklist_id = id; }
+      return dar(200, { aircraft_ids: ids });
+    }
+    return dar(404, { detail: "No existe" });
+  }
+  if (req.method === "GET" && /^\/api\/aircraft\/[^/]+$/.test(ruta)) {
+    const a = aviones.find((x) => x.id === ruta.split("/").pop());
+    res.writeHead(a ? 200 : 404, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(a ?? { detail: "No existe" }));
   }
   if (ruta.startsWith("/api/firmas/")) return rutaFirmas(req, res, ruta, new URL(req.url, "http://x"), json);
   if (ruta.startsWith("/api/cad/")) return rutaCad(req, res, ruta, json);

@@ -64,6 +64,8 @@ class Aircraft(BaseModel):
     plan_vuelo: Optional[Dict[str, Any]] = None
     #: Si es simulador, cuál es en el CAD de ANAC (migración 036).
     cad_simulador: Optional[Dict[str, Any]] = None
+    #: La checklist asignada a este avión (migración 054). Se asigna desde `/checklists`.
+    checklist_id: Optional[UUID] = None
 
     model_config = ConfigDict(from_attributes=True)
 

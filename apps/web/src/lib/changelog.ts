@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.39.0",
+    fecha: "2026-11-15",
+    titulo: "Checklists y tu año en vuelo",
+    novedades: [
+      {
+        icono: "festejo",
+        titulo: "Tu año en vuelo",
+        texto: "Tus horas, vuelos, aeródromos, millas, tus aviones y tus hitos del año, en historias como las de Instagram. Al final, una foto para compartir en cuatro colores, con el mapa de todos tus vuelos.",
+        href: "/dashboard/summary/tu-ano",
+        cta: "Ver mi año",
+      },
+      {
+        icono: "avion",
+        titulo: "La checklist de tu avión",
+        texto: "Cargá la checklist de tu escuela o tu avión tal cual está en papel y usala tildando ítem por ítem, con letra grande para la pierna. Está en Herramientas y en la pantalla de vuelo del Mapa, y anda sin señal.",
+        href: "/dashboard/tools/checklists",
+        cta: "Ver checklists",
+      },
+    ],
+  },
+  {
     version: "3.38.0",
     fecha: "2026-11-13",
     titulo: "Mirá la hoja antes de imprimirla",

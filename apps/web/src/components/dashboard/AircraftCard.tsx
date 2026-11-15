@@ -8,14 +8,17 @@ import { motion } from "framer-motion";
 import CamposPerformance from "./CamposPerformance";
 import CampoSimulador from "./CampoSimulador";
 import CampoPotencia from "./CampoPotencia";
+import Link from "next/link";
 import { useAvisos } from "./Avisos";
 import PerfilPlanAvion from "./plan-de-vuelo/PerfilPlanAvion";
 
 interface AircraftCardProps {
   aircraft: Aircraft;
+  /** La checklist asignada (id y nombre), si tiene: se asigna desde Herramientas → Checklists. */
+  checklist?: { id: string; nombre: string } | null;
 }
 
-export default function AircraftCard({ aircraft }: AircraftCardProps) {
+export default function AircraftCard({ aircraft, checklist }: AircraftCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { notificar } = useAvisos();
@@ -187,6 +190,15 @@ export default function AircraftCard({ aircraft }: AircraftCardProps) {
             {aircraft.cruise_tas_kt && <span>{aircraft.cruise_tas_kt} kt</span>}
             {aircraft.fuel_burn_lph && <span>{aircraft.fuel_burn_lph} L/h</span>}
             {aircraft.fuel_capacity_l && <span>{aircraft.fuel_capacity_l} L</span>}
+          </p>
+        )}
+
+        {checklist && (
+          <p className="text-[11px] font-medium mt-2 truncate">
+            <span className="text-zinc-400 dark:text-zinc-500">Checklist: </span>
+            <Link href={`/dashboard/tools/checklists/${checklist.id}`} className="text-aviation-cyan hover:underline">
+              {checklist.nombre}
+            </Link>
           </p>
         )}
 

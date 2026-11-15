@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Cloud, ClipboardList, Fuel, Gauge, Ruler, TrendingDown, Wind } from "lucide-react";
+import Link from "next/link";
+import { Cloud, ClipboardList, Fuel, Gauge, ListChecks, Ruler, TrendingDown, Wind } from "lucide-react";
 import UnitConverter from "./UnitConverter";
 import FuelCalculator from "./FuelCalculator";
 import WindCalculator from "./WindCalculator";
@@ -66,6 +67,14 @@ export default function ToolsClient() {
               </button>
             );
           })}
+          {/* No es una pestaña: la checklist necesita datos del server (las tuyas y tus aviones). */}
+          <Link
+            href="/dashboard/tools/checklists"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap border transition-colors bg-white dark:bg-carbon text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-white/10 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-300 dark:hover:border-white/20"
+          >
+            <ListChecks className="w-4 h-4 shrink-0" strokeWidth={2} />
+            Checklists
+          </Link>
         </div>
       </div>
 
