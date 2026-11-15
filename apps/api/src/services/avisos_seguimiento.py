@@ -19,6 +19,11 @@ mandar se "reserva" la columna (`aviso_despegue_at`, `aviso_aterrizaje_at`) con 
 condicional, y sólo manda quien la ganó. Es "como mucho una vez": si el proceso cae justo después de
 reservar, ese aviso no sale; es preferible a mandarlo dos veces.
 
+**A quienes siguen en Vector Tracker** (migración 056, `services/seguidores.py`) les llega lo mismo,
+por cuenta y con un link a `/vuelo/<token>` del tracker, **sólo si el piloto les asignó ese vuelo**: el
+barrido mira también los vuelos asignados a alguien que prendió los avisos, aunque nadie haya pedido
+avisos del link.
+
 Un aviso viejo no se manda: si el despegue se detecta recién 20 minutos después (el link se abrió con
 el avión ya en el aire, o el barrido estuvo parado), se anota sin avisar. Quien mira no necesita
 enterarse tarde de algo que ya pasó.
@@ -39,6 +44,7 @@ from urllib.parse import urlsplit
 from pydantic import BaseModel, field_validator
 
 from src.services.avisos import avisos_configurados, mandar_a
+from src.services.seguidores import armar_aviso_tracker, enviar_a_asignados, ids_de_seguimientos_con_seguidores
 from src.services.seguimientos import (
     ADSB_PRIMERAS,
     ADSB_ULTIMAS,
@@ -281,6 +287,18 @@ def _enviar(cliente: Any, seguimiento_id: str, aviso: Dict[str, str]) -> int:
     return mandar_a(subs, aviso, lambda i: cliente.table("seguimientos_avisos").delete().eq("id", i).execute())
 
 
+def _enviar_a_seguidores(cliente: Any, fila: Dict[str, Any], evento: str) -> None:
+    """
+    Lo mismo, a quienes ven este vuelo en el tracker (migración 056, los que el piloto asignó): un
+    push por cuenta, con el mismo texto y un link al tracker. Una falla acá nunca tira abajo el
+    aviso del link.
+    """
+    try:
+        enviar_a_asignados(cliente, str(fila["id"]), armar_aviso_tracker(evento, fila))
+    except Exception as exc:  # noqa: BLE001
+        log.warning("[avisos-vuelo] falló el aviso a seguidores de %s: %r", str(fila.get("id"))[:8], exc)
+
+
 def _reservar(cliente: Any, seguimiento_id: str, cambios: Dict[str, Any], columna: str) -> bool:
     """Reserva un aviso: sólo el que escribe `columna` estando vacía lo manda."""
     r = cliente.table("seguimientos_en_vivo").update(cambios).eq("id", seguimiento_id).is_(columna, "null").execute()
@@ -300,6 +318,7 @@ def atender(cliente: Any, fila: Dict[str, Any], ahora: datetime) -> List[str]:
             cambios["despego_at"] = d["despego_at"].isoformat()
         if _reservar(cliente, sid, cambios, "aviso_despegue_at") and d["enviar_despegue"]:
             _enviar(cliente, sid, armar_aviso_seguimiento("despegue", fila))
+            _enviar_a_seguidores(cliente, fila, "despegue")
             enviados.append("despegue")
     elif d["despego_at"] is not None:
         cliente.table("seguimientos_en_vivo").update({"despego_at": d["despego_at"].isoformat()}).eq("id", sid).execute()
@@ -311,6 +330,7 @@ def atender(cliente: Any, fila: Dict[str, Any], ahora: datetime) -> List[str]:
         ).execute()
     if d["reservar_aterrizaje"] and _reservar(cliente, sid, {"aviso_aterrizaje_at": ahora_iso}, "aviso_aterrizaje_at") and d["enviar_aterrizaje"]:
         _enviar(cliente, sid, armar_aviso_seguimiento("aterrizaje", fila))
+        _enviar_a_seguidores(cliente, fila, "aterrizaje")
         enviados.append("aterrizaje")
     return enviados
 
@@ -323,7 +343,9 @@ def barrer(cliente: Any, ahora: Optional[datetime] = None) -> int:
     if not avisos_configurados():
         return 0
     ahora = ahora or datetime.now(timezone.utc)
-    ids = sorted({s["seguimiento_id"] for s in (cliente.table("seguimientos_avisos").select("seguimiento_id").execute().data or [])})
+    ids = {s["seguimiento_id"] for s in (cliente.table("seguimientos_avisos").select("seguimiento_id").execute().data or [])}
+    # Y los de pilotos con seguidores del tracker que prendieron los avisos (migración 056).
+    ids = sorted(ids | set(ids_de_seguimientos_con_seguidores(cliente)))
     if not ids:
         return 0
     filas = cliente.table("seguimientos_en_vivo").select(_COLUMNAS).in_("id", ids).is_("aviso_aterrizaje_at", "null").execute().data or []
@@ -346,3 +368,4 @@ def avisar_fin_manual(cliente: Any, fila: Dict[str, Any]) -> None:
     ahora = datetime.now(timezone.utc)
     if _reservar(cliente, fila["id"], {"aviso_aterrizaje_at": ahora.isoformat()}, "aviso_aterrizaje_at"):
         _enviar(cliente, fila["id"], armar_aviso_seguimiento("fin", fila))
+        _enviar_a_seguidores(cliente, fila, "fin")

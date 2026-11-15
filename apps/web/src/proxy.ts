@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { decidirEnTracker, esEstaticoDelTracker, esHostTracker, esRutaDelTrackerEnLaWeb, hostDeLaWeb } from "@/lib/tracker-host";
 import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S, destinoSinSesion, dominioDeCookie, hostDelPedido, loginCon, necesitaRenovar } from "@/lib/sesion";
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.vectoraero.ar";
@@ -101,9 +102,23 @@ async function renovar(refreshToken: string): Promise<Par | "muerto" | "red"> {
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const esTracker = esHostTracker(hostDelPedido(request.headers));
+
+  /*
+    Vector Tracker (tracker.vectoraero.ar): la misma app, otro árbol (`src/app/tracker/`). Del host
+    principal `/tracker/…` no se abre (404: se entra por el otro host); en el del tracker las
+    rutas se reescriben por dentro. Ver `lib/tracker-host.ts`.
+  */
+  if (!esTracker && esRutaDelTrackerEnLaWeb(pathname)) {
+    return NextResponse.rewrite(new URL("/__no-existe", request.url));
+  }
+  if (esTracker && esEstaticoDelTracker(pathname)) {
+    return NextResponse.next();
+  }
 
   if (pathname.startsWith("/auth/callback")) {
-    return NextResponse.next();
+    // La vuelta de Google del tracker es otra pantalla (guarda la sesión y va al inicio del tracker).
+    return esTracker ? NextResponse.rewrite(new URL("/tracker/auth/callback", request.url)) : NextResponse.next();
   }
 
   // El logout tiene que poder correr siempre, incluso —sobre todo— con la sesión rota.
@@ -166,6 +181,27 @@ export async function proxy(request: NextRequest) {
     return new URL(destino, `${proto}://${host}`);
   };
 
+  if (esTracker) {
+    const d = decidirEnTracker(pathname, Boolean(token));
+    switch (d.tipo) {
+      case "redirige":
+        return conCookies(NextResponse.redirect(aDondeVa(d.destino)));
+      case "a-la-web": {
+        const proto = request.headers.get("x-forwarded-proto") || "https";
+        return conCookies(NextResponse.redirect(new URL(d.destino, `${proto}://${hostDeLaWeb(hostDelPedido(request.headers))}`)));
+      }
+      case "reescribe": {
+        const url = request.nextUrl.clone();
+        url.pathname = d.destino;
+        return conCookies(NextResponse.rewrite(url, { request: { headers: request.headers } }));
+      }
+      case "no-existe":
+        return NextResponse.rewrite(new URL("/__no-existe", request.url));
+      default:
+        return conCookies(NextResponse.next({ request: { headers: request.headers } }));
+    }
+  }
+
   const isDashboardPage = pathname.startsWith("/dashboard");
 
   // Sin sesión, al login (3.13.0): si en este navegador hubo una, con el aviso de que expiró.
@@ -196,5 +232,16 @@ export const config = {
   // `/api/seguimiento/posicion`: el teléfono la llama cada ~15 s durante todo un vuelo compartido,
   // y el JWT dura una hora; que el proxy lo renueve evita un 401 a mitad de un vuelo largo.
   // `/seguir/…` (la página pública) NO está acá a propósito: se abre sin cuenta y sin sesión.
-  matcher: ["/", "/dashboard/:path*", "/u/:path*", "/q/:path*", "/api/admin/:path*", "/api/seguimiento/posicion"],
+  // Y todo lo del host del tracker (`has`: `tracker.vectoraero.ar`, `tracker.localhost`), que reescribe
+  // sus rutas por dentro, más `/tracker/…` en el host principal, que es un 404.
+  matcher: [
+    "/",
+    "/dashboard/:path*",
+    "/u/:path*",
+    "/q/:path*",
+    "/api/admin/:path*",
+    "/api/seguimiento/posicion",
+    "/tracker/:path*",
+    { source: "/:path*", has: [{ type: "host", value: "tracker\\..+" }] },
+  ],
 };

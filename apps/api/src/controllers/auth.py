@@ -13,6 +13,8 @@ WEBS_ACEPTADAS = (
     "https://vectoraero.ar",
     "https://www.vectoraero.ar",
     "https://vector.fdiaznem.com.ar",
+    # Vector Tracker (migración 056): quien sigue vuelos entra con Google desde acá.
+    "https://tracker.vectoraero.ar",
 )
 
 

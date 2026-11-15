@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.42.0 — Vector Tracker
+
+_15 de noviembre de 2026_
+
+- **Vector Tracker para tu familia** — Invitá a quien quieras con un link: entra con Google en tracker.vectoraero.ar y ve en vivo los vuelos que le asignes, con aviso cuando despegás y aterrizás. Vos elegís, vuelo por vuelo, quién lo ve. El link público de siempre sigue andando igual.
+
 ## v3.41.0 — Compartí tu vuelo sin plan
 
 _15 de noviembre de 2026_

@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Copy, Loader2, Send } from "lucide-react";
 import { compartirSinPlan, terminarSeguimiento } from "@/actions/seguimiento";
+import { asignarSeguidores } from "@/actions/seguidores";
+import ChipsDeSeguidores from "@/components/dashboard/compartir/ChipsDeSeguidores";
+import SeguidoresDelTracker from "@/components/dashboard/compartir/SeguidoresDelTracker";
+import { alternarAsignado, vinculados, type Seguidor } from "@/lib/seguidores";
 import CampoAerodromo from "@/components/dashboard/plan-de-vuelo/CampoAerodromo";
 import { mandarLink } from "@/components/dashboard/mapa/CompartirSeguimiento";
 import type { AerodromoForm } from "@/lib/formulario-plan";
@@ -23,6 +27,9 @@ import type { Aircraft } from "@/types";
  * - "Cambiar el horario" de uno sin plan reabre el formulario con su `seguimiento_id`: el link es el
  *   mismo y el token no cambia, así que no hay que mandarle otro a la familia.
  * - La matrícula sólo sale si se prende "Mostrar la matrícula" (apagado por defecto).
+ * - **Vector Tracker** (migración 056): "Quiénes siguen tus vuelos" invita a la familia con un link; en cada
+ *   vuelo, "Lo ven en el tracker:" asigna a mano quién lo ve (por defecto ninguno; guarda al tocar), y
+ *   el formulario sin plan lo hace antes de crear el link. Sin seguidores que ya entraron, no hay chips.
  */
 
 export interface ActivoParaMostrar extends SeguimientoActivo {
@@ -51,6 +58,7 @@ export default function CompartirTuVuelo({
   ahoraIso,
   origenInicial,
   destinoInicial,
+  seguidores,
 }: {
   aviones: Aircraft[];
   /** `null`: no se pudieron leer (no se dice "no compartís nada"). */
@@ -60,6 +68,8 @@ export default function CompartirTuVuelo({
   ahoraIso: string;
   origenInicial: string;
   destinoInicial: string;
+  /** Migración 056. `null`: no se pudieron leer. */
+  seguidores: Seguidor[] | null;
 }) {
   const [avionId, setAvionId] = useState(aviones.length === 1 ? aviones[0].id : "");
   const [origen, setOrigen] = useState<AerodromoForm | null>(null);
@@ -76,6 +86,11 @@ export default function CompartirTuVuelo({
   const [confirmando, setConfirmando] = useState<string | null>(null);
   const [terminando, setTerminando] = useState<string | null>(null);
   const formulario = useRef<HTMLFormElement>(null);
+  // Vector Tracker: los que ya entraron, quiénes ven cada vuelo y quiénes van a ver el que se está armando.
+  const entraron = useMemo(() => vinculados(seguidores ?? []), [seguidores]);
+  const [asignados, setAsignados] = useState<Record<string, string[]>>({});
+  const [guardandoAsignacion, setGuardandoAsignacion] = useState<string | null>(null);
+  const [paraElNuevo, setParaElNuevo] = useState<string[]>([]);
 
   // El último avión usado (o el único). Sólo comodidad: sin `localStorage` queda el único o ninguno.
   useEffect(() => {
@@ -120,6 +135,7 @@ export default function CompartirTuVuelo({
     setOrigen(s.puntos[0] ? { codigo: s.puntos[0].codigo, nombre: s.puntos[0].nombre, lat: s.puntos[0].lat, lon: s.puntos[0].lon } : null);
     const ultimo = s.puntos[s.puntos.length - 1];
     setDestino(s.puntos.length > 1 && ultimo ? { codigo: ultimo.codigo, nombre: ultimo.nombre, lat: ultimo.lat, lon: ultimo.lon } : null);
+    setParaElNuevo(asignadosDe(s));
     if (s.salidaFecha) setFecha(s.salidaFecha);
     setHora(s.salidaHora ?? "");
     setDuracion(s.duracionPrevistaMin ? textoDeDuracion(s.duracionPrevistaMin) : "");
@@ -127,7 +143,27 @@ export default function CompartirTuVuelo({
     formulario.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const asignadosDe = (s: ActivoParaMostrar) => asignados[s.id] ?? s.seguidorIds;
+
+  const alternar = async (s: ActivoParaMostrar, seguidorId: string) => {
+    const antes = asignadosDe(s);
+    const despues = alternarAsignado(antes, seguidorId);
+    setAsignados((a) => ({ ...a, [s.id]: despues }));
+    setGuardandoAsignacion(s.id);
+    setError(null);
+    try {
+      const r = await asignarSeguidores(s.id, despues);
+      if ("error" in r) {
+        setAsignados((a) => ({ ...a, [s.id]: antes }));
+        setError(r.error);
+      } else setAsignados((a) => ({ ...a, [s.id]: r.seguidorIds }));
+    } finally {
+      setGuardandoAsignacion(null);
+    }
+  };
+
   const limpiar = () => {
+    setParaElNuevo([]);
     setEditando(null);
     setOrigen(null);
     setDestino(null);
@@ -176,6 +212,11 @@ export default function CompartirTuVuelo({
         localStorage.setItem(CLAVE_AVION, avionId);
       } catch {
         /* nada */
+      }
+      // Quiénes lo ven en el tracker: recién con el vuelo creado hay un id al que asignar.
+      if (entraron.length > 0 && (paraElNuevo.length > 0 || editando)) {
+        const a = await asignarSeguidores(r.seguimiento.id, paraElNuevo);
+        if ("error" in a) setAviso(`El link está creado, pero no se pudo guardar quiénes lo ven en el tracker: ${a.error}`);
       }
       setResultado({ id: r.seguimiento.id, token: r.seguimiento.token, cambio: Boolean(editando) });
       limpiar();
@@ -238,6 +279,7 @@ export default function CompartirTuVuelo({
                   {detalleDeVistas({ mirandoAhora: s.mirandoAhora, vistosTotal: s.vistosTotal, ultimaVistaAt: s.ultimaVistaAt, ahora: s.ahora })}
                   {s.avionTipo ? ` · ${s.avionTipo}` : ""}
                 </p>
+                <ChipsDeSeguidores seguidores={entraron} seleccion={asignadosDe(s)} ocupado={guardandoAsignacion === s.id} onCambio={(id) => void alternar(s, id)} />
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1">
                   <button type="button" onClick={() => void mandar(s.token)} className={`${ROTULO} inline-flex min-h-9 items-center gap-1.5 text-aviation-cyan hover:underline`}>
                     <Send className="h-3 w-3" /> Compartir
@@ -371,6 +413,8 @@ export default function CompartirTuVuelo({
               />
             </label>
 
+            <ChipsDeSeguidores seguidores={entraron} seleccion={paraElNuevo} onCambio={(id) => setParaElNuevo((a) => alternarAsignado(a, id))} etiqueta="Que lo vean en el tracker:" />
+
             <p className="text-[11px] leading-relaxed text-zinc-500">
               El link muestra origen, destino y horario, sin cuenta. La línea del mapa entre los dos es directa y sólo orientativa: no es tu ruta. Si el avión transmite ADS-B y hay un receptor
               cerca, tu familia lo ve volar y el link termina solo cuando aterriza.
@@ -391,6 +435,8 @@ export default function CompartirTuVuelo({
           </form>
         )}
       </section>
+
+      <SeguidoresDelTracker inicial={seguidores} />
     </div>
   );
 }

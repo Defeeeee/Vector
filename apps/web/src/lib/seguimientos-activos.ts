@@ -32,6 +32,8 @@ export interface SeguimientoActivo {
   mirandoAhora: number;
   vistosTotal: number;
   ultimaVistaAt: string | null;
+  /** Migración 056: los ids de `seguidores` a los que está asignado en el tracker (quienes lo ven allá). */
+  seguidorIds: string[];
   /** ISO, la hora del servidor al contestar: "hace 3 min" se cuenta contra ésta. */
   ahora: string;
   origen: OrigenDelLink;
@@ -69,6 +71,7 @@ export function activosDeRespuesta(json: unknown): SeguimientoActivo[] {
       mirandoAhora: numero(f.mirando_ahora),
       vistosTotal: numero(f.vistos_total),
       ultimaVistaAt: texto(f.ultima_vista_at),
+      seguidorIds: Array.isArray(f.seguidor_ids) ? (f.seguidor_ids as unknown[]).filter((x): x is string => typeof x === "string") : [],
       ahora: texto(f.ahora) ?? "",
       origen: planId ? "plan" : rutaOrientativa ? "sin-plan" : "mapa",
     });

@@ -73,7 +73,8 @@ class Settings(BaseSettings):
         "https://vectoraero.ar",
         "https://www.vectoraero.ar",
         "https://api.vectoraero.ar",
-        "https://auth.vectoraero.ar"
+        "https://auth.vectoraero.ar",
+        "https://tracker.vectoraero.ar",
     ] # Change this to your frontend URL in production
     
     # Environment config

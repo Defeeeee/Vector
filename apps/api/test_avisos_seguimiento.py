@@ -174,7 +174,7 @@ class Consulta:
 
 class Base:
     def __init__(self, seguimientos, subs, adsb):
-        self.t = {"seguimientos_en_vivo": seguimientos, "seguimientos_avisos": subs, "adsb_posiciones": adsb}
+        self.t = {"seguimientos_en_vivo": seguimientos, "seguimientos_avisos": subs, "adsb_posiciones": adsb, "tracker_suscripciones": [], "seguidores": [], "seguimiento_seguidores": []}
 
     def table(self, nombre):
         return Consulta(self.t, nombre)

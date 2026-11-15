@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.42.0",
+    fecha: "2026-11-15",
+    titulo: "Vector Tracker",
+    novedades: [
+      {
+        icono: "compartir",
+        titulo: "Vector Tracker para tu familia",
+        texto: "Invitá a quien quieras con un link: entra con Google en tracker.vectoraero.ar y ve en vivo los vuelos que le asignes, con aviso cuando despegás y aterrizás. Vos elegís, vuelo por vuelo, quién lo ve. El link público de siempre sigue andando igual.",
+        href: "/dashboard/mapa/compartir",
+        cta: "Invitar",
+      },
+    ],
+  },
+  {
     version: "3.41.0",
     fecha: "2026-11-15",
     titulo: "Compartí tu vuelo sin plan",

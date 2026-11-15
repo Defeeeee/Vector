@@ -95,6 +95,13 @@ jobs:
       - name: Avisos a quien mira el vuelo (despegó, aterrizó, endpoints de push)
         run: python test_avisos_seguimiento.py
 
+      # Importa los controladores (pide las variables de mentira, como los de abajo).
+      - name: Seguidores y Vector Tracker (invitación de un uso, vuelos asignados, avisos)
+        env:
+          SUPABASE_URL: https://dummy.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: dummy-key
+        run: python test_seguidores.py
+
       # Importa el servicio de seguimientos (muestras, aterrizaje): pide las variables de mentira.
       - name: Repaso del vuelo (ADS-B contra el plan)
         env:

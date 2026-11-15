@@ -45,6 +45,9 @@ import {
  * - **"Avisarme cuando despegue y cuando aterrice"** (`AvisarVuelo`): un push web sin cuenta, que manda el
  *   grabador del VPS aunque la página esté cerrada. Sólo mientras el link sigue en vuelo.
  * - Un corte de red no borra lo que se estaba viendo: queda la última posición y el aviso.
+ * - **Dentro de Vector Tracker** (`enTracker`, migración 056): el mismo visor bajo el encabezado del
+ *   tracker (menos alto), con "← Tus vuelos" y sin `AvisarVuelo`: los avisos del tracker son de la
+ *   cuenta y se piden una vez en el inicio. Lo demás es idéntico al link público, que no cambia.
  */
 
 type Fin = "no-disponible" | null;
@@ -73,7 +76,7 @@ function idDeEsteNavegador(): string | null {
   return id;
 }
 
-export default function SeguimientoVivo({ token, inicial }: { token: string; inicial: SeguimientoPublico }) {
+export default function SeguimientoVivo({ token, inicial, enTracker = false }: { token: string; inicial: SeguimientoPublico; enTracker?: boolean }) {
   const [datos, setDatos] = useState(() => normalizar(inicial));
   const [fin, setFin] = useState<Fin>(null);
   const [sinConexion, setSinConexion] = useState(false);
@@ -173,7 +176,7 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
 
   if (fin === "no-disponible") {
     return (
-      <Pantalla>
+      <Pantalla enTracker={enTracker}>
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
           <p className={`${rotulo} text-white/60`}>Seguimiento</p>
           <h1 className="mt-3 text-3xl font-bold text-white">Este link ya no está disponible</h1>
@@ -189,7 +192,7 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
         : "text-aviation-cyan";
 
   return (
-    <Pantalla>
+    <Pantalla enTracker={enTracker}>
       {/* El mapa: arriba en el teléfono (~55 % del alto), a la derecha en la compu. */}
       <div className="relative order-1 h-[55dvh] shrink-0 lg:order-2 lg:h-auto">
         <SeguimientoMapa datos={datos} centrar={centrar} encuadrar={encuadrar} onSuelto={() => setSuelto(true)} />
@@ -224,6 +227,11 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
         className="relative z-10 order-2 -mt-4 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-t-3xl border-t border-white/20 bg-noche px-5 pb-8 pt-3 lg:order-1 lg:mt-0 lg:rounded-none lg:border-r lg:border-t-0 lg:border-white/10 lg:px-6 lg:pt-6"
       >
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/30 lg:hidden" aria-hidden />
+        {enTracker && (
+          <Link href="/" className="mb-3 inline-flex min-h-11 items-center gap-1 text-base font-semibold text-aviation-cyan hover:underline">
+            <span aria-hidden>←</span> Tus vuelos
+          </Link>
+        )}
 
         <p className={`${rotulo} flex items-center gap-2 ${colorEstado}`}>
           <span className={`h-2 w-2 rounded-full ${estado.clave === "volando" || estado.clave === "en_tierra" || estado.clave === "en_seguimiento" ? "bg-aviation-cyan" : "bg-white/50"}`} />
@@ -246,7 +254,7 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
         )}
 
         {/* Un push cuando despegue y cuando aterrice, sin cuenta (migración 046). Sólo mientras el link sigue en vuelo. */}
-        {enVuelo && <AvisarVuelo token={token} />}
+        {enVuelo && !enTracker && <AvisarVuelo token={token} />}
 
         <div aria-live="polite">
           {"aviso" in estado && <p className="mt-3 border-l-2 border-white/20 pl-3 text-sm text-white/75">{estado.aviso}</p>}
@@ -381,8 +389,10 @@ export default function SeguimientoVivo({ token, inicial }: { token: string; ini
   );
 }
 
-function Pantalla({ children }: { children: React.ReactNode }) {
-  return <main className="dark flex h-[100dvh] w-full flex-col overflow-hidden bg-noche text-white lg:grid lg:grid-cols-[380px_1fr]">{children}</main>;
+function Pantalla({ children, enTracker = false }: { children: React.ReactNode; enTracker?: boolean }) {
+  // En el tracker, menos el encabezado de 56 px (más la muesca, si hay).
+  const alto = enTracker ? "h-[calc(100dvh-3.5rem-env(safe-area-inset-top))]" : "h-[100dvh]";
+  return <main className={`dark flex ${alto} w-full flex-col overflow-hidden bg-noche text-white lg:grid lg:grid-cols-[380px_1fr]`}>{children}</main>;
 }
 
 function Bloque({ titulo, children }: { titulo: string; children: React.ReactNode }) {

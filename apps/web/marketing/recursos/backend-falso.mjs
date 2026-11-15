@@ -194,6 +194,7 @@ const activoDe = (e) => ({
   id: e.id, token: e.token, ruta: e.ruta, puntos: e.puntos, salida_prevista: iso(e.salida), duracion_prevista_min: e.duracion,
   vence_at: iso(e.salida + (e.duracion + 120) * 60e3), plan_id: e.plan_id, ruta_orientativa: e.ruta_orientativa, mostrar_matricula: e.mostrar,
   avion_tipo: e.tipo, aterrizo_at: null, created_at: iso(e.creado), mirando_ahora: e.plan_id ? 1 : 0, vistos_total: e.plan_id ? 3 : 0, ultima_vista_at: e.plan_id ? iso(Date.now() - 60e3) : null, ahora: iso(Date.now()),
+  seguidor_ids: [...(asignaciones.get(e.id) ?? [])],
 });
 function vistaCompartido(e) {
   return { nombre: "Lucía", ruta: e.ruta, puntos: e.puntos, ruta_orientativa: e.ruta_orientativa, avion: { tipo: e.tipo, icao: "C152", ...(e.mostrar ? { matricula: "LV-ABC" } : {}) },
@@ -253,6 +254,79 @@ function puntoDemo(i, cuando) {
   const alt = Math.min(2400, 700 + i * 350) + (i % 2) * 20;
   const track = Math.round((Math.atan2((lo - plo) * Math.cos((la * Math.PI) / 180), la - pla) * 180) / Math.PI + 360) % 360 || 330;
   return { la: Math.round(la * 1e5) / 1e5, lo: Math.round(lo * 1e5) / 1e5, alt, track, epoch: Math.floor(+cuando / 1000), hora: cuando.toISOString() };
+}
+// Seguidores y Vector Tracker (migración 056), en memoria. El piloto es Lucía. `seguidoresFalsos` es lo que ve ella en
+// "Compartir tu vuelo": Ana ("Mamá") ya entró y "Papá" tiene un link pendiente (token de 43 caracteres: se puede abrir en
+// /invitacion/<token> del tracker). `asignaciones` es qué vuelo ve cada uno (por defecto ninguno). Del lado de quien sigue
+// (`/api/tracker/*`), la cuenta que entra sigue a Lucía y a Roberto: un vuelo en el aire de Lucía y otro de Roberto por
+// salir (los de `vistaPlan`); el tercero (aterrizó) no está asignado y da 404. `SIN_SEGUIDOS=1` arranca sin seguir a nadie.
+const SIN_SEGUIDOS = process.env.SIN_SEGUIDOS === "1";
+const TOKEN_INVITACION = "tokenInvitacionPapa0000000000000000000001";
+const seguidoresFalsos = [
+  { id: "f0000000-0000-4000-8000-000000000001", apodo: "Mamá", vinculado: true, nombre: "Ana", invitacion_token: null, invitacion_vence_at: null, vencida: false, creado_at: iso(Date.now() - 5 * 86400e3), vinculado_at: iso(Date.now() - 4 * 86400e3) },
+  { id: "f0000000-0000-4000-8000-000000000002", apodo: "Papá", vinculado: false, nombre: null, invitacion_token: TOKEN_INVITACION, invitacion_vence_at: iso(Date.now() + 6 * 86400e3), vencida: false, creado_at: iso(Date.now() - 86400e3), vinculado_at: null },
+];
+const asignaciones = new Map();
+const vuelosDelTracker = () => [
+  { ...vistaPlan("volando"), token: TOKENS_PLAN.volando, piloto: { nombre: "Lucía", handle: "lucia.vuela" } },
+  { ...vistaPlan("antes"), token: TOKENS_PLAN.antes, piloto: { nombre: "Roberto", handle: null } },
+];
+function rutaTracker(req, ruta, json) {
+  const hay = (c, cuerpo) => ({ c, cuerpo });
+  if (ruta === "/api/seguidores" && req.method === "GET") return hay(200, seguidoresFalsos);
+  if (ruta === "/api/seguidores" && req.method === "POST") {
+    if (seguidoresFalsos.length >= 20) return hay(400, { detail: "Ya invitaste a 20 personas, que es el máximo. Quitá a alguien para sumar a otra." });
+    const f = { id: crypto.randomUUID(), apodo: (json.apodo ?? "").trim() || null, vinculado: false, nombre: null, invitacion_token: `tokenInvitacion${Date.now()}${"x".repeat(30)}`.slice(0, 43), invitacion_vence_at: iso(Date.now() + 7 * 86400e3), vencida: false, creado_at: iso(Date.now()), vinculado_at: null };
+    seguidoresFalsos.push(f);
+    return hay(201, f);
+  }
+  const m = ruta.match(/^\/api\/seguidores\/([^/]+)$/);
+  if (m) {
+    const i = seguidoresFalsos.findIndex((x) => x.id === m[1]);
+    if (i < 0) return hay(404, { detail: "Esa persona no existe." });
+    if (req.method === "PATCH") { seguidoresFalsos[i].apodo = (json.apodo ?? "").trim() || null; return hay(200, seguidoresFalsos[i]); }
+    if (req.method === "DELETE") { for (const a of asignaciones.values()) a.delete(m[1]); seguidoresFalsos.splice(i, 1); return hay(200, { ok: true }); }
+  }
+  const a = ruta.match(/^\/api\/seguimientos\/([^/]+)\/seguidores$/);
+  if (a && req.method === "PUT") {
+    if (!compartidos.has(a[1])) return hay(404, { detail: "Ese seguimiento no existe." });
+    const ids = [...new Set(json.seguidor_ids ?? [])];
+    if (ids.some((id) => !seguidoresFalsos.some((x) => x.id === id && x.vinculado))) return hay(400, { detail: "Sólo podés asignar a quienes ya aceptaron tu invitación." });
+    asignaciones.set(a[1], new Set(ids));
+    return hay(200, { seguidor_ids: ids.sort() });
+  }
+  const inv = ruta.match(/^\/api\/publico\/tracker\/invitaciones\/([^/]+)$/);
+  if (inv) {
+    const f = seguidoresFalsos.find((x) => x.invitacion_token === inv[1] && !x.vinculado);
+    return hay(200, f ? { vigente: true, nombre: "Lucía" } : { vigente: false, nombre: null });
+  }
+  const acep = ruta.match(/^\/api\/tracker\/invitaciones\/([^/]+)\/aceptar$/);
+  if (acep && req.method === "POST") {
+    const f = seguidoresFalsos.find((x) => x.invitacion_token === acep[1] && !x.vinculado);
+    if (!f) return hay(410, { detail: "Esta invitación ya se usó o venció. Pedile al piloto que te mande otra." });
+    Object.assign(f, { vinculado: true, nombre: "Ana", invitacion_token: null, invitacion_vence_at: null, vinculado_at: iso(Date.now()) });
+    return hay(200, { piloto: { nombre: "Lucía" }, ya_seguia: false });
+  }
+  if (ruta === "/api/tracker/pilotos") return hay(200, SIN_SEGUIDOS ? [] : [{ nombre: "Lucía", handle: "lucia.vuela", activo: true }, { nombre: "Roberto", handle: null, activo: false }]);
+  if (ruta === "/api/tracker/vuelos") return hay(200, SIN_SEGUIDOS ? [] : vuelosDelTracker());
+  const v = ruta.match(/^\/api\/tracker\/vuelos\/([^/]+)$/);
+  if (v) {
+    const f = SIN_SEGUIDOS ? null : vuelosDelTracker().find((x) => x.token === v[1]);
+    return f ? hay(200, { token: f.token, piloto: f.piloto }) : hay(404, { detail: "Ese vuelo no existe." });
+  }
+  if (ruta === "/api/tracker/avisos" && req.method === "GET") return hay(200, { dispositivos: 0, disponibles: true });
+  if (ruta === "/api/tracker/avisos" || ruta === "/api/tracker/avisos/baja") return hay(ruta.endsWith("/baja") ? 200 : 201, { ok: true });
+  return null;
+}
+// Entrar con Google sin Google: devuelve un link que vuelve directo a /auth/callback del host de origen con una sesión
+// falsa (JWT sin firmar que vence en un día; el proxy de Next no verifica la firma). Para probar el tracker en
+// http://tracker.localhost:3001: el `Origin` de la server action es https://tracker.localhost:3001, acá se vuelve a http.
+function loginGoogleFalso(req) {
+  const origen = String(req.headers.origin ?? "");
+  const host = origen.replace(/^https?:\/\//, "") || "localhost:3001";
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+  const jwt = `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ sub: "u2", email: "ana@vector.test", exp: Math.floor(Date.now() / 1000) + 86400 })}.prueba`;
+  return { url: `http://${host}/auth/callback#access_token=${jwt}` };
 }
 const checklistsFalsas = [];
 const rutasGuardadas = [{ id: "r1", nombre: "SADF → SAAK por BENAVIDEZ", ruta: "SADF BENAVIDEZ SAAK", aircraft_id: null, created_at: "2026-11-09T12:00:00Z", updated_at: "2026-11-09T12:00:00Z" }];
@@ -659,6 +733,15 @@ if (process.argv[1]?.endsWith("backend-falso.mjs")) createServer(async (req, res
     return res.end(JSON.stringify(ok
       ? { access_token: `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ sub: "u1", email: CUENTA_DE_PRUEBA.email, exp: Math.floor(Date.now() / 1000) + 86400 })}.prueba` }
       : { detail: "Usuario o contraseña inválidos." }));
+  }
+  if (ruta === "/api/login/google" || ruta === "/api/auth/login/google") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(loginGoogleFalso(req)));
+  }
+  const delTracker = rutaTracker(req, ruta, json);
+  if (delTracker) {
+    res.writeHead(delTracker.c, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+    return res.end(JSON.stringify(delTracker.cuerpo));
   }
   if (ruta.startsWith("/api/adsb/")) {
     res.writeHead(200, { "Content-Type": "application/json" });

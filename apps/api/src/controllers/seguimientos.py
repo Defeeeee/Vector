@@ -29,7 +29,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from litestar import Controller, Request, Response, get, post
+from litestar import Controller, Request, Response, get, post, put
 from litestar.exceptions import ClientException, NotFoundException
 from postgrest.exceptions import APIError
 from pydantic import BaseModel
@@ -72,6 +72,7 @@ from src.services.avisos_seguimiento import (
     avisar_fin_manual,
     leer_adsb,
 )
+from src.services.seguidores import AsignacionIn, avisar_compartido
 from src.config import settings
 from src.supabase_client import SupabaseManager
 
@@ -405,9 +406,80 @@ class SeguimientosController(Controller):
                 .data
                 or []
             )
-            return [resumen_de_activo(f, ahora) for f in filas if esta_activo(f, ahora)]
+            vivos = [f for f in filas if esta_activo(f, ahora)]
+            # A quiénes está asignado cada uno en el tracker (migración 056): ids de `seguidores`.
+            asignados: Dict[str, List[str]] = {}
+            if vivos:
+                for a in (
+                    supabase_client.table("seguimiento_seguidores")
+                    .select("seguimiento_id,seguidor_fila_id")
+                    .in_("seguimiento_id", [f["id"] for f in vivos])
+                    .execute()
+                    .data
+                    or []
+                ):
+                    asignados.setdefault(a["seguimiento_id"], []).append(a["seguidor_fila_id"])
+            return [{**resumen_de_activo(f, ahora), "seguidor_ids": sorted(asignados.get(f["id"], []))} for f in vivos]
 
         return await asyncio.to_thread(_leer)
+
+    @put("/{seguimiento_id:uuid}/seguidores", status_code=200)
+    async def asignar_seguidores(
+        self, request: Request, supabase_client: Client, seguimiento_id: UUID, data: AsignacionIn
+    ) -> Dict[str, List[str]]:
+        """
+        Quiénes ven este vuelo en Vector Tracker (migración 056): **reemplaza** la lista. Sólo vuelos del
+        piloto que siguen en marcha, y sólo seguidores suyos que ya aceptaron. A quien se suma le llega
+        "<nombre> compartió un vuelo" (en segundo plano); a quien se saca, nada: deja de verlo.
+        """
+        user_id = str(request.state.user.id)
+        ahora = _ahora()
+
+        def _asignar() -> Dict[str, List[str]]:
+            filas = (
+                supabase_client.table("seguimientos_en_vivo")
+                .select("id,token,nombre,puntos,salida_prevista,vence_at,terminado_at")
+                .eq("id", str(seguimiento_id))
+                .eq("user_id", user_id)
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+            if not filas:
+                raise NotFoundException(_NO_EXISTE)
+            seg = filas[0]
+            if not esta_activo(seg, ahora):
+                raise ClientException(detail="Este seguimiento ya terminó.", status_code=410)
+            mios = (
+                supabase_client.table("seguidores")
+                .select("id,seguidor_id")
+                .eq("piloto_id", user_id)
+                .not_.is_("seguidor_id", "null")
+                .execute()
+                .data
+                or []
+            )
+            por_fila = {m["id"]: m["seguidor_id"] for m in mios}
+            if any(i not in por_fila for i in data.seguidor_ids):
+                raise ClientException(detail="Sólo podés asignar a quienes ya aceptaron tu invitación.", status_code=400)
+            tabla = lambda: supabase_client.table("seguimiento_seguidores")  # noqa: E731
+            actuales = {
+                a["seguidor_fila_id"]
+                for a in (tabla().select("seguidor_fila_id").eq("seguimiento_id", str(seguimiento_id)).execute().data or [])
+            }
+            quedan = set(data.seguidor_ids)
+            sacar = sorted(actuales - quedan)
+            sumar = sorted(quedan - actuales)
+            if sacar:
+                tabla().delete().eq("seguimiento_id", str(seguimiento_id)).in_("seguidor_fila_id", sacar).execute()
+            if sumar:
+                tabla().insert([{"seguimiento_id": str(seguimiento_id), "seguidor_fila_id": i} for i in sumar]).execute()
+                nuevos = [por_fila[i] for i in sumar]
+                en_segundo_plano(lambda: avisar_compartido(SupabaseManager.get_service_client(), seg, nuevos))
+            return {"seguidor_ids": sorted(quedan)}
+
+        return await asyncio.to_thread(_asignar)
 
     @get("/de-plan/{plan_id:uuid}")
     async def de_plan(self, request: Request, supabase_client: Client, plan_id: UUID) -> Dict[str, Any]:
@@ -585,6 +657,46 @@ class SeguimientosController(Controller):
 _leer_adsb = leer_adsb
 
 
+#: Lo que se lee de un seguimiento para armar la vista de un link (público o del tracker).
+COLUMNAS_VISTA = (
+    "nombre,ruta,puntos,created_at,avion_tipo,avion_icao,avion_matricula,mostrar_matricula,vence_at,terminado_at,"
+    "ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido,vistas,vistos_total,"
+    "matricula_adsb,salida_prevista,aterrizo_at,ruta_orientativa"
+)
+
+
+def leer_vista(cliente: Any, fila: Dict[str, Any], ahora: datetime, token: str, visitante: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Lo que ve quien abre un seguimiento, desde su fila ya leída (`COLUMNAS_VISTA`): suma ADS-B, termina
+    un plan que aterrizó (el primero que mira lo guarda), anota la vista si hay `visitante` y devuelve
+    `vista_publica`. Lo comparten el link público y el tracker (`GET /tracker/vuelos`), para que los dos
+    cuenten exactamente lo mismo.
+    """
+    adsb = _leer_adsb(cliente, fila, ahora)
+    # Un plan que aterrizó termina solo (migración 045): el primero que mira lo guarda.
+    # Lo que se muestra sale de la misma cuenta, así que no depende de que el guardado ande.
+    if fila.get("salida_prevista") and esta_activo(fila, ahora):
+        aterrizo = evaluar_vuelo(fila, adsb, ahora)["aterrizo_at"]
+        if aterrizo is not None:
+            marca = aterrizo.isoformat()
+            fila = {**fila, "terminado_at": marca, "aterrizo_at": marca}
+            try:
+                cliente.table("seguimientos_en_vivo").update({"terminado_at": marca, "aterrizo_at": marca}).eq("token", token).is_(
+                    "terminado_at", "null"
+                ).execute()
+            except Exception:  # noqa: BLE001
+                pass
+    # Sólo se anota mientras el vuelo sigue en curso; una falla acá nunca rompe la consulta.
+    if visitante and esta_activo(fila, ahora):
+        try:
+            cambios = anotar_vista(fila.get("vistas"), fila.get("vistos_total"), visitante, ahora)
+            if cambios:
+                cliente.table("seguimientos_en_vivo").update(cambios).eq("token", token).execute()
+        except Exception:  # noqa: BLE001
+            pass
+    return vista_publica(fila, ahora, adsb)
+
+
 def _token_con_forma(token: str) -> bool:
     return 32 <= len(token) <= 64 and all(c.isalnum() or c in "-_" for c in token)
 
@@ -620,7 +732,7 @@ class SeguimientosPublicosController(Controller):
             cliente = SupabaseManager.get_service_client()
             filas = (
                 cliente.table("seguimientos_en_vivo")
-                .select("nombre,ruta,puntos,created_at,avion_tipo,avion_icao,avion_matricula,mostrar_matricula,vence_at,terminado_at,ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido,vistas,vistos_total,matricula_adsb,salida_prevista,aterrizo_at,ruta_orientativa")
+                .select(COLUMNAS_VISTA)
                 .eq("token", token)
                 .limit(1)
                 .execute()
@@ -629,30 +741,7 @@ class SeguimientosPublicosController(Controller):
             )
             if not filas or not visible(filas[0], ahora):
                 raise NotFoundException(_NO_EXISTE)
-            fila = filas[0]
-            adsb = _leer_adsb(cliente, fila, ahora)
-            # Un plan que aterrizó termina solo (migración 045): el primero que mira lo guarda.
-            # Lo que se muestra sale de la misma cuenta, así que no depende de que el guardado ande.
-            if fila.get("salida_prevista") and esta_activo(fila, ahora):
-                aterrizo = evaluar_vuelo(fila, adsb, ahora)["aterrizo_at"]
-                if aterrizo is not None:
-                    marca = aterrizo.isoformat()
-                    fila = {**fila, "terminado_at": marca, "aterrizo_at": marca}
-                    try:
-                        cliente.table("seguimientos_en_vivo").update({"terminado_at": marca, "aterrizo_at": marca}).eq("token", token).is_(
-                            "terminado_at", "null"
-                        ).execute()
-                    except Exception:  # noqa: BLE001
-                        pass
-            # Sólo se anota mientras el vuelo sigue en curso; una falla acá nunca rompe la consulta.
-            if esta_activo(fila, ahora):
-                try:
-                    cambios = anotar_vista(fila.get("vistas"), fila.get("vistos_total"), visitante, ahora)
-                    if cambios:
-                        cliente.table("seguimientos_en_vivo").update(cambios).eq("token", token).execute()
-                except Exception:  # noqa: BLE001
-                    pass
-            return vista_publica(fila, ahora, adsb)
+            return leer_vista(cliente, filas[0], ahora, token, visitante)
 
         cuerpo = await asyncio.to_thread(_leer)
         return Response(cuerpo, headers={"Cache-Control": "no-store"})

@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/api";
 import PageHeader from "@/components/dashboard/PageHeader";
 import CompartirTuVuelo, { type ActivoParaMostrar } from "@/components/dashboard/compartir/CompartirTuVuelo";
 import { leerSeguimientosActivos } from "@/actions/seguimiento";
+import { leerSeguidores } from "@/actions/seguidores";
 import { fechaArgentina, horaDeArgentina } from "@/lib/compartir-sin-plan";
 import { ROTULO_DE_ORIGEN, rotuloDeSalida, trayectoDeActivo } from "@/lib/seguimientos-activos";
 import type { Aircraft } from "@/types";
@@ -19,6 +20,8 @@ export const metadata = { title: "Compartir tu vuelo | Vector" };
  * - Las fechas se escriben acá, en el server (invariante 1): el cliente recibe el texto ya armado y
  *   "hoy" resuelto (`hoy`), nunca el reloj del navegador.
  * - `?origen=SADM&destino=SAZS` precarga el formulario (lo manda el Mapa con la ruta cargada).
+
+ * - **Vector Tracker** (migración 056): quiénes siguen tus vuelos y a quién se asigna cada uno (`leerSeguidores`).
  * - Una lectura que falla no es "no compartís nada" (invariante 2): se dice que no se pudo leer.
  */
 
@@ -28,7 +31,7 @@ const codigo = (v: string) => (/^[A-Za-z0-9]{3,4}$/.test(v.trim()) ? v.trim().to
 export default async function CompartirPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const ahoraIso = new Date().toISOString();
-  const [avionesRes, activos] = await Promise.all([apiFetch("/aircraft", { cache: "no-store" }), leerSeguimientosActivos()]);
+  const [avionesRes, activos, seguidores] = await Promise.all([apiFetch("/aircraft", { cache: "no-store" }), leerSeguimientosActivos(), leerSeguidores()]);
   if (avionesRes.status === 401) redirect("/api/auth/logout?redirect=/login?expirada=1");
   // Sin simuladores: no vuelan.
   const aviones: Aircraft[] = avionesRes.ok ? ((await avionesRes.json().catch(() => [])) as Aircraft[]).filter((a) => !a.is_simulator) : [];
@@ -59,6 +62,7 @@ export default async function CompartirPage({ searchParams }: { searchParams: Pr
         ahoraIso={ahoraIso}
         origenInicial={codigo(unParametro(params.origen))}
         destinoInicial={codigo(unParametro(params.destino))}
+        seguidores={seguidores}
       />
     </div>
   );
