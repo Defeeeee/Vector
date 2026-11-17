@@ -346,6 +346,16 @@ export function revisar(f: FormularioPlan, ahoraIso?: string): Revision {
   };
   const may = (s: string) => (s ?? "").trim().toUpperCase();
 
+  // 18 · PER/ obligatorio. La ENR 1.10 lo deja "si lo prescribe la autoridad ATS"; EANA lo
+  // pide en la práctica (Berni, piloto, 2026-11-17). Va como campo "otros.PER" para que el
+  // editor lo muestre junto a la casilla 18.
+  obligatorio(
+    "otros.PER",
+    /^[A-EH]$/.test(may(f.otros.PER ?? "")),
+    !may(f.otros.PER ?? ""),
+    "Casilla 18: falta PER/, la categoría de performance del avión (A si cruza el umbral a menos de 91 kt: casi todos los de escuela).",
+  );
+
   // 7
   const c7 = identificacionAeronave(f.matricula);
   obligatorio("matricula", c7.length >= 2, !c7, "Casilla 7: falta la matrícula.");

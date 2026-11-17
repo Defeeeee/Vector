@@ -253,7 +253,7 @@ export function rutaItem15(elementos: ElementoRuta[]): string | null {
 /* -------------------------------------------------------------------------- */
 
 /** El orden en que la ENR 1.10 enumera los indicadores de la casilla 18. */
-const ORDEN_18 = [
+export const ORDEN_18 = [
   "STS", "PBN", "NAV", "COM", "DAT", "SUR", "DEP", "DEST", "DOF", "REG", "EET", "SEL",
   "TYP", "CODE", "DLE", "OPR", "ORGN", "PER", "ALTN", "RALT", "TALT", "RIF", "RMK",
 ] as const;

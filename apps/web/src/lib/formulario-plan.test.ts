@@ -100,6 +100,26 @@ describe("revisar: el formulario a un plan OACI", () => {
     expect(r.plan.c18).toContain("DEST/CANUELAS 3500S05845W");
   });
 
+  it("PER/ es obligatorio: sin él el plan no está completo", () => {
+    const { PER: _per, ...sinPer } = ACEPTADO.otros;
+    const r = revisar({ ...ACEPTADO, otros: sinPer });
+    expect(r.completo).toBe(false);
+    expect(r.estados["otros.PER"]).toBe("falta");
+    expect(r.errores.map((e) => e.mensaje).join(" ")).toContain("falta PER/");
+    expect(revisar({ ...ACEPTADO, otros: { ...sinPer, PER: "Z" } }).completo).toBe(false);
+    expect(revisar({ ...ACEPTADO, otros: { ...sinPer, PER: "b" } }).completo).toBe(true);
+  });
+
+  it("la casilla 18 sale en el orden de la ENR 1.10 aunque los indicadores vengan desordenados", () => {
+    const r = revisar({
+      ...ACEPTADO,
+      otros: { RMK: "HOLA", PER: "A", OPR: "ESCUELA", REG: "LVS114", NAV: "ABAS", STS: "HOSP", EET: "SABB0030", PBN: "B2", ORGN: "X" },
+    });
+    expect(r.plan.c18).toBe("STS/HOSP PBN/B2 NAV/ABAS DOF/261010 REG/LVS114 EET/SABB0030 OPR/ESCUELA ORGN/X PER/A RMK/HOLA");
+    const posiciones = ["STS/", "PBN/", "NAV/", "DOF/", "REG/", "EET/", "OPR/", "ORGN/", "PER/", "RMK/"].map((i) => r.plan.c18.indexOf(i));
+    expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones);
+  });
+
   it("ZZZZ en el tipo pide TYP/", () => {
     expect(revisar({ ...ACEPTADO, tipoAeronave: "ZZZZ" }).errores.map((e) => e.campo)).toContain("otros.TYP");
     expect(revisar({ ...ACEPTADO, tipoAeronave: "ZZZZ", otros: { ...ACEPTADO.otros, TYP: "AERO BOERO 115" } }).completo).toBe(true);

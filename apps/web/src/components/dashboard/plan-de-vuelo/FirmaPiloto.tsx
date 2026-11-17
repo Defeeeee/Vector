@@ -10,6 +10,42 @@ import { guardarFirma } from "@/actions/plan-de-vuelo";
  *
  * Tinta oscura sobre fondo transparente, que es como queda en el PDF, también en modo oscuro.
  */
+/**
+ * El PNG del lienzo recortado a la tinta (con un 3 % de margen), así la firma guardada ya
+ * viene justa. El PDF la recorta igual (`recortarFirmaPng`): esto sólo achica lo que se guarda.
+ */
+function recortarALaTinta(c: HTMLCanvasElement): string {
+  try {
+    const ctx = c.getContext("2d");
+    if (!ctx) return c.toDataURL("image/png");
+    const { width: w, height: h } = c;
+    const px = ctx.getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (px[(y * w + x) * 4 + 3] <= 16) continue;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+    if (x1 < 0) return c.toDataURL("image/png");
+    const m = Math.ceil(Math.max(x1 - x0 + 1, y1 - y0 + 1) * 0.03);
+    x0 = Math.max(0, x0 - m);
+    y0 = Math.max(0, y0 - m);
+    x1 = Math.min(w - 1, x1 + m);
+    y1 = Math.min(h - 1, y1 + m);
+    const salida = document.createElement("canvas");
+    salida.width = x1 - x0 + 1;
+    salida.height = y1 - y0 + 1;
+    salida.getContext("2d")?.drawImage(c, x0, y0, salida.width, salida.height, 0, 0, salida.width, salida.height);
+    return salida.toDataURL("image/png");
+  } catch {
+    return c.toDataURL("image/png");
+  }
+}
+
 export default function FirmaPiloto({
   inicial,
   onCambio,
@@ -48,7 +84,7 @@ export default function FirmaPiloto({
   const guardar = async () => {
     const c = lienzo.current;
     if (!c || !hayTrazo) return;
-    const png = c.toDataURL("image/png");
+    const png = recortarALaTinta(c);
     setEstado("guardando");
     const r = await guardarFirma(png);
     if ("error" in r) {

@@ -1,5 +1,6 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 import type { PlanOaci } from "./plan-de-vuelo";
+import { recortarFirmaPng } from "./recortar-firma";
 
 /**
  * El plan de vuelo en el **formulario de EANA**: el que imprimen las oficinas ARO/AIS,
@@ -94,8 +95,13 @@ const LETRAS = {
   obsN: letraEn(35.4, 97.9),
 };
 
-/** La firma va arriba del rótulo impreso "Firma del Comandante de la aeronave". */
-const FIRMA: Caja = [300, 33, 565, 58];
+/**
+ * La firma va arriba del rótulo impreso "Firma del Comandante de la aeronave", en la caja
+ * "Espacio reservado para requisitos adicionales" (y de 22 a 60 pt). Arranca a la derecha
+ * del texto "RESERVED…" (que termina en x ≈ 348) y puede pisar un poco la línea de arriba,
+ * como una firma de verdad. Con la tinta recortada (`recortarFirmaPng`) ocupa casi toda.
+ */
+const FIRMA: Caja = [352, 31, 568, 65];
 
 interface Fuentes {
   normal: PDFFont;
@@ -239,7 +245,7 @@ export async function pdfPlanDeVuelo(p: PlanOaci, opciones: OpcionesPdfPlan): Pr
   izquierda(page, n, p.presentadoPor, [pp[0] + 2, pp[3] - 16, pp[2] - 2, pp[3] - 3]);
 
   if (opciones.firmaPng) {
-    const firma = await doc.embedPng(opciones.firmaPng);
+    const firma = await doc.embedPng(recortarFirmaPng(opciones.firmaPng));
     const escala = Math.min((FIRMA[2] - FIRMA[0]) / firma.width, (FIRMA[3] - FIRMA[1]) / firma.height);
     const w = firma.width * escala;
     page.drawImage(firma, { x: FIRMA[0] + (FIRMA[2] - FIRMA[0] - w) / 2, y: FIRMA[1], width: w, height: firma.height * escala });
@@ -344,7 +350,7 @@ async function pdfMensaje(
   enCeldas(page, n, d.licencia, caja(m.cajas.licencia), 6);
 
   if (opciones.firmaPng) {
-    const firma = await doc.embedPng(opciones.firmaPng);
+    const firma = await doc.embedPng(recortarFirmaPng(opciones.firmaPng));
     const c = caja(m.cajas.firma);
     const escala = Math.min((c[2] - c[0]) / firma.width, (c[3] - c[1]) / firma.height);
     const w = firma.width * escala;
@@ -367,7 +373,7 @@ const DLA: FormularioMensaje = {
     c16altn: [579, 540, 715, 566],
     nombre: [8, 795, 384, 826],
     licencia: [390, 802, 594, 826],
-    firma: [610, 795, 880, 830],
+    firma: [600, 782, 882, 830],
   },
   renglones: [622, 644, 666, 688, 710, 732, 754].map((y) => [y, y + 22]),
 };
@@ -391,7 +397,7 @@ const CNL: FormularioMensaje = {
     c16altn: [562, 506, 699, 533],
     nombre: [8, 795, 380, 836],
     licencia: [382, 816, 580, 840],
-    firma: [585, 795, 865, 838],
+    firma: [582, 792, 867, 840],
   },
   renglones: [589, 614, 636, 658, 680, 702, 724, 746, 768].map((y, i, a) => [y, a[i + 1] ?? 790]),
 };
@@ -431,7 +437,7 @@ const CHG: FormularioMensaje = {
     c16altn: [559, 507, 696, 534],
     nombre: [8, 806, 375, 846],
     licencia: [379, 826, 577, 846],
-    firma: [580, 806, 862, 846],
+    firma: [581, 800, 864, 845],
   },
   renglones: [[590, 612], [612, 634], [634, 656]],
   renglonesEnmienda: [[722, 744], [744, 766], [766, 786], [786, 806]],

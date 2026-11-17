@@ -48,7 +48,7 @@ import {
   type PilotoParaPlan,
   type Sugerencia,
 } from "@/lib/formulario-plan";
-import { asuntoDelMail, cuerpoDelMail, mensajeFpl, nombreDelArchivo, type Indicador18 } from "@/lib/plan-de-vuelo";
+import { asuntoDelMail, cuerpoDelMail, mensajeFpl, nombreDelArchivo, ORDEN_18, type Indicador18 } from "@/lib/plan-de-vuelo";
 import {
   demoraDesdeHoraUtc,
   dofDeDemora,
@@ -129,9 +129,12 @@ const BORDE: Record<string, string> = {
   opcional: "border-zinc-200 dark:border-white/10",
 };
 
-const INDICADORES: Indicador18[] = [
-  "STS", "PBN", "NAV", "COM", "DAT", "SUR", "REG", "EET", "SEL", "TYP", "CODE", "DLE", "OPR", "ORGN", "PER", "RALT", "TALT", "RIF", "RMK",
-];
+/** Los que Vector arma solo (de los aeródromos y la fecha): no se escriben. */
+const AUTOMATICOS: Indicador18[] = ["DEP", "DEST", "ALTN", "DOF"];
+/** PER/ es obligatorio (EANA): siempre a la vista, no hay que abrirlo con el chip. */
+const SIEMPRE_VISIBLES: Indicador18[] = ["PER"];
+/** Los que el piloto abre con un chip, en el orden de la ENR 1.10. */
+const INDICADORES: Indicador18[] = ORDEN_18.filter((i) => !AUTOMATICOS.includes(i) && !SIEMPRE_VISIBLES.includes(i));
 
 /**
  * Una casilla. Es un `<label>` para que tocar en cualquier parte enfoque el campo, **salvo
@@ -431,6 +434,13 @@ export default function EditorPlanDeVuelo({
       ? sugerirAutonomia(avion.fuel_capacity_l, avion.fuel_burn_lph, "con los tanques llenos")
       : null);
 
+  // PER/: los aviones de escuela cruzan el umbral a menos de 91 kt (categoría A). Se sugiere,
+  // no se llena: la categoría la decide el piloto.
+  const sugPer: Sugerencia | null =
+    !avion?.cruise_tas_kt || avion.cruise_tas_kt <= 160
+      ? { valor: "A", motivo: "menos de 91 kt en el umbral, lo común en aviones de escuela" }
+      : null;
+
   const sugerida = useMemo(() => (f.salida ? oficinaParaSalida(f.salida, oficinas) : null), [f.salida, oficinas]);
   const cercanas = useMemo(() => (f.salida ? oficinasCercanas(f.salida, oficinas) : []), [f.salida, oficinas]);
   const oficina = oficinas.find((o) => o.oaci === f.oficina) ?? sugerida?.oficina ?? null;
@@ -721,6 +731,17 @@ export default function EditorPlanDeVuelo({
     return auto;
   }, [r.plan.c18]);
 
+  // Un indicador escrito adentro del valor de otro ("PER/A" en RMK/) saldría fuera de orden.
+  const indicadoresAjenos = useMemo(() => {
+    const hallados: { en: string; otro: string }[] = [];
+    for (const [ind, valor] of Object.entries(f.otros)) {
+      for (const m of (valor ?? "").toUpperCase().matchAll(/(?:^|\s)([A-Z]{2,5})\//g)) {
+        if (m[1] !== ind && (ORDEN_18 as readonly string[]).includes(m[1])) hallados.push({ en: ind, otro: m[1] });
+      }
+    }
+    return hallados;
+  }, [f.otros]);
+
   return (
     <div className="space-y-6 pb-16">
       {/* Encabezado */}
@@ -985,34 +1006,62 @@ export default function EditorPlanDeVuelo({
                 );
               })}
             </div>
+            {/* Todo en el orden de la ENR 1.10, con los que arma Vector en su lugar. */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {Object.entries(autoOtros).map(([ind, valor]) => (
-                <div key={ind} className="rounded-2xl border border-dashed border-zinc-200 dark:border-white/10 px-3.5 py-2">
-                  <span className="text-[11px] font-semibold text-zinc-400">
-                    <span className="data font-bold">{ind}/</span> · lo arma Vector
-                  </span>
-                  <p className="data text-sm font-bold text-zinc-700 dark:text-zinc-300 py-1">{valor}</p>
-                </div>
-              ))}
-              {INDICADORES.filter((ind) => indicadoresAbiertos.has(ind) || f.otros[ind]).map((ind) => (
-                <Campo key={ind} etiqueta={`${ind}/`} estado={f.otros[ind] ? "ok" : "opcional"} delAvion={f.origen[`otros.${ind}`] === "avion"}>
-                  {ind === "PER" ? (
-                    <select value={f.otros.PER ?? ""} onChange={(ev) => cambiarOtro("PER", ev.target.value)} className={INPUT}>
-                      <option value="">—</option>
-                      <option value="A">A · menos de 91 kt en el umbral</option>
-                      <option value="B">B · 91 a 120 kt</option>
-                      <option value="C">C · 121 a 140 kt</option>
-                      <option value="D">D · 141 a 165 kt</option>
-                      <option value="E">E · más de 165 kt</option>
-                    </select>
-                  ) : (
-                    <input value={f.otros[ind] ?? ""} onChange={(ev) => cambiarOtro(ind, ev.target.value)} className={`${INPUT} uppercase`} />
-                  )}
-                </Campo>
-              ))}
+              {ORDEN_18.map((ind) => {
+                if (AUTOMATICOS.includes(ind)) {
+                  const valor = autoOtros[ind];
+                  if (!valor) return null;
+                  return (
+                    <div key={ind} className="rounded-2xl border border-dashed border-zinc-200 dark:border-white/10 px-3.5 py-2">
+                      <span className="text-[11px] font-semibold text-zinc-400">
+                        <span className="data font-bold">{ind}/</span> · lo arma Vector
+                      </span>
+                      <p className="data text-sm font-bold text-zinc-700 dark:text-zinc-300 py-1">{valor}</p>
+                    </div>
+                  );
+                }
+                const visible = SIEMPRE_VISIBLES.includes(ind) || indicadoresAbiertos.has(ind) || !!f.otros[ind];
+                if (!visible) return null;
+                return (
+                  <Campo
+                    key={ind}
+                    etiqueta={ind === "PER" ? "PER/ · obligatorio" : `${ind}/`}
+                    estado={ind === "PER" ? e["otros.PER"] : f.otros[ind] ? "ok" : "opcional"}
+                    delAvion={f.origen[`otros.${ind}`] === "avion"}
+                    debajo={
+                      ind === "PER" ? (
+                        <Sugerido s={sugPer} actual={f.otros.PER ?? ""} onUsar={() => sugPer && cambiarOtro("PER", sugPer.valor)} />
+                      ) : undefined
+                    }
+                  >
+                    {ind === "PER" ? (
+                      <select value={f.otros.PER ?? ""} onChange={(ev) => cambiarOtro("PER", ev.target.value)} className={INPUT}>
+                        <option value="">—</option>
+                        <option value="A">A · menos de 91 kt en el umbral</option>
+                        <option value="B">B · 91 a 120 kt</option>
+                        <option value="C">C · 121 a 140 kt</option>
+                        <option value="D">D · 141 a 165 kt</option>
+                        <option value="E">E · más de 165 kt</option>
+                      </select>
+                    ) : (
+                      <input value={f.otros[ind] ?? ""} onChange={(ev) => cambiarOtro(ind, ev.target.value)} className={`${INPUT} uppercase`} />
+                    )}
+                  </Campo>
+                );
+              })}
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold text-zinc-400">Así sale en el formulario:</p>
+              <p className="data text-xs font-bold text-zinc-700 dark:text-zinc-300 break-words py-1">{r.plan.c18}</p>
             </div>
             {r.errores.filter((x) => x.campo.startsWith("otros")).map((x) => (
               <p key={x.campo} className="text-xs text-red-600 dark:text-red-400">{x.mensaje}</p>
+            ))}
+            {indicadoresAjenos.map((x) => (
+              <p key={x.en} className="text-xs text-amber-600 dark:text-amber-400">
+                En {x.en}/ escribiste {x.otro}/: escribilo en su propio campo para que salga en orden.
+              </p>
             ))}
           </Seccion>
 

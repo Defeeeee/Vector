@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.44.0 — El plan de vuelo, más prolijo
+
+_17 de noviembre de 2026_
+
+- **Casilla 18 en orden, con PER/ y la firma más grande** — La casilla 18 se ve en el mismo orden en que sale en el formulario, con una vista de cómo queda. PER/ ahora es obligatorio, y Vector te sugiere la A para los aviones de escuela. Tu firma sale más grande en el plan, la demora, la cancelación y la modificación.
+
 ## v3.43.0 — Vector Tracker, como app
 
 _15 de noviembre de 2026_

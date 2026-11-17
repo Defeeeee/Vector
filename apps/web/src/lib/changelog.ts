@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.44.0",
+    fecha: "2026-11-17",
+    titulo: "El plan de vuelo, más prolijo",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Casilla 18 en orden, con PER/ y la firma más grande",
+        texto: "La casilla 18 se ve en el mismo orden en que sale en el formulario, con una vista de cómo queda. PER/ ahora es obligatorio, y Vector te sugiere la A para los aviones de escuela. Tu firma sale más grande en el plan, la demora, la cancelación y la modificación.",
+        href: "/dashboard/plan-de-vuelo",
+        cta: "Ver mis planes",
+      },
+    ],
+  },
+  {
     version: "3.43.0",
     fecha: "2026-11-15",
     titulo: "Vector Tracker, como app",

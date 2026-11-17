@@ -65,7 +65,14 @@ Leídas el 2026-10-10. Lo regulatorio se escribe contra esto, no de memoria
   los indicadores nacionales de tres letras.
 - **La ruta empieza y termina con DCT** (`DCT ATE DCT`), como en ese plan.
 - **NAV/ABAS** cuando el GPS tiene aumentación ABAS (con Z en la casilla 10), y **PER/**
-  con la categoría de performance, si el piloto la marca.
+  con la categoría de performance. **PER/ es obligatorio** en Vector (Berni, piloto,
+  2026-11-17): la ENR 1.10 lo deja "si lo prescribe la autoridad ATS" y EANA lo pide en
+  la práctica; sin él el plan no está completo (`revisar`, campo `otros.PER`, una letra
+  A–E o H). El editor lo muestra siempre y **sugiere** A (aviones de escuela, menos de
+  91 kt en el umbral), sin llenarlo. La casilla 18 sale siempre en el orden de la ENR 1.10
+  (`ORDEN_18`), y el editor muestra sus campos en ese mismo orden.
+- **La firma del piloto se recorta a la tinta** (`recortar-firma.ts`) antes de ponerla en
+  el PDF, y va en la caja "Espacio reservado para requisitos adicionales" del formulario.
 - **Casilla 19:** el teléfono va en las observaciones (`N/ T.E. +54…`); "Comandante de la
   aeronave" lleva nombre, licencia y número; las radios de emergencia son las de
   supervivencia, no la VHF del avión; "Presentado por" queda vacío si no lo presenta otro.
