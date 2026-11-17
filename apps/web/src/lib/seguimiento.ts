@@ -15,6 +15,8 @@
  *   entran en la cuenta.
  */
 
+import { origenDelTracker } from "./tracker-host";
+
 /** Cada cuánto el teléfono manda la posición. */
 export const CADA_MS = 15_000;
 /** Cada cuánto la página pública vuelve a preguntar. */
@@ -63,6 +65,12 @@ export interface SeguimientoPublico {
    * origen y el destino, y la línea del mapa entre ellos es directa y orientativa.
    */
   ruta_orientativa?: boolean;
+  /** Migración 057. ISO: cuándo aterrizó (el seguimiento lo detectó o lo cerró). Un backend anterior no lo manda. */
+  aterrizo_at?: string | null;
+  /** Migración 057: dónde aterrizó (cualquier aeródromo, no sólo el destino cargado), o `null` si no se sabe. */
+  aterrizo_en?: { codigo: string; nombre: string } | null;
+  /** Migración 057: el avión volvió a aparecer en el aire más tarde y ese tramo se cerró sin ver dónde aterrizó. */
+  aterrizo_sin_ver?: boolean;
   /** Si el link puede completarse con ADS-B (el backend tiene la matrícula; nunca se la muestra). */
   con_adsb?: boolean;
   ultima: { lat: number; lon: number; alt_ft: number | null; gs_kt: number | null; track: number | null; hora: string | null; fuente?: FuenteDePosicion } | null;
@@ -110,9 +118,15 @@ export function posicionDeLectura(l: LecturaParaCompartir | null): PosicionAEnvi
   };
 }
 
-/** El link que se comparte. `origen` es `window.location.origin` (o el sitio, en el server). */
-export function urlDeSeguimiento(origen: string, token: string): string {
-  return `${origen.replace(/\/+$/, "")}/seguir/${encodeURIComponent(token)}`;
+/**
+ * El link que se comparte, por **Vector Tracker** (`https://tracker.vectoraero.ar/seguir/<token>`).
+ * `origen` es `window.location.origin` (o el sitio, en el server) y se pasa al host del tracker
+ * (`origenDelTracker`); en desarrollo queda donde está. Con `trackerUrl` (el `TRACKER_URL` del server,
+ * `lib/sitio.ts`) se usa ése tal cual.
+ */
+export function urlDeSeguimiento(origen: string, token: string, trackerUrl?: string | null): string {
+  const base = trackerUrl?.trim() ? trackerUrl.trim() : origenDelTracker(origen);
+  return `${base.replace(/\/+$/, "")}/seguir/${encodeURIComponent(token)}`;
 }
 
 /** ¿Tiene la forma de un token? (32–64 caracteres url-safe): lo demás es un 404 sin pedir nada. */

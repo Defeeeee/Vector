@@ -310,7 +310,7 @@ class TrackerController(Controller):
                 return []
             filas = (
                 cliente.table("seguimientos_en_vivo")
-                .select(f"user_id,token,{COLUMNAS_VISTA}")
+                .select(f"token,{COLUMNAS_VISTA}")
                 .in_("id", asignados)
                 .gte("vence_at", (ahora - GRACIA_DESPUES_DE_TERMINAR).isoformat())
                 .order("created_at", desc=True)

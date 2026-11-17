@@ -13,6 +13,7 @@ import { AuditSummary, Profile } from "@/types";
 import { ACTIVIDAD_HREF } from "@/lib/secciones";
 import SinConexionBanner from "@/components/dashboard/SinConexionBanner";
 import VistoPorUltimaVez from "@/components/dashboard/VistoPorUltimaVez";
+import SinSenal from "@/components/dashboard/SinSenal";
 import { AvisosProvider } from "@/components/dashboard/Avisos";
 
 import { redirect } from "next/navigation";
@@ -284,6 +285,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <SincronizarCad />
       {/* Los datos al día: al volver a la app, cada 5 minutos y tirando hacia abajo (3.7.0). */}
       <ActualizarDatos servido={Date.now()} />
+      {/* Vector sin señal (3.44.0): guarda la app para volar y avisa, con la hora de lo guardado, cuando no hay red. */}
+      <SinSenal usuarioId={profile?.id ?? null} />
     </div>
     </AvisosProvider>
   );

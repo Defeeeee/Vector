@@ -71,6 +71,12 @@ export const MENSAJES = {
   activarAhora: "vector:activar-ahora",
   /** Borrar los caches con datos personales. Ver el borrado al cerrar sesión. */
   olvidarDatosPersonales: "vector:olvidar-datos-personales",
+  /**
+   * Guardar para volar sin señal (3.44.0): completar la app y el paquete de datos y precalentar las
+   * pantallas principales. Lleva `{ usuario, forzar, conexion }` y se contesta por el puerto con el
+   * estado. Ver `debePrecalentar`, que decide, y `lib/sin-senal.ts`.
+   */
+  guardarParaVolar: "vector:guardar-para-volar",
 } as const;
 
 /**
@@ -120,16 +126,20 @@ const PAGINAS_CACHEABLES = [
   // El plan de vuelo, para armarlo en la plataforma sin señal (2026-10-23). El editor
   // guarda lo escrito en el teléfono y lo sube al volver la señal (`borrador-plan.ts`).
   "/dashboard/plan-de-vuelo",
+  // Las checklists del avión (3.39.0): se usan en la cabina, con el motor andando y sin señal.
+  "/dashboard/tools/checklists",
 ];
 
 /** El editor de un plan guardado: `/dashboard/plan-de-vuelo/<uuid>`. */
 const EDITOR_DE_PLAN = /^\/dashboard\/plan-de-vuelo\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Una checklist para usar: `/dashboard/tools/checklists/<uuid>`. */
+const CHECKLIST = /^\/dashboard\/tools\/checklists\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function paginaCacheable(pathname: string): boolean {
   // La raíz se normaliza a cadena vacía, que tampoco está en la lista: no hace falta
   // tratarla aparte, y una condición de más sin test es una condición que miente.
   const p = pathname.replace(/\/+$/, "");
-  return PAGINAS_CACHEABLES.includes(p) || EDITOR_DE_PLAN.test(p);
+  return PAGINAS_CACHEABLES.includes(p) || EDITOR_DE_PLAN.test(p) || CHECKLIST.test(p);
 }
 
 /**

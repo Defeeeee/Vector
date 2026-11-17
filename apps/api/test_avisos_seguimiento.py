@@ -89,10 +89,10 @@ fila_base = {
     "despego_at": None, "aviso_despegue_at": None, "aviso_aterrizaje_at": None,
 }
 d = armar_aviso_seguimiento("despegue", fila_base)
-a = armar_aviso_seguimiento("aterrizaje", fila_base)
+a = armar_aviso_seguimiento("aterrizaje", {**fila_base, "aterrizo_en": {"codigo": "SRDL", "nombre": "Dolores"}})
 f = armar_aviso_seguimiento("fin", fila_base)
 check("despegue: 'Federico despegó de SADM', y abre el link", d["titulo"] == "Federico despegó de SADM" and d["url"] == f"/seguir/{TOKEN}")
-check("aterrizaje: 'Federico aterrizó en SRDL'", a["titulo"] == "Federico aterrizó en SRDL")
+check("aterrizaje: 'Federico aterrizó en Dolores' (el lugar donde se detectó)", a["titulo"] == "Federico aterrizó en Dolores")
 check("fin a mano: 'Federico terminó el vuelo'", f["titulo"] == "Federico terminó el vuelo")
 check("sin la matrícula, en ningún campo, si el piloto no la prendió", all("LV-ABC" not in repr(x) and "LVABC" not in repr(x) for x in (d, a, f)))
 con = {**fila_base, "mostrar_matricula": True, "avion_matricula": "LV-ABC"}
@@ -140,6 +140,14 @@ class Consulta:
 
     def gte(self, c, v):
         self.filtros.append(lambda r: r.get(c) >= v)
+        return self
+
+    def neq(self, c, v):
+        self.filtros.append(lambda r: r.get(c) != v)
+        return self
+
+    def lt(self, c, v):
+        self.filtros.append(lambda r: r.get(c) < v)
         return self
 
     def lte(self, c, v):
@@ -214,11 +222,11 @@ check("ni mientras sigue volando", barrer(base, T0 + timedelta(minutes=36)) == 0
 
 base.t["adsb_posiciones"] = sin_volar + despegue + crucero + llegada
 check("antes de los 3 minutos en tierra no hay aterrizaje", barrer(base, T0 + timedelta(minutes=52)) == 0 and fila["terminado_at"] is None)
-check("aterriza: avisa 'aterrizó en SRDL'", barrer(base, T0 + timedelta(minutes=56)) == 1 and enviados[-1][1] == "Federico aterrizó en SRDL")
+check("aterriza: avisa 'aterrizó en SRDL'", barrer(base, T0 + timedelta(minutes=56)) == 1 and enviados[-1][1] == "Federico aterrizó en Dolores")
 check("y termina el seguimiento, con el aterrizaje guardado", fila["terminado_at"] is not None and fila["aterrizo_at"] == fila["terminado_at"] and fila["aviso_aterrizaje_at"] is not None)
 n = len(enviados)
 check("después, el vuelo ya no se mira ni se repite nada", barrer(base, T0 + timedelta(minutes=57)) == 0 and barrer(base, T0 + timedelta(minutes=70)) == 0 and len(enviados) == n)
-check("en total, dos avisos: despegue y aterrizaje", [e[1] for e in enviados] == ["Federico despegó de SADM", "Federico aterrizó en SRDL"])
+check("en total, dos avisos: despegue y aterrizaje", [e[1] for e in enviados] == ["Federico despegó de SADM", "Federico aterrizó en Dolores"])
 
 # El mismo barrido corrido dos veces a la vez: el segundo pierde la reserva.
 enviados.clear()
@@ -239,8 +247,8 @@ check("un despegue visto 20 min tarde no se avisa, pero queda anotado", enviados
 # Lo terminó la lectura pública del link (que no manda avisos): el barrido avisa el aterrizaje.
 enviados.clear()
 toque = (T0 + timedelta(minutes=51)).isoformat()
-base4, fila4 = nueva_base(sin_volar + despegue + crucero + llegada, terminado_at=toque, aterrizo_at=toque, despego_at=(T0 + timedelta(minutes=31)).isoformat(), aviso_despegue_at=T0.isoformat())
-check("terminado por aterrizaje desde la lectura pública: el barrido avisa", barrer(base4, T0 + timedelta(minutes=57)) == 1 and enviados[-1][1] == "Federico aterrizó en SRDL")
+base4, fila4 = nueva_base(sin_volar + despegue + crucero + llegada, terminado_at=toque, aterrizo_at=toque, aterrizo_en={"codigo": "SRDL", "nombre": "Dolores"}, despego_at=(T0 + timedelta(minutes=31)).isoformat(), aviso_despegue_at=T0.isoformat())
+check("terminado por aterrizaje desde la lectura pública: el barrido avisa", barrer(base4, T0 + timedelta(minutes=57)) == 1 and enviados[-1][1] == "Federico aterrizó en Dolores")
 check("...y una vez", barrer(base4, T0 + timedelta(minutes=58)) == 0)
 
 # Terminado a mano: no hay aterrizaje; lo avisa el controlador.
@@ -280,6 +288,47 @@ av.avisos_configurados = lambda: False
 base9, _ = nueva_base(sin_volar + despegue)
 check("sin claves VAPID no se manda nada", barrer(base9, T0 + timedelta(minutes=34, seconds=20)) == 0)
 av.avisos_configurados = lambda: True
+
+
+# --- aterrizar en otro aeródromo, el avión que reaparece y los tramos encadenados (migración 057) -------------------
+enviados.clear()
+av._SIN_TRAMO_ANTERIOR.clear()
+TOKEN_V = "v" * 40
+# Una ida que se perdió en el aire hace 6 horas (a las 06:00Z) y nadie cerró, y una vuelta que salió 2 h 30 antes de lo previsto (dentro de `ADELANTO_ENCADENADO`, 3 h).
+ida_rows = [adsb(-470, -34.56, -58.96, 150, 60), adsb(-469, -34.58, -58.98, 400, 75)] + [adsb(m, -34.6 - (m + 470) * 0.002, -59.0, 3000, 95) for m in range(-468, -359, 2)]
+fin_ida = datetime.fromisoformat(ida_rows[-1]["visto_at"])
+vuelta_rows = [adsb(-60, -34.9, -58.7, 150, 60), adsb(-59, -34.91, -58.72, 600, 80)] + [adsb(m, -34.9 - (m + 60) * 0.0017, -58.7 - (m + 60) * 0.005, 1500, 95) for m in range(-58, -2)] + [adsb(-1, -34.99, -58.99, 100, 62)]
+ida_fila = {**fila_base, "id": "ida", "token": "i" * 40, "user_id": "u1", "salida_prevista": (T0 - timedelta(hours=8)).isoformat(), "vence_at": (T0 - timedelta(hours=2)).isoformat(),
+            "created_at": (T0 - timedelta(hours=9)).isoformat(), "terminado_at": (T0 - timedelta(hours=1)).isoformat()}
+vuelta_fila = {**fila_base, "id": "vuelta", "token": TOKEN_V, "user_id": "u1", "salida_prevista": (T0 + timedelta(hours=1, minutes=30)).isoformat(), "vence_at": (T0 + timedelta(hours=9)).isoformat(),
+               "created_at": (T0 - timedelta(hours=5)).isoformat()}
+otro_fila = {**vuelta_fila, "id": "ajena", "token": "a" * 40, "user_id": "u2"}
+base10 = Base([ida_fila, vuelta_fila, otro_fila], [{"id": "a1", "seguimiento_id": "vuelta", "endpoint": buenos[0], "p256dh": "k", "auth": "x"}], ida_rows + vuelta_rows)
+AHORA10 = T0 + timedelta(minutes=10)
+res = av.resolver_tramo_anterior(base10, dict(vuelta_fila), AHORA10)
+check("el tramo anterior (mismo piloto, mismo avión, ya cerrado) fija desde dónde se lee: su última posición", res["desde_tramo_at"] == fin_ida.isoformat())
+check("...y queda guardado, una sola vez", vuelta_fila["desde_tramo_at"] == fin_ida.isoformat())
+check("otro piloto con el mismo avión no encadena", av.resolver_tramo_anterior(base10, dict(otro_fila), AHORA10).get("desde_tramo_at") is None)
+check("sin matrícula de ADS-B o sin salida prevista no busca nada", av.resolver_tramo_anterior(base10, {**vuelta_fila, "desde_tramo_at": None, "matricula_adsb": None}, AHORA10).get("desde_tramo_at") is None)
+check("un tramo anterior que sigue volando no encadena (todavía)", (lambda b: av.resolver_tramo_anterior(b, {**vuelta_fila, "desde_tramo_at": None, "id": "x2"}, T0 - timedelta(hours=6)).get("desde_tramo_at"))(Base([{**ida_fila, "terminado_at": None, "vence_at": (T0 + timedelta(hours=9)).isoformat()}], [], ida_rows)) is None)
+check("la lectura pública usa lo mismo: la vuelta toma el vuelo de las 11:00Z", (lambda v: v["fase"] == "aterrizo" and v["aterrizo_en"] == {"codigo": "SRDL", "nombre": "Dolores"} and v["recorrido"][0][3] == int(datetime.fromisoformat(vuelta_rows[0]["visto_at"]).timestamp()))(vista_publica({**vuelta_fila, "desde_tramo_at": fin_ida.isoformat()}, AHORA10, vuelta_rows)))
+check("el barrido: el despegue de hace una hora se anota sin avisar y el aterrizaje sale con el lugar", barrer(base10, AHORA10) == 1 and enviados == [(1, "Federico aterrizó en Dolores", f"/seguir/{TOKEN_V}")])
+check("...y la vuelta queda terminada en su aterrizaje, con el lugar guardado", vuelta_fila["aterrizo_at"] == vuelta_fila["terminado_at"] == vuelta_rows[-1]["visto_at"] and vuelta_fila["aterrizo_en"] == {"codigo": "SRDL", "nombre": "Dolores"} and vuelta_fila["aterrizo_sin_ver"] is False and vuelta_fila["aviso_despegue_at"] is not None)
+
+# Aterriza en otro aeródromo que no es el destino: Tandil.
+enviados.clear()
+tandil_rows = [adsb(31, -34.56, -58.97, 300, 60), adsb(32, -35.0, -58.98, 900, 85)] + [adsb(m, -35.0 - (m - 32) * 0.1, -59.0 - (m - 32) * 0.02, 1500, 95) for m in range(33, 40)] + [adsb(40, -37.2294, -59.2286, 120, 65)]
+base11, fila11 = nueva_base(tandil_rows, despego_at=(T0 + timedelta(minutes=31)).isoformat(), aviso_despegue_at=T0.isoformat())
+check("la señal se corta baja y lenta sobre Tandil, que no es el destino: 'aterrizó en Tandil'", barrer(base11, T0 + timedelta(minutes=46)) == 1 and enviados[-1][1] == "Federico aterrizó en Tandil" and fila11["aterrizo_en"]["codigo"] == "SAZT")
+
+# El avión vuelve a verse en el aire después de un corte largo: el tramo se cierra sin saber dónde.
+enviados.clear()
+reaparece = [adsb(31, -34.56, -58.97, 300, 60), adsb(32, -34.6, -58.98, 900, 85)] + [adsb(m, -34.7 - (m - 32) * 0.01, -59.0, 3000, 95) for m in range(33, 60)] + [adsb(120, -34.98, -59.02, 150, 60), adsb(121, -34.97, -59.03, 600, 80), adsb(122, -34.95, -59.05, 1500, 95), adsb(123, -34.93, -59.07, 1500, 95)]
+base12, fila12 = nueva_base(reaparece, despego_at=(T0 + timedelta(minutes=31)).isoformat(), aviso_despegue_at=T0.isoformat())
+check("reaparece en el aire 60 minutos después: avisa que aterrizó (sin decir dónde)", barrer(base12, T0 + timedelta(minutes=125)) == 1 and enviados[-1][1] == "Federico aterrizó")
+check("...queda terminado a la hora de la última muestra de antes, 'sin ver dónde'", fila12["aterrizo_sin_ver"] is True and fila12["aterrizo_en"] is None and fila12["aterrizo_at"] == reaparece[len(reaparece) - 5]["visto_at"] == fila12["terminado_at"])
+check("el aviso sin lugar explica por qué", armar_aviso_seguimiento("aterrizaje", {**fila_base, "aterrizo_sin_ver": True})["cuerpo"].startswith("No se vio dónde") and armar_aviso_seguimiento("aterrizaje", fila_base)["cuerpo"] == "El seguimiento terminó.")
+check("la vista pública del cierre dice lo mismo", (lambda v: v["aterrizo_sin_ver"] is True and v["aterrizo_en"] is None and v["aterrizo_at"] == fila12["aterrizo_at"])(vista_publica(fila12, T0 + timedelta(minutes=126), reaparece)))
 
 # --- lo público no filtra nada --------------------------------------------------------------------
 vp = vista_publica({**fila_base, "despego_at": T0.isoformat(), "aviso_despegue_at": T0.isoformat(), "aviso_aterrizaje_at": T0.isoformat(), "endpoint": buenos[0]}, T0 + timedelta(minutes=5), [])

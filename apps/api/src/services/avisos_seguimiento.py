@@ -24,7 +24,7 @@ por cuenta y con un link a `/vuelo/<token>` del tracker, **sólo si el piloto le
 barrido mira también los vuelos asignados a alguien que prendió los avisos, aunque nadie haya pedido
 avisos del link.
 
-Un aviso viejo no se manda: si el despegue se detecta recién 20 minutos después (el link se abrió con
+Un aviso viejo no se manda (salvo el de "aterrizó sin ver dónde", que por definición se sabe tarde): si el despegue se detecta recién 20 minutos después (el link se abrió con
 el avión ya en el aire, o el barrido estuvo parado), se anota sin avisar. Quien mira no necesita
 enterarse tarde de algo que ya pasó.
 
@@ -37,6 +37,7 @@ service role y no sale por ninguna API.
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit
@@ -48,11 +49,14 @@ from src.services.seguidores import armar_aviso_tracker, enviar_a_asignados, ids
 from src.services.seguimientos import (
     ADSB_PRIMERAS,
     ADSB_ULTIMAS,
+    CADENA_MAXIMA_ATRAS,
     _en_aire,
     _fecha,
     _muestras_del_seguimiento,
+    candidatos_a_tramo_anterior,
     estado_de,
     evaluar_vuelo,
+    fin_del_tramo,
     hubo_vuelo,
     matricula_para_adsb,
     unir_filas_adsb,
@@ -163,13 +167,16 @@ def armar_aviso_seguimiento(evento: str, fila: Dict[str, Any]) -> Dict[str, str]
     nombre = " ".join(str(fila.get("nombre") or "").split())[:40] or "Un piloto"
     puntos = fila.get("puntos") if isinstance(fila.get("puntos"), list) else []
     origen = _codigo_de(puntos[0]) if puntos else ""
-    destino = _codigo_de(puntos[-1]) if len(puntos) > 1 else ""
     if evento == "despegue":
         titulo = f"{nombre} despegó de {origen}" if origen else f"{nombre} despegó"
         cuerpo = "Seguí el vuelo en vivo."
     elif evento == "aterrizaje":
-        titulo = f"{nombre} aterrizó en {destino}" if destino else f"{nombre} aterrizó"
-        cuerpo = "El seguimiento terminó."
+        # Migración 057: el aviso dice dónde aterrizó de verdad (cualquier aeródromo), no el destino cargado.
+        # Si no se vio dónde (el avión reapareció en el aire después de un corte), lo dice sin inventar.
+        lugar = fila.get("aterrizo_en") if isinstance(fila.get("aterrizo_en"), dict) else {}
+        donde = " ".join(str(lugar.get("nombre") or lugar.get("codigo") or "").split())[:40]
+        titulo = f"{nombre} aterrizó en {donde}" if donde else f"{nombre} aterrizó"
+        cuerpo = "No se vio dónde: estaba fuera de la cobertura." if fila.get("aterrizo_sin_ver") and not donde else "El seguimiento terminó."
     elif evento == "fin":
         titulo = f"{nombre} terminó el vuelo"
         cuerpo = "El seguimiento terminó."
@@ -198,7 +205,8 @@ def decidir(fila: Dict[str, Any], adsb: Any, ahora: datetime) -> Dict[str, Any]:
     - `despego_at`: el despegue que se vio recién (la hora de la primera muestra en el aire) o `None`;
     - `reservar_despegue` / `enviar_despegue`: hay que reservar `aviso_despegue_at`; y mandarlo
       (si es reciente) o sólo anotarlo;
-    - `aterrizo_at`: el aterrizaje que se detectó recién (hay que guardarlo y terminar el vuelo);
+    - `aterrizo_at`, `aterrizo_en`, `aterrizo_sin_ver`: el aterrizaje que se detectó recién (hay que
+      guardarlo, con el lugar, y terminar el vuelo);
     - `reservar_aterrizaje` / `enviar_aterrizaje`: lo mismo con `aviso_aterrizaje_at`.
 
     Cubre los tres casos: el vuelo sigue en curso (se evalúa con ADS-B y GPS); terminó por
@@ -210,6 +218,8 @@ def decidir(fila: Dict[str, Any], adsb: Any, ahora: datetime) -> Dict[str, Any]:
         "reservar_despegue": False,
         "enviar_despegue": False,
         "aterrizo_at": None,
+        "aterrizo_en": None,
+        "aterrizo_sin_ver": False,
         "reservar_aterrizaje": False,
         "enviar_aterrizaje": False,
     }
@@ -228,15 +238,19 @@ def decidir(fila: Dict[str, Any], adsb: Any, ahora: datetime) -> Dict[str, Any]:
         despego = datetime.fromtimestamp(primera["t"], tz=timezone.utc)
         salida["despego_at"] = despego
     if estado == "en_vuelo" and aterrizo is None:
-        aterrizo = evaluar_vuelo(fila, adsb, ahora, muestras)["aterrizo_at"]
-        salida["aterrizo_at"] = aterrizo
+        ev = evaluar_vuelo(fila, adsb, ahora, muestras)
+        aterrizo = ev["aterrizo_at"]
+        salida["aterrizo_at"], salida["aterrizo_en"], salida["aterrizo_sin_ver"] = aterrizo, ev["aterrizo_en"], ev["aterrizo_sin_ver"]
 
     if despego is not None and not fila.get("aviso_despegue_at"):
         salida["reservar_despegue"] = True
         salida["enviar_despegue"] = ahora - despego <= AVISO_VIGENTE
     if aterrizo is not None:
         salida["reservar_aterrizaje"] = True
-        salida["enviar_aterrizaje"] = ahora - aterrizo <= AVISO_VIGENTE
+        # "Aterrizó sin ver dónde" se descubre tarde por definición (cuando el avión vuelve a aparecer en el aire,
+        # más de 20 min después): la familia que esperaba la noticia la recibe igual.
+        sin_ver = bool(salida["aterrizo_sin_ver"] or fila.get("aterrizo_sin_ver"))
+        salida["enviar_aterrizaje"] = sin_ver or ahora - aterrizo <= AVISO_VIGENTE
     return salida
 
 
@@ -272,8 +286,66 @@ def leer_adsb(cliente: Any, fila: Dict[str, Any], ahora: datetime) -> List[Dict[
     return unir_filas_adsb(primeras, ultimas)
 
 
+#: Los que no tienen tramo anterior se vuelven a mirar cada tanto, no en cada lectura del link (la página
+#: pregunta cada ~15 s): `{id del seguimiento: monotonic de la última vez}`.
+_SIN_TRAMO_ANTERIOR: Dict[str, float] = {}
+REVISAR_TRAMO_CADA_S = 60
+_COLUMNAS_TRAMO = (
+    "id,user_id,matricula_adsb,salida_prevista,created_at,terminado_at,vence_at,aterrizo_at,aterrizo_en,aterrizo_sin_ver,"
+    "desde_tramo_at,puntos,ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido"
+)
+
+
+def resolver_tramo_anterior(cliente: Any, fila: Dict[str, Any], ahora: datetime) -> Dict[str, Any]:
+    """
+    Tramos encadenados (migración 057): si el **mismo piloto** compartió antes **el mismo avión** (hasta 12 h
+    antes de la salida de éste) y ese seguimiento ya terminó, la ventana de ADS-B de éste empieza donde terminó
+    aquél (`desde_tramo_at`, que se guarda una sola vez) y no 30 min antes de su salida: así el vuelo que salió
+    antes de lo previsto, o desde otro aeródromo, no se descarta. Sin tramo anterior la fila queda igual. Es un
+    mejor esfuerzo: si algo falla, se sigue con la ventana de siempre. Devuelve la fila, con `desde_tramo_at`
+    si lo encontró.
+    """
+    if fila.get("desde_tramo_at") or not fila.get("salida_prevista") or not matricula_para_adsb(fila.get("matricula_adsb")):
+        return fila
+    sid, uid = fila.get("id"), fila.get("user_id")
+    if not sid or not uid or estado_de(fila, ahora) != "en_vuelo":
+        return fila
+    ultima = _SIN_TRAMO_ANTERIOR.get(str(sid))
+    if ultima is not None and time.monotonic() - ultima < REVISAR_TRAMO_CADA_S:
+        return fila
+    try:
+        salida = _fecha(fila["salida_prevista"])
+        candidatos = (
+            cliente.table("seguimientos_en_vivo")
+            .select(_COLUMNAS_TRAMO)
+            .eq("user_id", uid)
+            .eq("matricula_adsb", fila["matricula_adsb"])
+            .gte("salida_prevista", (salida - CADENA_MAXIMA_ATRAS).isoformat())
+            .lte("salida_prevista", salida.isoformat())
+            .order("salida_prevista", desc=True)
+            .limit(5)
+            .execute()
+            .data
+            or []
+        )
+        for previo in candidatos_a_tramo_anterior(fila, candidatos)[:3]:
+            fin = fin_del_tramo(previo, leer_adsb(cliente, previo, ahora), ahora)
+            if fin is None:
+                continue
+            marca = fin.isoformat()
+            cliente.table("seguimientos_en_vivo").update({"desde_tramo_at": marca}).eq("id", sid).is_("desde_tramo_at", "null").execute()
+            _SIN_TRAMO_ANTERIOR.pop(str(sid), None)
+            return {**fila, "desde_tramo_at": marca}
+    except Exception as exc:  # noqa: BLE001 — sin tramo anterior se sigue como siempre
+        log.warning("[avisos-vuelo] no pude buscar el tramo anterior de %s: %r", str(sid)[:8], exc)
+    if len(_SIN_TRAMO_ANTERIOR) > 500:
+        _SIN_TRAMO_ANTERIOR.clear()
+    _SIN_TRAMO_ANTERIOR[str(sid)] = time.monotonic()
+    return fila
+
+
 _COLUMNAS = (
-    "id,token,nombre,puntos,created_at,vence_at,terminado_at,ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido,"
+    "id,user_id,desde_tramo_at,aterrizo_en,aterrizo_sin_ver,ruta,token,nombre,puntos,created_at,vence_at,terminado_at,ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido,"
     "matricula_adsb,salida_prevista,aterrizo_at,despego_at,aviso_despegue_at,aviso_aterrizaje_at,"
     "mostrar_matricula,avion_matricula"
 )
@@ -307,6 +379,7 @@ def _reservar(cliente: Any, seguimiento_id: str, cambios: Dict[str, Any], column
 
 def atender(cliente: Any, fila: Dict[str, Any], ahora: datetime) -> List[str]:
     """Mira un vuelo con avisos pedidos, guarda lo que pasó y manda lo que corresponda. Devuelve los eventos enviados."""
+    fila = resolver_tramo_anterior(cliente, fila, ahora)
     adsb = leer_adsb(cliente, fila, ahora)
     d = decidir(fila, adsb, ahora)
     enviados: List[str] = []
@@ -325,12 +398,18 @@ def atender(cliente: Any, fila: Dict[str, Any], ahora: datetime) -> List[str]:
     if d["aterrizo_at"] is not None:
         marca = d["aterrizo_at"].isoformat()
         # Si la lectura pública del link ya lo terminó, no se pisa: el aviso sale igual abajo.
-        cliente.table("seguimientos_en_vivo").update({"terminado_at": marca, "aterrizo_at": marca}).eq("id", sid).is_(
+        cliente.table("seguimientos_en_vivo").update(
+            {"terminado_at": marca, "aterrizo_at": marca, "aterrizo_en": d["aterrizo_en"], "aterrizo_sin_ver": d["aterrizo_sin_ver"]}
+        ).eq("id", sid).is_(
             "terminado_at", "null"
         ).execute()
     if d["reservar_aterrizaje"] and _reservar(cliente, sid, {"aviso_aterrizaje_at": ahora_iso}, "aviso_aterrizaje_at") and d["enviar_aterrizaje"]:
-        _enviar(cliente, sid, armar_aviso_seguimiento("aterrizaje", fila))
-        _enviar_a_seguidores(cliente, fila, "aterrizaje")
+        # El lugar: el que se detectó recién o el que ya guardó la lectura pública del link.
+        con_lugar = (
+            {**fila, "aterrizo_en": d["aterrizo_en"], "aterrizo_sin_ver": d["aterrizo_sin_ver"]} if d["aterrizo_at"] is not None else fila
+        )
+        _enviar(cliente, sid, armar_aviso_seguimiento("aterrizaje", con_lugar))
+        _enviar_a_seguidores(cliente, con_lugar, "aterrizaje")
         enviados.append("aterrizaje")
     return enviados
 

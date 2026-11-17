@@ -43,12 +43,21 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as esbuild from "esbuild";
+import { listarAssets } from "./assets-del-build.mjs";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const { version } = JSON.parse(fs.readFileSync(path.join(RAIZ, "package.json"), "utf8"));
 
 const ENTRADA = path.join(RAIZ, "src", "sw", "sw.ts");
 const SALIDA = path.join(RAIZ, "public", "sw.js");
+
+/*
+  Todos los archivos estáticos del build, para guardarlos al instalarse el service worker
+  (3.44.0, "Vector sin señal"): la app entera abre sin red, no sólo lo que se visitó. Sale de
+  `.next/static`, así que **tiene que correr después de `next build`** (el script `build` ya lo hace).
+*/
+const assets = listarAssets(path.join(RAIZ, ".next", "static"));
+if (!assets.length) console.warn("sw.js: no hay .next/static; el precache de la app queda vacío (corré `next build` antes).");
 
 const resultado = await esbuild.build({
   entryPoints: [ENTRADA],
@@ -66,13 +75,17 @@ const resultado = await esbuild.build({
     navegador compara el `sw.js` byte a byte; si el archivo saliera idéntico entre
     dos deploys, la actualización no se dispararía.
   */
-  define: { "process.env.NEXT_PUBLIC_APP_VERSION": JSON.stringify(version) },
+  define: {
+    "process.env.NEXT_PUBLIC_APP_VERSION": JSON.stringify(version),
+    // La lista de `/_next/static/**` del build: ver `listarAssets` y `guardarLaApp` en `sw.ts`.
+    __VECTOR_ASSETS__: JSON.stringify(assets),
+  },
   alias: { "@": path.join(RAIZ, "src") },
   logLevel: "warning",
   metafile: true,
 });
 
 const bytes = fs.statSync(SALIDA).size;
-console.log(`sw.js  ${(bytes / 1024).toFixed(1)} KB  (versión ${version})`);
+console.log(`sw.js  ${(bytes / 1024).toFixed(1)} KB  (versión ${version}, ${assets.length} archivos de la app para guardar)`);
 
 if (resultado.errors.length) process.exit(1);

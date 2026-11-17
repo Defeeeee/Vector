@@ -289,6 +289,25 @@ export function salidasDesde(secuencia: string[], desde: string): string[] {
   return secuencia.filter((p) => p !== d);
 }
 
+/**
+ * Las aerovías de una lista que pasan por un punto, ordenadas por designador, cada una con
+ * **hasta dónde se puede ir por ella** (`salidasDesde`). Es el cuerpo de `/api/aerovias`, y está
+ * acá y no en la ruta para que el service worker conteste lo mismo sin señal
+ * (`lib/sin-senal.ts`): una sola implementación, sobre la lista que cada lado tiene.
+ */
+export function aeroviasConSalidas(
+  todas: { designador: string; puntos: string[] }[],
+  punto: string
+): { designador: string; puntos: string[]; salidas: string[] }[] {
+  const p = (punto ?? "").trim().toUpperCase();
+  if (!p) return [];
+  return todas
+    .filter((a) => a.puntos.includes(p))
+    .sort((x, y) => x.designador.localeCompare(y.designador))
+    // Todos menos aquel del que se sale: la aerovía se vuela en los dos sentidos.
+    .map((a) => ({ designador: a.designador, puntos: a.puntos, salidas: salidasDesde(a.puntos, p) }));
+}
+
 /* -------------------------------------------------------------------------- */
 
 /**

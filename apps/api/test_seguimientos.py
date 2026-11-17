@@ -58,6 +58,16 @@ from src.services.seguimientos import (
     unir_filas_adsb,
     vencimiento_desde_plan,
     ventana_adsb,
+    ADELANTO_ENCADENADO,
+    DestinoNuevo,
+    CORTE_REAPARECE_S,
+    candidatos_a_tramo_anterior,
+    cierre_del_vuelo,
+    con_destino_nuevo,
+    detectar_aterrizaje,
+    indice_de_reaparicion,
+    _destino,
+    fin_del_tramo,
     id_de_visitante_valido,
     esta_activo,
     limite_de_retencion,
@@ -204,7 +214,7 @@ check("la última posición dice de dónde salió", v["ultima"]["fuente"] == "gp
 check("los puntos con nombre", vista_publica({**fila, "puntos": [[-34.45, -58.59, "SADF", "San Fernando"]]}, T0)["puntos"] == [[-34.45, -58.59, "SADF", "San Fernando"]])
 check("la hora de inicio", v["inicio"] == T0.isoformat())
 check("el avión, sin matrícula", v["avion"] == {"tipo": "Cessna 152", "icao": "C152"})
-CLAVES_PUBLICAS = {"nombre", "ruta", "puntos", "avion", "inicio", "estado", "fase", "salida_prevista", "con_adsb", "ultima", "recorrido", "ahora", "ruta_orientativa"}
+CLAVES_PUBLICAS = {"nombre", "ruta", "puntos", "avion", "inicio", "estado", "fase", "salida_prevista", "con_adsb", "ultima", "recorrido", "ahora", "ruta_orientativa", "aterrizo_at", "aterrizo_en", "aterrizo_sin_ver"}
 check("las claves son exactamente las permitidas", set(v) == CLAVES_PUBLICAS)
 check("las claves de la última posición", set(v["ultima"]) == {"lat", "lon", "alt_ft", "gs_kt", "track", "hora", "fuente"})
 # La matrícula: sólo con el interruptor prendido. Apagado no sale aunque la fila la tuviera.
@@ -497,6 +507,149 @@ check("público: sin ruta_orientativa en la fila (viejos) es falso", vista_publi
 _act = resumen_de_activo({**_fila_sp, "id": "i1", "token": "t1", "vistas": {"abcdefghijklmnop": int(T0.timestamp())}, "vistos_total": 2, "duracion_prevista_min": 90, "avion_tipo": "Tecnam P2008"}, T0 + timedelta(seconds=10))
 check("activo: trae lo que necesita la pantalla del piloto", _act["id"] == "i1" and _act["token"] == "t1" and _act["ruta_orientativa"] is True and _act["plan_id"] is None and _act["duracion_prevista_min"] == 90 and _act["mirando_ahora"] == 1 and _act["vistos_total"] == 2)
 check("activo: no filtra la matrícula de ADS-B ni el user_id", "LVABC" not in repr(_act) and "u-secreto" not in repr(_act))
+
+
+# =====================================================================================
+# Aterrizar en cualquier aeródromo, el avión que reaparece y los tramos encadenados (migración 057)
+# El caso real del 2026-11-16 (LV-S048), con posiciones sintéticas en esos puntos y horas.
+# =====================================================================================
+D0 = datetime(2026, 11, 16, 0, 0, 0, tzinfo=timezone.utc)
+SADM = (-34.6792, -58.6436)
+SAZM = (-37.9342, -57.5733)
+SAZT = (-37.2344, -59.2286)
+
+
+def ar(h, m, lat, lon, alt=None, gs=None, tierra=False, seg=0):
+    """Una fila de `adsb_posiciones` del 2026-11-16 a las `h:m` UTC."""
+    return {"visto_at": (D0 + timedelta(hours=h, minutes=m, seconds=seg)).isoformat(), "lat": lat, "lon": lon, "altitud": alt, "velocidad": gs, "en_tierra": tierra}
+
+
+def recta(h0, m0, n, a, b, alt0, alt1, gs0, gs1, paso_s=60):
+    """`n` muestras en el aire cada `paso_s` de `a` a `b`, subiendo o bajando de `alt0` a `alt1`."""
+    filas = []
+    for i in range(n):
+        f = i / max(1, n - 1)
+        filas.append(ar(h0, m0, a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, round(alt0 + (alt1 - alt0) * f), round(gs0 + (gs1 - gs0) * f), seg=i * paso_s))
+    return filas
+
+
+# La ida, sin plan, SADM -> SAZM: salida prevista 11:30Z. ADS-B ve el despegue de SADM a las 12:04Z y la señal se
+# pierde a las 13:49Z a 7000 ft en -37,07 -58,92 (cambió de destino en vuelo y no lo actualizó en Vector).
+IDA_ADSB = recta(12, 4, 106, SADM, (-37.07, -58.92), 150, 7000, 60, 100)
+check("la ida: el último dato es de las 13:49 a 7000 ft", IDA_ADSB[-1]["visto_at"] == (D0 + timedelta(hours=13, minutes=49)).isoformat() and IDA_ADSB[-1]["altitud"] == 7000)
+ida = {"id": "ida", "user_id": "u1", "nombre": "Federico", "ruta": "SADM SAZM", "puntos": [[SADM[0], SADM[1], "SADM", "Morón"], [SAZM[0], SAZM[1], "SAZM", "Mar del Plata"]],
+       "ruta_orientativa": True, "created_at": (D0 + timedelta(hours=11)).isoformat(), "salida_prevista": (D0 + timedelta(hours=11, minutes=30)).isoformat(),
+       "vence_at": (D0 + timedelta(hours=15, minutes=30)).isoformat(), "terminado_at": None, "aterrizo_at": None, "aterrizo_en": None, "aterrizo_sin_ver": False,
+       "matricula_adsb": "LVS048", "avion_matricula": None, "mostrar_matricula": False, "avion_tipo": "Tecnam P2008", "avion_icao": "P2008", "recorrido": [],
+       "ultima_lat": None, "ultima_lon": None, "ultima_at": None, "plan_id": None, "desde_tramo_at": None}
+v_ida = vista_publica(ida, D0 + timedelta(hours=14, minutes=30), IDA_ADSB)
+check("la ida: ve el vuelo pero lejos de todo aeródromo no aterrizó (sin datos, no 'aterrizó')", v_ida["fase"] == "sin_datos" and v_ida["aterrizo_at"] is None and v_ida["aterrizo_en"] is None and v_ida["aterrizo_sin_ver"] is False and v_ida["ultima"]["alt_ft"] == 7000)
+
+# La vuelta, de plan, SAZM -> SADM: salida prevista 19:30Z. Salió mucho antes desde otro aeródromo: ADS-B lo vio en el aire desde
+# 17:38Z y aterrizó en SADM a las 18:36Z (la señal se corta a 100 ft y 62 kt, a 1 NM de la pista).
+CERCA_SADM = (-34.69, -58.66)
+VUELTA_ADSB = recta(17, 38, 58, (-35.57, -58.02), CERCA_SADM, 150, 100, 62, 62) + [ar(18, 36, CERCA_SADM[0], CERCA_SADM[1], 100, 62)]
+VUELTA_ADSB = [f for f in VUELTA_ADSB if f["visto_at"] <= (D0 + timedelta(hours=18, minutes=36)).isoformat()]
+FIN_VUELTA = datetime.fromisoformat(VUELTA_ADSB[-1]["visto_at"])
+vuelta = {**ida, "id": "vuelta", "ruta": "SAZM SADM", "puntos": [[SAZM[0], SAZM[1], "SAZM", "Mar del Plata"], [SADM[0], SADM[1], "SADM", "Morón"]], "ruta_orientativa": False,
+          "plan_id": "p1", "created_at": (D0 + timedelta(hours=14)).isoformat(), "salida_prevista": (D0 + timedelta(hours=19, minutes=30)).isoformat(),
+          "vence_at": (D0 + timedelta(hours=23, minutes=30)).isoformat()}
+TODO = IDA_ADSB + VUELTA_ADSB
+AHORA_V = FIN_VUELTA + timedelta(minutes=14)
+v_hoy = vista_publica(vuelta, AHORA_V, TODO)
+check("sin tramo anterior (la regla de siempre) la vuelta se descarta: la ventana arranca 30 min antes de la salida prevista", v_hoy["ultima"] is None and v_hoy["recorrido"] == [] and ventana_adsb(vuelta, AHORA_V)[0] == D0 + timedelta(hours=19))
+# Sin encadenar, ni la ida ni la vuelta se ven; encadenada la vuelta arranca donde terminó la ida.
+FIN_IDA = datetime.fromisoformat(IDA_ADSB[-1]["visto_at"])
+check("el tramo anterior termina en la última posición que se le vio (13:49Z), no cuando alguien lo cerró", fin_del_tramo({**ida, "terminado_at": (D0 + timedelta(hours=18)).isoformat()}, IDA_ADSB + VUELTA_ADSB[:5], D0 + timedelta(hours=19)) == FIN_IDA)
+check("...y si estaba aterrizado, el aterrizaje guardado", fin_del_tramo({**ida, "aterrizo_at": (D0 + timedelta(hours=13)).isoformat(), "terminado_at": (D0 + timedelta(hours=13)).isoformat()}, IDA_ADSB, D0 + timedelta(hours=19)) == D0 + timedelta(hours=13))
+check("...y uno que sigue volando no terminó", fin_del_tramo({**ida, "vence_at": (D0 + timedelta(hours=23)).isoformat()}, IDA_ADSB, D0 + timedelta(hours=13, minutes=50)) is None)
+check("un tramo anterior sin una sola posición termina en su fin", fin_del_tramo({**ida, "terminado_at": (D0 + timedelta(hours=12)).isoformat()}, [], D0 + timedelta(hours=19)) == D0 + timedelta(hours=12))
+check("...o en su vencimiento si lo cerraron más tarde", fin_del_tramo({**ida, "terminado_at": (D0 + timedelta(hours=20)).isoformat()}, [], D0 + timedelta(hours=21)) == D0 + timedelta(hours=15, minutes=30))
+enc = {**vuelta, "desde_tramo_at": FIN_IDA.isoformat()}
+check(
+    "encadenada, la ventana empieza 3 h antes de la salida (19:30Z → 16:30Z) y no 30 min antes: el anterior terminó antes (13:49Z)",
+    ventana_adsb(enc, AHORA_V)[0] == max(FIN_IDA, datetime.fromisoformat(vuelta["salida_prevista"]) - ADELANTO_ENCADENADO) == datetime.fromisoformat(vuelta["salida_prevista"]) - ADELANTO_ENCADENADO,
+)
+_cerca = datetime.fromisoformat(vuelta["salida_prevista"]) - timedelta(hours=1)
+check("...y si el anterior terminó después de eso, desde que terminó", ventana_adsb({**vuelta, "desde_tramo_at": _cerca.isoformat()}, AHORA_V)[0] == _cerca)
+check(
+    "un corte en crucero que reaparece lejos, a la velocidad de siempre, no cierra el tramo",
+    indice_de_reaparicion(
+        [{"t": k * 60, "lat": -34.0 - k * 95 / 60 / 60, "lon": -58.0, "alt": 3000, "gs": 95.0, "tierra": False} for k in range(20)]
+        + [{"t": 19 * 60 + 1800, "lat": -34.0 - (19 + 30) * 95 / 60 / 60, "lon": -58.0, "alt": 3000, "gs": 95.0, "tierra": False}]
+    ) is None,
+)
+check(
+    "...y el mismo corte que reaparece casi en el mismo lugar (paró y volvió a salir) sí lo cierra",
+    indice_de_reaparicion(
+        [{"t": k * 60, "lat": -34.0 - k * 95 / 60 / 60, "lon": -58.0, "alt": 3000, "gs": 95.0, "tierra": False} for k in range(20)]
+        + [{"t": 19 * 60 + 1800, "lat": -34.0 - 19 * 95 / 60 / 60, "lon": -58.0, "alt": 800, "gs": 80.0, "tierra": False}]
+    ) == 20,
+)
+v_enc = vista_publica(enc, AHORA_V, TODO)
+check("encadenada, la vuelta toma el vuelo de 17:38Z (lo que ya traía en el aire cuenta)", v_enc["recorrido"][0][3] == int(datetime.fromisoformat(VUELTA_ADSB[0]["visto_at"]).timestamp()) and v_enc["recorrido"][0][3] > int(FIN_IDA.timestamp()))
+check("...sin ninguna posición de la ida (la última de la ida no entra: es del anterior)", all(p[3] > int(FIN_IDA.timestamp()) for p in v_enc["recorrido"]))
+check("...y lo cierra al aterrizar en SADM a las 18:36Z", v_enc["fase"] == "aterrizo" and v_enc["aterrizo_at"] == FIN_VUELTA.isoformat() and v_enc["aterrizo_en"] == {"codigo": "SADM", "nombre": "Morón"} and v_enc["aterrizo_sin_ver"] is False)
+ev_enc = evaluar_vuelo(enc, TODO, AHORA_V)
+check("evaluar_vuelo devuelve cuándo, dónde y que lo vio", ev_enc["aterrizo_at"] == FIN_VUELTA and ev_enc["aterrizo_en"]["codigo"] == "SADM" and ev_enc["aterrizo_sin_ver"] is False)
+check("a los 2 minutos de la última muestra, todavía 'volando'", evaluar_vuelo(enc, TODO, FIN_VUELTA + timedelta(minutes=2))["fase"] == "volando")
+check("el tramo anterior: sólo cuenta uno del mismo avión y del mismo piloto, hasta 12 h antes de la salida", [c["id"] for c in candidatos_a_tramo_anterior(vuelta, [ida, vuelta, {**ida, "id": "otro-avion", "matricula_adsb": "LVABC"}, {**ida, "id": "muy-viejo", "salida_prevista": (D0 - timedelta(hours=2)).isoformat()}, {**ida, "id": "sin-salida", "salida_prevista": None}, {**ida, "id": "despues", "salida_prevista": (D0 + timedelta(hours=20)).isoformat()}])] == ["ida"])
+check("...y el más nuevo primero", [c["id"] for c in candidatos_a_tramo_anterior(vuelta, [ida, {**ida, "id": "mas-nuevo", "salida_prevista": (D0 + timedelta(hours=14)).isoformat()}])] == ["mas-nuevo", "ida"])
+check("la matrícula de ADS-B sigue sin salir, ni la fecha del encadenado", "LVS048" not in repr(v_enc) and "desde_tramo_at" not in v_enc and set(v_enc) == CLAVES_PUBLICAS)
+v_ter = vista_publica({**enc, "terminado_at": FIN_VUELTA.isoformat(), "aterrizo_at": FIN_VUELTA.isoformat(), "aterrizo_en": {"codigo": "SADM", "nombre": "Morón"}}, AHORA_V + timedelta(hours=1), TODO)
+check("ya guardado, lo público trae el lugar de la fila", v_ter["aterrizo_en"] == {"codigo": "SADM", "nombre": "Morón"} and v_ter["aterrizo_at"] == FIN_VUELTA.isoformat() and v_ter["fase"] == "aterrizo")
+check("un seguimiento cerrado tarde no se lleva los vuelos de después de su vencimiento", ventana_adsb({**ida, "terminado_at": (D0 + timedelta(hours=20)).isoformat()}, D0 + timedelta(hours=21))[1] == D0 + timedelta(hours=15, minutes=30))
+
+# --- aterrizar en cualquier aeródromo (no sólo el destino) ---
+a_tandil = recta(12, 4, 40, SADM, SAZT, 150, 500, 62, 90) + [ar(12, 44, SAZT[0] + 0.005, SAZT[1], 120, 65)]
+ult_tandil = datetime.fromisoformat(a_tandil[-1]["visto_at"])
+mtandil = muestras_de_adsb(a_tandil)
+check("la señal se corta baja y lenta sobre Tandil, que no es el destino (SAZM): a los 5 min aterrizó en Tandil", (lambda r: r["en"] == {"codigo": "SAZT", "nombre": "Tandil"} and r["at"] == ult_tandil)(detectar_aterrizaje(mtandil, ult_tandil + timedelta(seconds=SILENCIO_ATERRIZAJE_S), _destino_sazm := {"lat": SAZM[0], "lon": SAZM[1], "codigo": "SAZM", "nombre": "Mar del Plata"})))
+check("...y antes de los 5 minutos no", detectar_aterrizaje(mtandil, ult_tandil + timedelta(seconds=SILENCIO_ATERRIZAJE_S - 1), _destino_sazm) is None)
+v_t = vista_publica(ida, ult_tandil + timedelta(minutes=6), a_tandil)
+check("público: 'Aterrizó en Tandil' con la hora", v_t["fase"] == "aterrizo" and v_t["aterrizo_en"] == {"codigo": "SAZT", "nombre": "Tandil"} and v_t["aterrizo_at"] == ult_tandil.isoformat() and v_t["aterrizo_sin_ver"] is False)
+check("si es el destino, el del vuelo (con su nombre)", detectar_aterrizaje(mtandil, ult_tandil + timedelta(minutes=6), {"lat": SAZT[0], "lon": SAZT[1], "codigo": "SAZT", "nombre": "Aeródromo Tandil"})["en"]["nombre"] == "Aeródromo Tandil")
+sin_aero = a_tandil[:-1] + [ar(12, 44, -46.0, -70.5, 120, 65)]
+check("baja y lenta pero lejos de todo aeródromo: sin datos, nunca 'aterrizó'", detectar_aterrizaje(muestras_de_adsb(sin_aero), ult_tandil + timedelta(hours=1), _destino_sazm) is None and vista_publica(ida, ult_tandil + timedelta(hours=1), sin_aero)["fase"] == "sin_datos")
+check("cerca de un aeródromo pero a 2500 ft: tampoco", detectar_aterrizaje(muestras_de_adsb(a_tandil[:-1] + [ar(12, 44, SAZT[0] + 0.005, SAZT[1], 2500, 65)]), ult_tandil + timedelta(hours=1), _destino_sazm) is None)
+check("un destino que no está en la lista (LAD, campo) sigue valiendo", (lambda r: r is not None and r["en"] == {"codigo": "LAD9", "nombre": "Mi campo"})(detectar_aterrizaje(muestras_de_adsb(recta(12, 4, 30, SADM, (-35.0, -59.5), 150, 300, 62, 80) + [ar(12, 34, -35.002, -59.5, 100, 60)]), D0 + timedelta(hours=13), {"lat": -35.0, "lon": -59.5, "codigo": "LAD9", "nombre": "Mi campo"})))
+# Perder la señal subiendo, sobre el aeródromo de salida, no es llegar.
+sube = [ar(12, 4, SADM[0], SADM[1], 150, 60), ar(12, 4, SADM[0] + 0.005, SADM[1], 250, 65, seg=30), ar(12, 5, SADM[0] + 0.01, SADM[1], 400, 70), ar(12, 6, SADM[0] + 0.02, SADM[1], 600, 80), ar(12, 7, SADM[0] + 0.03, SADM[1], 800, 85)]
+check("despegar y perder la señal subiendo sobre el aeródromo de salida no es aterrizar", detectar_aterrizaje(muestras_de_adsb(sube), D0 + timedelta(hours=13), _destino_sazm) is None and vista_publica(ida, D0 + timedelta(hours=12, minutes=20), sube)["fase"] != "aterrizo")
+circuito = sube + [ar(12, 8 + i, SADM[0] + 0.02, SADM[1] + 0.01 * (i % 3), 700, 80) for i in range(14)] + [ar(12, 22, SADM[0] + 0.004, SADM[1], 100, 65)]
+check("pero un vuelo local de 15 minutos o más que vuelve a su aeródromo sí aterrizó ahí", (lambda r: r is not None and r["en"]["codigo"] == "SADM")(detectar_aterrizaje(muestras_de_adsb(circuito), D0 + timedelta(hours=13), _destino_sazm)))
+check("y si el destino es el mismo aeródromo de salida, vale desde el principio (como hasta ahora)", detectar_aterrizaje(muestras_de_adsb(sube[:3] + [ar(12, 6, SADM[0] + 0.004, SADM[1], 100, 65)]), D0 + timedelta(hours=13), {"lat": SADM[0], "lon": SADM[1], "codigo": "SADM", "nombre": "Morón"}) is not None)
+toque_otro = recta(12, 4, 30, SADM, SAZT, 150, 500, 62, 90) + [ar(12, 34, SAZT[0], SAZT[1], None, 10, True), ar(12, 35, SAZT[0], SAZT[1], None, 5, True)]
+check("una muestra en tierra también dice dónde (y a los 3 minutos)", (lambda r: r is not None and r["en"]["codigo"] == "SAZT")(detectar_aterrizaje(muestras_de_adsb(toque_otro), D0 + timedelta(hours=12, minutes=40), _destino_sazm)))
+check("en tierra lejos de todo aeródromo: aterrizó y no se sabe dónde (el lugar queda vacío)", (lambda r: r is not None and r["en"] is None)(detectar_aterrizaje(muestras_de_adsb(recta(12, 4, 30, SADM, (-46.0, -70.5), 150, 500, 62, 90) + [ar(12, 34, -46.0, -70.5, None, 10, True), ar(12, 35, -46.0, -70.5, None, 5, True)]), D0 + timedelta(hours=12, minutes=40), _destino_sazm)))
+
+# --- el avión que reaparece en el aire ---
+ida_y_vuelta = muestras_de_adsb(IDA_ADSB + VUELTA_ADSB)
+i = indice_de_reaparicion(ida_y_vuelta)
+check("tras un corte de más de 20 minutos y con un vuelo antes, el avión que reaparece en el aire se marca", i is not None and ida_y_vuelta[i]["t"] == datetime.fromisoformat(VUELTA_ADSB[0]["visto_at"]).timestamp() and CORTE_REAPARECE_S == 1200)
+cierre = cierre_del_vuelo(ida_y_vuelta, FIN_VUELTA + timedelta(hours=1), {"lat": SAZM[0], "lon": SAZM[1], "codigo": "SAZM", "nombre": "Mar del Plata"})
+check("el tramo de antes se cierra como aterrizado sin saber dónde: a la hora de la última posición, sin lugar", cierre == {"at": FIN_IDA, "en": None, "sin_ver": True})
+check("un corte de 15 minutos no es un cierre", indice_de_reaparicion(muestras_de_adsb(recta(12, 4, 20, SADM, (-35.5, -58.9), 150, 5000, 60, 100) + recta(12, 39, 10, (-35.6, -58.9), (-36.0, -58.9), 5000, 5000, 100, 100))) is None)
+check("un corte largo que no vuelve a aparecer no es aterrizaje (sin datos, como hasta ahora)", cierre_del_vuelo(muestras_de_adsb(IDA_ADSB), D0 + timedelta(hours=20), {"lat": SAZM[0], "lon": SAZM[1]}) is None)
+check("ni si lo que reaparece está en tierra (no es un avión en el aire)", indice_de_reaparicion(muestras_de_adsb(IDA_ADSB + [ar(17, 38, SADM[0], SADM[1], None, 0, True)])) is None)
+check("sin un vuelo antes del corte, tampoco", indice_de_reaparicion(muestras_de_adsb([ar(12, 4, 1, 1, 100, 60), ar(12, 5, 1, 1, 100, 60)] + VUELTA_ADSB)) is None)
+ida_larga = {**ida, "vence_at": (D0 + timedelta(hours=23)).isoformat()}
+v_sv = vista_publica(ida_larga, D0 + timedelta(hours=18, minutes=40), TODO)
+check("público: la ida se cierra 'sin ver dónde' y no muestra el vuelo de después", v_sv["fase"] == "aterrizo" and v_sv["aterrizo_sin_ver"] is True and v_sv["aterrizo_en"] is None and v_sv["aterrizo_at"] == FIN_IDA.isoformat() and v_sv["recorrido"][-1][3] == int(FIN_IDA.timestamp()) and v_sv["ultima"]["alt_ft"] == 7000)
+v_sv2 = vista_publica({**ida_larga, "terminado_at": FIN_IDA.isoformat(), "aterrizo_at": FIN_IDA.isoformat(), "aterrizo_sin_ver": True}, D0 + timedelta(hours=19), TODO)
+check("ya guardado, sigue diciéndolo", v_sv2["aterrizo_sin_ver"] is True and v_sv2["fase"] == "aterrizo" and v_sv2["recorrido"][-1][3] <= int((FIN_IDA + COLA_TRAS_ATERRIZAR).timestamp()))
+
+# --- cambiar sólo el destino ---
+check("destino: el modelo pide un punto", DestinoNuevo(punto={"lat": -37.23, "lon": -59.22, "codigo": " SAZT ", "nombre": "Tandil"}).punto.codigo == "SAZT" and falla(lambda: DestinoNuevo(punto={"lat": 91, "lon": 0})) and falla(lambda: DestinoNuevo()))
+tandil = PuntoRuta(lat=SAZT[0], lon=SAZT[1], codigo="SAZT", nombre="Tandil")
+c1 = con_destino_nuevo(ida, tandil)
+check("destino: una ruta sin plan reemplaza el último punto y se rearma 'SADM SAZT'", c1["puntos"] == [ida["puntos"][0], [SAZT[0], SAZT[1], "SAZT", "Tandil"]] and c1["ruta"] == "SADM SAZT")
+c2 = con_destino_nuevo({**vuelta, "ruta": "SAZM DCT BAIRES SADM", "puntos": [[1, 1, "SAZM", ""], [2, 2, "BAIRES", ""], [3, 3, "SADM", ""]]}, tandil)
+check("destino: una ruta cargada cambia su último punto y su última palabra", c2["puntos"][-1] == [SAZT[0], SAZT[1], "SAZT", "Tandil"] and len(c2["puntos"]) == 3 and c2["ruta"] == "SAZM DCT BAIRES SAZT")
+check("destino: sin puntos la ruta es sólo ese", con_destino_nuevo({"ruta": "", "puntos": []}, tandil) == {"ruta": "SAZT", "puntos": [[SAZT[0], SAZT[1], "SAZT", "Tandil"]]})
+check("destino: con un solo punto (el origen), el nuevo se suma como destino", [p[2] for p in con_destino_nuevo({"ruta": "SADM", "puntos": [[1, 1, "SADM", ""]]}, tandil)["puntos"]] == ["SADM", "SAZT"] and con_destino_nuevo({"ruta": "SADM", "puntos": [[1, 1, "SADM", ""]]}, tandil)["ruta"] == "SADM SAZT")
+check("destino: no toca la ruta orientativa ni inventa claves", set(c1) == {"ruta", "puntos"} and set(c2) == {"ruta", "puntos"})
+check("destino: sin código usa el nombre", con_destino_nuevo(ida, PuntoRuta(lat=-35, lon=-59, nombre="Campo López"))["ruta"] == "SADM Campo López")
 
 # --- el borrado ---
 check("se borra a los 30 días", limite_de_retencion(T0).startswith("2026-10-12T12:00:00") and DIAS_DE_RETENCION == 30)

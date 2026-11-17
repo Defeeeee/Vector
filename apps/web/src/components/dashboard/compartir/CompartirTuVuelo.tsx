@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Copy, Loader2, Send } from "lucide-react";
-import { compartirSinPlan, terminarSeguimiento } from "@/actions/seguimiento";
+import { cambiarDestinoSeguimiento, compartirSinPlan, terminarSeguimiento } from "@/actions/seguimiento";
 import { asignarSeguidores } from "@/actions/seguidores";
 import ChipsDeSeguidores from "@/components/dashboard/compartir/ChipsDeSeguidores";
 import SeguidoresDelTracker from "@/components/dashboard/compartir/SeguidoresDelTracker";
@@ -26,6 +26,9 @@ import type { Aircraft } from "@/types";
  *   avión, arriba del campo, y se aplica con un toque. Sin velocidad cargada, no hay sugerencia.
  * - "Cambiar el horario" de uno sin plan reabre el formulario con su `seguimiento_id`: el link es el
  *   mismo y el token no cambia, así que no hay que mandarle otro a la familia.
+ * - **"Cambiar el destino"** (migración 057), en cualquier vuelo en marcha (del Mapa, de un plan o sin plan):
+ *   un selector de aeródromo y listo, sin cargar la ruta ni tocar el plan guardado. Para el piloto que se
+ *   desvió y aterriza en otro lado.
  * - La matrícula sólo sale si se prende "Mostrar la matrícula" (apagado por defecto).
  * - **Vector Tracker** (migración 056): "Quiénes siguen tus vuelos" invita a la familia con un link; en cada
  *   vuelo, "Lo ven en el tracker:" asigna a mano quién lo ve (por defecto ninguno; guarda al tocar), y
@@ -86,6 +89,10 @@ export default function CompartirTuVuelo({
   const [confirmando, setConfirmando] = useState<string | null>(null);
   const [terminando, setTerminando] = useState<string | null>(null);
   const formulario = useRef<HTMLFormElement>(null);
+  // "Cambiar el destino": de qué vuelo, a qué aeródromo y si se está guardando.
+  const [cambiandoDestino, setCambiandoDestino] = useState<string | null>(null);
+  const [destinoNuevo, setDestinoNuevo] = useState<AerodromoForm | null>(null);
+  const [guardandoDestino, setGuardandoDestino] = useState(false);
   // Vector Tracker: los que ya entraron, quiénes ven cada vuelo y quiénes van a ver el que se está armando.
   const entraron = useMemo(() => vinculados(seguidores ?? []), [seguidores]);
   const [asignados, setAsignados] = useState<Record<string, string[]>>({});
@@ -243,6 +250,28 @@ export default function CompartirTuVuelo({
     }
   };
 
+  const guardarDestino = async (s: ActivoParaMostrar) => {
+    if (!destinoNuevo || typeof destinoNuevo.lat !== "number" || typeof destinoNuevo.lon !== "number") {
+      setError("Elegí un aeródromo de la lista: necesitamos saber dónde está.");
+      return;
+    }
+    setGuardandoDestino(true);
+    setError(null);
+    setAviso(null);
+    try {
+      const r = await cambiarDestinoSeguimiento(s.id, { lat: destinoNuevo.lat, lon: destinoNuevo.lon, codigo: destinoNuevo.codigo, nombre: destinoNuevo.nombre });
+      if ("error" in r) {
+        setError(r.terminado ? "Ese vuelo ya terminó: no se puede cambiar el destino." : r.error);
+        return;
+      }
+      setCambiandoDestino(null);
+      setDestinoNuevo(null);
+      setAviso(`Listo: el link ahora va a ${destinoNuevo.nombre || destinoNuevo.codigo}.`);
+    } finally {
+      setGuardandoDestino(false);
+    }
+  };
+
   const dejar = async (s: ActivoParaMostrar) => {
     setTerminando(s.id);
     setError(null);
@@ -292,6 +321,17 @@ export default function CompartirTuVuelo({
                       Cambiar el horario
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCambiandoDestino(cambiandoDestino === s.id ? null : s.id);
+                      setDestinoNuevo(null);
+                      setError(null);
+                    }}
+                    className={`${ROTULO} min-h-9 text-zinc-400 hover:text-white`}
+                  >
+                    Cambiar el destino
+                  </button>
                   {confirmando === s.id ? (
                     <span className="flex items-center gap-3 text-xs text-zinc-300">
                       ¿Dejar de compartir?
@@ -308,6 +348,27 @@ export default function CompartirTuVuelo({
                     </button>
                   )}
                 </div>
+                {cambiandoDestino === s.id && (
+                  <div className="max-w-md space-y-3 border-l-2 border-white/20 pl-4">
+                    <span className={`${ROTULO} block text-zinc-500`}>Nuevo destino</span>
+                    <CampoAerodromo valor={destinoNuevo} onCambio={setDestinoNuevo} placeholder="SAZT o Tandil" claseInput={CAMPO} />
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        disabled={guardandoDestino || !destinoNuevo}
+                        onClick={() => void guardarDestino(s)}
+                        className="inline-flex items-center gap-2 rounded-full bg-aviation-cyan px-4 py-2 text-xs font-bold text-noche transition-colors hover:bg-sky-300 disabled:opacity-40"
+                      >
+                        {guardandoDestino && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        {guardandoDestino ? "Guardando…" : "Guardar el destino"}
+                      </button>
+                      <button type="button" onClick={() => { setCambiandoDestino(null); setDestinoNuevo(null); }} className={`${ROTULO} text-zinc-400 hover:text-white`}>
+                        Cancelar
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-zinc-500">Cambia sólo el final del link: lo que tu familia ve. No toca tu plan de vuelo.</p>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

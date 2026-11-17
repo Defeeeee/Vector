@@ -249,6 +249,26 @@ export type EstadoMostrado =
   | { clave: "aterrizo"; titulo: string }
   | { clave: "terminado"; titulo: string };
 
+/**
+ * Lo que dice una vez que aterrizó, o `null` si no hay nada que decir de eso (migración 057):
+ * "Aterrizó en Tandil (SAZT) a las 15:40" (hora argentina, armada a mano: invariante 1); con el lugar pero
+ * sin hora, sin la hora; "Aterrizó a las 15:40 (no se vio dónde: estaba fuera de la cobertura de ADS-B)" si el
+ * tramo se cerró porque el avión volvió a aparecer en el aire. Sin lugar y sin saber que no se vio, sólo
+ * "Aterrizó…" con la hora (un aterrizaje en tierra lejos de todo aeródromo).
+ */
+export function textoDeAterrizaje(d: Partial<Pick<SeguimientoPublico, "fase" | "aterrizo_at" | "aterrizo_en" | "aterrizo_sin_ver">>): string | null {
+  if (d.fase !== "aterrizo") return null;
+  const hora = horaArgentina(d.aterrizo_at ?? null);
+  const a = hora ? ` a las ${hora}` : "";
+  const lugar = d.aterrizo_en;
+  if (lugar && (lugar.nombre || lugar.codigo)) {
+    const nombre = lugar.nombre && lugar.codigo && lugar.nombre !== lugar.codigo ? `${lugar.nombre} (${lugar.codigo})` : lugar.nombre || lugar.codigo;
+    return `Aterrizó en ${nombre}${a}`;
+  }
+  if (d.aterrizo_sin_ver) return `Aterrizó${a} (no se vio dónde: estaba fuera de la cobertura de ADS-B)`;
+  return `Aterrizó${a}`;
+}
+
 /** Los segundos desde la última posición, o `null` si no hay. */
 export function segundosSinDatos(hora: string | null, ahora: string): number | null {
   return hora ? SEG_ENTRE(hora, ahora) : null;
@@ -337,6 +357,9 @@ export function normalizar(d: SeguimientoPublico): SeguimientoPublico {
     fase: d.fase,
     salida_prevista: d.salida_prevista ?? null,
     ruta_orientativa: d.ruta_orientativa ?? false,
+    aterrizo_at: d.aterrizo_at ?? null,
+    aterrizo_en: d.aterrizo_en ?? null,
+    aterrizo_sin_ver: d.aterrizo_sin_ver ?? false,
     con_adsb: d.con_adsb ?? false,
     ultima: d.ultima ? { ...d.ultima, fuente: d.ultima.fuente ?? "gps" } : null,
   };

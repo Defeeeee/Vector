@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { allAirports } from "@/lib/airports";
-import { alternativasCerca, MAX_ALTERNATIVAS, RADIO_POR_DEFECTO_NM } from "@/lib/alternativas";
+import { alternativasDesdeDirectorio } from "@/lib/alternativas";
 
 /**
  * GET /api/airports/near?lat=-34.68&lon=-58.64[&nm=40][&gs=110]
@@ -25,29 +25,7 @@ export async function GET(req: NextRequest) {
   const nm = Number(searchParams.get("nm"));
   const gs = Number(searchParams.get("gs"));
 
-  const candidatos = allAirports()
-    .filter((a) => a.lat !== undefined && a.lon !== undefined)
-    /*
-      **Sin helipuertos.** El directorio los incluye —`size: "H"`, o `kind: "HEL"` en
-      MADHEL— y en el conurbano son muchos: la primera prueba de esto devolvió tres
-      helipuertos entre los cinco más cercanos a Morón. Un helipuerto no es una
-      alternativa para un avión, y ofrecerlo es peor que no ofrecer nada.
-    */
-    .filter((a) => a.size !== "H" && a.madhel?.kind !== "HEL")
-    .map((a) => ({
-      icao: a.icao,
-      label: a.label,
-      lat: a.lat as number,
-      lon: a.lon as number,
-      local: a.local,
-      pistas: a.pistas,
-    }));
-
-  const resultados = alternativasCerca({ lat, lon }, candidatos, {
-    radioNm: Number.isFinite(nm) && nm > 0 ? Math.min(nm, 300) : RADIO_POR_DEFECTO_NM,
-    limite: MAX_ALTERNATIVAS,
-    groundSpeedKt: Number.isFinite(gs) && gs > 0 ? gs : null,
-  });
+  const resultados = alternativasDesdeDirectorio(allAirports(), { lat, lon }, { nm, gs });
 
   return NextResponse.json(
     { resultados },

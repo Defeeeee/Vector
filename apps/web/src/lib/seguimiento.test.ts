@@ -49,8 +49,20 @@ describe("la posición que se manda", () => {
 });
 
 describe("el link", () => {
-  it("se arma sobre el origen, sin barras de más", () => {
-    expect(urlDeSeguimiento("https://vectoraero.ar/", "a".repeat(32))).toBe(`https://vectoraero.ar/seguir/${"a".repeat(32)}`);
+  it("sale por Vector Tracker: el host de la web pasa al del tracker, sin barras de más", () => {
+    expect(urlDeSeguimiento("https://vectoraero.ar/", "a".repeat(32))).toBe(`https://tracker.vectoraero.ar/seguir/${"a".repeat(32)}`);
+    expect(urlDeSeguimiento("https://www.vectoraero.ar", "a".repeat(32))).toBe(`https://tracker.vectoraero.ar/seguir/${"a".repeat(32)}`);
+  });
+  it("si ya es el tracker, o es desarrollo, queda donde está", () => {
+    expect(urlDeSeguimiento("https://tracker.vectoraero.ar", "a".repeat(32))).toBe(`https://tracker.vectoraero.ar/seguir/${"a".repeat(32)}`);
+    expect(urlDeSeguimiento("http://localhost:3000", "a".repeat(32))).toBe(`http://localhost:3000/seguir/${"a".repeat(32)}`);
+    expect(urlDeSeguimiento("http://192.168.0.12:3000", "a".repeat(32))).toBe(`http://192.168.0.12:3000/seguir/${"a".repeat(32)}`);
+  });
+  it("con TRACKER_URL (el server) usa ése", () => {
+    expect(urlDeSeguimiento("https://vectoraero.ar", "a".repeat(32), "https://tracker.ejemplo.ar/")).toBe(`https://tracker.ejemplo.ar/seguir/${"a".repeat(32)}`);
+  });
+  it("sin origen (el server, sin ventana) no inventa nada", () => {
+    expect(urlDeSeguimiento("", "a".repeat(32))).toBe(`/seguir/${"a".repeat(32)}`);
   });
   it("reconoce la forma de un token", () => {
     expect(tokenValido("a".repeat(32))).toBe(true);

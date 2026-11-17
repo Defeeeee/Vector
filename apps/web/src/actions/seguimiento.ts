@@ -116,6 +116,31 @@ export async function cambiarRutaSeguimiento(
   }
 }
 
+/**
+ * Cambia sólo el **destino** de un vuelo en marcha (`POST /seguimientos/{id}/destino`, migración 057): el
+ * piloto se desvió o aterriza en otro lado y no quiere cargar la ruta entera. Sirve para cualquier
+ * seguimiento suyo —del Mapa, de un plan o sin plan— y no cambia el plan guardado. `terminado` es que ya
+ * no estaba en vuelo (410 o 404).
+ */
+export async function cambiarDestinoSeguimiento(
+  id: string,
+  destino: { lat: number; lon: number; codigo: string; nombre: string }
+): Promise<{ ok: true } | { error: string; terminado?: boolean }> {
+  try {
+    const res = await apiFetch(`/seguimientos/${encodeURIComponent(id)}/destino`, {
+      method: "POST",
+      body: JSON.stringify({ punto: { lat: destino.lat, lon: destino.lon, codigo: destino.codigo.slice(0, 20), nombre: destino.nombre.slice(0, 60) } }),
+      cache: "no-store",
+    });
+    if (!res.ok) return { error: await detalle(res, "No se pudo cambiar el destino."), terminado: res.status === 410 || res.status === 404 };
+    revalidatePath(PANTALLA_COMPARTIR);
+    return { ok: true };
+  } catch (e) {
+    if (esErrorDeRedirect(e)) throw e;
+    return { error: "Error de conexión con el servidor." };
+  }
+}
+
 /** Prende o apaga la matrícula del link mientras se comparte. Apagada, el backend la borra. */
 export async function cambiarMatriculaVisible(id: string, mostrar: boolean, matricula: string): Promise<{ ok: true } | { error: string }> {
   try {

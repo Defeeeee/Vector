@@ -86,9 +86,17 @@ describe("paginaCacheable", () => {
       "/dashboard/tools",
       "/dashboard/plan-de-vuelo",
       "/dashboard/plan-de-vuelo/3f2c1a9e-8b7d-4c6e-9a1b-2d3e4f5a6b7c",
+      // Las checklists del avión, para usarlas en la cabina (3.44.0).
+      "/dashboard/tools/checklists",
+      "/dashboard/tools/checklists/3f2c1a9e-8b7d-4c6e-9a1b-2d3e4f5a6b7c",
     ]) {
       expect(paginaCacheable(p)).toBe(true);
     }
+  });
+
+  it("de las checklists, sólo la lista y las que tienen id", () => {
+    expect(paginaCacheable("/dashboard/tools/checklists/nueva")).toBe(false);
+    expect(paginaCacheable("/dashboard/tools/checklists/3f2c1a9e-8b7d-4c6e-9a1b-2d3e4f5a6b7c/editar")).toBe(false);
   });
 
   it("del plan de vuelo, sólo la lista y el editor de un plan con id", () => {

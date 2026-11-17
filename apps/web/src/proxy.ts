@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { decidirEnTracker, esEstaticoDelTracker, esHostTracker, esRutaDelTrackerEnLaWeb, hostDeLaWeb } from "@/lib/tracker-host";
+import { decidirEnTracker, esEstaticoDelTracker, esHostTracker, esRutaDelTrackerEnLaWeb, hostDeLaWeb, urlDeSeguirEnElTracker } from "@/lib/tracker-host";
 import { COOKIE_HUBO_SESION, DURACION_MARCA_S, DURACION_SESION_S, destinoSinSesion, dominioDeCookie, hostDelPedido, loginCon, necesitaRenovar } from "@/lib/sesion";
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.vectoraero.ar";
@@ -114,6 +114,12 @@ export async function proxy(request: NextRequest) {
   }
   if (esTracker && esEstaticoDelTracker(pathname)) {
     return NextResponse.next();
+  }
+  // `/seguir/<token>` es del tracker: los links que ya se mandaron con el host de la web redirigen (308). En
+  // desarrollo no. No renueva sesión: se abre sin cuenta.
+  if (!esTracker && pathname.startsWith("/seguir/")) {
+    const destino = urlDeSeguirEnElTracker(hostDelPedido(request.headers), pathname, request.nextUrl.search, process.env.TRACKER_URL);
+    return destino ? NextResponse.redirect(destino, 308) : NextResponse.next();
   }
 
   if (pathname.startsWith("/auth/callback")) {
@@ -231,7 +237,8 @@ export const config = {
   // reconoce y no puede asignar la pegatina.
   // `/api/seguimiento/posicion`: el teléfono la llama cada ~15 s durante todo un vuelo compartido,
   // y el JWT dura una hora; que el proxy lo renueve evita un 401 a mitad de un vuelo largo.
-  // `/seguir/…` (la página pública) NO está acá a propósito: se abre sin cuenta y sin sesión.
+  // `/seguir/…` (la página pública) se abre sin cuenta y sin sesión: acá sólo para redirigir al host del tracker
+  // los links viejos de la web principal (no se renueva nada).
   // Y todo lo del host del tracker (`has`: `tracker.vectoraero.ar`, `tracker.localhost`), que reescribe
   // sus rutas por dentro, más `/tracker/…` en el host principal, que es un 404.
   matcher: [
@@ -241,6 +248,7 @@ export const config = {
     "/q/:path*",
     "/api/admin/:path*",
     "/api/seguimiento/posicion",
+    "/seguir/:path*",
     "/tracker/:path*",
     { source: "/:path*", has: [{ type: "host", value: "tracker\\..+" }] },
   ],

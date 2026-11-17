@@ -90,8 +90,9 @@ check("abre el vuelo en el tracker (ruta relativa) y no dice la matrícula", c["
 check("sin salida ni ruta igual dice algo", armar_aviso_compartido({**fila_aviso, "salida_prevista": None, "puntos": []})["cuerpo"] == "Seguilo en vivo.")
 check("sin horario, sólo la ruta", armar_aviso_compartido({**fila_aviso, "salida_prevista": None})["cuerpo"] == "SADM → SAZS")
 d = armar_aviso_tracker("despegue", fila_aviso)
-a = armar_aviso_tracker("aterrizaje", fila_aviso)
-check("despegue y aterrizaje del tracker: el mismo texto del link, con el link del tracker", d["titulo"] == "Federico despegó de SADM" and a["titulo"] == "Federico aterrizó en SAZS" and d["url"] == a["url"] == f"/vuelo/{TOKEN}")
+LUGAR = {"codigo": "SAZS", "nombre": "Dolores"}
+a = armar_aviso_tracker("aterrizaje", {**fila_aviso, "aterrizo_en": LUGAR})
+check("despegue y aterrizaje del tracker: el mismo texto del link, con el link del tracker", d["titulo"] == "Federico despegó de SADM" and a["titulo"] == "Federico aterrizó en Dolores" and d["url"] == a["url"] == f"/vuelo/{TOKEN}")
 check("sin la matrícula si el piloto no la prendió", "LV-ABC" not in repr(d) and "LV-ABC" not in repr(a))
 check("las etiquetas del tracker no pisan a las del link", d["etiqueta"].startswith("tracker-") and d["etiqueta"] != a["etiqueta"])
 check("en el aire primero, después lo que sale, al final lo que terminó", [v["k"] for v in ordenar_vuelos([
@@ -369,8 +370,8 @@ despegue = av.enviar_a_asignados(base, v1["id"], armar_aviso_tracker("despegue",
 check("el despegue le llega a Ana y a Luis (asignados), no a Sofía ni a otros", despegue == 2 and enviados[-1][0] == sorted(["sub-" + ANA[:4], "sub-" + LUIS[:4]]) and enviados[-1][1] == "Federico despegó de SADM")
 enviados.clear()
 check("un vuelo sin asignados no manda nada", av.enviar_a_asignados(base, v2["id"], armar_aviso_tracker("aterrizaje", v2)) == 0 and enviados == [])
-av._enviar_a_seguidores(base, v1, "aterrizaje")
-check("el aviso de aterrizaje por el camino del barrido: a los asignados, con el link al tracker", enviados == [(sorted(["sub-" + ANA[:4], "sub-" + LUIS[:4]]), "Federico aterrizó en SAZS", f"/vuelo/{v1['token']}")])
+av._enviar_a_seguidores(base, {**v1, "aterrizo_en": LUGAR}, "aterrizaje")
+check("el aviso de aterrizaje por el camino del barrido: a los asignados, con el link al tracker", enviados == [(sorted(["sub-" + ANA[:4], "sub-" + LUIS[:4]]), "Federico aterrizó en Dolores", f"/vuelo/{v1['token']}")])
 enviados.clear()
 check("el barrido completo corre con seguidores asignados", isinstance(barrer(base, AHORA), int))
 enviados.clear()

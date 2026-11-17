@@ -1,4 +1,5 @@
 import { distanciaNmPrecisa } from "./distance";
+import type { Airport } from "./busqueda-aerodromos";
 
 /**
  * Aeródromos al alcance desde un punto de la ruta.
@@ -99,4 +100,37 @@ export function alcanceNm(horasUtiles: number | null, groundSpeedKt: number | nu
   if (horasUtiles === null || groundSpeedKt === null) return null;
   if (!(horasUtiles > 0) || !(groundSpeedKt > 0)) return null;
   return horasUtiles * groundSpeedKt;
+}
+
+/**
+ * Los aeródromos cerca de un punto, sacados del directorio. Es el cuerpo de
+ * `/api/airports/near`, y está acá para que el service worker conteste **lo mismo** sin señal
+ * (`lib/sin-senal.ts`), sobre el directorio que lleva el paquete de datos.
+ *
+ * **Sin helipuertos**: el directorio los incluye (`size: "H"`, o `kind: "HEL"` en MADHEL) y en el
+ * conurbano son muchos; un helipuerto no es una alternativa para un avión. Sólo los que tienen
+ * coordenadas: sin posición no hay distancia que medir ni punto que dibujar.
+ */
+export function alternativasDesdeDirectorio(
+  directorio: Airport[],
+  desde: { lat: number; lon: number },
+  opciones: { nm?: number; gs?: number } = {}
+): Alternativa[] {
+  const candidatos = directorio
+    .filter((a) => a.lat !== undefined && a.lon !== undefined)
+    .filter((a) => a.size !== "H" && a.madhel?.kind !== "HEL")
+    .map((a) => ({
+      icao: a.icao,
+      label: a.label,
+      lat: a.lat as number,
+      lon: a.lon as number,
+      local: a.local,
+      pistas: a.pistas,
+    }));
+  const { nm, gs } = opciones;
+  return alternativasCerca(desde, candidatos, {
+    radioNm: Number.isFinite(nm) && (nm as number) > 0 ? Math.min(nm as number, 300) : RADIO_POR_DEFECTO_NM,
+    limite: MAX_ALTERNATIVAS,
+    groundSpeedKt: Number.isFinite(gs) && (gs as number) > 0 ? (gs as number) : null,
+  });
 }

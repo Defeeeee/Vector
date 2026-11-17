@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { aeroviasPorPunto, puntosDeAerovia } from "@/lib/aerovias";
-import { salidasDesde } from "@/lib/ruta-planificada";
+import { allAerovias } from "@/lib/aerovias";
+import { aeroviasConSalidas } from "@/lib/ruta-planificada";
 import { fuenteAip } from "@/lib/aip";
 
 /**
@@ -24,12 +24,7 @@ export async function GET(req: NextRequest) {
   const punto = (searchParams.get("punto") ?? "").trim().toUpperCase();
   if (!punto) return NextResponse.json({ aerovias: [], vigencia: null });
 
-  const aerovias = aeroviasPorPunto(punto).map((a) => ({
-    designador: a.designador,
-    puntos: a.puntos,
-    // Todos menos aquel del que se sale: la aerovía se vuela en los dos sentidos.
-    salidas: salidasDesde(a.puntos, punto),
-  }));
+  const aerovias = aeroviasConSalidas(allAerovias(), punto);
 
   const fuente = fuenteAip("ENR3.1");
 

@@ -37,6 +37,7 @@ from supabase import Client
 
 from src.auth.guards import auth_guard
 from src.services.seguimientos import (
+    DestinoNuevo,
     MatriculaVisible,
     PosicionEnVivo,
     RutaNueva,
@@ -45,6 +46,7 @@ from src.services.seguimientos import (
     SeguimientoSinPlan,
     agregar_al_recorrido,
     anotar_vista,
+    con_destino_nuevo,
     duracion_del_plan,
     esta_activo,
     evaluar_vuelo,
@@ -71,6 +73,7 @@ from src.services.avisos_seguimiento import (
     SuscripcionAvisoIn,
     avisar_fin_manual,
     leer_adsb,
+    resolver_tramo_anterior,
 )
 from src.services.seguidores import AsignacionIn, avisar_compartido
 from src.config import settings
@@ -396,7 +399,7 @@ class SeguimientosController(Controller):
                 supabase_client.table("seguimientos_en_vivo")
                 .select(
                     "id,token,ruta,puntos,salida_prevista,duracion_prevista_min,vence_at,terminado_at,plan_id,ruta_orientativa,"
-                    "mostrar_matricula,avion_tipo,aterrizo_at,created_at,vistas,vistos_total,ultima_vista_at"
+                    "mostrar_matricula,avion_tipo,aterrizo_at,aterrizo_en,created_at,vistas,vistos_total,ultima_vista_at"
                 )
                 .eq("user_id", user_id)
                 .is_("terminado_at", "null")
@@ -589,6 +592,33 @@ class SeguimientosController(Controller):
         await asyncio.to_thread(_cambiar)
         return {"ok": True}
 
+    @post("/{seguimiento_id:uuid}/destino", status_code=200)
+    async def destino(self, request: Request, supabase_client: Client, seguimiento_id: UUID, data: DestinoNuevo) -> Dict[str, Any]:
+        """
+        Cambia sólo el **destino** (el último punto de la ruta y su texto) de un vuelo en marcha: el piloto
+        se desvió o aterriza en otro lado y no quiere cargar la ruta entera. Una ruta orientativa (sin
+        plan) sigue siéndolo. Sólo el dueño y sólo en vuelo (410 si terminó). No toca el recorrido ni el
+        plan guardado, si lo hay.
+        """
+        user_id = str(request.state.user.id)
+        ahora = _ahora()
+
+        def _cambiar() -> Dict[str, Any]:
+            tabla = supabase_client.table("seguimientos_en_vivo")
+            filas = (
+                tabla.select("vence_at,terminado_at,ruta,puntos,ruta_orientativa").eq("id", str(seguimiento_id)).eq("user_id", user_id).limit(1).execute().data
+                or []
+            )
+            if not filas:
+                raise NotFoundException(_NO_EXISTE)
+            if not esta_activo(filas[0], ahora):
+                raise ClientException(detail="Este seguimiento ya terminó.", status_code=410)
+            cambios = con_destino_nuevo(filas[0], data.punto)
+            tabla.update(cambios).eq("id", str(seguimiento_id)).eq("user_id", user_id).execute()
+            return {"ok": True, "ruta": cambios["ruta"], "puntos": cambios["puntos"]}
+
+        return await asyncio.to_thread(_cambiar)
+
     @post("/{seguimiento_id:uuid}/matricula", status_code=200)
     async def matricula(
         self, request: Request, supabase_client: Client, seguimiento_id: UUID, data: MatriculaVisible
@@ -661,7 +691,7 @@ _leer_adsb = leer_adsb
 COLUMNAS_VISTA = (
     "nombre,ruta,puntos,created_at,avion_tipo,avion_icao,avion_matricula,mostrar_matricula,vence_at,terminado_at,"
     "ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido,vistas,vistos_total,"
-    "matricula_adsb,salida_prevista,aterrizo_at,ruta_orientativa"
+    "matricula_adsb,salida_prevista,aterrizo_at,ruta_orientativa,id,user_id,desde_tramo_at,aterrizo_en,aterrizo_sin_ver"
 )
 
 
@@ -672,16 +702,20 @@ def leer_vista(cliente: Any, fila: Dict[str, Any], ahora: datetime, token: str, 
     `vista_publica`. Lo comparten el link público y el tracker (`GET /tracker/vuelos`), para que los dos
     cuenten exactamente lo mismo.
     """
+    # Tramos encadenados (migración 057): si el piloto voló antes ese avión, se lee desde que terminó aquél.
+    fila = resolver_tramo_anterior(cliente, fila, ahora)
     adsb = _leer_adsb(cliente, fila, ahora)
-    # Un plan que aterrizó termina solo (migración 045): el primero que mira lo guarda.
+    # Un plan que aterrizó termina solo (migración 045): el primero que mira lo guarda, con el lugar.
     # Lo que se muestra sale de la misma cuenta, así que no depende de que el guardado ande.
     if fila.get("salida_prevista") and esta_activo(fila, ahora):
-        aterrizo = evaluar_vuelo(fila, adsb, ahora)["aterrizo_at"]
+        ev = evaluar_vuelo(fila, adsb, ahora)
+        aterrizo = ev["aterrizo_at"]
         if aterrizo is not None:
             marca = aterrizo.isoformat()
-            fila = {**fila, "terminado_at": marca, "aterrizo_at": marca}
+            lugar = {"aterrizo_en": ev["aterrizo_en"], "aterrizo_sin_ver": ev["aterrizo_sin_ver"]}
+            fila = {**fila, "terminado_at": marca, "aterrizo_at": marca, **lugar}
             try:
-                cliente.table("seguimientos_en_vivo").update({"terminado_at": marca, "aterrizo_at": marca}).eq("token", token).is_(
+                cliente.table("seguimientos_en_vivo").update({"terminado_at": marca, "aterrizo_at": marca, **lugar}).eq("token", token).is_(
                     "terminado_at", "null"
                 ).execute()
             except Exception:  # noqa: BLE001

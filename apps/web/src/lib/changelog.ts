@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.45.0",
+    fecha: "2026-11-17",
+    titulo: "Vector sin señal, y el seguimiento más listo",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Vector anda sin señal",
+        texto: "Cuando abrís Vector con internet, se guarda la app entera, tus pantallas principales (inicio, Mapa, checklists, planes, aeródromos, bitácora) y los datos de los 741 aeródromos, las aerovías y los espacios aéreos. En el aire, sin señal, el Mapa arma la ruta, calcula tramos y muestra todo igual, con una franja que dice de cuándo es lo guardado. En el Hangar ves qué tenés guardado y lo actualizás.",
+        href: "/dashboard/settings",
+        cta: "Ver lo guardado",
+      },
+      {
+        icono: "compartir",
+        titulo: "El seguimiento entiende los cambios de planes",
+        texto: "Si aterrizás en otro aeródromo, tu familia ve «Aterrizó en Tandil». Si el avión vuelve a aparecer en el aire, el tramo anterior se cierra solo. La vuelta se engancha a la ida aunque salgas antes de lo previsto, y podés cambiar el destino desde «Compartir tu vuelo». Los links ahora salen por tracker.vectoraero.ar; los viejos siguen andando.",
+        href: "/dashboard/mapa/compartir",
+        cta: "Compartir tu vuelo",
+      },
+    ],
+  },
+  {
     version: "3.44.1",
     fecha: "2026-11-17",
     titulo: "El CAD, después de la DDJJ",

@@ -9,6 +9,10 @@
  * - La sesión es una sola entre los dos hosts (la cookie es de `.vectoraero.ar`), pero una cuenta
  *   que entra al tracker **nunca va a `/dashboard`**: ahí `/dashboard` redirige a la web principal.
  * - Del host principal, `/tracker/…` directo es un 404: no se entra por ahí.
+ * - **`/seguir/<token>`** (el link que se manda por WhatsApp) también se sirve en el host del tracker, **pública,
+ *   sin sesión y sin la pantalla de instalar** (`decidirEnTracker` la deja pasar a `src/app/seguir/`, no la
+ *   reescribe a `src/app/tracker/`): la abre la familia desde el chat. Los links viejos de la web principal
+ *   (`vectoraero.ar/seguir/<token>`) redirigen con 308 al del tracker (`urlDeSeguirEnElTracker`).
  */
 
 /** ¿Es el host del tracker? Sin puerto, y con la lista de hosts que el proxy reenvía (`a, b`). */
@@ -44,6 +48,8 @@ const PASAN = [/^\/_next\//, /^\/api\//, /^\/sw\.js$/, /^\/icono-/, /^\/apple-to
 export function decidirEnTracker(pathname: string, hayToken: boolean): DecisionTracker {
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) return { tipo: "a-la-web", destino: pathname };
   if (PASAN.some((r) => r.test(pathname))) return { tipo: "pasa" };
+  // El link de un vuelo compartido: público, sin sesión y fuera del árbol del tracker (no se instala nada).
+  if (esRutaDeSeguir(pathname)) return { tipo: "pasa" };
   // Un archivo con extensión que no es de la app (robots.txt, etc.): que Next decida.
   if (/\.[a-z0-9]{2,5}$/i.test(pathname) && pathname !== "/manifest.webmanifest") return { tipo: "pasa" };
   // Entrar por `/tracker/…` directo en este host no es una ruta pública.
@@ -67,4 +73,45 @@ export function hostDeLaWeb(host: string | null | undefined): string {
 /** Lo que el tracker deja pasar sin tocar ni renovar sesión: archivos y lo estático (la API sí renueva). */
 export function esEstaticoDelTracker(pathname: string): boolean {
   return !pathname.startsWith("/api/") && decidirEnTracker(pathname, true).tipo === "pasa";
+}
+
+/** `/seguir/<algo>`: el link público de un vuelo compartido. */
+export function esRutaDeSeguir(pathname: string): boolean {
+  return /^\/seguir\/[^/]+\/?$/.test(pathname);
+}
+
+/** ¿Es un host de desarrollo (`localhost`, `127.0.0.1`, `[::1]`, `*.localhost` o una IP de la red local)? */
+export function esHostLocal(host: string | null | undefined): boolean {
+  const h = (host ?? "").split(",")[0].trim().toLowerCase().replace(/:\d+$/, "");
+  return h === "localhost" || h.endsWith(".localhost") || h === "[::1]" || h === "::1" || /^\d{1,3}(\.\d{1,3}){3}$/.test(h);
+}
+
+/**
+ * El origen del tracker a partir del de la web (`https://vectoraero.ar` → `https://tracker.vectoraero.ar`).
+ * En desarrollo (`localhost`, una IP) y en el propio tracker queda igual: ahí no hay otro host. Un origen
+ * vacío (el server, sin ventana) o raro también queda como vino. Es lo que usan los links que arma el
+ * navegador, que no puede leer `TRACKER_URL` (sólo del server, `lib/sitio.ts`).
+ */
+export function origenDelTracker(origen: string): string {
+  let u: URL;
+  try {
+    u = new URL(origen);
+  } catch {
+    return origen;
+  }
+  if (esHostLocal(u.host) || esHostTracker(u.host)) return u.origin;
+  return `${u.protocol}//tracker.${u.hostname.replace(/^www\./, "")}${u.port ? `:${u.port}` : ""}`;
+}
+
+/**
+ * A dónde manda la web principal un `/seguir/<token>` que le llega: al mismo link del tracker, con la
+ * ruta y la búsqueda tal cual (un 308). `null` si no hay que redirigir: ya es el host del tracker o
+ * es desarrollo. `trackerUrl` es `TRACKER_URL` si está; si no, se arma con el host del pedido.
+ */
+export function urlDeSeguirEnElTracker(host: string | null | undefined, pathname: string, search: string, trackerUrl?: string | null): string | null {
+  if (!esRutaDeSeguir(pathname) || esHostTracker(host) || esHostLocal(host)) return null;
+  const h = (host ?? "").split(",")[0].trim().toLowerCase();
+  if (!h && !trackerUrl) return null;
+  const base = (trackerUrl || "").trim().replace(/\/+$/, "") || `https://tracker.${h.replace(/^www\./, "")}`;
+  return `${base}${pathname}${search}`;
 }

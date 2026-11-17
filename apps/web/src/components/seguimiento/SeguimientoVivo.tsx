@@ -20,6 +20,7 @@ import {
   llegadaEstimada,
   nmAKm,
   nombreDePunto,
+  textoDeAterrizaje,
   normalizar,
   puntosDePerfil,
   recorridoNm,
@@ -261,7 +262,7 @@ export default function SeguimientoVivo({ token, inicial, enTracker = false }: {
           {sinConexion && !terminado && <p className="mt-3 text-sm text-white/60">Tu conexión se cortó: se muestra lo último que llegó y se vuelve a intentar solo.</p>}
           {terminado && (
             <p className="mt-3 text-base text-white/85">
-              {estado.clave === "aterrizo" && "El avión tocó tierra y el seguimiento terminó. "}
+              {estado.clave === "aterrizo" && `${textoDeAterrizaje(datos) ?? "El avión tocó tierra"}. El seguimiento terminó. `}
               {u ? `Última posición ${hace ?? "registrada"}.` : "No llegó ninguna posición."}
               {duracionS !== null && duracionS >= 60 ? ` El seguimiento duró ${duracion(duracionS)}.` : ""}
             </p>
@@ -373,7 +374,14 @@ export default function SeguimientoVivo({ token, inicial, enTracker = false }: {
           </Bloque>
         )}
 
-        <footer className="mt-8 flex items-end justify-between gap-4 border-t border-white/10 pt-4">
+        {/* Quien abre el link desde WhatsApp puede seguir a este piloto siempre, en Vector Tracker (migración 056). */}
+        {!enTracker && (
+          <p className="mt-8 text-sm text-white/70">
+            ¿Querés que te avise siempre? Pedile {datos.nombre && datos.nombre !== "Un piloto" ? `a ${datos.nombre}` : "al piloto"} que te invite a Vector Tracker.
+          </p>
+        )}
+
+        <footer className="mt-4 flex items-end justify-between gap-4 border-t border-white/10 pt-4">
           <p className="text-xs leading-snug text-white/60">
             {datos.con_adsb || dePlan
               ? "Posición del GPS del teléfono del piloto o, si el teléfono no manda, de receptores ADS-B públicos (adsb.fi): puede tardar, cortarse, o no haber datos si el avión no transmite. "

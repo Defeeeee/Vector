@@ -10,6 +10,7 @@ import {
   HEADER_CAPTURA,
   CACHE_SHELL,
   MENSAJES,
+  VERSION,
   PRECACHE,
   RUTA_PUNTOS,
   cachesABorrar,
@@ -19,6 +20,24 @@ import {
   paginaCacheable,
   topeMeteo,
 } from "@/lib/pwa";
+import {
+  CLAVE_ESTADO_APP,
+  CLAVE_ESTADO_PANTALLAS,
+  PAGINAS_PARA_VOLAR,
+  RUTAS_CON_PAQUETE,
+  RUTA_PAQUETE,
+  conexionBuena,
+  contestarSinSenal,
+  debePrecalentar,
+  enlacesDeChecklists,
+  entandas,
+  indiceDelPaquete,
+  type Conexion,
+  type EstadoApp,
+  type EstadoPantallas,
+  type IndiceSinSenal,
+  type PaqueteSinSenal,
+} from "@/lib/sin-senal";
 import { esArranque, paginaDeArranque } from "@/lib/arranque";
 import { catalogoDesdeJson, type CatalogoSerializado } from "@/lib/catalogo-json";
 import { destinoDelAviso, leerAviso } from "@/lib/push";
@@ -48,6 +67,13 @@ import type { Catalogo } from "@/lib/catalogo";
 
 declare const self: ServiceWorkerGlobalScope;
 
+/**
+ * Todos los archivos de `/_next/static/**` del build: los hornea `scripts/build-sw.mjs` con esbuild
+ * (`define`). Vacía si el service worker se armó sin un `next build` antes.
+ */
+declare const __VECTOR_ASSETS__: string[];
+const ASSETS_DEL_BUILD: string[] = typeof __VECTOR_ASSETS__ === "undefined" ? [] : __VECTOR_ASSETS__;
+
 self.addEventListener("install", (evento) => {
   /*
     Se traen por adelantado sólo las cosas que el piloto puede no haber visitado
@@ -64,6 +90,15 @@ self.addEventListener("install", (evento) => {
       const cache = await caches.open(CACHE_SHELL);
       await cache.addAll(PRECACHE);
       await guardarLoQueNecesitaElRespaldo(cache);
+      /*
+        **Vector sin señal (3.44.0):** además de lo de arriba, toda la app (`/_next/static/**` del
+        build) y el paquete de datos de aeródromos, para que abra entera sin red aunque el piloto
+        no haya pasado por cada pantalla. Va **adentro** del `waitUntil` de la instalación: la
+        versión nueva recién queda "lista" cuando terminó de guardarse, así que activarla (que la
+        app hace sola al abrir) nunca deja una app a medias. Un archivo que no baja **no** voltea la
+        instalación —se guarda cuando se pida, como antes—, y el estado dice cuántos faltan.
+      */
+      await guardarLaApp(cache, { forzar: false }).catch(() => undefined);
     })()
   );
 
@@ -152,6 +187,20 @@ self.addEventListener("message", (evento) => {
         await suscripcion?.unsubscribe().catch(() => false);
         evento.ports[0]?.postMessage({ ok: true });
       })()
+    );
+    return;
+  }
+
+  if (tipo === MENSAJES.guardarParaVolar) {
+    const pedido = evento.data as { usuario?: string | null; forzar?: boolean; conexion?: Conexion };
+    evento.waitUntil(
+      guardarParaVolar({
+        usuario: pedido.usuario ?? null,
+        forzar: pedido.forzar === true,
+        conexion: pedido.conexion ?? { online: true },
+      })
+        .then((resultado) => evento.ports[0]?.postMessage(resultado))
+        .catch(() => evento.ports[0]?.postMessage({ error: true }))
     );
   }
 });
@@ -243,7 +292,9 @@ async function guardarLoQueNecesitaElRespaldo(cache: Cache): Promise<void> {
  */
 async function delCacheODeLaRed(evento: FetchEvent, pedido: Request): Promise<Response> {
   const cache = await caches.open(CACHE_SHELL);
-  const guardado = await cache.match(pedido);
+  // `ignoreSearch`: el contenido lo decide el nombre con hash (o la versión del cache), no la query
+  // —el favicon, por ejemplo, lleva su hash en `?icon.0649…`—. Así lo precacheado sin query también sirve.
+  const guardado = await cache.match(pedido, { ignoreSearch: true });
   if (guardado) return guardado;
 
   const respuesta = await fetch(pedido);
@@ -346,7 +397,13 @@ async function paginaConRespaldo(evento: FetchEvent): Promise<Response> {
     })
     .catch(() => null);
 
-  const guardada = await cache.match(pedido);
+  /*
+    `ignoreVary`: el HTML de Next viene con `Vary: rsc, next-router-state-tree, …`, y lo que el
+    precalentado (`guardarParaVolar`) guarda lo pidió el service worker, no una navegación: sin esto
+    las cabeceras que el navegador agrega a la suya podrían hacer que no se reconociera. Acá nunca
+    hay copias distintas de una misma URL —los pedidos RSC no se guardan—, así que no hay nada que confundir.
+  */
+  const guardada = await cache.match(pedido, { ignoreVary: true });
   if (!guardada) {
     const respuesta = await red;
     if (!respuesta) return await respaldoSinConexion();
@@ -507,11 +564,26 @@ async function guardadoYRefrescar(evento: FetchEvent, pedido: Request): Promise<
     return guardado;
   }
 
-  const respuesta = await red;
-  if (respuesta) return respuesta;
+  /*
+    Sin copia guardada: la red, pero **no para siempre**. Con señal que engancha y no transfiere
+    (la de un aeródromo, o en vuelo) el pedido puede colgarse medio minuto; pasado `ESPERA_LOCAL_MS`,
+    o apenas falla, se contesta con lo que el teléfono sabe (el catálogo de a bordo y el paquete de
+    datos), que es **el mismo algoritmo** que el servidor y lleva `offline: true`. El pedido no se
+    aborta: sigue en `waitUntil` y, si llega, deja guardada la respuesta de la red.
+  */
+  const primero = await Promise.race([red, new Promise<null>((listo) => setTimeout(() => listo(null), ESPERA_LOCAL_MS))]);
+  if (primero) return primero;
 
-  return (await resolverConCatalogoLocal(pedido)) ?? Response.error();
+  const local = await resolverConCatalogoLocal(pedido);
+  if (local) {
+    evento.waitUntil(red);
+    return local;
+  }
+  return (await red) ?? Response.error();
 }
+
+/** Cuánto se espera a la red, sin nada guardado, antes de contestar con lo del teléfono. */
+const ESPERA_LOCAL_MS = 3500;
 
 /**
  * Lo que hace que el planificador funcione sin señal.
@@ -532,6 +604,18 @@ async function guardadoYRefrescar(evento: FetchEvent, pedido: Request): Promise<
  */
 async function resolverConCatalogoLocal(pedido: Request): Promise<Response | null> {
   const url = new URL(pedido.url);
+
+  // Aeródromos, aerovías y las capas del Mapa: del paquete de datos (`lib/sin-senal.ts`).
+  if (RUTAS_CON_PAQUETE.includes(url.pathname)) {
+    const indice = await indiceDelPaqueteBordo();
+    const respuesta = indice ? contestarSinSenal(url, indice) : null;
+    if (!respuesta) return null;
+    return new Response(JSON.stringify(respuesta.cuerpo), {
+      status: respuesta.status,
+      headers: { "Content-Type": "application/json", "X-Vector-Origen": "paquete-local" },
+    });
+  }
+
   if (url.pathname !== RUTA_PUNTOS) return null;
 
   const catalogo = await catalogoDeBordo();
@@ -547,6 +631,25 @@ async function resolverConCatalogoLocal(pedido: Request): Promise<Response | nul
     status: 200,
     headers: { "Content-Type": "application/json", "X-Vector-Origen": "catalogo-local" },
   });
+}
+
+/**
+ * El paquete de datos con sus índices, armado una vez por vida del worker (como el catálogo). Sale
+ * del cache de esta versión; si no está guardado todavía, de la red.
+ */
+let indicePaquete: IndiceSinSenal | null = null;
+
+async function indiceDelPaqueteBordo(): Promise<IndiceSinSenal | null> {
+  if (indicePaquete) return indicePaquete;
+  try {
+    const guardado = await caches.match(RUTA_PAQUETE, { cacheName: CACHE_SHELL });
+    const respuesta = guardado ?? (await fetch(RUTA_PAQUETE, { cache: "reload" }));
+    if (!respuesta.ok) return null;
+    indicePaquete = indiceDelPaquete((await respuesta.json()) as PaqueteSinSenal);
+    return indicePaquete;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -587,6 +690,189 @@ async function redOMeteoGuardada(evento: FetchEvent, pedido: Request, maximoMin:
     if (guardado) await cache.delete(pedido);
     throw new Error("sin meteorología reciente");
   }
+}
+
+/* ----------------------------------------------- Vector sin señal (3.44.0) --- */
+
+const ANCHO_DE_BAJADA = 6;
+
+/** Una respuesta JSON armada por el worker: lo que se anota en el cache (no tiene `Vary`). */
+function jsonGuardable(valor: unknown): Response {
+  return new Response(JSON.stringify(valor), { headers: { "Content-Type": "application/json" } });
+}
+
+async function leerJson<T>(cache: Cache, clave: string): Promise<T | null> {
+  try {
+    const r = await cache.match(new URL(clave, self.location.origin).toString());
+    return r ? ((await r.json()) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+function conexionDelWorker(): Conexion {
+  const c = (self.navigator as unknown as { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  return { online: true, saveData: c?.saveData, effectiveType: c?.effectiveType };
+}
+
+/**
+ * Guarda **toda la app** y el paquete de datos en el cache de esta versión. Sirve para la
+ * instalación (guarda lo que falte) y para "Actualizar ahora" (`forzar`: vuelve a bajar el paquete,
+ * que es lo único que puede haber cambiado sin que cambie la versión).
+ *
+ * Lo ya guardado no se vuelve a bajar: los nombres llevan hash. Sólo se guarda un 200 (un 404
+ * guardado envenenaría el cache hasta la próxima versión). Con "ahorro de datos" activado en el
+ * teléfono, se saltea la app (se guarda a medida que se pide, como siempre) pero no el paquete, que
+ * son 130 KB comprimidos.
+ */
+async function guardarLaApp(cache: Cache, o: { forzar: boolean }): Promise<EstadoApp> {
+  const ahorro = conexionDelWorker().saveData === true && !o.forzar;
+
+  if (!ahorro) {
+    const faltan: string[] = [];
+    for (const url of ASSETS_DEL_BUILD) if (!(await cache.match(url))) faltan.push(url);
+    for (const tanda of entandas(faltan, ANCHO_DE_BAJADA)) {
+      await Promise.all(
+        tanda.map(async (url) => {
+          try {
+            const r = await fetch(url);
+            if (r.status === 200) await cache.put(url, r);
+          } catch {
+            // Sin red a mitad de camino: se completa en la próxima pasada o cuando se pida.
+          }
+        })
+      );
+    }
+  }
+
+  let aerodromos = 0;
+  let paquete = !!(await cache.match(RUTA_PAQUETE));
+  if (o.forzar || !paquete) {
+    try {
+      // `reload`: el paquete lleva `Cache-Control` largo, que es para el navegador común y no para esto.
+      const r = await fetch(RUTA_PAQUETE, { cache: "reload" });
+      if (r.status === 200) {
+        const copia = r.clone();
+        await cache.put(RUTA_PAQUETE, r);
+        paquete = true;
+        indicePaquete = null;
+        aerodromos = ((await copia.json()) as PaqueteSinSenal).aerodromos.length;
+      }
+    } catch {
+      // Se queda con el que ya había, si había.
+    }
+  }
+  if (paquete && !aerodromos) {
+    aerodromos = (await indiceDelPaqueteBordo().catch(() => null))?.paquete.aerodromos.length ?? 0;
+  }
+
+  let guardados = 0;
+  for (const url of ASSETS_DEL_BUILD) if (await cache.match(url)) guardados++;
+
+  const estado: EstadoApp = {
+    version: VERSION,
+    archivos: ASSETS_DEL_BUILD.length,
+    guardados,
+    paquete,
+    aerodromos,
+    guardadoEn: new Date().toISOString(),
+  };
+  await cache.put(new URL(CLAVE_ESTADO_APP, self.location.origin).toString(), jsonGuardable(estado));
+  return estado;
+}
+
+/**
+ * Baja una pantalla del dashboard **desde el service worker** y la guarda con su fecha. Devuelve su
+ * HTML, o `null` si no era un 200 propio (una redirección a `/login` —la sesión venció— o a un paso
+ * del alta no se guarda, ni se sigue).
+ *
+ * Es un GET de lectura (invariante 15). **Se llama de a una**, nunca en paralelo: cada pedido pasa
+ * por `proxy.ts`, que puede renovar la sesión, y el refresh token de Supabase es de un solo uso
+ * (ver `paginaConRespaldo`). Se hace después de que la pantalla ya cargó, o sea con la sesión
+ * recién renovada.
+ */
+async function bajarPantalla(cache: Cache, ruta: string): Promise<string | null> {
+  try {
+    const pedido = new Request(new URL(ruta, self.location.origin).toString(), {
+      headers: { Accept: "text/html,application/xhtml+xml" },
+      redirect: "manual",
+      credentials: "same-origin",
+    });
+    const respuesta = await fetch(pedido);
+    if (respuesta.status !== 200 || respuesta.type === "opaqueredirect") return null;
+    const html = await respuesta.clone().text();
+    await guardarConSello(cache, pedido, respuesta);
+    return html;
+  } catch {
+    return null;
+  }
+}
+
+/** Una pasada a la vez: dos pestañas abiertas piden lo mismo, y los pedidos van de a uno por la sesión. */
+let guardandoParaVolar: Promise<unknown> | null = null;
+
+async function guardarParaVolar(o: { usuario: string | null; forzar: boolean; conexion: Conexion }) {
+  if (guardandoParaVolar) {
+    await guardandoParaVolar.catch(() => undefined);
+    return { motivo: "en-curso", hizo: false, app: null, pantallas: 0, precalentadoEn: null };
+  }
+  const pasada = guardarParaVolarAhora(o);
+  guardandoParaVolar = pasada;
+  try {
+    return await pasada;
+  } finally {
+    guardandoParaVolar = null;
+  }
+}
+
+async function guardarParaVolarAhora(o: { usuario: string | null; forzar: boolean; conexion: Conexion }) {
+  const shell = await caches.open(CACHE_SHELL);
+  let paginas = await caches.open(CACHE_PAGINAS);
+  const estadoPrevio = await leerJson<EstadoPantallas>(paginas, CLAVE_ESTADO_PANTALLAS);
+
+  const decision = debePrecalentar({
+    estado: estadoPrevio,
+    usuario: o.usuario,
+    ahoraMs: Date.now(),
+    forzar: o.forzar,
+    conexion: o.conexion,
+  });
+
+  // Lo guardado era de otra cuenta: se va **antes** de guardar nada, aunque no haya señal.
+  if (decision.limpiar) {
+    await Promise.all(CACHES_PERSONALES.map((n) => caches.delete(n)));
+    paginas = await caches.open(CACHE_PAGINAS);
+  }
+
+  // La app y los datos: sólo si falta algo (o si lo pidió el piloto) y la conexión da.
+  const estadoApp = await leerJson<EstadoApp>(shell, CLAVE_ESTADO_APP);
+  const incompleta = !estadoApp || !estadoApp.paquete || estadoApp.guardados < estadoApp.archivos;
+  let app: EstadoApp | null = estadoApp;
+  if (o.conexion.online && (o.forzar || (incompleta && conexionBuena(o.conexion)))) {
+    app = await guardarLaApp(shell, { forzar: o.forzar });
+  }
+
+  let estado: EstadoPantallas | null = decision.limpiar ? null : estadoPrevio;
+  if (decision.hacer) {
+    const guardadas: string[] = [];
+    for (const ruta of PAGINAS_PARA_VOLAR) {
+      const html = await bajarPantalla(paginas, ruta);
+      if (html === null) continue;
+      guardadas.push(ruta);
+      if (ruta === "/dashboard/tools/checklists") {
+        for (const checklist of enlacesDeChecklists(html)) {
+          if ((await bajarPantalla(paginas, checklist)) !== null) guardadas.push(checklist);
+        }
+      }
+    }
+    // Sólo si se pudo guardar alguna: una pasada sin nada (la sesión venció) no cuenta como hecha.
+    if (guardadas.length) {
+      estado = { usuario: o.usuario, precalentadoEn: new Date().toISOString(), pantallas: guardadas };
+      await paginas.put(new URL(CLAVE_ESTADO_PANTALLAS, self.location.origin).toString(), jsonGuardable(estado));
+    }
+  }
+
+  return { motivo: decision.motivo, hizo: decision.hacer, app, pantallas: estado?.pantallas.length ?? 0, precalentadoEn: estado?.precalentadoEn ?? null };
 }
 
 /** El logout por GET: el camino de los 401 y del link de `ErrorEstado`. */

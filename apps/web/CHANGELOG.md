@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.45.0 — Vector sin señal, y el seguimiento más listo
+
+_17 de noviembre de 2026_
+
+- **Vector anda sin señal** — Cuando abrís Vector con internet, se guarda la app entera, tus pantallas principales (inicio, Mapa, checklists, planes, aeródromos, bitácora) y los datos de los 741 aeródromos, las aerovías y los espacios aéreos. En el aire, sin señal, el Mapa arma la ruta, calcula tramos y muestra todo igual, con una franja que dice de cuándo es lo guardado. En el Hangar ves qué tenés guardado y lo actualizás.
+- **El seguimiento entiende los cambios de planes** — Si aterrizás en otro aeródromo, tu familia ve «Aterrizó en Tandil». Si el avión vuelve a aparecer en el aire, el tramo anterior se cierra solo. La vuelta se engancha a la ida aunque salgas antes de lo previsto, y podés cambiar el destino desde «Compartir tu vuelo». Los links ahora salen por tracker.vectoraero.ar; los viejos siguen andando.
+
 ## v3.44.1 — El CAD, después de la DDJJ
 
 _17 de noviembre de 2026_

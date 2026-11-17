@@ -11,6 +11,7 @@ import {
   normalizar,
   puntosDePerfil,
   recorridoNm,
+  textoDeAterrizaje,
   textoDelAvion,
   textoSalida,
   textoVertical,
@@ -274,5 +275,35 @@ describe("las dos fuentes en el mismo recorrido", () => {
     const n = normalizar({ nombre: "L", ruta: "", puntos: [], recorrido: rec, estado: "en_vuelo", ultima: { lat: 0, lon: 0, alt_ft: null, gs_kt: null, track: null, hora: null, fuente: "adsb" }, ahora: "x", avion: null, inicio: null });
     expect(n.recorrido.map((p) => p[4])).toEqual(["gps", "gps", "adsb", "adsb", "gps"]);
     expect(n.ultima?.fuente).toBe("adsb");
+  });
+});
+
+describe("dónde aterrizó (migración 057)", () => {
+  const base = { fase: "aterrizo" as const, aterrizo_at: "2026-11-16T18:40:00+00:00" };
+  it("con el lugar: nombre, código y hora argentina", () => {
+    expect(textoDeAterrizaje({ ...base, aterrizo_en: { codigo: "SAZT", nombre: "Tandil" } })).toBe("Aterrizó en Tandil (SAZT) a las 15:40");
+  });
+  it("con sólo el código o sólo el nombre, y sin repetir si son iguales", () => {
+    expect(textoDeAterrizaje({ ...base, aterrizo_en: { codigo: "GEZ", nombre: "" } })).toBe("Aterrizó en GEZ a las 15:40");
+    expect(textoDeAterrizaje({ ...base, aterrizo_en: { codigo: "", nombre: "Campo" } })).toBe("Aterrizó en Campo a las 15:40");
+    expect(textoDeAterrizaje({ ...base, aterrizo_en: { codigo: "GEZ", nombre: "GEZ" } })).toBe("Aterrizó en GEZ a las 15:40");
+  });
+  it("sin lugar porque el avión reapareció en el aire: lo dice sin inventar dónde", () => {
+    expect(textoDeAterrizaje({ ...base, aterrizo_en: null, aterrizo_sin_ver: true })).toBe(
+      "Aterrizó a las 15:40 (no se vio dónde: estaba fuera de la cobertura de ADS-B)"
+    );
+  });
+  it("sin lugar y sin hora (un link viejo): sólo 'Aterrizó'", () => {
+    expect(textoDeAterrizaje({ fase: "aterrizo" })).toBe("Aterrizó");
+  });
+  it("si no aterrizó, nada", () => {
+    expect(textoDeAterrizaje({ fase: "volando", aterrizo_en: { codigo: "SAZT", nombre: "Tandil" } })).toBeNull();
+    expect(textoDeAterrizaje({})).toBeNull();
+  });
+  it("normalizar completa lo que un backend anterior no manda", () => {
+    const n = normalizar({ nombre: "A", ruta: "", puntos: [], avion: null, inicio: null, estado: "terminado", ultima: null, recorrido: [], ahora: "2026-11-16T18:40:00+00:00" } as SeguimientoPublico);
+    expect(n.aterrizo_at).toBeNull();
+    expect(n.aterrizo_en).toBeNull();
+    expect(n.aterrizo_sin_ver).toBe(false);
   });
 });
