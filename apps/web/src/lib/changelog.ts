@@ -1896,6 +1896,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.48.1",
+    fecha: "2026-11-17",
+    motivo: "Las respuestas de la oficina ARO no se clasificaban con Gemini: se le pedía un plazo de 8 s y Google exige 10 como mínimo (400). Ahora 12 s, y \`conEspera\` nunca baja de 10 s.",
+  },
+  {
     version: "3.32.1",
     fecha: "2026-11-13",
     motivo: "Una firma que ya venía sin fondo (PNG transparente) se cargaba en negativo: el limpiador tomaba el fondo transparente como tinta. Arreglo de la 3.31.0.",

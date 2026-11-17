@@ -75,10 +75,17 @@ export function noContesto(err: unknown): boolean {
 
 const convieneOtroModelo = (err: unknown) => esSaturacion(err) || noContesto(err);
 
-/** El config con el tope de espera por intento. */
+/**
+ * Lo mínimo que acepta Google como plazo: con menos, la API contesta 400 ("Manually set deadline
+ * 8s is too short. Minimum allowed deadline is 10s."). Pasó con la clasificación de las respuestas de
+ * la oficina ARO (`respuesta-plan-gemini.ts`, 8 s): nunca clasificaba con Gemini.
+ */
+export const ESPERA_MINIMA_GEMINI_MS = 10_000;
+
+/** El config con el tope de espera por intento (nunca menos que el mínimo de Google). */
 const conEspera = (config: GenerateContentConfig, esperaMs: number): GenerateContentConfig => ({
   ...config,
-  httpOptions: { ...config.httpOptions, timeout: esperaMs },
+  httpOptions: { ...config.httpOptions, timeout: Math.max(esperaMs, ESPERA_MINIMA_GEMINI_MS) },
 });
 
 function avisarCambio(modelo: string, siguiente: string, err: unknown) {

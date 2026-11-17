@@ -44,6 +44,6 @@ export async function clasificarRespuesta(
 async function pedirAGemini(consigna: string, contenido: string): Promise<string | null> {
   if (!process.env.GEMINI_API_KEY) return null;
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const r = await generarConRespaldo(ai, { systemInstruction: consigna, temperature: 0, maxOutputTokens: 10 }, contenido, 8000);
+  const r = await generarConRespaldo(ai, { systemInstruction: consigna, temperature: 0, maxOutputTokens: 10 }, contenido, 12_000);
   return r.text ?? null;
 }
