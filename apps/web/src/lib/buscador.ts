@@ -30,6 +30,7 @@ const OTRAS: { titulo: string; detalle: string; href: string; palabras: string }
   { titulo: "Pasar al CAD", detalle: "Tus vuelos al CAD de ANAC, y traerlos", href: "/dashboard/history/cad", palabras: "cad anac ddjj declaracion jurada traer marcador" },
   { titulo: "Checklists", detalle: "Las de tu avión, para tildar en tierra y en vuelo", href: "/dashboard/tools/checklists", palabras: "checklist lista de chequeo procedimientos prevuelo puesta en marcha tecnam" },
   { titulo: "Tu año en vuelo", detalle: "Tus horas, aeródromos y aviones del año, para compartir", href: "/dashboard/summary/tu-ano", palabras: "wrapped resumen anual año historias instagram compartir estadisticas" },
+  { titulo: "Tu mapa", detalle: "Todos tus aeródromos y rutas en un mapa, por año y por avión", href: "/dashboard/summary/mapa", palabras: "mapa carrera aerodromos rutas recorrido visitados compartir imagen provincias" },
   { titulo: "Firmas del libro", detalle: "Tu firma, quienes certifican, el dorso y las constancias", href: "/dashboard/history/firmas", palabras: "firma firmas sello sellos certificante certificantes instructor dorso constancia constancias examen pdf libro" },
   { titulo: "Hangar", detalle: "Tu perfil, licencia, CMA, aviones y libros", href: "/dashboard/settings", palabras: "perfil ajustes configuracion licencia cma avion aviones libros whatsapp cuenta" },
   { titulo: "Novedades", detalle: "Lo nuevo en Vector", href: "/dashboard/novedades", palabras: "cambios version changelog" },

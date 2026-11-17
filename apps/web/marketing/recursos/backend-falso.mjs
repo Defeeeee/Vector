@@ -35,6 +35,16 @@ for (let d = 420; d >= 2; d -= 5 + (n % 3)) {
   if (d % 9 === 0) f.capota = 0.5;
   vuelos.push(f);
 }
+// Vuelos de 2024 y 2025 con más aeródromos (Rosario, Córdoba, Bariloche, Ushuaia), en los dos aviones,
+// para probar "Tu mapa" con varios años y aviones; uno con un código que no existe.
+for (const [fecha, ruta, av, dur] of [
+  ["2024-03-09", "SADF SAAR", "a1", 2.1], ["2024-03-10", "SAAR SADF", "a1", 2.0], ["2024-07-21", "SADF SACO SADF", "a2", 4.2],
+  ["2024-11-02", "SADF SAZS", "a2", 3.4], ["2025-01-18", "SAZS SADF", "a2", 3.5], ["2025-02-14", "SADF SAWH", "a1", 5.9],
+  ["2025-02-16", "SAWH SADF", "a1", 5.8], ["2025-04-05", "SADF SADF", "a1", 1.2], ["2025-04-06", "SADF ZZZZ", "a1", 1.5],
+]) {
+  vuelos.push({ id: `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`, user_id: "u1", aircraft_id: av, date: fecha, route: ruta, landings: 2, duration: dur,
+    takeoff: `${fecha}T13:00:00Z`, landing: `${fecha}T${hhmm(13 * 60 + dur * 60)}:00Z`, purpose: "VP", pic_day_tra: dur });
+}
 const dashboard = {
   profile: perfil, aircraft: aviones, flights: SIN_VUELOS ? [] : vuelos, session: { active: false },
   packs: [{ id: "p1", user_id: "u1", name: "Pack 10 h · Aeroclub", total_hours: 10, remaining_hours: 6.5, created_at: dia(30), start_date: dia(30), is_active: true, aircraft_ids: ["a1"] }],

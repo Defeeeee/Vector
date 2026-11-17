@@ -96,6 +96,12 @@ export default async function SummaryPage() {
             >
               {`Tu ${anioActualArgentina(new Date())} en vuelo`}
             </Link>
+            <Link
+              href="/dashboard/summary/mapa"
+              className="inline-flex items-center justify-center min-h-11 px-5 rounded-full border border-white/25 text-white font-semibold text-sm"
+            >
+              Tu mapa
+            </Link>
             <CompartirTarjeta />
           </>
         }

@@ -42,6 +42,7 @@ const CUELGAN_DE_UNA_PESTANA: Record<string, string> = {
   "/dashboard/tools/checklists": "\"Checklists\" en Herramientas y \"Checklist del avión\" en la pantalla de vuelo del Mapa (3.39.0)",
   "/dashboard/tools/checklists/[id]": "tocar una checklist en la lista de Checklists",
   "/dashboard/summary/tu-ano": "\"Tu año en vuelo\" arriba del Resumen (3.39.0)",
+  "/dashboard/summary/mapa": "\"Tu mapa\" arriba del Resumen, al lado de \"Tu año en vuelo\" (3.47.0)",
   "/dashboard/history/firmas": "el botón \"Firmas\" de la Bitácora y el link del libro en PDF (estaba en el Hangar hasta la 3.36.0)",
   "/dashboard/history/auditoria": "el aviso de la Auditoría arriba de los vuelos (era pestaña hasta la 3.12.0)",
   "/dashboard/mapa/compartir": "\"Compartir tu vuelo con tu familia\" en la tarjeta de la ruta del Mapa (3.41.0)",

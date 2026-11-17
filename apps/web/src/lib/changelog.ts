@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.48.0",
+    fecha: "2026-11-17",
+    titulo: "Tu mapa",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Toda tu carrera en un mapa",
+        texto: "En el Resumen, «Tu mapa»: todos los aeródromos donde estuviste y las piernas que volaste, más gruesas cuanto más las repetiste, con filtro por año y por avión. Tocá un aeródromo para ver cuántas veces fuiste, la primera y la última. Y compartilo como imagen, en formato post o historia.",
+        href: "/dashboard/summary/mapa",
+        cta: "Ver mi mapa",
+      },
+    ],
+  },
+  {
     version: "3.47.0",
     fecha: "2026-11-17",
     titulo: "La llegada que se corrige sola",

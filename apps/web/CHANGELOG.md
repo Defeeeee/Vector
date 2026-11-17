@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.48.0 — Tu mapa
+
+_17 de noviembre de 2026_
+
+- **Toda tu carrera en un mapa** — En el Resumen, «Tu mapa»: todos los aeródromos donde estuviste y las piernas que volaste, más gruesas cuanto más las repetiste, con filtro por año y por avión. Tocá un aeródromo para ver cuántas veces fuiste, la primera y la última. Y compartilo como imagen, en formato post o historia.
+
 ## v3.47.0 — La llegada que se corrige sola
 
 _17 de noviembre de 2026_
