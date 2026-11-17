@@ -8,6 +8,7 @@ import CamposPerformance from "./CamposPerformance";
 import CampoSimulador from "./CampoSimulador";
 import CampoPotencia from "./CampoPotencia";
 import { useAvisos } from "./Avisos";
+import { mensajeDeError } from "@/lib/error-de-red";
 
 export default function AircraftForm() {
   const [isPending, startTransition] = useTransition();
@@ -28,7 +29,7 @@ export default function AircraftForm() {
         const form = document.getElementById("add-aircraft-form") as HTMLFormElement;
         if (form) form.reset();
       } catch (e: any) {
-        setError(e.message || "Error al registrar la aeronave");
+        setError(mensajeDeError(e, "Error al registrar la aeronave", navigator.onLine));
       }
     });
   }

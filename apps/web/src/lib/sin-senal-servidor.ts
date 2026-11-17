@@ -1,4 +1,4 @@
-import { allAirports } from "@/lib/airports";
+import { aerodromosParaFiltrar, allAirports, allLads } from "@/lib/airports";
 import { allAerovias } from "@/lib/aerovias";
 import { fuenteAip } from "@/lib/aip";
 import { armarMapa } from "@/lib/mapa-datos";
@@ -27,5 +27,7 @@ export function armarPaquete(): PaqueteSinSenal {
       ? { documento: "ENR 3", edicion: fuente.edicion, vigenteDesde: fuente.vigenteDesde, url: fuente.url }
       : null,
     mapa: armarMapa(),
+    lads: allLads().map((l): [string, string] => [l.numero, l.nombre]),
+    filtrables: aerodromosParaFiltrar(),
   };
 }

@@ -5,6 +5,7 @@ import { autoridadDelFormulario } from "@/lib/cad";
 import { apiFetch } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 import { esErrorDeRedirect } from "@/lib/redirect-error";
+import { esClaveValida } from "@/lib/cola-sin-senal";
 import { certificanteDelFormulario } from "@/lib/firmas-libro";
 import { revalidarLoQueCambiaUnVuelo } from "@/lib/revalidar-vuelo";
 
@@ -16,7 +17,7 @@ function getNumber(val: any): number | null {
 
 export async function logFlight(
   formData: FormData
-): Promise<{ error: string } | { success: true; id: string | null }> {
+): Promise<{ error: string; estado?: number } | { success: true; id: string | null }> {
   const aircraft_id = formData.get("aircraft_id") as string;
   // Optional: the picker only renders with more than one logbook, and the
   // backend files the flight in the pilot's default when this is absent.
@@ -81,16 +82,25 @@ export async function logFlight(
     ...autoridadDelFormulario(formData.get("cad_autoridad_id"), formData.get("cad_autoridad_nombre")),
     // Quién lo certificó, para el PDF del libro (migración 048).
     ...certificanteDelFormulario(formData.get("certificante_id"), formData.get("certificante_firma"), formData.get("certificante_sello_id")),
+    // La clave de idempotencia del formulario (migración 058): sin señal el pedido se reintenta
+    // desde la cola del teléfono, y con la misma clave el backend devuelve el mismo vuelo.
+    ...(esClaveValida(formData.get("clave_cliente")) ? { clave_cliente: formData.get("clave_cliente") as string } : {}),
   };
 
-  const response = await apiFetch("/flights", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  let response: Response;
+  try {
+    response = await apiFetch("/flights", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    // El backend no contestó: con `estado` el formulario y la cola saben que se puede reintentar.
+    return { error: "No pudimos hablar con el servidor.", estado: 503 };
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    return { error: error.detail || "No se pudo registrar el vuelo" };
+    return { error: typeof error.detail === "string" && error.detail ? error.detail : "No se pudo registrar el vuelo", estado: response.status };
   }
 
   // El vuelo creado, con su id: unir un plan de vuelo necesita saber **con qué vuelo** se cerró.

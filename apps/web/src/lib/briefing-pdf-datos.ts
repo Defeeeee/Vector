@@ -4,6 +4,7 @@ import { recencyByClass, recencyWindowDays } from "./recency";
 import { pilotStatus } from "./pilot-status";
 import { esAlumno } from "./licencias";
 import { soloVolados } from "./simulador";
+import { franjaDeGuardado, type CausaGuardado } from "./dato-guardado";
 import { frescura, horaDeObservacion } from "./frescura";
 import { antiguedad } from "./anac-vigencia";
 import { paraPdf, type Piernera } from "./piernera";
@@ -196,6 +197,13 @@ export interface EstacionBriefing {
   notams: NotamBriefing[] | null;
   notamsCapturadosEn: string | null;
   notamsFuente: "descarga" | "anac" | "navegador" | null;
+  /**
+   * 3.46.0: el METAR y el TAF son los de la última vez con señal, no de ahora (`X-Vector-Origen:
+   * guardado`). El papel lo dice con la hora, porque se imprime y se lee más tarde.
+   */
+  climaGuardado?: { capturadoEn: string | null } | null;
+  /** Los NOTAM son los de la última copia guardada (sin señal, o ANAC no contestó). */
+  notamsGuardados?: CausaGuardado | null;
 }
 
 /** Los aeródromos que entran en una hoja: más pedidos a ANAC y más papel no ayudan a decidir. */
@@ -252,13 +260,31 @@ export function armarEstacion(e: EstacionBriefing, ahora: Date): BloqueEstacion 
       paraPdf(`Sin METAR propio: el de abajo es de ${e.estacionCercana.name} (${e.estacionCercana.icao}), a ${e.estacionCercana.distanceNm} NM.`)
     );
   }
-  if (metar) {
+  if (e.climaGuardado && (metar || taf)) {
+    // Lo guardado: la misma franja de la pantalla, en UTC como el resto del papel. Reemplaza al aviso de frescura.
+    const observado = metar ? horaDeObservacion(e.observadoEn, metar, ahora) : null;
+    avisos.push(
+      paraPdf(
+        franjaDeGuardado({
+          dato: metar ? "metar" : "taf",
+          observadoEn: observado,
+          capturadoEn: e.climaGuardado.capturadoEn,
+          ahoraMs: ahora.getTime(),
+          zona: "utc",
+        })
+      )
+    );
+  } else if (metar) {
     const f = frescura(horaDeObservacion(e.observadoEn, metar, ahora), ahora);
     if (!f) avisos.push("No se pudo saber de cuándo es el METAR.");
     else if (f.nivel === "inservible") avisos.push(`METAR VIEJO (${f.texto}): no sirve para decidir.`);
     else if (f.nivel === "viejo") avisos.push(`METAR de ${f.texto}: ya no es reciente.`);
   }
-  const fechaClima = e.climaRespondio ? `METAR y TAF consultados a las ${horaUtc(ahora)}.` : "";
+  const fechaClima = e.climaRespondio
+    ? e.climaGuardado
+      ? "METAR y TAF GUARDADOS de la última vez con señal: no son de ahora."
+      : `METAR y TAF consultados a las ${horaUtc(ahora)}.`
+    : "";
 
   let notams: BloqueEstacion["notams"] = [];
   let notaNotams: string;
@@ -278,6 +304,20 @@ export function armarEstacion(e: EstacionBriefing, ahora: Date): BloqueEstacion 
           ? `${e.notams.length} NOTAM vigentes; acá van los primeros ${MAX_NOTAMS}. Faltan ${e.notams.length - MAX_NOTAMS}.`
           : `${e.notams.length} NOTAM vigentes.`;
     const t = e.notamsCapturadosEn ? new Date(e.notamsCapturadosEn) : null;
+    if (e.notamsGuardados) {
+      avisos.push(
+        paraPdf(
+          franjaDeGuardado({
+            dato: "notam",
+            capturadoEn: e.notamsCapturadosEn,
+            ahoraMs: ahora.getTime(),
+            causa: e.notamsGuardados,
+            zona: "utc",
+          })
+        )
+      );
+      notaNotams = `${notaNotams} (de lo guardado)`;
+    }
     if (t && !Number.isNaN(t.getTime())) {
       const hace = antiguedad(e.notamsCapturadosEn, ahora);
       fechaNotams = `NOTAM de ${e.notamsFuente ? FUENTE_NOTAM[e.notamsFuente] : "ANAC"}, verificados a las ${horaUtc(t)}${hace ? ` (${hace})` : ""}.`;

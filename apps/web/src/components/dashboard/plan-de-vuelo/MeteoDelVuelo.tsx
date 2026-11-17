@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { AlertTriangle, CloudSun, Loader2 } from "lucide-react";
+import FranjaGuardado from "../FranjaGuardado";
+import { origenGuardado } from "@/lib/dato-guardado";
 
 /**
  * METAR, TAF y NOTAM de los aeródromos del plan, a la hora del vuelo
@@ -22,7 +24,7 @@ interface Aerodromo {
   rol: string;
   codigo: string;
   hora: string;
-  metar: { estacion: string; distanciaNm: number | null; texto: string; hace: string | null; viejo: boolean } | null;
+  metar: { estacion: string; distanciaNm: number | null; texto: string; hace: string | null; viejo: boolean; observadoEn?: string | null } | null;
   taf: { estacion: string; distanciaNm: number | null; lineas: string[] | null; aviso: string | null } | null;
   notams: { afectan: Notam[]; revisar: Notam[]; noEnTuHorario: Notam[]; permanentes: Notam[] } | null;
 }
@@ -45,6 +47,8 @@ export default function MeteoDelVuelo({
 }) {
   const [datos, setDatos] = useState<Respuesta | null>(null);
   const [estado, setEstado] = useState<"cargando" | "listo" | "error">("cargando");
+  /** Sin señal (3.46.0): lo que se ve es la última copia guardada, con su fecha. */
+  const [guardado, setGuardado] = useState<{ capturadoEn: string | null } | null>(null);
   const clave = `${aerodromos.map((a) => `${a.rol}:${a.codigo}`).join(",")}|${salidaIso}|${llegadaIso}`;
 
   useEffect(() => {
@@ -57,6 +61,7 @@ export default function MeteoDelVuelo({
       try {
         const r = await fetch(`/api/plan-de-vuelo/meteo?${q.toString()}`, { signal: control.signal });
         if (!r.ok) throw new Error(String(r.status));
+        setGuardado(origenGuardado(r.headers));
         setDatos(await r.json());
         setEstado("listo");
       } catch {
@@ -84,6 +89,7 @@ export default function MeteoDelVuelo({
 
   return (
     <div className={`space-y-4 transition-opacity ${estado === "cargando" ? "opacity-60" : ""}`}>
+      {guardado && <FranjaGuardado dato="meteo" capturadoEn={guardado.capturadoEn} />}
       <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
         Los NOTAM se cruzan con tu ventana, <span className="data">{datos.ventana}</span>: una hora antes de la salida y una
         después de la llegada. Es una ayuda: el briefing sigue siendo tuyo.
@@ -101,12 +107,16 @@ export default function MeteoDelVuelo({
             <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
               METAR ahora
               {a.metar && (
-                <span className={`font-normal ${a.metar.viejo ? "text-amber-700 dark:text-amber-400" : "text-zinc-500 dark:text-zinc-400"}`}>
+                <span className={`font-normal ${a.metar.viejo || guardado ? "text-amber-700 dark:text-amber-400" : "text-zinc-500 dark:text-zinc-400"}`}>
                   {de(a.metar.estacion, a.codigo, a.metar.distanciaNm)}
-                  {a.metar.hace ? ` · ${a.metar.hace}` : " · sin hora de observación"}
+                  {/* El "hace" quedó escrito al armar la respuesta: de lo guardado se dice en la franja. */}
+                  {guardado ? "" : a.metar.hace ? ` · ${a.metar.hace}` : " · sin hora de observación"}
                 </span>
               )}
             </p>
+            {a.metar && guardado && (
+              <FranjaGuardado dato="metar" observadoEn={a.metar.observadoEn} capturadoEn={guardado.capturadoEn} />
+            )}
             {a.metar ? (
               <p className="data text-[11px] leading-relaxed text-zinc-800 dark:text-zinc-200 break-words">{a.metar.texto}</p>
             ) : (

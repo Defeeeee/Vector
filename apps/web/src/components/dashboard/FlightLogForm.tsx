@@ -10,6 +10,9 @@ import { Aircraft, AirportRef, Logbook } from "@/types";
 import { logFlight } from "@/actions/flight";
 import { pasarVueloAlCad } from "@/actions/cad-vector";
 import { esErrorDeRedirect } from "@/lib/redirect-error";
+import { camposDeFormData, agregar, nuevaClave, sePuedeEncolar, type EntradaCola } from "@/lib/cola-sin-senal";
+import { guardarCola, leerColaLocal } from "@/lib/cola-sin-senal-cliente";
+import { esErrorDeRed, mensajeDeError } from "@/lib/error-de-red";
 import { useAvisos } from "./Avisos";
 import { aLocal, aUtc } from "@/lib/horarios";
 import SugerenciaAdsb from "@/components/dashboard/SugerenciaAdsb";
@@ -181,6 +184,10 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
   const { notificar } = useAvisos();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** La clave de idempotencia de este alta (migración 058): se crea al primer guardado y no cambia. */
+  const claveRef = useRef<string | null>(null);
+  /** Guardado en el teléfono sin señal: el resumen del vuelo. */
+  const [guardadoEnElTelefono, setGuardadoEnElTelefono] = useState<{ resumen: string; alCad: boolean } | null>(null);
 
   // Repetir el origen cuando la ruta trae un solo código es propio de este
   // formulario: prefija los dos campos de un circuito local. La función
@@ -407,10 +414,45 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
     // sum check here any more — the backend still validates as a backstop.
     formData.set("route", rutaAGuardar);
     formData.set("duration", duracionAGuardar.toFixed(1));
+    // Sin señal el pedido espera en el teléfono y se reintenta: con esta clave el backend no
+    // crea dos vuelos ni cobra dos veces (migración 058, `lib/cola-sin-senal.ts`).
+    claveRef.current ??= nuevaClave();
+    formData.set("clave_cliente", claveRef.current);
+
+    /** Deja el pedido en la cola del teléfono, si se pudo guardar, y lo dice. */
+    const guardarEnElTelefono = (): boolean => {
+      const clave = claveRef.current!;
+      const matricula = aircraft.find((a) => a.id === aircraftId)?.registration;
+      const resumen = [
+        esSimulador ? rutaAGuardar : `${canonicalOrigin} → ${canonicalDestination}`,
+        `${(esSimulador ? horasInstruccionNum : duracionAGuardar).toFixed(1)} h`,
+        matricula,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      const entrada: EntradaCola = { id: clave, tipo: "vuelo", creado: new Date().toISOString(), campos: camposDeFormData(formData), resumen, fallas: 0 };
+      if (!guardarCola(agregar(leerColaLocal(), entrada))) {
+        setError("Sin señal, y el teléfono no deja guardar el vuelo para después. Probá de nuevo cuando tengas señal, sin cerrar la app.");
+        setIsPending(false);
+        return false;
+      }
+      setGuardadoEnElTelefono({ resumen, alCad: vaAlCad });
+      setIsPending(false);
+      return true;
+    };
+
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      guardarEnElTelefono();
+      return;
+    }
 
     try {
       const resultado = await logFlight(formData);
       if ("error" in resultado) {
+        if (resultado.estado !== undefined && sePuedeEncolar({ ok: false, error: resultado.error, estado: resultado.estado })) {
+          guardarEnElTelefono();
+          return;
+        }
         setError(resultado.error);
         setIsPending(false);
         return;
@@ -435,7 +477,7 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
       });
       if (vaAlCad && resultado.id) {
         setCargandoCad(true);
-        const cad = await pasarVueloAlCad(resultado.id);
+        const cad = await pasarVueloAlCad(resultado.id).catch((err) => ({ ok: false as const, mensaje: mensajeDeError(err, "No se pudo hablar con el CAD.") }));
         setCargandoCad(false);
         notificar(
           cad.ok
@@ -460,7 +502,13 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
         si el vuelo no se hubiera guardado.
       */
       if (esErrorDeRedirect(e)) throw e;
-      setError(e.message || "Error al registrar el vuelo");
+      // Se cortó la red en el camino: no sabemos si el pedido llegó. Se guarda con su clave y, al
+      // mandarlo de nuevo, el backend devuelve el mismo vuelo si ya lo había creado.
+      if (esErrorDeRed(e, typeof navigator !== "undefined" ? navigator.onLine : undefined)) {
+        guardarEnElTelefono();
+        return;
+      }
+      setError(mensajeDeError(e, "Error al registrar el vuelo"));
       setIsPending(false);
     }
   }
@@ -479,6 +527,23 @@ export default function FlightLogForm({ aircraft, logbooks = [], initialData, re
     >
       {/* Lo que después cierra el vuelo programado. Ver `logFlight`. */}
       {planVueloId && <input type="hidden" name="plan_vuelo_id" value={planVueloId} />}
+      {guardadoEnElTelefono && (
+        <div role="status" className="mb-6 border-y border-amber-500/30 bg-amber-500/[0.06] py-4 space-y-2">
+          <p className="text-sm font-bold text-white">Guardado en el teléfono: se carga solo cuando vuelva la señal</p>
+          <p className="text-[13px] text-zinc-400">
+            {guardadoEnElTelefono.resumen}. Hasta que se cargue no figura en tu bitácora; el aviso queda en el inicio y en la Bitácora.
+            {guardadoEnElTelefono.alCad && " Para tu CAD, pasalo después desde Pasar al CAD."}
+          </p>
+          <div className="flex gap-5 pt-1">
+            <button type="button" className="text-xs font-bold text-aviation-cyan hover:underline" onClick={() => { claveRef.current = null; setGuardadoEnElTelefono(null); }}>
+              Cargar otro vuelo
+            </button>
+            <button type="button" className="text-xs font-bold text-zinc-300 hover:underline" onClick={() => router.push(redirectTo || "/dashboard/history")}>
+              Ir a la Bitácora
+            </button>
+          </div>
+        </div>
+      )}
       <AnimatePresence>
         {error && (
           <motion.div

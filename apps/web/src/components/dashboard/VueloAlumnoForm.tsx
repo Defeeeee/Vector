@@ -11,6 +11,9 @@ import { calculateFlightDuration } from "@/lib/utils";
 import { aLocal, aUtc } from "@/lib/horarios";
 import SugerenciaAdsb from "@/components/dashboard/SugerenciaAdsb";
 import { useAvisos } from "@/components/dashboard/Avisos";
+import { camposDeFormData, agregar, nuevaClave, sePuedeEncolar, type EntradaCola } from "@/lib/cola-sin-senal";
+import { guardarCola, leerColaLocal } from "@/lib/cola-sin-senal-cliente";
+import { esErrorDeRed, mensajeDeError } from "@/lib/error-de-red";
 
 /**
  * Registrar un vuelo, versión alumno piloto (Federico, 2026-09-24).
@@ -74,6 +77,9 @@ export default function VueloAlumnoForm({
   const { notificar } = useAvisos();
   const [pendiente, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  /** La clave de idempotencia de este alta (migración 058), creada al primer guardado. */
+  const claveRef = useRef<string | null>(null);
+  const [guardadoEnElTelefono, setGuardadoEnElTelefono] = useState<string | null>(null);
 
   const aviones = useMemo(() => aircraft.filter((a) => !a.is_simulator), [aircraft]);
   const [origenInicial, destinoInicial] = (inicial?.route ?? "").split(" ");
@@ -139,7 +145,7 @@ export default function VueloAlumnoForm({
         setModelo("");
         router.refresh();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "No se pudo agregar el avión.");
+        setError(mensajeDeError(e, "No se pudo agregar el avión.", typeof navigator !== "undefined" ? navigator.onLine : undefined));
       }
     });
   }
@@ -171,8 +177,28 @@ export default function VueloAlumnoForm({
       fd.set("purpose", conInstructor === "si" ? "INST" : "ENT");
       fd.set(columna, horas.toFixed(1));
       if (planVueloId) fd.set("plan_vuelo_id", planVueloId);
-      const r = await logFlight(fd);
+      // Sin señal el pedido espera en el teléfono y se reintenta con esta clave (migración 058).
+      claveRef.current ??= nuevaClave();
+      fd.set("clave_cliente", claveRef.current);
+      const guardarEnElTelefono = () => {
+        const resumen = [ruta === "LOCAL" ? "Local" : ruta.replace(" ", " → "), `${horas.toFixed(1)} h`, conInstructor === "si" ? "con instructor" : "solo"].join(" · ");
+        const entrada: EntradaCola = { id: claveRef.current!, tipo: "vuelo", creado: new Date().toISOString(), campos: camposDeFormData(fd), resumen, fallas: 0 };
+        if (!guardarCola(agregar(leerColaLocal(), entrada))) {
+          setError("Sin señal, y el teléfono no deja guardar el vuelo para después. Probá de nuevo cuando tengas señal, sin cerrar la app.");
+          return;
+        }
+        setGuardadoEnElTelefono(resumen);
+      };
+      if (typeof navigator !== "undefined" && navigator.onLine === false) return guardarEnElTelefono();
+      let r: Awaited<ReturnType<typeof logFlight>>;
+      try {
+        r = await logFlight(fd);
+      } catch (e) {
+        if (esErrorDeRed(e, typeof navigator !== "undefined" ? navigator.onLine : undefined)) return guardarEnElTelefono();
+        throw e;
+      }
       if ("error" in r) {
+        if (r.estado !== undefined && sePuedeEncolar({ ok: false, error: r.error, estado: r.estado })) return guardarEnElTelefono();
         setError(r.error);
         return;
       }
@@ -344,6 +370,20 @@ export default function VueloAlumnoForm({
         ))}
       </div>
 
+      {guardadoEnElTelefono && (
+        <div role="status" className="border-y border-amber-500/30 bg-amber-500/[0.06] py-4 space-y-2">
+          <p className="text-sm font-bold text-white">Guardado en el teléfono: se carga solo cuando vuelva la señal</p>
+          <p className="text-[13px] text-zinc-400">{guardadoEnElTelefono}. Hasta que se cargue no figura en tu bitácora; el aviso queda en el inicio y en la Bitácora.</p>
+          <div className="flex gap-5 pt-1">
+            <button type="button" className="text-xs font-bold text-aviation-cyan hover:underline" onClick={() => { claveRef.current = null; setGuardadoEnElTelefono(null); }}>
+              Cargar otro vuelo
+            </button>
+            <button type="button" className="text-xs font-bold text-zinc-300 hover:underline" onClick={() => router.push("/dashboard/history")}>
+              Ir a la Bitácora
+            </button>
+          </div>
+        </div>
+      )}
       {error && <p ref={errorRef} role="alert" className="text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
 
       <button

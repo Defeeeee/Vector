@@ -8,6 +8,8 @@ import {
   CACHE_PAGINAS,
   CACHES_PERSONALES,
   HEADER_CAPTURA,
+  HEADER_ORIGEN,
+  ORIGEN_GUARDADO,
   CACHE_SHELL,
   MENSAJES,
   VERSION,
@@ -653,12 +655,17 @@ async function indiceDelPaqueteBordo(): Promise<IndiceSinSenal | null> {
 }
 
 /**
- * Meteorología: la red manda, y lo guardado sólo si no pasó su tope.
+ * Meteorología: la red manda, y **sin red se contesta con lo último guardado, marcado**.
  *
  * **Nunca cache primero.** Un METAR guardado no es un dato más rápido: es un dato de
  * antes, y la diferencia importa justo cuando el piloto está decidiendo pista en uso.
- * Se va a la red, y sólo si no contesta se mira lo que hay — y aun así se descarta si
- * lleva más tiempo guardado que el tope de esa ruta.
+ * Se va a la red, y sólo si no contesta se mira lo que hay.
+ *
+ * Hasta la 3.45.0 se descartaba pasado un tope corto (2 h el METAR). Desde la 3.46.0 se muestra
+ * lo que haya de hasta 48 h (`RUTAS_METEO`) **con la cabecera `X-Vector-Origen: guardado`**: cada
+ * pantalla la lee y pone la franja con la edad (`lib/dato-guardado.ts`), así que ya no se ve un
+ * dato viejo igual que uno fresco. Más viejo que el tope, o sin fecha de captura, se borra y se
+ * deja fallar: no saber cuándo se trajo es no poder decir qué edad tiene.
  *
  * La respuesta guardada lleva estampada `X-Vector-Capturado-En`, que contesta una
  * pregunta distinta de la del METAR: **cuándo lo trajimos**, no cuándo se observó. Las
@@ -680,15 +687,12 @@ async function redOMeteoGuardada(evento: FetchEvent, pedido: Request, maximoMin:
   } catch {
     const guardado = await cache.match(pedido);
     if (guardado && capturaVigente(guardado.headers.get(HEADER_CAPTURA), maximoMin, new Date())) {
-      return guardado;
+      const cabeceras = new Headers(guardado.headers);
+      cabeceras.set(HEADER_ORIGEN, ORIGEN_GUARDADO);
+      return new Response(guardado.body, { status: guardado.status, headers: cabeceras });
     }
-    /*
-      Vencido o sin fecha: **se borra y se deja fallar**. Servir un METAR de seis horas
-      no es servir un dato viejo, es servir un dato falso con formato de dato — y la
-      pantalla ya sabe decir "no pudimos traer el METAR", que es la respuesta honesta.
-    */
     if (guardado) await cache.delete(pedido);
-    throw new Error("sin meteorología reciente");
+    throw new Error("sin meteorología guardada");
   }
 }
 

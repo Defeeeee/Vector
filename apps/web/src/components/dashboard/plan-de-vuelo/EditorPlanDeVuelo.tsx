@@ -764,7 +764,7 @@ export default function EditorPlanDeVuelo({
       {(sinSenal || recuperado) && (
         <p className="rounded-2xl bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
           {sinSenal
-            ? "Sin señal. Podés seguir armando el plan y bajar el PDF: lo que escribas queda en este teléfono y se sube solo cuando vuelva la señal. Para mandarlo a la oficina hace falta señal."
+            ? "Sin señal. Podés seguir armando el plan y bajar el PDF: lo que escribas queda en este teléfono y se sube solo cuando vuelva la señal. No se manda solo: un plan mandado tarde puede ser peor que no mandarlo. Mandalo vos cuando tengas señal (antes de la EOBT)."
             : "Recuperamos lo que escribiste sin señal y ya lo estamos subiendo."}
         </p>
       )}
@@ -1252,6 +1252,7 @@ export default function EditorPlanDeVuelo({
                   {envio.estado === "mandando" ? <Loader2 className="w-4 h-4 shrink-0 animate-spin" /> : <Mail className="w-4 h-4 shrink-0" />}
                   <span className="truncate">Mandar a {oficina ? oficina.correo : "la oficina"}</span>
                 </button>
+                {sinSenal && <p className="text-xs text-amber-700 dark:text-amber-400">Sin señal: el plan queda guardado en el teléfono; mandalo cuando tengas señal (antes de la EOBT).</p>}
                 {envio.texto && (
                   <p className={`text-xs ${envio.estado === "error" ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>
                     {envio.texto}
@@ -1388,10 +1389,11 @@ export default function EditorPlanDeVuelo({
                     </Campo>
                     {chequeoDemora.aviso && <p className="text-xs text-amber-700 dark:text-amber-400">{chequeoDemora.aviso}</p>}
                     <div className="flex flex-wrap gap-2">
+                      {sinSenal && envioAroActivo && <p className="text-xs text-amber-700 dark:text-amber-400">Sin señal: mandalo cuando tengas señal. Podés bajar el PDF ahora.</p>}
                       {envioAroActivo && (
                         <button
                           type="button"
-                          disabled={!demoraNueva || !listo || !oficina || ocupadoDemora}
+                          disabled={!demoraNueva || !listo || !oficina || ocupadoDemora || sinSenal}
                           onClick={mandarDemora}
                           className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold disabled:opacity-40"
                         >
@@ -1496,10 +1498,11 @@ export default function EditorPlanDeVuelo({
                     {chequeoCambio.aviso && cambios.length > 0 && <p className="text-xs text-amber-700 dark:text-amber-400">{chequeoCambio.aviso}</p>}
                     {cambios.length > 0 && (
                       <div className="flex flex-wrap gap-2">
+                        {sinSenal && envioAroActivo && <p className="text-xs text-amber-700 dark:text-amber-400">Sin señal: mandalo cuando tengas señal. Podés bajar el PDF ahora.</p>}
                         {envioAroActivo && (
                           <button
                             type="button"
-                            disabled={!textoEnmienda || sinCambiosReales || !listo || !oficina || ocupadoCambio}
+                            disabled={!textoEnmienda || sinCambiosReales || !listo || !oficina || ocupadoCambio || sinSenal}
                             onClick={mandarCambio}
                             className="bg-aviation-cyan text-noche hover:bg-sky-300 inline-flex max-w-full items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold disabled:opacity-40"
                           >
@@ -1543,10 +1546,11 @@ export default function EditorPlanDeVuelo({
                   vigente{demoras.length > 0 ? " (la de tu última demora)" : ""}.
                 </p>
                 <div className="flex flex-wrap gap-2">
+                  {sinSenal && envioAroActivo && <p className="text-xs text-amber-700 dark:text-amber-400">Sin señal: mandalo cuando tengas señal. Podés bajar el PDF ahora.</p>}
                   {envioAroActivo && (
                     <button
                       type="button"
-                      disabled={!listo || !oficina || ocupadoCancelacion}
+                      disabled={!listo || !oficina || ocupadoCancelacion || sinSenal}
                       onClick={mandarCancelacion}
                       className="inline-flex max-w-full items-center gap-2 px-4 py-2.5 rounded-full border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 text-xs font-semibold disabled:opacity-40"
                     >

@@ -210,6 +210,56 @@ export function filtrarAerodromos(
   return { resultados: cumplen.slice(0, max), total: cumplen.length, conDatoFaltante };
 }
 
+/** Las provincias de los candidatos, ordenadas: lo que ofrece el selector. */
+export function provinciasDe(candidatos: AerodromoFiltrable[]): string[] {
+  return [...new Set(candidatos.map((a) => a.provincia).filter(Boolean))].sort((x, y) => x.localeCompare(y, "es"));
+}
+
+/** Un aeródromo de partida resuelto por código (`desde`), con lo que hace falta para medir. */
+export interface AerodromoDeLaBusqueda {
+  icao: string;
+  label: string;
+  lat?: number;
+  lon?: number;
+}
+
+/**
+ * Lo que contesta `/api/airports/filtrar`, armado **igual en el servidor y en el paquete de sin
+ * señal** (3.46.0): el servidor le pasa el directorio entero y el teléfono, lo que bajó
+ * (`lib/sin-senal.ts`). `resolverDesde` busca por ICAO o designador ANAC.
+ *
+ * `desde` que no existe, o sin coordenadas, se avisa en `desdeError` y la distancia no entra en el
+ * filtro (no se descarta ni se inventa nada: invariante 2).
+ */
+export function responderFiltrar(
+  params: URLSearchParams,
+  o: { candidatos: AerodromoFiltrable[]; resolverDesde: (codigo: string) => AerodromoDeLaBusqueda | null },
+) {
+  const filtros = filtrosDeParams(params);
+
+  let desde: { icao: string; label: string; lat: number; lon: number } | null = null;
+  let desdeError: string | null = null;
+  if (filtros.desde) {
+    const a = o.resolverDesde(filtros.desde);
+    if (!a) desdeError = `No encuentro el aeródromo ${filtros.desde}.`;
+    else if (a.lat === undefined || a.lon === undefined) desdeError = `No tengo la ubicación de ${a.icao}.`;
+    else desde = { icao: a.icao, label: a.label, lat: a.lat, lon: a.lon };
+  }
+
+  const resultado = filtrarAerodromos(
+    o.candidatos,
+    desde ? filtros : { ...filtros, desde: undefined, radioNm: undefined },
+    desde,
+  );
+
+  return {
+    ...resultado,
+    desde: desde ? { icao: desde.icao, label: desde.label } : null,
+    desdeError,
+    provincias: provinciasDe(o.candidatos),
+  };
+}
+
 /** ¿Hay algo que filtrar? Sin filtros la pantalla no muestra la lista de los 500. */
 export function hayFiltros(f: FiltrosAerodromo): boolean {
   return Boolean(

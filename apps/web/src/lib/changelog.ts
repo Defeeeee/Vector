@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.46.0",
+    fecha: "2026-11-17",
+    titulo: "Más cosas sin señal",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Registrá el vuelo aunque no haya señal",
+        texto: "Sin señal, el vuelo queda guardado en el teléfono y se carga solo cuando vuelve, sin duplicarse. Sin señal también ves el último METAR, TAF y NOTAM guardados, marcados con su hora y su antigüedad, y andan los LAD y los filtros de Aeropuertos. El plan de vuelo no se manda solo: queda guardado para que lo mandes con señal.",
+        href: "/dashboard/log-flight",
+        cta: "Registrar un vuelo",
+      },
+    ],
+  },
+  {
     version: "3.45.1",
     fecha: "2026-11-17",
     titulo: "Los links de seguimiento duran una semana",

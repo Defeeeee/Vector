@@ -136,6 +136,13 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: "dummy-key"
         run: python test_models.py
 
+      # Registrar sin señal (migración 058): el reintento con la misma clave es un solo vuelo.
+      - name: Vuelos con clave de cliente
+        env:
+          SUPABASE_URL: "https://dummy.supabase.co"
+          SUPABASE_PUBLISHABLE_KEY: "dummy-key"
+        run: python test_flights_clave_cliente.py
+
       # Offline: arma su propio árbol de PDF en un directorio temporal. Lo que
       # importa de verdad es que no se pueda escapar de la carpeta configurada
       # con `../` en la categoría o el nombre de archivo.

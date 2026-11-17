@@ -1,6 +1,8 @@
 import { buscarEnIndice, construirIndice, normalize, type Airport, type IndiceAerodromos } from "./busqueda-aerodromos";
 import { alternativasDesdeDirectorio } from "./alternativas";
 import { aeroviasConSalidas } from "./ruta-planificada";
+import { resultadosLad, type Lad } from "./lad";
+import { responderFiltrar, type AerodromoDeLaBusqueda, type AerodromoFiltrable } from "./filtro-aerodromos";
 import type { armarMapa } from "./mapa-datos";
 
 /**
@@ -20,7 +22,10 @@ import type { armarMapa } from "./mapa-datos";
  *    plan de vuelo y Aeropuertos le piden a `/api/mapa`, `/api/airports/*` y `/api/aerovias`
  *    (`contestarSinSenal`, **el mismo algoritmo que el servidor**: las funciones puras son las
  *    mismas, ver `alternativasDesdeDirectorio` y `aeroviasConSalidas`). Los puntos de la ruta
- *    siguen resolviéndose con el catálogo de a bordo (`/api/puntos`).
+ *    siguen resolviéndose con el catálogo de a bordo (`/api/puntos`). Desde la 3.46.0 también los
+ *    **LAD** de ANAC (`?lad=1`) y los **filtros de Aeropuertos** (`/api/airports/filtrar`, con los
+ *    candidatos que arma `aerodromosParaFiltrar`); la frase con Gemini (`/api/airports/frase`) no
+ *    anda sin red y la pantalla lo dice.
  * 3. **Las pantallas**: la última copia de cada una que se abrió, y las principales precalentadas
  *    al abrir la app con buena señal (`debePrecalentar`). Son datos del piloto: se borran al cerrar
  *    sesión y si entra otra cuenta (`EstadoPantallas.usuario`).
@@ -31,7 +36,7 @@ import type { armarMapa } from "./mapa-datos";
 export const RUTA_PAQUETE = "/api/sin-senal/datos";
 
 /** Sube sólo si cambia la forma del paquete: un paquete de otro esquema no se usa. */
-export const ESQUEMA_PAQUETE = 1;
+export const ESQUEMA_PAQUETE = 2;
 
 export type MapaDatos = ReturnType<typeof armarMapa>;
 
@@ -44,11 +49,25 @@ export interface PaqueteSinSenal {
   aerovias: { designador: string; puntos: string[] }[];
   vigenciaAerovias: { documento: string; edicion: string; vigenteDesde: string; url: string } | null;
   mapa: MapaDatos;
+  /**
+   * Los LAD de ANAC (`src/data/lad.tsv`): `[número, nombre]`. **Sin coordenadas**, como en el
+   * servidor; en tupla y no en objeto porque son ~2.000 y el paquete se baja por el teléfono.
+   */
+  lads: [string, string][];
+  /**
+   * Lo que los filtros de Aeropuertos necesitan de **todos** los aeródromos argentinos (con y sin
+   * coordenadas: sin ellas, "sin dato"), tal como los arma `aerodromosParaFiltrar`: pistas,
+   * superficie, combustible, control, uso, provincia.
+   */
+  filtrables: AerodromoFiltrable[];
 }
 
 export interface IndiceSinSenal {
   aerodromos: IndiceAerodromos;
   aerovias: PaqueteSinSenal["aerovias"];
+  lads: Lad[];
+  /** Para resolver el "desde" de los filtros, por ICAO o designador ANAC (como `getAirport`). */
+  filtrablesPorCodigo: Map<string, AerodromoDeLaBusqueda>;
   paquete: PaqueteSinSenal;
 }
 
@@ -57,7 +76,18 @@ export function indiceDelPaquete(paquete: PaqueteSinSenal): IndiceSinSenal {
   if (paquete.esquema !== ESQUEMA_PAQUETE) {
     throw new Error(`El paquete sin señal es de esquema ${paquete.esquema} y este código lee ${ESQUEMA_PAQUETE}.`);
   }
-  return { aerodromos: construirIndice(paquete.aerodromos), aerovias: paquete.aerovias, paquete };
+  const filtrablesPorCodigo = new Map<string, AerodromoDeLaBusqueda>();
+  for (const a of paquete.filtrables) {
+    filtrablesPorCodigo.set(normalize(a.icao), a);
+    if (a.local && a.local !== a.icao) filtrablesPorCodigo.set(normalize(a.local), a);
+  }
+  return {
+    aerodromos: construirIndice(paquete.aerodromos),
+    aerovias: paquete.aerovias,
+    lads: paquete.lads.map(([numero, nombre]) => ({ numero, nombre })),
+    filtrablesPorCodigo,
+    paquete,
+  };
 }
 
 export interface RespuestaLocal {
@@ -66,7 +96,7 @@ export interface RespuestaLocal {
 }
 
 /** Las rutas que el paquete sabe contestar. */
-export const RUTAS_CON_PAQUETE = ["/api/mapa", "/api/airports/search", "/api/airports/near", "/api/aerovias"];
+export const RUTAS_CON_PAQUETE = ["/api/mapa", "/api/airports/search", "/api/airports/near", "/api/airports/filtrar", "/api/aerovias"];
 
 /**
  * Lo que el servidor habría contestado, contestado con el paquete. `null` si no es una ruta que el
@@ -74,8 +104,10 @@ export const RUTAS_CON_PAQUETE = ["/api/mapa", "/api/airports/search", "/api/air
  *
  * **Misma respuesta que el servidor, más `offline: true`** (la convención de `/api/puntos`): para que
  * la pantalla pueda decir con qué contestó. Dos diferencias, las dos de alcance y no de algoritmo:
- * el directorio es sólo Argentina, y `lad=1` no trae los LAD (no van en el paquete: sin coordenadas,
- * no sirven para el Mapa; en el plan de vuelo se los escribe a mano).
+ * el directorio es sólo Argentina (un `desde` extranjero en los filtros no se resuelve), y el
+ * "desde" de los filtros se busca entre los aeródromos del paquete. Los LAD (`lad=1`) y los
+ * filtros (`/api/airports/filtrar`) van **desde 3.46.0**, con las mismas funciones del servidor
+ * (`resultadosLad`, `responderFiltrar`).
  */
 export function contestarSinSenal(url: URL, indice: IndiceSinSenal): RespuestaLocal | null {
   const p = url.searchParams;
@@ -93,7 +125,23 @@ export function contestarSinSenal(url: URL, indice: IndiceSinSenal): RespuestaLo
     const q = p.get("q")?.trim() ?? "";
     if (q.length < 2) return { status: 200, cuerpo: { results: [], offline: true } };
     const limite = Math.min(Number(p.get("limit")) || 8, 25);
-    return { status: 200, cuerpo: { results: buscarEnIndice(indice.aerodromos, q, limite), offline: true } };
+    const aerodromos = buscarEnIndice(indice.aerodromos, q, limite);
+    // `&lad=1`: también los LAD de ANAC (sólo el plan de vuelo y Registrar vuelo los piden).
+    const results = p.get("lad") === "1" ? [...aerodromos, ...resultadosLad(q, indice.lads, Math.min(limite, 8))] : aerodromos;
+    return { status: 200, cuerpo: { results, offline: true } };
+  }
+
+  if (url.pathname === "/api/airports/filtrar") {
+    return {
+      status: 200,
+      cuerpo: {
+        ...responderFiltrar(p, {
+          candidatos: indice.paquete.filtrables,
+          resolverDesde: (codigo) => indice.filtrablesPorCodigo.get(normalize(codigo)) ?? null,
+        }),
+        offline: true,
+      },
+    };
   }
 
   if (url.pathname === "/api/airports/near") {
@@ -140,6 +188,8 @@ export const PAGINAS_PARA_VOLAR = [
   "/dashboard/plan-de-vuelo",
   "/dashboard/airports",
   "/dashboard/history",
+  // Registrar un vuelo sin señal (3.46.0): la cola del teléfono lo carga al volver la señal.
+  "/dashboard/log-flight",
 ];
 
 /** Cuántas checklists (una por avión, como mucho) se bajan de la lista. */

@@ -23,6 +23,9 @@ import {
 import { computeAltitude } from "@/lib/aviation";
 import { fmt } from "./tools/ToolPrimitives";
 import { fichaDesdeElNavegador } from "@/lib/anac-navegador";
+import { origenGuardado, type CausaGuardado } from "@/lib/dato-guardado";
+import { horaDeObservacion } from "@/lib/frescura";
+import FranjaGuardado from "./FranjaGuardado";
 
 /**
  * El briefing meteorológico de la ruta, adentro del planificador.
@@ -67,6 +70,12 @@ interface Notam {
 }
 
 interface DatosEstacion {
+  /** El METAR y el TAF salieron de lo guardado (sin señal), y de cuándo se trajeron (3.46.0). */
+  climaGuardado: { capturadoEn: string | null } | null;
+  /** Los NOTAM salieron de la última copia guardada, y por qué. */
+  notamsGuardados: CausaGuardado | null;
+  /** De cuándo son los NOTAM (ISO), para la franja. */
+  notamsDe: string | null;
   metar?: string;
   taf?: string;
   categoria: CategoriaVuelo;
@@ -89,6 +98,9 @@ interface DatosEstacion {
 }
 
 const VACIA: DatosEstacion = {
+  climaGuardado: null,
+  notamsGuardados: null,
+  notamsDe: null,
   categoria: "UNK",
   tempC: null,
   vientoDir: null,
@@ -140,19 +152,24 @@ export default function BriefingRuta({ puntos }: { puntos: Punto[] }) {
           // `encodeURIComponent` porque el código sale de un input libre.
           const q = encodeURIComponent(icao);
           const [clima, notams] = await Promise.allSettled([
-            fetch(`/api/weather?icao=${q}`, { signal: controlador.signal }).then((r) =>
-              r.ok ? r.json() : Promise.reject(new Error(String(r.status)))
-            ),
+            fetch(`/api/weather?icao=${q}`, { signal: controlador.signal }).then(async (r) => {
+              if (!r.ok) throw new Error(String(r.status));
+              return { cuerpo: await r.json(), guardado: origenGuardado(r.headers) };
+            }),
             // Le pregunta el navegador a ANAC, que bloquea a nuestros servidores (`lib/anac-navegador.ts`).
             fichaDesdeElNavegador(icao, undefined, controlador.signal),
           ]);
 
           if (clima.status !== "fulfilled") return [icao, { ...VACIA }];
 
-          const c = clima.value;
+          const c = clima.value.cuerpo;
+          const fichaOk = notams.status === "fulfilled" ? notams.value : null;
           return [
             icao,
             {
+              climaGuardado: clima.value.guardado,
+              notamsGuardados: fichaOk && Array.isArray(fichaOk.notams) ? (fichaOk.notamsGuardados ?? null) : null,
+              notamsDe: fichaOk?.notamsCapturadosEn ?? null,
               metar: texto(c.metar),
               taf: texto(c.taf),
               categoria: (c.category as CategoriaVuelo) ?? "UNK",
@@ -192,7 +209,9 @@ export default function BriefingRuta({ puntos }: { puntos: Punto[] }) {
       icao,
       categoria: d.categoria,
       vientoKt: d.vientoKt,
-      notams: d.notams === null ? null : d.notams.length,
+      // Los NOTAM de lo guardado se muestran, marcados, pero no cuentan para el veredicto: "no se pudo preguntar".
+      notams: d.notams === null || d.notamsGuardados ? null : d.notams.length,
+      desdeGuardado: d.climaGuardado !== null,
       respondio: d.respondio,
       /*
         El METAR crudo viaja al veredicto porque **se autofecha**: el grupo `DDHHMMZ`
@@ -359,6 +378,17 @@ function TarjetaEstacion({ punto, datos }: { punto: Punto; datos: DatosEstacion 
         )
       )}
 
+      {/* Sin señal (3.46.0): el METAR y el TAF son los de la última vez, con su edad a la vista. */}
+      {datos.climaGuardado && (datos.metar || datos.taf) && (
+        <div className="mt-2.5">
+          <FranjaGuardado
+            dato={datos.metar ? "metar" : "taf"}
+            observadoEn={datos.metar ? horaDeObservacion(null, datos.metar, new Date()) : null}
+            capturadoEn={datos.climaGuardado.capturadoEn}
+          />
+        </div>
+      )}
+
       {datos.metar && (
         <div className="flex items-start gap-2 mt-2.5">
           <p className="font-mono text-[10px] leading-relaxed text-zinc-500 dark:text-zinc-400 break-all flex-1 select-all">
@@ -393,11 +423,20 @@ function TarjetaEstacion({ punto, datos }: { punto: Punto; datos: DatosEstacion 
         <div className="mt-3 space-y-3 border-t border-zinc-100 dark:border-white/5 pt-3">
           {datos.taf && (
             <div>
+              {datos.climaGuardado && datos.metar && (
+                <div className="mb-1.5">
+                  <FranjaGuardado dato="taf" capturadoEn={datos.climaGuardado.capturadoEn} />
+                </div>
+              )}
               <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">TAF</p>
               <p className="font-mono text-[10px] leading-relaxed text-zinc-500 dark:text-zinc-400 break-all select-all">
                 {datos.taf}
               </p>
             </div>
+          )}
+
+          {datos.notams !== null && datos.notamsGuardados && (
+            <FranjaGuardado dato="notam" capturadoEn={datos.notamsDe} causa={datos.notamsGuardados} />
           )}
 
           {datos.notams === null ? (

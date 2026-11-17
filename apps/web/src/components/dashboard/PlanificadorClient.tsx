@@ -10,6 +10,9 @@ import TramoAerovia from "./TramoAerovia";
 import PageHeader from "./PageHeader";
 import PlanMapa from "./PlanMapa";
 import BriefingRuta from "./BriefingRuta";
+import FranjaGuardado from "./FranjaGuardado";
+import { origenGuardado } from "@/lib/dato-guardado";
+import { horaDeObservacion } from "@/lib/frescura";
 import AlternativasCerca from "./AlternativasCerca";
 import ArmarDesdePlanificador from "./plan-de-vuelo/ArmarDesdePlanificador";
 import StyledSelect from "./StyledSelect";
@@ -183,6 +186,13 @@ export default function PlanificadorClient({ aeronaves, rutaInicial, aeronaveIni
   /** Altitud de crucero. Es lo que decide qué nivel de viento en altura corresponde. */
   const [altitud, setAltitud] = useState("");
   const [niveles, setNiveles] = useState<NivelViento[]>([]);
+  /*
+    Sin señal (3.46.0): el METAR y el viento en altura que contesta el service worker desde lo
+    guardado **se muestran, marcados, pero no llenan los campos de viento**: un viento de hace horas
+    en una casilla que alimenta el rumbo y el tiempo de cada tramo es lo que no se puede dejar pasar.
+  */
+  const [metarViejo, setMetarViejo] = useState<{ estacion: string; texto: string; capturadoEn: string | null; observadoEn: Date | null } | null>(null);
+  const [vientoAltViejo, setVientoAltViejo] = useState<{ capturadoEn: string | null } | null>(null);
   /** El viento de superficie que trajo el METAR, para poder compararlo con el de altura. */
   const vientoSuperficie = useRef<{ direccion: number; velocidad: number } | null>(null);
 
@@ -225,7 +235,19 @@ export default function PlanificadorClient({ aeronaves, rutaInicial, aeronaveIni
         const res = await fetch(`/api/weather?icao=${encodeURIComponent(icaoSalida)}`);
         if (!res.ok || cancelado) return;
         const datos = await res.json();
-        if (cancelado || tocoViento.current) return;
+        const guardado = origenGuardado(res.headers);
+        if (cancelado) return;
+        if (guardado) {
+          setMetarViejo({
+            estacion: datos.nearestStation?.icao || icaoSalida,
+            texto: String(datos.metar ?? ""),
+            capturadoEn: guardado.capturadoEn,
+            observadoEn: horaDeObservacion(datos.observadoEn, datos.metar, new Date()),
+          });
+          return;
+        }
+        setMetarViejo(null);
+        if (tocoViento.current) return;
 
         // `windDir` puede venir "VRB" cuando el viento es variable. No es un número y
         // no hay rumbo que corregir: se deja el campo vacío en vez de inventar un cero,
@@ -261,7 +283,11 @@ export default function PlanificadorClient({ aeronaves, rutaInicial, aeronaveIni
         const res = await fetch(`/api/winds-aloft?lat=${salida.lat}&lon=${salida.lon}`);
         if (!res.ok || cancelado) return;
         const datos = await res.json();
-        if (!cancelado) setNiveles(datos.niveles ?? []);
+        const guardado = origenGuardado(res.headers);
+        if (cancelado) return;
+        // De lo guardado se muestra la franja, pero no se usa para el viento de cada tramo.
+        setVientoAltViejo(guardado);
+        setNiveles(guardado ? [] : (datos.niveles ?? []));
       } catch {
         // Sin viento en altura se planifica con el de superficie, que es lo que se venía
         // haciendo. No es un error que valga la pena mostrar.
@@ -959,7 +985,23 @@ export default function PlanificadorClient({ aeronaves, rutaInicial, aeronaveIni
               </ToolNote>
             ) : null}
 
-            {altitudNum > 0 && niveles.length === 0 && (
+            {metarViejo && (
+              <div className="space-y-1.5" data-imprimir="no">
+                <FranjaGuardado dato="metar" observadoEn={metarViejo.observadoEn} capturadoEn={metarViejo.capturadoEn} />
+                {metarViejo.texto && (
+                  <p className="font-mono text-[10px] leading-relaxed text-zinc-500 dark:text-zinc-400 break-all">{metarViejo.texto}</p>
+                )}
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">No se usó para llenar el viento: cargalo vos.</p>
+              </div>
+            )}
+            {vientoAltViejo && (
+              <div className="space-y-1.5" data-imprimir="no">
+                <FranjaGuardado dato="viento" capturadoEn={vientoAltViejo.capturadoEn} />
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">No se usó para el viento de cada tramo.</p>
+              </div>
+            )}
+
+            {altitudNum > 0 && niveles.length === 0 && !vientoAltViejo && (
               <ToolNote>
                 No pudimos traer el viento en altura para esta zona. Se sigue usando el de superficie.
               </ToolNote>

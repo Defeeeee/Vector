@@ -21,10 +21,11 @@ import { VIGENCIA_MADHEL_MIN, VIGENCIA_NOTAM_MIN, hayQuePreguntar } from "./anac
  * 2. `POST /api/notams` los completa con el AIP (que vive en el disco del servidor) y
  *    devuelve lo mismo que siempre devolvió el GET.
  * 3. Se guarda en la cache del service worker bajo la URL del GET, con la fecha: así, sin
- *    señal, se sirve como antes (`RUTAS_METEO`, 12 h).
+ *    señal, se sirve la última copia (`RUTAS_METEO`, hasta 48 h).
  *
- * Si el navegador no llega a ANAC (sin señal, o ANAC caído de verdad), se usa lo guardado
- * si es reciente, y si no, "no se pudo consultar" enseguida: **no** se le pregunta al
+ * Si el navegador no llega a ANAC (sin señal, o ANAC caído de verdad), se usa **lo último que
+ * se guardó, de hasta 48 h, y la ficha lo dice** (`notamsGuardados`: la pantalla pone la franja
+ * con la edad, 3.46.0); sin copia, "no se pudo consultar" enseguida: **no** se le pregunta al
  * servidor, que está bloqueado y sólo agregaría 6 s de espera.
  *
  * **Se le pregunta lo menos posible** (`lib/anac-vigencia.ts`): lo que ya trajo se reusa
@@ -44,6 +45,8 @@ type Tipo = "madhel" | "notams";
 interface Crudo {
   valor: unknown;
   capturadoEn: string | null;
+  /** Es la última copia guardada porque ANAC no contestó (no la que alcanzaba por vigente). */
+  deRespaldo?: boolean;
 }
 
 /** Lo que contestó ANAC, tal cual, o `null` si no contestó. Nunca tira. */
@@ -107,8 +110,9 @@ const enCurso = new Map<string, Promise<unknown>>();
 
 /**
  * Lo que dice ANAC de un aeródromo, **preguntando sólo si lo guardado venció**
- * (`lib/anac-vigencia.ts`). Si ANAC no contesta, sirve lo guardado de hasta 12 h —la
- * pantalla dice de cuándo es—, y si no hay, `null`: "no se pudo consultar".
+ * (`lib/anac-vigencia.ts`). Si ANAC no contesta, sirve lo último guardado de hasta 48 h,
+ * marcado `deRespaldo` (la pantalla lo dice y dice de cuándo es), y si no hay, `null`: "no se
+ * pudo consultar".
  */
 async function obtener(tipo: Tipo, indicador: string, vigenciaMin: number): Promise<Crudo> {
   const guardado = await leerCrudo(tipo, indicador);
@@ -128,20 +132,22 @@ async function obtener(tipo: Tipo, indicador: string, vigenciaMin: number): Prom
   }
   const respaldoMin = topeMeteo("/api/notams") ?? 0;
   return guardado && !hayQuePreguntar(guardado.capturadoEn, respaldoMin, new Date())
-    ? guardado
+    ? { ...guardado, deRespaldo: true }
     : { valor: null, capturadoEn: null };
 }
 
 const urlDelGet = (icao: string) => new URL(`/api/notams?icao=${encodeURIComponent(icao)}`, window.location.origin).toString();
 
-async function guardarParaSinSenal(icao: string, ficha: unknown) {
+async function guardarParaSinSenal(icao: string, ficha: FichaAnac) {
   try {
     if (!("caches" in window)) return;
     const cache = await caches.open(CACHE_METEO);
     await cache.put(
       urlDelGet(icao),
       new Response(JSON.stringify(ficha), {
-        headers: { "Content-Type": "application/json", [HEADER_CAPTURA]: new Date().toISOString() },
+        // La fecha de los NOTAM de adentro, no la de hoy: si eran de la última copia (ANAC no contestó),
+        // guardarla "ahora" le daría otras 48 h de vida a un dato que ya venía viejo.
+        headers: { "Content-Type": "application/json", [HEADER_CAPTURA]: fechaDeCaptura(ficha) },
       }),
     );
   } catch {
@@ -149,6 +155,12 @@ async function guardarParaSinSenal(icao: string, ficha: unknown) {
   }
 }
 
+function fechaDeCaptura(ficha: FichaAnac): string {
+  const t = ficha.notamsCapturadosEn ? Date.parse(ficha.notamsCapturadosEn) : NaN;
+  return Number.isFinite(t) ? new Date(t).toISOString() : new Date().toISOString();
+}
+
+/** La última ficha armada (de hasta 48 h), o `null`. Sin fecha de captura no se usa. */
 async function guardadaReciente(icao: string): Promise<FichaAnac | null> {
   try {
     if (!("caches" in window)) return null;
@@ -214,14 +226,19 @@ export async function fichaDesdeElNavegador(icao: string, indicador?: string, si
     });
     if (!res.ok) throw new Error(`notams ${res.status}`);
     const compuesta = (await res.json()) as FichaAnac;
-    const ficha: FichaAnac = { ...compuesta, notamsCapturadosEn: compuesta.notamsCapturadosEn ?? notams.capturadoEn };
+    const ficha: FichaAnac = {
+      ...compuesta,
+      notamsCapturadosEn: compuesta.notamsCapturadosEn ?? notams.capturadoEn,
+      // Hay red pero ANAC no contestó: son los NOTAM de la última vez. Se guarda **sin** la marca (la marca es de este momento).
+      notamsGuardados: notams.deRespaldo && notams.valor !== null ? "sin-anac" : null,
+    };
     // Sólo lo que trajo algo: "no se pudo consultar" no pisa una ficha buena guardada.
-    if (madhel.valor !== null || notams.valor !== null) void guardarParaSinSenal(icao, ficha);
+    if (madhel.valor !== null || notams.valor !== null) void guardarParaSinSenal(icao, { ...ficha, notamsGuardados: null });
     return ficha;
   } catch (err) {
-    // Sin señal no se puede componer: la última ficha armada, si es de las últimas 12 h.
+    // Sin señal no se puede componer: la última ficha armada, si es de las últimas 48 h, y se dice.
     const guardada = await guardadaReciente(icao);
-    if (guardada) return guardada;
+    if (guardada) return { ...guardada, notamsGuardados: "sin-senal" };
     throw err;
   }
 }

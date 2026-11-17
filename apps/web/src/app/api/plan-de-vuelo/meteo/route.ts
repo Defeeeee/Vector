@@ -89,8 +89,11 @@ export async function GET(req: NextRequest) {
 
     const m = opciones.find((e) => metarDe.has(e.icao));
     const crudo = m ? metarDe.get(m.icao)! : null;
-    const f = crudo ? frescura(horaDeObservacion(crudo.reportTime ?? crudo.obsTime, crudo.rawOb, ahora), ahora) : null;
-    const metar = m && crudo ? { estacion: m.icao, distanciaNm: m.distanciaNm ? Math.round(m.distanciaNm) : null, texto: crudo.rawOb!, hace: f?.texto ?? null, viejo: f ? f.nivel !== "fresco" : true } : null;
+    const observado = crudo ? horaDeObservacion(crudo.reportTime ?? crudo.obsTime, crudo.rawOb, ahora) : null;
+    const f = crudo ? frescura(observado, ahora) : null;
+    // `observadoEn` viaja aparte de `hace`: "hace 12 min" queda escrito al armar la respuesta, y si el
+    // service worker la contesta desde lo guardado (3.46.0) la pantalla recalcula la edad con la hora.
+    const metar = m && crudo ? { estacion: m.icao, distanciaNm: m.distanciaNm ? Math.round(m.distanciaNm) : null, texto: crudo.rawOb!, hace: f?.texto ?? null, viejo: f ? f.nivel !== "fresco" : true, observadoEn: observado ? observado.toISOString() : null } : null;
 
     const t = opciones.find((e) => tafDe.has(e.icao));
     const parseado = t ? parsearTaf(tafDe.get(t.icao)!, ahora.toISOString()) : null;

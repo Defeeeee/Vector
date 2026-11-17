@@ -128,6 +128,9 @@ const PAGINAS_CACHEABLES = [
   "/dashboard/plan-de-vuelo",
   // Las checklists del avión (3.39.0): se usan en la cabina, con el motor andando y sin señal.
   "/dashboard/tools/checklists",
+  // Registrar un vuelo (3.46.0): sin señal queda en la cola del teléfono (`cola-sin-senal.ts`) y
+  // se carga solo al volver. La pantalla tiene que poder abrirse en el aeródromo sin señal.
+  "/dashboard/log-flight",
 ];
 
 /** El editor de un plan guardado: `/dashboard/plan-de-vuelo/<uuid>`. */
@@ -187,6 +190,8 @@ export const RUTAS_DE_DATOS = [
   "/api/puntos",
   "/api/airports/search",
   "/api/airports/near",
+  // Los filtros de Aeropuertos (3.46.0): sin señal los contesta el paquete (`contestarSinSenal`).
+  "/api/airports/filtrar",
   "/api/aerovias",
   // Las capas del Mapa: aeródromos, radioayudas y espacios aéreos (3.0.0).
   "/api/mapa",
@@ -195,31 +200,35 @@ export const RUTAS_DE_DATOS = [
 /** La única de las cinco que el service worker puede contestar por su cuenta. */
 export const RUTA_PUNTOS = "/api/puntos";
 
+/** Lo guardado de meteorología se muestra hasta 48 h (más viejo, no): ver `RUTAS_METEO`. */
+export const MAX_GUARDADO_MIN = 48 * 60;
+
+/** La cabecera con la que el service worker dice que contestó desde lo guardado (`lib/dato-guardado.ts`). */
+export const HEADER_ORIGEN = "X-Vector-Origen";
+export const ORIGEN_GUARDADO = "guardado";
+
 /**
- * Meteorología: se guarda, pero con **corte duro** y con la fecha a la vista.
+ * Meteorología: se guarda, y **sin red se muestra lo último que se supo, marcado como viejo**
+ * (3.46.0, `lib/dato-guardado.ts`).
  *
- * No entró hasta que la pantalla supo decir la antigüedad del dato (ver
- * `lib/frescura.ts`). Antes de eso, guardar un METAR era guardar algo que se
- * renderizaba idéntico tuviera cinco minutos o cinco horas — el peor bug de la
- * historia de esta app con otro disfraz.
+ * Hasta la 3.45.0 había un corte duro (2 h para el METAR, 12 h para NOTAM y viento): pasado eso la
+ * entrada se borraba y la pantalla decía "no pudimos traer el METAR". El miedo era servir "un dato
+ * falso con formato de dato"; lo que lo hacía falso era que se viera igual que uno fresco. Desde la
+ * 3.46.0 el service worker contesta desde lo guardado **con la cabecera `X-Vector-Origen: guardado`**
+ * y cada pantalla pone la franja con la edad (la hora de observación para el METAR, la de la
+ * descarga para el resto). Sin red y sin copia, o con una de más de 48 h, sigue siendo "no pudimos".
  *
- * Los topes de acá no reemplazan a los de `frescura.ts`: **son otra cosa.** Aquéllos
- * miden cuándo se *observó* y deciden si el dato puede opinar; éstos miden cuánto hace
- * que lo *trajimos* y deciden si vale la pena servirlo. Un METAR de las 14:00Z traído a
- * las 14:05 y el mismo traído a las 19:00 no dicen lo mismo sobre el cielo de ahora.
+ * Los topes de acá no reemplazan a los de `frescura.ts`: **son otra cosa.** Aquéllos miden cuándo se
+ * *observó* y deciden si el dato puede opinar en un veredicto (un METAR guardado nunca opina:
+ * `EstacionRuta.desdeGuardado`); éstos miden cuánto hace que lo *trajimos* y deciden si vale la
+ * pena mostrarlo.
  */
 export const RUTAS_METEO: { ruta: string; maximoMin: number }[] = [
-  /*
-    Dos horas: un ciclo entero de METAR. Pasado eso la entrada se borra en vez de
-    servirse — el mismo umbral que `INSERVIBLE_MIN`, porque es el mismo razonamiento.
-  */
-  { ruta: "/api/weather", maximoMin: 120 },
-  /*
-    Doce horas para NOTAM y viento en altura, que se mueven mucho más lento: un NOTAM
-    tiene vigencia propia —viaja en el dato— y el GFS se corre cada seis.
-  */
-  { ruta: "/api/notams", maximoMin: 720 },
-  { ruta: "/api/winds-aloft", maximoMin: 720 },
+  { ruta: "/api/weather", maximoMin: MAX_GUARDADO_MIN },
+  { ruta: "/api/notams", maximoMin: MAX_GUARDADO_MIN },
+  { ruta: "/api/winds-aloft", maximoMin: MAX_GUARDADO_MIN },
+  // La meteo del plan de vuelo, a la hora del vuelo (`lib/meteo-plan.ts`): la guarda tal cual la última vez.
+  { ruta: "/api/plan-de-vuelo/meteo", maximoMin: MAX_GUARDADO_MIN },
 ];
 
 /** Cuándo se guardó una respuesta. Lo estampa el service worker. */

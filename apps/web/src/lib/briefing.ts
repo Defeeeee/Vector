@@ -73,6 +73,12 @@ export interface EstacionRuta {
   metar?: string | null;
   /** La hora de observación en ISO, si el proveedor la mandó. */
   observadoEn?: string | null;
+  /**
+   * Lo que se muestra de esta estación salió de **lo guardado** (sin señal, 3.46.0): se ve, marcado,
+   * pero **nunca opina en el veredicto**, tenga la edad que tenga. Un METAR de 40 minutos guardado
+   * no sabe qué pasó en los últimos 40.
+   */
+  desdeGuardado?: boolean;
 }
 
 export type TonoVeredicto = "bien" | "atencion" | "peligro" | "sinDatos";
@@ -127,7 +133,7 @@ function vencida(e: EstacionRuta, ahora: Date): boolean {
  */
 export function veredictoDeRuta(estaciones: EstacionRuta[], ahora = new Date()): Veredicto {
   const consultadas = estaciones.length;
-  const informa = (e: EstacionRuta) => e.respondio && e.categoria !== "UNK" && !vencida(e, ahora);
+  const informa = (e: EstacionRuta) => e.respondio && e.categoria !== "UNK" && !e.desdeGuardado && !vencida(e, ahora);
   const conDato = estaciones.filter(informa);
   const respondieron = conDato.length;
   const faltantes = estaciones.filter((e) => !informa(e));

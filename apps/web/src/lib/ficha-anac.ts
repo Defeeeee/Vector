@@ -55,6 +55,13 @@ export interface FichaAnac {
   notamsFuente?: "descarga" | "anac" | "navegador" | null;
   /** La "Última actualización" de ANAC, tal cual ("02 Nov 2026 21:33"), si vino de la descarga. */
   notamsActualizacion?: string | null;
+  /**
+   * Sólo la pone el navegador (`lib/anac-navegador.ts`): los NOTAM (o la ficha entera) salen de la
+   * **última copia guardada**, no de una consulta de ahora, y por qué: `sin-senal` (no se pudo
+   * componer con nuestro servidor) o `sin-anac` (hay red pero ANAC no contestó). La pantalla pone la
+   * franja con la edad (`lib/dato-guardado.ts`) y **nunca** cuenta esos NOTAM para un veredicto.
+   */
+  notamsGuardados?: "sin-senal" | "sin-anac" | null;
 }
 
 const texto = (v: unknown): string => (typeof v === "string" ? v : "");

@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { createFlightPack } from "@/actions/flight-pack";
 import { LoadingButton } from "@/components/LoadingButton";
 import { Aircraft } from "@/types";
+import { mensajeDeError } from "@/lib/error-de-red";
 
 interface FlightPackFormProps {
   aircraft: Aircraft[];
@@ -21,7 +22,7 @@ export default function FlightPackForm({ aircraft }: FlightPackFormProps) {
         await createFlightPack(formData);
         // On success, the form will be revalidated by the server action
       } catch (e: any) {
-        setError(e.message || "Error al crear el pack de horas");
+        setError(mensajeDeError(e, "Error al crear el pack de horas", navigator.onLine));
       }
     });
   }

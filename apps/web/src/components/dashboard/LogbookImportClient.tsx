@@ -6,6 +6,7 @@ import { Aircraft } from "@/types";
 import { bulkLogFlights } from "@/actions/flight";
 import { useRouter } from "next/navigation";
 import { comprimirImagen } from "@/lib/imagen-cliente";
+import { mensajeDeError } from "@/lib/error-de-red";
 
 /** Hasta cuántas fotos de hojas por vez: las mismas que acepta `/api/parse-logbook`. */
 const MAX_FOTOS = 12;
@@ -229,7 +230,7 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
       }
       router.push("/dashboard/history");
     } catch (err: any) {
-      setError(err.message || "Ocurrió un error al registrar los vuelos en la bitácora.");
+      setError(mensajeDeError(err, "Ocurrió un error al registrar los vuelos en la bitácora.", navigator.onLine));
     } finally {
       setIsSubmitting(false);
     }

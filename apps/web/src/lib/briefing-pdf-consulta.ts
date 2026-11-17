@@ -1,4 +1,5 @@
 import { fichaDesdeElNavegador } from "./anac-navegador";
+import { origenGuardado } from "./dato-guardado";
 import type { CategoriaVuelo } from "./briefing";
 import type { EstacionBriefing } from "./briefing-pdf-datos";
 
@@ -22,7 +23,10 @@ const texto = (v: unknown): string | null =>
 export async function consultarAerodromo(codigo: string, nombre: string, signal: AbortSignal): Promise<EstacionBriefing> {
   const q = encodeURIComponent(codigo);
   const [clima, ficha] = await Promise.allSettled([
-    fetch(`/api/weather?icao=${q}`, { signal }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))),
+    fetch(`/api/weather?icao=${q}`, { signal }).then(async (r) => {
+      if (!r.ok) throw new Error(String(r.status));
+      return { cuerpo: await r.json(), guardado: origenGuardado(r.headers) };
+    }),
     fichaDesdeElNavegador(codigo, undefined, signal),
   ]);
   // `null` y no `[]`: "no pudimos preguntar" no es "no hay NOTAM".
@@ -33,11 +37,12 @@ export async function consultarAerodromo(codigo: string, nombre: string, signal:
     notams,
     notamsCapturadosEn: ficha.status === "fulfilled" ? ficha.value.notamsCapturadosEn ?? null : null,
     notamsFuente: ficha.status === "fulfilled" ? ficha.value.notamsFuente ?? null : null,
+    notamsGuardados: ficha.status === "fulfilled" && notams ? ficha.value.notamsGuardados ?? null : null,
   };
   if (clima.status !== "fulfilled") {
     return { ...base, climaRespondio: false, metar: null, taf: null, observadoEn: null, estacionCercana: null };
   }
-  const c = clima.value as {
+  const c = clima.value.cuerpo as {
     metar?: unknown;
     taf?: unknown;
     category?: CategoriaVuelo;
@@ -47,6 +52,7 @@ export async function consultarAerodromo(codigo: string, nombre: string, signal:
   return {
     ...base,
     climaRespondio: true,
+    climaGuardado: clima.value.guardado,
     metar: texto(c.metar),
     taf: texto(c.taf),
     observadoEn: typeof c.observadoEn === "string" ? c.observadoEn : null,

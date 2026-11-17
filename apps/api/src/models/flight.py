@@ -107,6 +107,8 @@ class FlightCreate(BaseModel):
     certificante_firma: Optional[Literal["si", "no"]] = None
     #: Con qué sello/cargo de la persona certificó (migración 049, `certificante_sellos`).
     certificante_sello_id: Optional[UUID] = None
+    #: Clave de idempotencia del formulario (migración 058): el mismo alta dos veces es un solo vuelo.
+    clave_cliente: Optional[UUID] = None
     
     model_config = ConfigDict(populate_by_name=True)
 

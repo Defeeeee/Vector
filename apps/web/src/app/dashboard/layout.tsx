@@ -12,6 +12,8 @@ import { leerResumenSocial } from "@/lib/resumen-social";
 import { AuditSummary, Profile } from "@/types";
 import { ACTIVIDAD_HREF } from "@/lib/secciones";
 import SinConexionBanner from "@/components/dashboard/SinConexionBanner";
+import AvisoColaSinSenal from "@/components/dashboard/AvisoColaSinSenal";
+import EnviarColaSinSenal from "@/components/dashboard/EnviarColaSinSenal";
 import VistoPorUltimaVez from "@/components/dashboard/VistoPorUltimaVez";
 import SinSenal from "@/components/dashboard/SinSenal";
 import { AvisosProvider } from "@/components/dashboard/Avisos";
@@ -250,6 +252,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
               se sirvió desde el teléfono, y se calcula en el cliente leyendo el cache.
             */}
             <VistoPorUltimaVez />
+            {/* Vuelos registrados sin señal que esperan en el teléfono (sólo en el inicio y la Bitácora). */}
+            <AvisoColaSinSenal />
             {children}
           </div>
         </main>
@@ -287,6 +291,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <ActualizarDatos servido={Date.now()} />
       {/* Vector sin señal (3.44.0): guarda la app para volar y avisa, con la hora de lo guardado, cuando no hay red. */}
       <SinSenal usuarioId={profile?.id ?? null} />
+      {/* Manda solos los vuelos guardados en el teléfono sin señal, al volver la red (2026-11-17). */}
+      <EnviarColaSinSenal />
     </div>
     </AvisosProvider>
   );

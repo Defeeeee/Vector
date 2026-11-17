@@ -126,6 +126,8 @@ function Fila({ a, visitas, alElegir }: { a: AerodromoFiltrado; visitas?: number
  * (`/api/airports/frase`). La búsqueda la hace `/api/airports/filtrar` sobre el directorio,
  * y los filtros viven en la URL: un link a esta pantalla abre la misma lista.
  */
+const SIN_SENAL_FRASE = "Sin señal: la frase necesita conexión. Escribí los filtros a mano, que esos andan igual.";
+
 export default function FiltroAerodromos({
   inicial,
   historial,
@@ -200,8 +202,14 @@ export default function FiltroAerodromos({
   async function leerFrase(e: React.FormEvent) {
     e.preventDefault();
     if (frase.trim().length < 3 || leyendo) return;
-    setLeyendo(true);
     setAviso(null);
+    // La frase la lee un modelo en la nube: sin red no hay nada que probar. Los filtros de al lado
+    // siguen andando (los contesta el teléfono, `contestarSinSenal`).
+    if (!navigator.onLine) {
+      setAviso({ tipo: "error", texto: SIN_SENAL_FRASE });
+      return;
+    }
+    setLeyendo(true);
     try {
       const res = await fetch("/api/airports/frase", {
         method: "POST",
@@ -220,7 +228,8 @@ export default function FiltroAerodromos({
       if (body.noEntendido?.length) setAviso({ tipo: "noEntendido", texto: `No pude usar: ${body.noEntendido.join(" ")}` });
       else if (!hayFiltros(nuevos)) setAviso({ tipo: "noEntendido", texto: "No encontré filtros en la frase. Probá con distancia, pista, combustible o provincia." });
     } catch {
-      setAviso({ tipo: "error", texto: "No pude leer la frase. Usá los filtros." });
+      // El pedido ni salió (sin señal, con la conexión colgada): no es que la frase esté mal escrita.
+      setAviso({ tipo: "error", texto: SIN_SENAL_FRASE });
     } finally {
       setLeyendo(false);
     }

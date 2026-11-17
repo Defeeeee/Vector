@@ -19,6 +19,7 @@ import OpeningBalanceFields, { openingTotal } from "./OpeningBalanceFields";
 import AperturaAlumnoFields from "./AperturaAlumnoFields";
 import { APERTURA_PPA_VACIA, horasDeAperturaPPA, revisarAperturaPPA } from "@/lib/apertura-alumno";
 import type { AperturaPPA } from "@/types";
+import { mensajeDeError } from "@/lib/error-de-red";
 
 /**
  * El arranque, en tres pasos, **obligatorio** y **retomable**.
@@ -144,7 +145,7 @@ export default function OnboardingOverlay({ profile, estado }: OnboardingOverlay
         // El @ va después del avión; si ya lo tenía, directo a "Tus vuelos".
         setPaso(estado?.arroba === false ? 3 : 4);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "No se pudo registrar la aeronave.");
+        setError(mensajeDeError(e, "No se pudo registrar la aeronave.", navigator.onLine));
       }
     });
   }

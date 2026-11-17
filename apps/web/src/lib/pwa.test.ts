@@ -104,6 +104,10 @@ describe("paginaCacheable", () => {
     expect(paginaCacheable("/dashboard/plan-de-vuelo/3f2c1a9e-8b7d-4c6e-9a1b-2d3e4f5a6b7c/otra")).toBe(false);
   });
 
+  it("registrar un vuelo sí (3.46.0): sin señal va a la cola del teléfono y se carga al volver", () => {
+    expect(paginaCacheable("/dashboard/log-flight")).toBe(true);
+  });
+
   it("**las de escritura y las de sesión no**", () => {
     /*
       Una foto vieja de un formulario de alta no sirve para nada, y una del login
@@ -112,7 +116,6 @@ describe("paginaCacheable", () => {
       cierto.
     */
     for (const p of [
-      "/dashboard/log-flight",
       "/dashboard/log-flight/import",
       "/dashboard/settings",
       "/dashboard/history/auditoria",
@@ -219,6 +222,7 @@ describe("estrategiaPara", () => {
       "/api/puntos?q=SADM",
       "/api/airports/search?q=SAD",
       "/api/airports/near?lat=-34&lon=-58",
+      "/api/airports/filtrar?comb=100LL",
       "/api/aerovias?punto=BCA",
     ]) {
       expect(estrategiaPara(pedir(ruta), ORIGEN)).toBe("datos");
@@ -231,17 +235,16 @@ describe("estrategiaPara", () => {
       Antes de eso, guardar un METAR era guardar algo que se renderizaba idéntico
       tuviera cinco minutos o cinco horas — el peor bug de esta app con otro disfraz.
     */
-    for (const ruta of ["/api/weather?icao=SADM", "/api/notams?icao=SADM", "/api/winds-aloft?lat=-34&lon=-58"]) {
+    for (const ruta of ["/api/weather?icao=SADM", "/api/notams?icao=SADM", "/api/winds-aloft?lat=-34&lon=-58", "/api/plan-de-vuelo/meteo?salida=x"]) {
       expect(estrategiaPara(pedir(ruta), ORIGEN)).toBe("meteo");
     }
   });
 
   it("los topes de meteo, y el que no está no se guarda", () => {
-    // Dos horas para el METAR: un ciclo entero. Doce para NOTAM y viento en altura,
-    // que se mueven mucho más lento.
-    expect(topeMeteo("/api/weather")).toBe(120);
-    expect(topeMeteo("/api/notams")).toBe(720);
-    expect(topeMeteo("/api/winds-aloft")).toBe(720);
+    // 3.46.0: sin red se muestra lo último que se supo, marcado, hasta 48 h (era 2 h el METAR y 12 h el resto).
+    for (const ruta of ["/api/weather", "/api/notams", "/api/winds-aloft", "/api/plan-de-vuelo/meteo"]) {
+      expect(topeMeteo(ruta)).toBe(48 * 60);
+    }
     expect(topeMeteo("/api/puntos")).toBeNull();
   });
 

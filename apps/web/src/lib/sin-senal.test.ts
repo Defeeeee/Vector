@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { allAirports, getAirport, searchAirports } from "./airports";
+import { NextRequest } from "next/server";
+import { allAirports, getAirport, searchAirports, searchLads } from "./airports";
+import { GET as filtrarDelServidor } from "@/app/api/airports/filtrar/route";
+import { GET as buscarDelServidor } from "@/app/api/airports/search/route";
 import { allAerovias } from "./aerovias";
 import { alternativasDesdeDirectorio } from "./alternativas";
 import { aeroviasConSalidas } from "./ruta-planificada";
@@ -105,6 +108,51 @@ describe("contestarSinSenal", () => {
     expect(cuerpo.aerovias.length).toBeGreaterThan(0);
     expect(cuerpo.offline).toBe(true);
     expect((pedir("/api/aerovias")?.cuerpo as { aerovias: unknown[] }).aerovias).toEqual([]);
+  });
+
+  it("**los LAD (`lad=1`) salen igual que en el servidor**: mismo orden, misma forma", async () => {
+    expect(paquete.lads.length).toBeGreaterThan(3000);
+    for (const q of ["2013", "LAD2013", "lad 51", "villa josefina", "azopardo", "lad", "x"]) {
+      const ruta = `/api/airports/search?q=${encodeURIComponent(q)}&lad=1`;
+      const local = (pedir(ruta)?.cuerpo as { results: unknown[] }).results;
+      const servidor = await (await buscarDelServidor(new NextRequest(new URL(ruta, "https://vectoraero.ar")))).json();
+      // Los LAD, idénticos y en el mismo orden; los aeródromos ya se comparan arriba (el directorio de a bordo es sólo Argentina).
+      const esLad = (r: unknown) => /^LAD\d+$/.test((r as { icao: string }).icao);
+      expect((local as unknown[]).filter(esLad), ruta).toEqual((servidor.results as unknown[]).filter(esLad));
+    }
+    const lads = (pedir("/api/airports/search?q=2013&lad=1")?.cuerpo as { results: { icao: string }[] }).results;
+    expect(lads.map((r) => r.icao)).toContain("LAD2013");
+    expect(lads.filter((r) => r.icao.startsWith("LAD"))).toEqual(viaJson(searchLads("2013", 8)));
+    // Sin `lad=1` no hay LAD, como siempre.
+    expect((pedir("/api/airports/search?q=2013")?.cuerpo as { results: { icao: string }[] }).results.some((r) => r.icao.startsWith("LAD"))).toBe(false);
+  });
+
+  it("**los filtros de Aeropuertos contestan lo mismo que el servidor**", async () => {
+    const consultas = [
+      "",
+      "sindato=1",
+      "comb=100LL",
+      "comb=JETA1&sup=dura&largo=800",
+      "desde=SADF&nm=100&comb=100LL&sup=dura&largo=800",
+      "desde=SADF&nm=100&sindato=1",
+      "desde=FDO&nm=60",
+      "desde=SADM&nm=150&ctrl=no&uso=publico",
+      "desde=ZZZZ&nm=100",
+      "prov=Mendoza&sup=blanda",
+      "prov=C%C3%B3rdoba&ctrl=si",
+      "uso=privado&largo=1200&sindato=1",
+    ];
+    for (const q of consultas) {
+      const ruta = `/api/airports/filtrar?${q}`;
+      const local = pedir(ruta);
+      const servidor = await (await filtrarDelServidor(new NextRequest(new URL(ruta, "https://vectoraero.ar")))).json();
+      expect(local?.status).toBe(200);
+      expect(local?.cuerpo, ruta).toEqual({ ...servidor, offline: true });
+    }
+    // Y hay algo que comparar: no es "todo vacío".
+    const conComb = pedir("/api/airports/filtrar?comb=100LL")?.cuerpo as { total: number; provincias: string[] };
+    expect(conComb.total).toBeGreaterThan(5);
+    expect(conComb.provincias.length).toBeGreaterThan(10);
   });
 
   it("**lo que no sabe contestar lo deja en paz**", () => {

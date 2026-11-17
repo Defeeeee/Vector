@@ -50,6 +50,19 @@ class FlightsController(Controller):
         return created.data[0]["id"]
 
     @staticmethod
+    def _vuelo_por_clave(supabase_client: Client, user_id: str, clave: str) -> Optional[Flight]:
+        """El vuelo de este piloto con esa clave de idempotencia (migración 058), si ya se creó."""
+        resp = (
+            supabase_client.table("flights")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("clave_cliente", str(clave))
+            .limit(1)
+            .execute()
+        )
+        return Flight(**resp.data[0]) if resp.data else None
+
+    @staticmethod
     def _resolver_certificante(
         supabase_client: Client, user_id: str, payload: Dict[str, Any], vuelo: Optional[Dict[str, Any]] = None
     ) -> None:
@@ -255,6 +268,16 @@ class FlightsController(Controller):
         user_id = str(request.state.user.id)
         insert_data["user_id"] = user_id
 
+        # Idempotencia (migración 058): el formulario manda una clave y, sin señal, reintenta el
+        # mismo pedido. Si ese vuelo ya está, se devuelve **sin crear otro ni cobrar de nuevo**.
+        clave = insert_data.get("clave_cliente")
+        if clave:
+            ya = self._vuelo_por_clave(supabase_client, user_id, clave)
+            if ya is not None:
+                return ya
+        else:
+            insert_data.pop("clave_cliente", None)
+
         # A flight always lands in a logbook. When the client does not name one
         # — the WhatsApp bot, or any build that predates logbooks — it goes to
         # the pilot's default. Without this fallback `logbook_id` could never
@@ -268,7 +291,14 @@ class FlightsController(Controller):
         else:
             insert_data["traido_del_cad"] = False
 
-        response = supabase_client.table("flights").insert(insert_data).execute()
+        try:
+            response = supabase_client.table("flights").insert(insert_data).execute()
+        except Exception:
+            # Dos reintentos en carrera: el índice único dejó pasar uno solo; el otro devuelve ése.
+            ya = self._vuelo_por_clave(supabase_client, user_id, clave) if clave else None
+            if ya is None:
+                raise
+            return ya
         flight_obj = Flight(**response.data[0])
 
         # Un vuelo traído del CAD ya se voló (y se pagó): no genera cobro (migración 030).

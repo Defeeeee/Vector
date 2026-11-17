@@ -23,6 +23,9 @@ import {
 import { AirportRef } from "@/types";
 import FiltroAerodromos from "./FiltroAerodromos";
 import { fichaDesdeElNavegador } from "@/lib/anac-navegador";
+import { origenGuardado, type CausaGuardado } from "@/lib/dato-guardado";
+import { horaDeObservacion } from "@/lib/frescura";
+import FranjaGuardado from "./FranjaGuardado";
 import { antiguedad } from "@/lib/anac-vigencia";
 
 export interface NotamItem {
@@ -72,6 +75,8 @@ export interface AirportHistory {
 
 interface Weather {
   metar: string;
+  /** ISO, si el upstream lo mandó: de cuándo es el METAR (`/api/weather`). */
+  observadoEn?: string | null;
   /** El TAF crudo, o "No disponible": la pestaña Clima se sacó en la 3.12.0 y su TAF vino acá. */
   taf?: string;
   category: string;
@@ -140,6 +145,10 @@ export default function AirportsClient({
   const [results, setResults] = useState<AirportRef[]>([]);
   const [selected, setSelected] = useState<AirportRef | null>(null);
   const [weather, setWeather] = useState<Weather | null>(null);
+  /** El METAR y el TAF salieron de lo guardado (sin señal), y de cuándo se trajeron (3.46.0). */
+  const [wxGuardado, setWxGuardado] = useState<{ capturadoEn: string | null } | null>(null);
+  /** Los NOTAM salieron de la última copia: por qué (sin señal o ANAC no contestó). */
+  const [notamsGuardados, setNotamsGuardados] = useState<CausaGuardado | null>(null);
   // `null`: no se pudo preguntar a ANAC, que no es "no hay NOTAM" (invariante 2).
   const [notams, setNotams] = useState<NotamItem[] | null>([]);
   /** Cuándo se le preguntó a ANAC: si salen de lo guardado, la pantalla lo dice. */
@@ -207,6 +216,8 @@ export default function AirportsClient({
     setResults([]);
     if (clearSearch) setQuery("");
     setWeather(null);
+    setWxGuardado(null);
+    setNotamsGuardados(null);
     setNotams(null);
     setMadhelFull(null);
     setJeppesenCharts([]);
@@ -233,11 +244,13 @@ export default function AirportsClient({
       ]);
 
       if (wxRes && wxRes.ok) {
+        setWxGuardado(origenGuardado(wxRes.headers));
         setWeather(await wxRes.json());
       }
       if (notamRes) {
         setNotams(Array.isArray(notamRes.notams) ? notamRes.notams : null);
         setNotamsDe(notamRes.notamsCapturadosEn ?? null);
+        setNotamsGuardados(Array.isArray(notamRes.notams) ? (notamRes.notamsGuardados ?? null) : null);
         setNotamsAnac(notamRes.notamsFuente === "descarga" ? (notamRes.notamsActualizacion ?? null) : null);
         setMadhelFull(notamRes.madhel || null);
       }
@@ -688,6 +701,13 @@ export default function AirportsClient({
                 </p>
               ) : weather ? (
                 <>
+                  {wxGuardado && (
+                    <FranjaGuardado
+                      dato="metar"
+                      observadoEn={horaDeObservacion(weather.observadoEn, weather.metar, new Date())}
+                      capturadoEn={wxGuardado.capturadoEn}
+                    />
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
@@ -784,10 +804,14 @@ export default function AirportsClient({
                   </span>
                 ) : (
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Sin NOTAMs
+                    <CheckCircle2 className="w-3 h-3" /> {notamsGuardados ? "Sin NOTAMs guardados" : "Sin NOTAMs"}
                   </span>
                 )}
               </div>
+
+              {!loadingNotams && notams !== null && notamsGuardados && (
+                <FranjaGuardado dato="notam" capturadoEn={notamsDe} causa={notamsGuardados} />
+              )}
 
               {loadingNotams ? (
                 <p className="text-sm text-zinc-400 flex items-center gap-2 py-4">
@@ -820,7 +844,9 @@ export default function AirportsClient({
                 </div>
               ) : (
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 py-2">
-                  No hay NOTAMs vigentes reportados para este aeródromo.
+                  {notamsGuardados
+                    ? "No había NOTAMs vigentes cuando se guardó esto. Revisalos antes de volar."
+                    : "No hay NOTAMs vigentes reportados para este aeródromo."}
                 </p>
               )}
             </div>

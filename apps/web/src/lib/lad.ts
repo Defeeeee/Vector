@@ -32,6 +32,22 @@ export function leerLadsTsv(texto: string): Lad[] {
   return salida;
 }
 
+/** Un LAD como el resto de los resultados de `/api/airports/search?lad=1`: sin coordenadas. */
+export interface ResultadoLad {
+  icao: string;
+  name: string;
+  label: string;
+  country: "AR";
+}
+
+/**
+ * Lo que `/api/airports/search?lad=1` suma a los aeródromos. **Una sola función para el servidor y
+ * para el paquete de sin señal** (3.46.0): no se escribe dos veces la forma del resultado.
+ */
+export function resultadosLad(consulta: string, lads: Lad[], max = 6): ResultadoLad[] {
+  return buscarLads(consulta, lads, max).map((l) => ({ icao: codigoLad(l.numero), name: l.nombre, label: l.nombre, country: "AR" as const }));
+}
+
 const plano = (s: string) =>
   s
     .normalize("NFD")

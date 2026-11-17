@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { datosAip } from "./aip";
-import { buscarLads, codigoLad, leerLadsTsv, type Lad } from "./lad";
+import { leerLadsTsv, resultadosLad, type Lad, type ResultadoLad } from "./lad";
 import {
   buscarEnIndice,
   normalize,
@@ -10,7 +10,7 @@ import {
   type MadhelInfo,
 } from "./busqueda-aerodromos";
 import type { Pista } from "./briefing";
-import { pistaDeMadhel, type AerodromoFiltrable } from "./filtro-aerodromos";
+import { pistaDeMadhel, provinciasDe, type AerodromoFiltrable } from "./filtro-aerodromos";
 
 /*
   Los tipos y la búsqueda viven en `busqueda-aerodromos.ts`, que **no lee el disco**:
@@ -389,9 +389,7 @@ export function aerodromosParaFiltrar(): AerodromoFiltrable[] {
 
 /** Las provincias de MADHEL, para el selector de los filtros. */
 export function provinciasArgentinas(): string[] {
-  return [...new Set(aerodromosParaFiltrar().map((a) => a.provincia).filter(Boolean))].sort((x, y) =>
-    x.localeCompare(y, "es"),
-  );
+  return provinciasDe(aerodromosParaFiltrar());
 }
 
 let lads: Lad[] | null = null;
@@ -406,8 +404,13 @@ function cargarLads(): Lad[] {
   return lads;
 }
 
-export function searchLads(query: string, limit = 6): { icao: string; name: string; label: string; country: string }[] {
-  return buscarLads(query, cargarLads(), limit).map((l) => ({ icao: codigoLad(l.numero), name: l.nombre, label: l.nombre, country: "AR" }));
+export function searchLads(query: string, limit = 6): ResultadoLad[] {
+  return resultadosLad(query, cargarLads(), limit);
+}
+
+/** Todos los LAD, para el paquete de sin señal (`lib/sin-senal-servidor.ts`). */
+export function allLads(): Lad[] {
+  return cargarLads();
 }
 
 /** Un LAD por su número ("2013"), o `null`. */

@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.46.0 — Más cosas sin señal
+
+_17 de noviembre de 2026_
+
+- **Registrá el vuelo aunque no haya señal** — Sin señal, el vuelo queda guardado en el teléfono y se carga solo cuando vuelve, sin duplicarse. Sin señal también ves el último METAR, TAF y NOTAM guardados, marcados con su hora y su antigüedad, y andan los LAD y los filtros de Aeropuertos. El plan de vuelo no se manda solo: queda guardado para que lo mandes con señal.
+
 ## v3.45.1 — Los links de seguimiento duran una semana
 
 _17 de noviembre de 2026_
