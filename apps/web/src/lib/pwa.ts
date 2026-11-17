@@ -131,7 +131,34 @@ const PAGINAS_CACHEABLES = [
   // Registrar un vuelo (3.46.0): sin señal queda en la cola del teléfono (`cola-sin-senal.ts`) y
   // se carga solo al volver. La pantalla tiene que poder abrirse en el aeródromo sin señal.
   "/dashboard/log-flight",
+  // Un plan de vuelo nuevo, también sin señal (3.47.0): se arma con un id propio y se crea en el
+  // servidor al volver la red (`lib/plan-nuevo.ts`).
+  "/dashboard/plan-de-vuelo/nuevo",
 ];
+
+/**
+ * Las pantallas guardadas **sin query** que sirven para cualquier query (3.47.0). Sin señal, una
+ * navegación a `/dashboard/airports?icao=SADM` (del buscador ⌘K) o a `/dashboard/plan-de-vuelo/nuevo?id=…`
+ * no tiene copia guardada exacta: las copias se guardan por URL entera. Estas dos son una sola
+ * pantalla que **lee la query en el navegador** (`icaoDeLaUrl`, `idDePlanNuevo`), así que sirve la
+ * copia de la ruta pelada. Las demás pantallas con query (`/dashboard/history?ver=`, el Mapa con
+ * `?plan=`) la usan en el servidor: no entran acá, una copia de otra query sería otra pantalla.
+ */
+const PAGINAS_QUE_LEEN_LA_QUERY_EN_EL_NAVEGADOR = ["/dashboard/airports", "/dashboard/plan-de-vuelo/nuevo"];
+
+/** La URL de la copia sin query que sirve para este pedido, o `null` si no corresponde. */
+export function urlDeCopiaSinQuery(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (!u.search) return null;
+    if (!PAGINAS_QUE_LEEN_LA_QUERY_EN_EL_NAVEGADOR.includes(u.pathname.replace(/\/+$/, ""))) return null;
+    u.search = "";
+    u.hash = "";
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
 
 /** El editor de un plan guardado: `/dashboard/plan-de-vuelo/<uuid>`. */
 const EDITOR_DE_PLAN = /^\/dashboard\/plan-de-vuelo\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -192,6 +219,8 @@ export const RUTAS_DE_DATOS = [
   "/api/airports/near",
   // Los filtros de Aeropuertos (3.46.0): sin señal los contesta el paquete (`contestarSinSenal`).
   "/api/airports/filtrar",
+  // La ficha armada con el paquete, sin señal (3.47.0): sólo la contesta el service worker.
+  "/api/airports/ficha",
   "/api/aerovias",
   // Las capas del Mapa: aeródromos, radioayudas y espacios aéreos (3.0.0).
   "/api/mapa",

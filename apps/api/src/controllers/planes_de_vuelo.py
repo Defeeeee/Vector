@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from litestar import Controller, Request, delete, get, patch, post, put
-from litestar.exceptions import ClientException, NotAuthorizedException, NotFoundException
+from litestar.exceptions import ClientException, HTTPException, NotAuthorizedException, NotFoundException
 from pydantic import BaseModel, Field
 from supabase import Client
 
@@ -53,6 +53,61 @@ def _leer_plan(supabase_client: Client, user_id: str, plan_id: UUID) -> PlanVuel
     )
     if not resp.data:
         raise NotFoundException("Ese plan de vuelo no existe.")
+    return PlanVuelo(**resp.data[0])
+
+
+def _plan_del_piloto(supabase_client: Client, user_id: str, plan_id: UUID) -> Optional[PlanVuelo]:
+    """El plan de este piloto con ese id, o `None`. Lo de otro piloto no se ve (RLS y filtro)."""
+    resp = (
+        supabase_client.table("planes_de_vuelo")
+        .select("*")
+        .eq("id", str(plan_id))
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    return PlanVuelo(**resp.data[0]) if resp.data else None
+
+
+def _id_de_otro_piloto(plan_id: UUID) -> bool:
+    """¿Ese id ya existe (y, como no es de este piloto, es de otro)? Sólo el service role lo ve."""
+    resp = SupabaseManager.get_service_client().table("planes_de_vuelo").select("id").eq("id", str(plan_id)).limit(1).execute()
+    return bool(resp.data)
+
+
+def crear_plan(supabase_client: Client, user_id: str, data: PlanVueloCreate) -> PlanVuelo:
+    """
+    Crea el plan. Con `id` del cliente es **idempotente**: un plan armado sin señal se sube con el
+    id que ya tiene, y reintentarlo (o subirlo desde dos pantallas) devuelve el mismo plan sin crear
+    otro. Un id que es de otro piloto es un 409: no se pisa ni se devuelve.
+    """
+    if data.id is not None:
+        ya = _plan_del_piloto(supabase_client, user_id, data.id)
+        if ya is not None:
+            return ya
+    fila: Dict[str, Any] = {
+        "user_id": user_id,
+        "formulario": data.formulario,
+        "completo": data.completo,
+        "aircraft_id": str(data.aircraft_id) if data.aircraft_id else None,
+        **resumen_para_lista(data.formulario),
+    }
+    if data.id is not None:
+        fila["id"] = str(data.id)
+    try:
+        resp = supabase_client.table("planes_de_vuelo").insert(fila).execute()
+    except Exception:
+        if data.id is None:
+            raise
+        # Dos subidas en carrera: la otra ya lo creó. O el id es de otro piloto.
+        ya = _plan_del_piloto(supabase_client, user_id, data.id)
+        if ya is not None:
+            return ya
+        if _id_de_otro_piloto(data.id):
+            raise HTTPException(status_code=409, detail="Ese id de plan ya está en uso.")
+        raise
+    if not resp.data:
+        raise ClientException(detail="No se pudo guardar el plan de vuelo.")
     return PlanVuelo(**resp.data[0])
 
 
@@ -163,18 +218,7 @@ class PlanesDeVueloController(Controller):
 
     @post()
     async def crear(self, request: Request, supabase_client: Client, data: PlanVueloCreate) -> PlanVuelo:
-        user_id = str(request.state.user.id)
-        fila: Dict[str, Any] = {
-            "user_id": user_id,
-            "formulario": data.formulario,
-            "completo": data.completo,
-            "aircraft_id": str(data.aircraft_id) if data.aircraft_id else None,
-            **resumen_para_lista(data.formulario),
-        }
-        resp = supabase_client.table("planes_de_vuelo").insert(fila).execute()
-        if not resp.data:
-            raise ClientException(detail="No se pudo guardar el plan de vuelo.")
-        return PlanVuelo(**resp.data[0])
+        return crear_plan(supabase_client, str(request.state.user.id), data)
 
     @patch("/{plan_id:uuid}")
     async def actualizar(

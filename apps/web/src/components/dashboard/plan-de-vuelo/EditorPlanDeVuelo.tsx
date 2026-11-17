@@ -30,12 +30,14 @@ import fondoDla from "@/lib/plan-de-vuelo-dla.png";
 import fondoCnl from "@/lib/plan-de-vuelo-cnl.png";
 import fondoChg from "@/lib/plan-de-vuelo-chg.png";
 import { CASILLAS_CHG, MAXIMO_CAMBIOS, cambiosMandados, datoDeCasilla, enmienda, nombreDeCambio, revisarCambio, type CambioCasilla } from "@/lib/cambio-plan";
-import { cancelarPlan, duplicarPlan, enviarCambio, enviarDemora, enviarPlan, guardarDemoras, marcarCancelado, guardarPerfilAvion, guardarPlan, marcarDescargado } from "@/actions/plan-de-vuelo";
+import { asegurarPlan, cancelarPlan, duplicarPlan, enviarCambio, enviarDemora, enviarPlan, guardarDemoras, marcarCancelado, guardarPerfilAvion, guardarPlan, marcarDescargado } from "@/actions/plan-de-vuelo";
 import type { EnvioPlan } from "@/lib/plan-de-vuelo-servidor";
 import { borradorParaRecuperar, claveBorrador, leerBorrador } from "@/lib/borrador-plan";
+import { accionDeGuardado, crearAlAbrir, nuevoIdDePlan, urlDePlanNuevo } from "@/lib/plan-nuevo";
 import {
   tasDeVelocidad,
   aplicarAvion,
+  duplicar,
   horaDeTexto,
   leerFormulario,
   localDesdeUtc,
@@ -107,6 +109,14 @@ interface Props {
   vueloId: string | null;
   /** La clave de los avisos push (`/push/clave`): `null` si el backend no los tiene. */
   clavePush: string | null;
+  /**
+   * `false` en un plan **nuevo** (`/dashboard/plan-de-vuelo/nuevo`, `lib/plan-nuevo.ts`): el id lo puso el
+   * navegador y el servidor todavía no lo tiene. Lo escrito queda en el teléfono y el primer guardado con
+   * red **crea** el plan con ese id. Por defecto, `true` (un plan guardado).
+   */
+  enServidorInicial?: boolean;
+  /** Avisa que el plan se creó en el servidor (el plan nuevo pasa a tener su dirección de siempre). */
+  alCrearse?: () => void;
 }
 
 /** "19/10 23:52Z": sin `toLocaleString`, igual en el server y en el navegador (invariante 1). */
@@ -280,7 +290,12 @@ export default function EditorPlanDeVuelo({
   seguimientoInicial,
   vueloId,
   clavePush,
+  enServidorInicial = true,
+  alCrearse,
 }: Props) {
+  /** El servidor ya tiene este plan: el primer guardado de un plan nuevo lo crea (`accionDeGuardado`). */
+  const enServidor = useRef(enServidorInicial);
+  const [creado, setCreado] = useState(enServidorInicial);
   const [f, setF] = useState<FormularioPlan>(() => leerFormulario(formularioInicial));
   const [guardado, setGuardado] = useState<"guardado" | "guardando" | "error">("guardado");
   // Sin señal (2026-10-23): lo escrito queda en el teléfono y se sube al volver la red.
@@ -329,10 +344,18 @@ export default function EditorPlanDeVuelo({
     temporizador.current = null;
     setGuardado("guardando");
     const enviado = ultimo.current;
-    const promesa = guardarPlan(id, enviado);
+    const crea = accionDeGuardado(enServidor.current) === "crear";
+    // Sin red la acción puede rechazar en vez de devolver `{ error }`: es lo mismo, queda en el teléfono.
+    const promesa = (crea ? asegurarPlan(id, enviado) : guardarPlan(id, enviado)).catch(() => ({ error: "Sin conexión: el plan no se guardó." }));
     // Lo que esté en vuelo, para que mandar el plan por mail espere a que llegue.
     enCurso.current = promesa.then(() => undefined);
     const r = await promesa;
+    if (!("error" in r) && crea) {
+      // Creado: de acá en más se actualiza, y el plan nuevo toma la dirección del plan guardado.
+      enServidor.current = true;
+      setCreado(true);
+      alCrearseRef.current?.();
+    }
     if ("error" in r) {
       // Sin conexión o el servidor no contestó: se reintenta solo, no espera a que el piloto
       // vuelva a escribir.
@@ -353,6 +376,8 @@ export default function EditorPlanDeVuelo({
   const enCurso = useRef<Promise<void> | null>(null);
   const guardarRef = useRef(guardar);
   guardarRef.current = guardar;
+  const alCrearseRef = useRef(alCrearse);
+  alCrearseRef.current = alCrearse;
 
   const cambiar = useCallback(
     (cambio: Partial<FormularioPlan> | ((prev: FormularioPlan) => FormularioPlan)) => {
@@ -399,6 +424,8 @@ export default function EditorPlanDeVuelo({
       setSinSenal(false);
       void guardarRef.current();
     };
+    // Un plan nuevo con red se crea ya (como antes, cuando lo creaba el servidor); sin red queda en el teléfono.
+    if (!recuperar && crearAlAbrir(enServidor.current, navigator.onLine)) void guardarRef.current();
     const sinLinea = () => setSinSenal(true);
     setSinSenal(!navigator.onLine);
     window.addEventListener("online", enLinea);
@@ -491,6 +518,22 @@ export default function EditorPlanDeVuelo({
     } finally {
       router.push(`/dashboard/mapa?plan=${encodeURIComponent(id)}`);
     }
+  };
+
+  /**
+   * "Duplicar para otro día": el formulario que se está viendo, sin fecha ni hora, como borrador de un plan
+   * nuevo con su propio id (`lib/plan-nuevo.ts`). **Anda sin señal**: no pasa por el servidor, que lo crea
+   * cuando hay red. Sin almacenamiento en el teléfono, el camino de siempre (el servidor duplica).
+   */
+  const duplicarParaOtroDia = () => {
+    const nuevoId = nuevoIdDePlan();
+    try {
+      localStorage.setItem(claveBorrador(nuevoId), JSON.stringify({ formulario: duplicar(ultimo.current), at: new Date().toISOString() }));
+    } catch {
+      void duplicarPlan(id);
+      return;
+    }
+    router.push(urlDePlanNuevo(nuevoId));
   };
 
   async function esperarGuardado() {
@@ -927,7 +970,8 @@ export default function EditorPlanDeVuelo({
               <button
                 type="button"
                 onClick={() => void abrirEnElMapa()}
-                disabled={abriendoMapa}
+                disabled={abriendoMapa || !creado}
+                title={creado ? undefined : "El Mapa lee el plan guardado: se habilita cuando el plan se sube, con señal."}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-aviation-blue hover:underline disabled:opacity-60"
               >
                 {abriendoMapa ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapaIcono className="w-3.5 h-3.5" />} Abrir en el Mapa
@@ -1318,7 +1362,7 @@ export default function EditorPlanDeVuelo({
             )}
             <button
               type="button"
-              onClick={() => duplicarPlan(id)}
+              onClick={duplicarParaOtroDia}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
             >
               <Copy className="w-3.5 h-3.5" /> Duplicar para otro día

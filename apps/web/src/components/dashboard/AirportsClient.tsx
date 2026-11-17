@@ -26,6 +26,7 @@ import { fichaDesdeElNavegador } from "@/lib/anac-navegador";
 import { origenGuardado, type CausaGuardado } from "@/lib/dato-guardado";
 import { horaDeObservacion } from "@/lib/frescura";
 import FranjaGuardado from "./FranjaGuardado";
+import { TEXTO_NOTAM_SIN_SENAL, icaoDeLaUrl, textoFichaDelPaquete } from "@/lib/ficha-paquete";
 import { antiguedad } from "@/lib/anac-vigencia";
 
 export interface NotamItem {
@@ -145,6 +146,9 @@ export default function AirportsClient({
   const [results, setResults] = useState<AirportRef[]>([]);
   const [selected, setSelected] = useState<AirportRef | null>(null);
   const [weather, setWeather] = useState<Weather | null>(null);
+  // El METAR no se pudo pedir (sin señal, o el server no contestó): no es lo mismo que "no hay
+  // reporte" (invariante 2).
+  const [wxSinConsultar, setWxSinConsultar] = useState<null | "sin-senal" | "fallo">(null);
   /** El METAR y el TAF salieron de lo guardado (sin señal), y de cuándo se trajeron (3.46.0). */
   const [wxGuardado, setWxGuardado] = useState<{ capturadoEn: string | null } | null>(null);
   /** Los NOTAM salieron de la última copia: por qué (sin señal o ANAC no contestó). */
@@ -156,6 +160,8 @@ export default function AirportsClient({
   /** La "Última actualización" de ANAC, si los NOTAM salieron de la descarga del país. */
   const [notamsAnac, setNotamsAnac] = useState<string | null>(null);
   const [madhelFull, setMadhelFull] = useState<MadhelFull | null>(null);
+  /** La ficha se armó con el paquete guardado en el teléfono (sin señal, sin NOTAM): su versión (3.47.0). */
+  const [fichaDelPaquete, setFichaDelPaquete] = useState<string | null>(null);
   const [jeppesenCharts, setJeppesenCharts] = useState<CartaJeppesen[]>([]);
   const [loadingWx, setLoadingWx] = useState(false);
   const [loadingNotams, setLoadingNotams] = useState(false);
@@ -176,7 +182,11 @@ export default function AirportsClient({
   // question "what is my home field doing right now" is the common one, and
   // making them type it every visit is a toll on the frequent case.
   useEffect(() => {
-    if (initialIcao) void pick(initialIcao, { clearSearch: false });
+    // `?icao=` de la barra del navegador gana: sin señal el service worker sirve la página guardada
+    // **sin** query (la pantalla es una sola), y el aeródromo pedido sólo se sabe leyéndolo acá.
+    const pedido = icaoDeLaUrl(window.location.search);
+    const abrir = pedido ?? initialIcao;
+    if (abrir) void pick(abrir, { clearSearch: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialIcao]);
 
@@ -216,10 +226,12 @@ export default function AirportsClient({
     setResults([]);
     if (clearSearch) setQuery("");
     setWeather(null);
+    setWxSinConsultar(null);
     setWxGuardado(null);
     setNotamsGuardados(null);
     setNotams(null);
     setMadhelFull(null);
+    setFichaDelPaquete(null);
     setJeppesenCharts([]);
 
     const res = await fetch(`/api/airports/search?icao=${icao}`);
@@ -243,6 +255,7 @@ export default function AirportsClient({
           : Promise.resolve(null),
       ]);
 
+      if (!wxRes || !wxRes.ok) setWxSinConsultar(typeof navigator !== "undefined" && navigator.onLine === false ? "sin-senal" : "fallo");
       if (wxRes && wxRes.ok) {
         setWxGuardado(origenGuardado(wxRes.headers));
         setWeather(await wxRes.json());
@@ -253,6 +266,7 @@ export default function AirportsClient({
         setNotamsGuardados(Array.isArray(notamRes.notams) ? (notamRes.notamsGuardados ?? null) : null);
         setNotamsAnac(notamRes.notamsFuente === "descarga" ? (notamRes.notamsActualizacion ?? null) : null);
         setMadhelFull(notamRes.madhel || null);
+        setFichaDelPaquete(notamRes.fichaDelPaquete?.version ?? null);
       }
       if (chartsRes && chartsRes.ok) {
         const cartas = await chartsRes.json();
@@ -445,6 +459,15 @@ export default function AirportsClient({
                   )}
                 </div>
               </div>
+
+              {fichaDelPaquete && (
+                <p
+                  role="status"
+                  className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 font-mono text-[11px] font-semibold leading-relaxed text-amber-300"
+                >
+                  {textoFichaDelPaquete(fichaDelPaquete)}
+                </p>
+              )}
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Pistas */}
@@ -759,7 +782,11 @@ export default function AirportsClient({
                 </>
               ) : (
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Sin reporte para este aeródromo. La mayoría de los aeródromos chicos no emiten METAR.
+                  {wxSinConsultar === "sin-senal"
+                    ? "SIN SEÑAL · METAR no disponible: no se pudo consultar. Si este aeródromo emite METAR, revisalo cuando tengas señal."
+                    : wxSinConsultar === "fallo"
+                      ? "No se pudo consultar el METAR ahora. Probá de nuevo en un rato."
+                      : "Sin reporte para este aeródromo. La mayoría de los aeródromos chicos no emiten METAR."}
                 </p>
               )}
             </div>
@@ -819,7 +846,9 @@ export default function AirportsClient({
                 </p>
               ) : notams === null ? (
                 <p className="text-sm text-amber-700 dark:text-amber-400 py-2">
-                  No se pudieron consultar los NOTAM: ANAC no contestó. Revisalos en ais.anac.gob.ar antes de volar.
+                  {fichaDelPaquete
+                    ? TEXTO_NOTAM_SIN_SENAL
+                    : "No se pudieron consultar los NOTAM: ANAC no contestó. Revisalos en ais.anac.gob.ar antes de volar."}
                 </p>
               ) : notams.length > 0 ? (
                 <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">

@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.46.1",
+    fecha: "2026-11-17",
+    titulo: "La ficha y el plan nuevo, sin señal",
+    novedades: [
+      {
+        icono: "brujula",
+        titulo: "Sin señal: la ficha del aeródromo y el plan nuevo",
+        texto: "Sin señal, la ficha de cualquier aeródromo muestra pistas, frecuencias, el canal de llamada y el combustible, aunque nunca la hayas abierto (los NOTAM y el METAR dicen que no se pudieron consultar). Y podés armar un plan de vuelo nuevo sin señal: queda en el teléfono, bajás el PDF, y se sube solo cuando vuelve.",
+        href: "/dashboard/plan-de-vuelo",
+        cta: "Ver mis planes",
+      },
+    ],
+  },
+  {
     version: "3.46.0",
     fecha: "2026-11-17",
     titulo: "Más cosas sin señal",

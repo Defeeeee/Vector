@@ -1,4 +1,6 @@
-import { aerodromosParaFiltrar, allAirports, allLads } from "@/lib/airports";
+import { aerodromosParaFiltrar, allAirports, allLads, canalesDeLlamada, leerFichasMadhel } from "@/lib/airports";
+import { datosAip } from "@/lib/aip";
+import { fichaParaPaquete, type FichaDePaquete } from "@/lib/ficha-paquete";
 import { allAerovias } from "@/lib/aerovias";
 import { fuenteAip } from "@/lib/aip";
 import { armarMapa } from "@/lib/mapa-datos";
@@ -16,12 +18,14 @@ import { ESQUEMA_PAQUETE, type PaqueteSinSenal } from "@/lib/sin-senal";
  */
 export function armarPaquete(): PaqueteSinSenal {
   const fuente = fuenteAip("ENR3.1");
+  const aerodromos = allAirports()
+    .filter((a) => a.country === "AR" && a.lat !== undefined && a.lon !== undefined)
+    .sort((a, b) => a.icao.localeCompare(b.icao));
   return {
     esquema: ESQUEMA_PAQUETE,
     version: VERSION,
-    aerodromos: allAirports()
-      .filter((a) => a.country === "AR" && a.lat !== undefined && a.lon !== undefined)
-      .sort((a, b) => a.icao.localeCompare(b.icao)),
+    aerodromos,
+    fichas: fichasDelPaquete(aerodromos),
     aerovias: allAerovias().map((a) => ({ designador: a.designador, puntos: a.puntos })),
     vigenciaAerovias: fuente
       ? { documento: "ENR 3", edicion: fuente.edicion, vigenteDesde: fuente.vigenteDesde, url: fuente.url }
@@ -30,4 +34,23 @@ export function armarPaquete(): PaqueteSinSenal {
     lads: allLads().map((l): [string, string] => [l.numero, l.nombre]),
     filtrables: aerodromosParaFiltrar(),
   };
+}
+
+/**
+ * La ficha compuesta de cada aeródromo (`lib/ficha-paquete.ts`), con **la misma `componerFicha`** que
+ * la ficha con señal: el AIP manda donde publica, y MADHEL (sus pistas y combustible de
+ * `madhel-fichas.tsv`, y el canal de llamada de las normas particulares o de la lista de la zona)
+ * llena el resto. **Sin teléfonos ni normas**: la copia completa de MADHEL no está en el repo.
+ */
+function fichasDelPaquete(aerodromos: PaqueteSinSenal["aerodromos"]): Record<string, FichaDePaquete> {
+  const deMadhel = leerFichasMadhel();
+  const canales = canalesDeLlamada();
+  const fichas: Record<string, FichaDePaquete> = {};
+  for (const a of aerodromos) {
+    const m = a.local ? deMadhel.get(a.local) : undefined;
+    const canal = a.local ? (canales.get(a.local) ?? null) : null;
+    const ficha = fichaParaPaquete(datosAip(a.icao), m || canal ? { combustible: m?.combustible ?? "", pistas: m?.pistas ?? [], canal } : undefined);
+    if (ficha) fichas[a.icao] = ficha;
+  }
+  return fichas;
 }

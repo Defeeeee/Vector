@@ -172,6 +172,22 @@ async function guardadaReciente(icao: string): Promise<FichaAnac | null> {
   }
 }
 
+/**
+ * La ficha armada con el paquete de datos del teléfono (pistas, frecuencias, canal de llamada,
+ * combustible, cartas; sin NOTAM, teléfonos ni normas), o `null`. **Sólo se acepta lo que marca
+ * `fichaDelPaquete`**: la respuesta real de un servidor sin esa ruta no se confunde con una ficha.
+ */
+async function fichaDelPaquete(icao: string, signal?: AbortSignal): Promise<FichaAnac | null> {
+  try {
+    const res = await fetch(`/api/airports/ficha?icao=${encodeURIComponent(icao)}`, { signal });
+    if (!res.ok) return null;
+    const ficha = (await res.json()) as FichaAnac | null;
+    return ficha?.fichaDelPaquete ? ficha : null;
+  } catch {
+    return null;
+  }
+}
+
 /** El designador ANAC ("SADF" → "FDO"), del directorio: MADHEL y los NOTAM se piden por él. */
 async function designador(icao: string, signal?: AbortSignal): Promise<string> {
   try {
@@ -239,6 +255,10 @@ export async function fichaDesdeElNavegador(icao: string, indicador?: string, si
     // Sin señal no se puede componer: la última ficha armada, si es de las últimas 48 h, y se dice.
     const guardada = await guardadaReciente(icao);
     if (guardada) return { ...guardada, notamsGuardados: "sin-senal" };
+    // Nunca se abrió esa ficha (o hace más de 48 h): la que arma el paquete de datos guardado, **sin
+    // NOTAM** (`lib/ficha-paquete.ts`). Sólo la contesta el service worker; con señal el pedido da 404.
+    const delPaquete = await fichaDelPaquete(icao, signal);
+    if (delPaquete) return delPaquete;
     throw err;
   }
 }

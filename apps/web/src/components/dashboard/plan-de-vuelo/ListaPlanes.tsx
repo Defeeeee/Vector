@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
-import { ArrowRight, Copy, FilePlus2, Loader2, Plane, Route, Trash2 } from "lucide-react";
-import { borrarPlan, crearPlan, duplicarPlan } from "@/actions/plan-de-vuelo";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { ArrowRight, CloudOff, Copy, FilePlus2, Loader2, Plane, Route, Trash2 } from "lucide-react";
+import { asegurarPlan, borrarPlan, duplicarPlan } from "@/actions/plan-de-vuelo";
+import { borradorParaRecuperar, claveBorrador, leerBorrador } from "@/lib/borrador-plan";
+import { borradoresPendientes, nuevoIdDePlan, urlDePlanNuevo, type BorradorPendiente } from "@/lib/plan-nuevo";
 import { EstadoRespuesta } from "./RespuestasOficina";
 import type { ClasificacionRespuesta } from "@/lib/respuesta-plan";
-import { aplicarAvion, formularioVacio, type AvionParaPlan, type PilotoParaPlan } from "@/lib/formulario-plan";
+import { leerFormulario, type AvionParaPlan } from "@/lib/formulario-plan";
 
 export interface FilaPlan {
   id: string;
@@ -33,11 +36,9 @@ const ESTADOS: Record<FilaPlan["estado"], { texto: string; clase: string }> = {
 export default function ListaPlanes({
   filas,
   aviones,
-  piloto,
 }: {
   filas: FilaPlan[] | null;
   aviones: AvionParaPlan[];
-  piloto: PilotoParaPlan;
 }) {
   const [pendiente, startTransition] = useTransition();
   const [ocupado, setOcupado] = useState<string | null>(null);
@@ -54,10 +55,95 @@ export default function ListaPlanes({
     });
   };
 
-  const nuevo = (avion: AvionParaPlan | null) =>
-    correr(`nuevo-${avion?.id ?? "sin"}`, () =>
-      crearPlan(avion ? aplicarAvion(formularioVacio(), avion, piloto) : { ...formularioVacio(), piloto: piloto.comandante })
-    );
+  const router = useRouter();
+  // `true` hasta que se sabe lo contrario: así el primer dibujo del navegador es el del servidor.
+  const [enLinea, setEnLinea] = useState(true);
+  const [pendientes, setPendientes] = useState<BorradorPendiente[]>([]);
+  const subiendo = useRef(false);
+
+  /**
+   * Un plan nuevo, con o sin señal (`lib/plan-nuevo.ts`): el navegador le pone el id y abre el editor, que
+   * lo crea en el servidor apenas hay red. Un solo camino: no pasa por el servidor para empezar.
+   */
+  const nuevo = (avion: AvionParaPlan | null) => {
+    setOcupado(`nuevo-${avion?.id ?? "sin"}`);
+    router.push(urlDePlanNuevo(nuevoIdDePlan(), avion?.id));
+    // Si la navegación no llega a pasar, que el botón no quede trabado.
+    setTimeout(() => setOcupado(null), 8000);
+  };
+
+  /** Lo armado sin señal que el servidor todavía no tiene (los borradores del teléfono). */
+  const leerPendientes = useCallback(() => {
+    try {
+      const entradas: [string, string | null][] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const clave = localStorage.key(i);
+        if (clave) entradas.push([clave, localStorage.getItem(clave)]);
+      }
+      setPendientes(borradoresPendientes(entradas, filas ? new Set(filas.map((f) => f.id.toLowerCase())) : null));
+    } catch {
+      setPendientes([]);
+    }
+  }, [filas]);
+
+  /**
+   * Con red, sube los planes armados sin señal. El servidor los crea con el id que ya tienen (idempotente);
+   * el borrador del teléfono se borra salvo que sea **más nuevo** que el plan que ya estaba en el servidor
+   * (una edición de otro momento: la sube el editor al abrirlo, `borradorParaRecuperar`).
+   */
+  const subirPendientes = useCallback(
+    async (lista: BorradorPendiente[]) => {
+      if (subiendo.current || lista.length === 0) return;
+      subiendo.current = true;
+      let alguno = false;
+      try {
+        for (const p of lista) {
+          let texto: string | null = null;
+          try {
+            texto = localStorage.getItem(claveBorrador(p.id));
+          } catch {
+            continue;
+          }
+          const borrador = leerBorrador<unknown>(texto);
+          if (!borrador) continue;
+          const r = await asegurarPlan(p.id, leerFormulario(borrador.formulario)).catch(() => ({ error: "sin conexión" }));
+          if ("error" in r) continue;
+          alguno = true;
+          try {
+            if (!borradorParaRecuperar(borrador, r.actualizadoAt) && localStorage.getItem(claveBorrador(p.id)) === texto) {
+              localStorage.removeItem(claveBorrador(p.id));
+            }
+          } catch {
+            /* sin almacenamiento */
+          }
+        }
+      } finally {
+        subiendo.current = false;
+      }
+      if (alguno) {
+        leerPendientes();
+        router.refresh();
+      }
+    },
+    [leerPendientes, router]
+  );
+
+  useEffect(() => {
+    setEnLinea(navigator.onLine);
+    const con = () => setEnLinea(true);
+    const sin = () => setEnLinea(false);
+    window.addEventListener("online", con);
+    window.addEventListener("offline", sin);
+    return () => {
+      window.removeEventListener("online", con);
+      window.removeEventListener("offline", sin);
+    };
+  }, []);
+
+  useEffect(() => leerPendientes(), [leerPendientes, enLinea]);
+  useEffect(() => {
+    if (enLinea && pendientes.length) void subirPendientes(pendientes);
+  }, [enLinea, pendientes, subirPendientes]);
 
   const visibles = (filas ?? []).filter((f) => !borrados.has(f.id));
 
@@ -70,7 +156,7 @@ export default function ListaPlanes({
             <button
               key={a.id}
               type="button"
-              disabled={pendiente}
+              disabled={pendiente || ocupado !== null}
               onClick={() => nuevo(a)}
               className="group text-left rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-carbon p-5 hover:border-zinc-400 dark:hover:border-white/30 transition-colors disabled:opacity-60"
             >
@@ -90,7 +176,7 @@ export default function ListaPlanes({
           ))}
           <button
             type="button"
-            disabled={pendiente}
+            disabled={pendiente || ocupado !== null}
             onClick={() => nuevo(null)}
             className="text-left rounded-3xl border border-dashed border-zinc-300 dark:border-white/15 p-5 hover:border-zinc-500 transition-colors disabled:opacity-60"
           >
@@ -125,6 +211,30 @@ export default function ListaPlanes({
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
+      {pendientes.length > 0 && (
+        <section className="space-y-3">
+          <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+            <CloudOff className="w-4 h-4 text-amber-500" /> Armado sin señal
+          </h3>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            {enLinea ? "Subiéndolos al servidor…" : "Se suben solos al volver la señal. Mientras tanto están en este teléfono: podés abrirlos y seguir."}
+          </p>
+          <ul className="divide-y divide-zinc-100 dark:divide-white/5 rounded-3xl border border-amber-500/30 bg-white dark:bg-carbon overflow-hidden">
+            {pendientes.map((p) => (
+              <li key={p.id}>
+                <Link href={urlDePlanNuevo(p.id)} className="flex items-center gap-2 px-4 md:px-5 py-4 data font-bold text-zinc-900 dark:text-white">
+                  {p.salida ?? "????"} <ArrowRight className="w-3.5 h-3.5 text-zinc-400" /> {p.destino ?? "????"}
+                  <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-sans font-bold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+                    Sin subir
+                  </span>
+                  <span className="ml-auto text-xs font-sans font-normal text-zinc-500 dark:text-zinc-400 truncate">{p.matricula ?? "Sin avión"}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="space-y-4">
         <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Tus planes</h3>
         {filas === null ? (
@@ -149,11 +259,11 @@ export default function ListaPlanes({
                 </Link>
                 <button
                   type="button"
-                  title="Duplicar: el mismo vuelo otro día"
+                  title={enLinea ? "Duplicar: el mismo vuelo otro día" : "Sin señal: abrí el plan y duplicalo desde ahí"}
                   aria-label="Duplicar"
-                  disabled={pendiente}
+                  disabled={pendiente || !enLinea}
                   onClick={() => correr(`dup-${f.id}`, () => duplicarPlan(f.id))}
-                  className="p-2.5 rounded-xl text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+                  className="p-2.5 rounded-xl text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors disabled:opacity-40"
                 >
                   {ocupado === `dup-${f.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
                 </button>

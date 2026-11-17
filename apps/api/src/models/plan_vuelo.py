@@ -172,6 +172,9 @@ class PlanVuelo(PlanVueloResumen):
 
 
 class PlanVueloCreate(BaseModel):
+    #: El id lo puede poner el cliente (un plan armado sin señal ya lo tiene): crear dos veces con el
+    #: mismo id es un solo plan (idempotente). Sin id, lo pone la base.
+    id: Optional[UUID] = None
     formulario: Dict[str, Any]
     aircraft_id: Optional[UUID] = None
     completo: bool = False

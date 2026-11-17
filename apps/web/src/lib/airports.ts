@@ -323,7 +323,7 @@ const PISTA_CERRADA = /\bCLSD\b|\bCERRADA\b/i;
  * Las fichas de MADHEL que baja el workflow mensual (`scripts/build-madhel-fichas.mjs`):
  * combustible y pistas por designador ANAC. Vacío si el archivo todavía no existe.
  */
-function leerFichasMadhel(): Map<string, { combustible: string; pistas: string[] }> {
+export function leerFichasMadhel(): Map<string, { combustible: string; pistas: string[] }> {
   const mapa = new Map<string, { combustible: string; pistas: string[] }>();
   const archivo = path.join(process.cwd(), "src", "data", "madhel-fichas.tsv");
   if (!fs.existsSync(archivo)) return mapa;

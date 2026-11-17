@@ -99,8 +99,8 @@ describe("paginaCacheable", () => {
     expect(paginaCacheable("/dashboard/tools/checklists/3f2c1a9e-8b7d-4c6e-9a1b-2d3e4f5a6b7c/editar")).toBe(false);
   });
 
-  it("del plan de vuelo, sólo la lista y el editor de un plan con id", () => {
-    expect(paginaCacheable("/dashboard/plan-de-vuelo/nuevo")).toBe(false);
+  it("del plan de vuelo, la lista, el plan nuevo (3.47.0, se arma sin señal) y el editor de un plan con id", () => {
+    expect(paginaCacheable("/dashboard/plan-de-vuelo/nuevo")).toBe(true);
     expect(paginaCacheable("/dashboard/plan-de-vuelo/3f2c1a9e-8b7d-4c6e-9a1b-2d3e4f5a6b7c/otra")).toBe(false);
   });
 

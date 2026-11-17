@@ -1,4 +1,4 @@
-import { componerFicha, type DatosAip } from "./aip";
+import { componerFicha, type DatosAip } from "./aip-compuesta";
 
 /**
  * Lo que devuelve `/api/notams`: la ficha de MADHEL (completada con el AIP) y los NOTAM de
@@ -62,6 +62,13 @@ export interface FichaAnac {
    * franja con la edad (`lib/dato-guardado.ts`) y **nunca** cuenta esos NOTAM para un veredicto.
    */
   notamsGuardados?: "sin-senal" | "sin-anac" | null;
+  /**
+   * La ficha **no** salió de nuestro servidor ni de ANAC: se armó con el paquete de datos guardado en
+   * el teléfono (`lib/ficha-paquete.ts`), sin señal. Trae pistas, frecuencias, canal de llamada,
+   * combustible y cartas; **no trae NOTAM** (`notams` es `null`: no se pudieron consultar), teléfonos
+   * ni normas particulares. La pantalla lo dice con una franja y la versión de lo guardado.
+   */
+  fichaDelPaquete?: { version: string } | null;
 }
 
 const texto = (v: unknown): string => (typeof v === "string" ? v : "");

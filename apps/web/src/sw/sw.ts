@@ -20,6 +20,7 @@ import {
   claveDeLoServido,
   estrategiaPara,
   paginaCacheable,
+  urlDeCopiaSinQuery,
   topeMeteo,
 } from "@/lib/pwa";
 import {
@@ -405,7 +406,12 @@ async function paginaConRespaldo(evento: FetchEvent): Promise<Response> {
     las cabeceras que el navegador agrega a la suya podrían hacer que no se reconociera. Acá nunca
     hay copias distintas de una misma URL —los pedidos RSC no se guardan—, así que no hay nada que confundir.
   */
-  const guardada = await cache.match(pedido, { ignoreVary: true });
+  let guardada = await cache.match(pedido, { ignoreVary: true });
+  if (!guardada) {
+    // Una pantalla que lee su query en el navegador (`?icao=`, `?id=`) sirve la copia de la ruta pelada.
+    const sinQuery = urlDeCopiaSinQuery(pedido.url);
+    if (sinQuery) guardada = await cache.match(sinQuery, { ignoreVary: true });
+  }
   if (!guardada) {
     const respuesta = await red;
     if (!respuesta) return await respaldoSinConexion();

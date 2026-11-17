@@ -228,6 +228,100 @@ check(
     and _cli.updates[0]["envios"][0]["a"] == "acmor@eana.com.ar" and bool(_cli.updates[0].get("enviado_at")),
 )
 
+# --- Crear con el id del cliente (un plan armado sin señal) -------------------------------
+from types import SimpleNamespace as _NS  # noqa: E402
+from uuid import uuid4 as _uuid4  # noqa: E402
+
+import src.controllers.planes_de_vuelo as _pv  # noqa: E402
+from litestar.exceptions import HTTPException as _HE  # noqa: E402
+
+
+class _Cons:
+    def __init__(self, filas):
+        self.filas, self.modo, self.valores, self.filtros = filas, "select", None, []
+
+    def select(self, *_a, **_k):
+        return self
+
+    def insert(self, valores):
+        self.modo, self.valores = "insert", valores
+        return self
+
+    def eq(self, col, v):
+        self.filtros.append(lambda f: str(f.get(col)) == str(v))
+        return self
+
+    def limit(self, *_a):
+        return self
+
+    def execute(self):
+        if self.modo == "insert":
+            if any(str(f["id"]) == str(self.valores.get("id")) for f in self.filas):
+                raise RuntimeError("duplicate key value violates unique constraint")  # como el índice
+            fila = {
+                "id": self.valores.get("id") or str(_uuid4()),
+                "created_at": "2026-11-17T10:00:00Z",
+                "updated_at": "2026-11-17T10:00:00Z",
+                "demoras": [],
+                "envios": [],
+                **self.valores,
+            }
+            self.filas.append(fila)
+            return _NS(data=[dict(fila)])
+        return _NS(data=[dict(f) for f in self.filas if all(fl(f) for fl in self.filtros)])
+
+
+class _Base:
+    def __init__(self, filas):
+        self.filas = filas
+
+    def table(self, _n):
+        return _Cons(self.filas)
+
+
+YO_, OTRO_ = "11111111-1111-1111-1111-111111111111", "22222222-2222-2222-2222-222222222222"
+_filas: list = []
+_id = _uuid4()
+_a = _pv.crear_plan(_Base(_filas), YO_, PlanVueloCreate(id=_id, formulario=form))
+_b = _pv.crear_plan(_Base(_filas), YO_, PlanVueloCreate(id=_id, formulario={**form, "eobtUtc": "1900"}))
+check("crear con el id del cliente usa ese id", str(_a.id) == str(_id) and len(_filas) == 1)
+check("crearlo otra vez devuelve el mismo plan y no crea otro", str(_b.id) == str(_id) and len(_filas) == 1)
+check("y no pisa lo que ya estaba", _b.formulario.get("eobtUtc") == "1830")
+_c = _pv.crear_plan(_Base(_filas), YO_, PlanVueloCreate(formulario=form))
+check("sin id lo pone la base y es otro plan", str(_c.id) != str(_id) and len(_filas) == 2)
+
+# Un id de otro piloto: el piloto no lo ve (RLS) y el insert choca → 409.
+_filas_otro = [{"id": str(_id), "user_id": OTRO_, "formulario": {}, "completo": False}]
+
+
+class _BaseRLS(_Base):
+    """Como Supabase con RLS: el piloto no ve las filas de otro al leer."""
+
+    def table(self, _n):
+        c = _Cons(self.filas)
+        leer = c.execute
+
+        def execute():
+            if c.modo == "select":
+                return _NS(data=[dict(f) for f in self.filas if all(fl(f) for fl in c.filtros) and f["user_id"] == YO_])
+            return leer()
+
+        c.execute = execute
+        return c
+
+
+_orig = _pv._id_de_otro_piloto
+_pv._id_de_otro_piloto = lambda pid: any(str(f["id"]) == str(pid) for f in _filas_otro)
+try:
+    _pv.crear_plan(_BaseRLS(_filas_otro), YO_, PlanVueloCreate(id=_id, formulario=form))
+    _hubo409 = False
+except _HE as e:
+    _hubo409 = e.status_code == 409
+finally:
+    _pv._id_de_otro_piloto = _orig
+check("un id que es de otro piloto es un 409 y no se devuelve ni se pisa", _hubo409 and len(_filas_otro) == 1)
+check("el id del cliente tiene que ser un uuid", falla(lambda: PlanVueloCreate(id="no-es-uuid", formulario=form)))
+
 if not all(resultados):
     print(f"\n{resultados.count(False)} check(s) fallaron")
     sys.exit(1)

@@ -57,6 +57,30 @@ export async function crearPlan(formulario: FormularioPlan): Promise<{ error: st
 }
 
 /**
+ * Crea el plan **con el id que le puso el navegador** (`lib/plan-nuevo.ts`) y devuelve cuándo lo
+ * guardó el servidor. Es lo que sube un plan armado sin señal: **idempotente** (el backend devuelve el
+ * que ya existe con ese id, sin pisarlo), así que se puede reintentar o subir desde dos pantallas. No
+ * redirige: el editor ya está abierto. Un id que es de otro piloto es un error (409).
+ */
+export async function asegurarPlan(id: string, formulario: FormularioPlan): Promise<{ error: string } | { ok: true; actualizadoAt: string | null }> {
+  try {
+    const hoy = new Date().toISOString().slice(0, 10);
+    const f = normalizar(formulario.dofUtc ? formulario : { ...formulario, dofUtc: hoy });
+    const res = await apiFetch("/planes-de-vuelo", {
+      method: "POST",
+      body: JSON.stringify({ id, formulario: f, aircraft_id: f.aircraftId, completo: revisar(f).completo }),
+    });
+    if (!res.ok) return { error: await detalle(res, "No se pudo crear el plan de vuelo.") };
+    const plan = (await res.json()) as { updated_at?: string | null };
+    revalidatePath(LISTA);
+    return { ok: true as const, actualizadoAt: plan.updated_at ?? null };
+  } catch (e) {
+    if (esErrorDeRedirect(e)) throw e;
+    return { error: "Sin conexión: el plan no se guardó." };
+  }
+}
+
+/**
  * El mismo vuelo otro día: copia el plan sin fecha, hora ni demoras, y abre el editor.
  * Es lo que más usa Federico en FPL.AR: casi todos sus planes son repetidos.
  */

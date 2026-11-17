@@ -2,7 +2,7 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import ListaPlanes, { type FilaPlan } from "@/components/dashboard/plan-de-vuelo/ListaPlanes";
 import { cuandoRespuesta } from "@/lib/respuesta-plan";
 import { localDesdeUtc } from "@/lib/formulario-plan";
-import { avionesParaPlan, listarPlanes, pilotoParaPlan } from "@/lib/plan-de-vuelo-servidor";
+import { avionesParaPlan, listarPlanes } from "@/lib/plan-de-vuelo-servidor";
 
 /**
  * Los planes de vuelo guardados (migración 024 del backend).
@@ -23,7 +23,7 @@ function cuando(dof: string | null, eobt: string | null): string {
 }
 
 export default async function PlanDeVueloPage() {
-  const [planes, aviones, piloto] = await Promise.all([listarPlanes(), avionesParaPlan(), pilotoParaPlan()]);
+  const [planes, aviones] = await Promise.all([listarPlanes(), avionesParaPlan()]);
 
   const filas: FilaPlan[] | null = planes
     ? planes.map((p) => ({
@@ -65,7 +65,6 @@ export default async function PlanDeVueloPage() {
           cruise_tas_kt: a.cruise_tas_kt ?? null,
           plan_vuelo: a.plan_vuelo ?? null,
         }))}
-        piloto={piloto}
       />
     </div>
   );

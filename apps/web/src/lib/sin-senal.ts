@@ -4,6 +4,7 @@ import { aeroviasConSalidas } from "./ruta-planificada";
 import { resultadosLad, type Lad } from "./lad";
 import { responderFiltrar, type AerodromoDeLaBusqueda, type AerodromoFiltrable } from "./filtro-aerodromos";
 import type { armarMapa } from "./mapa-datos";
+import { fichaAnacDelPaquete, type FichaDePaquete } from "./ficha-paquete";
 
 /**
  * Vector sin señal (3.44.0, Federico: «cuando en el aire no tenía señal era como que no podía usar
@@ -36,7 +37,7 @@ import type { armarMapa } from "./mapa-datos";
 export const RUTA_PAQUETE = "/api/sin-senal/datos";
 
 /** Sube sólo si cambia la forma del paquete: un paquete de otro esquema no se usa. */
-export const ESQUEMA_PAQUETE = 2;
+export const ESQUEMA_PAQUETE = 3;
 
 export type MapaDatos = ReturnType<typeof armarMapa>;
 
@@ -46,6 +47,12 @@ export interface PaqueteSinSenal {
   version: string;
   /** Sólo Argentina: un código extranjero resuelve con señal y no sin ella (y la pantalla lo dice). */
   aerodromos: Airport[];
+  /**
+   * La ficha compuesta de cada aeródromo que tiene algo que mostrar, por `icao` (3.47.0): pistas,
+   * frecuencias, canal de llamada, combustible, ubicación y cartas, **sin NOTAM, teléfonos ni normas**
+   * (`lib/ficha-paquete.ts`). Es lo que la ficha de Aeropuertos muestra sin señal.
+   */
+  fichas: Record<string, FichaDePaquete>;
   aerovias: { designador: string; puntos: string[] }[];
   vigenciaAerovias: { documento: string; edicion: string; vigenteDesde: string; url: string } | null;
   mapa: MapaDatos;
@@ -96,7 +103,14 @@ export interface RespuestaLocal {
 }
 
 /** Las rutas que el paquete sabe contestar. */
-export const RUTAS_CON_PAQUETE = ["/api/mapa", "/api/airports/search", "/api/airports/near", "/api/airports/filtrar", "/api/aerovias"];
+export const RUTAS_CON_PAQUETE = [
+  "/api/mapa",
+  "/api/airports/search",
+  "/api/airports/near",
+  "/api/airports/filtrar",
+  "/api/airports/ficha",
+  "/api/aerovias",
+];
 
 /**
  * Lo que el servidor habría contestado, contestado con el paquete. `null` si no es una ruta que el
@@ -129,6 +143,15 @@ export function contestarSinSenal(url: URL, indice: IndiceSinSenal): RespuestaLo
     // `&lad=1`: también los LAD de ANAC (sólo el plan de vuelo y Registrar vuelo los piden).
     const results = p.get("lad") === "1" ? [...aerodromos, ...resultadosLad(q, indice.lads, Math.min(limite, 8))] : aerodromos;
     return { status: 200, cuerpo: { results, offline: true } };
+  }
+
+  // La ficha armada con el paquete (3.47.0): **no existe en el servidor**, que arma la suya con
+  // `POST /api/notams` y los NOTAM de ANAC; sólo el service worker la contesta, sin red. Sin NOTAM.
+  if (url.pathname === "/api/airports/ficha") {
+    const aeropuerto = indice.aerodromos.byIcao.get(normalize(p.get("icao") ?? ""));
+    return aeropuerto
+      ? { status: 200, cuerpo: fichaAnacDelPaquete(aeropuerto, indice.paquete.fichas[aeropuerto.icao], indice.paquete.version) }
+      : { status: 404, cuerpo: { error: "Aeródromo no encontrado", offline: true } };
   }
 
   if (url.pathname === "/api/airports/filtrar") {
@@ -186,6 +209,8 @@ export const PAGINAS_PARA_VOLAR = [
   "/dashboard/mapa",
   "/dashboard/tools/checklists",
   "/dashboard/plan-de-vuelo",
+  // Un plan nuevo sin señal (3.47.0): arma el formulario con lo guardado y se crea al volver la red.
+  "/dashboard/plan-de-vuelo/nuevo",
   "/dashboard/airports",
   "/dashboard/history",
   // Registrar un vuelo sin señal (3.46.0): la cola del teléfono lo carga al volver la señal.

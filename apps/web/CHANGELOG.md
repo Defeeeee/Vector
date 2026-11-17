@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.46.1 — La ficha y el plan nuevo, sin señal
+
+_17 de noviembre de 2026_
+
+- **Sin señal: la ficha del aeródromo y el plan nuevo** — Sin señal, la ficha de cualquier aeródromo muestra pistas, frecuencias, el canal de llamada y el combustible, aunque nunca la hayas abierto (los NOTAM y el METAR dicen que no se pudieron consultar). Y podés armar un plan de vuelo nuevo sin señal: queda en el teléfono, bajás el PDF, y se sube solo cuando vuelve.
+
 ## v3.46.0 — Más cosas sin señal
 
 _17 de noviembre de 2026_

@@ -36,6 +36,7 @@ const FUERA_DE_LA_BARRA: Record<string, string> = {
 const CUELGAN_DE_UNA_PESTANA: Record<string, string> = {
   "/dashboard/pilotos/publicar": "Compartir en cada vuelo, el aviso después de registrar uno, y el perfil propio",
   "/dashboard/pilotos/[handle]": "tocar un piloto en cualquier lista, publicación o actividad",
+  "/dashboard/plan-de-vuelo/nuevo": "«Empezar un plan» en la lista de Plan de vuelo (con o sin señal: el id lo pone el navegador)",
   "/dashboard/plan-de-vuelo/[id]": "tocar un plan en la lista de Plan de vuelo, o armarlo desde el planificador",
   "/dashboard/history/cad": "el botón \"Pasar al CAD\" de la Bitácora",
   "/dashboard/tools/checklists": "\"Checklists\" en Herramientas y \"Checklist del avión\" en la pantalla de vuelo del Mapa (3.39.0)",
