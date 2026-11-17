@@ -1,4 +1,10 @@
-import { decode, encode, toRGBA8 } from "@pdf-lib/upng";
+import * as UPNGModulo from "@pdf-lib/upng";
+
+// Sus tipos declaran exportaciones con nombre, pero la versión ESM (la que usa el build de Next)
+// sólo exporta un `default`; la CommonJS (la de los tests en node) trae las dos cosas. Así anda
+// en los dos lados.
+const UPNG = (UPNGModulo as unknown as { default?: typeof UPNGModulo }).default ?? UPNGModulo;
+const { decode, encode, toRGBA8 } = UPNG;
 
 /**
  * La firma se guarda como el PNG del lienzo entero donde se dibujó, con mucho margen vacío:
