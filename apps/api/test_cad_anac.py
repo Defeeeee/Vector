@@ -192,6 +192,18 @@ check("dos vuelos de Vector para uno del CAD: se marca uno solo", sum(1 for _, c
 sin_cambios = cad_anac.conciliar([dict(VUELOS[0], cad_estado="PENDIENTE DE DDJJ")], CAD_LISTA, "x")
 check("sin cambios, no se escribe nada", sin_cambios == [])
 
+# --- lo declarado: sale de la lista de ingresados y no es un vuelo borrado (2026-11-17) ---
+# Los 42 vuelos de la DDJJ pasaron a una solicitud de foliado: no están en `GetPagedList`.
+DECLARADOS = [{"id": "x", "takeoff": "2026-05-17T14:25:00+00:00", "matricula": "LVS024", "es_simulador": False, "cad_vuelo_id": 933627, "cad_estado": "PENDIENTE DE DDJJ"}]
+check("sin `con_declarados` no se desmarca nada", cad_anac.conciliar(DECLARADOS, CAD_LISTA, "x", desmarcar=False) == [])
+check("con la lista entera sí se desmarca (un borrado de verdad)", cad_anac.conciliar(DECLARADOS, CAD_LISTA, "x") != [])
+CAD_CON_DECLARADOS = CAD_LISTA + [{"vueloTripulanteID": 933627, "fechaSalida": "2026-05-17T14:25:00", "matricula": "LV-S024", "estadoDesc": "DECLARADO"}]
+check("un declarado marcado no se desmarca: queda con su estado", dict(cad_anac.conciliar(DECLARADOS, CAD_CON_DECLARADOS, "x")).get("x") == {"cad_estado": "DECLARADO"})
+vuelto_a_pasar = [dict(DECLARADOS[0], cad_vuelo_id=None, cad_estado=None)]
+relig = dict(cad_anac.conciliar(vuelto_a_pasar, CAD_CON_DECLARADOS, "ahora", desmarcar=True))
+check("los que perdieron su id se vuelven a ligar por salida y matrícula", relig.get("x", {}).get("cad_vuelo_id") == 933627 and relig["x"]["cad_estado"] == "DECLARADO")
+check("sin `con_declarados` también se vuelven a ligar (sólo se deja de desmarcar)", dict(cad_anac.conciliar(vuelto_a_pasar, CAD_CON_DECLARADOS, "ahora", desmarcar=False)).get("x", {}).get("cad_vuelo_id") == 933627)
+
 # --- cuidar a ANAC: la pausa y el tope de logins son de todo el servidor ---
 cad_anac._pausa_hasta = 0.0
 cad_anac._logins.clear()

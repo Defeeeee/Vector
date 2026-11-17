@@ -45,9 +45,12 @@ class VueloDelCad(BaseModel):
 
 class ListaDelCad(BaseModel):
     vuelos: list[VueloDelCad] = Field(max_length=1000)
+    #: La lista trae también lo ya declarado (solicitudes de foliado) y está entera. Sin esto no se
+    #: desmarca nada: lo declarado sale de la lista de ingresados y parecería borrado (2026-11-17).
+    con_declarados: bool = False
 
 
-def _conciliar_y_anotar(yo: str, cad: list, ahora: str) -> Dict[str, Any]:
+def _conciliar_y_anotar(yo: str, cad: list, ahora: str, con_declarados: bool = False) -> Dict[str, Any]:
     """Aplica `cad_anac.conciliar` a los vuelos del piloto y cuenta qué cambió."""
     cliente = SupabaseManager.get_service_client()
     aviones = {
@@ -65,7 +68,7 @@ def _conciliar_y_anotar(yo: str, cad: list, ahora: str) -> Dict[str, Any]:
         }
         for f in filas
     ]
-    cambios = cad_anac.conciliar(vuelos, cad, ahora)
+    cambios = cad_anac.conciliar(vuelos, cad, ahora, desmarcar=con_declarados)
     for flight_id, c in cambios:
         cliente.table("flights").update(c).eq("id", flight_id).eq("user_id", yo).execute()
     resultado = {
@@ -249,7 +252,7 @@ class CadController(Controller):
         yo = _yo(request)
         cad = [v.model_dump() for v in data.vuelos]
         ahora = _ahora()
-        resultado = await asyncio.to_thread(_conciliar_y_anotar, yo, cad, ahora)
+        resultado = await asyncio.to_thread(_conciliar_y_anotar, yo, cad, ahora, data.con_declarados)
 
         def _leido() -> None:
             # Migración 038. Si falla, la conciliación ya quedó: sólo falta la hora.

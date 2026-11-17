@@ -27,6 +27,12 @@ import {
   estaEnVector,
   firmaDeRevision,
   paraLeerEnDetalle,
+  solicitudesParaLeer,
+  firmaDeSolicitud,
+  unirConDeclarados,
+  vuelosDeSolicitud,
+  type SolicitudDelHistorial,
+  type SolicitudGuardada,
   type AnomaliaCad,
   type BorradorCad,
   type DiferenciaCad,
@@ -42,7 +48,7 @@ import {
   type VueloEnElCad,
 } from "@/lib/cad";
 import { cambiarAutoridadEnElCad, crearEnElCad, editarEnElCad, leerDelCad, type TransporteCad } from "@/lib/enlace-cad";
-import { compararVersion, VERSION_MINIMA_AUTORIDAD, VERSION_MINIMA_EDICION } from "@/lib/extension-cad";
+import { compararVersion, VERSION_MINIMA_AUTORIDAD, VERSION_MINIMA_DECLARADOS, VERSION_MINIMA_EDICION } from "@/lib/extension-cad";
 
 type Leido<T> = { ok: true; datos: T } | { ok: false; error: string; reconectar?: boolean };
 
@@ -114,6 +120,64 @@ function guardarRevisiones(r: Record<string, RevisionGuardada>) {
 }
 
 /**
+ * Las solicitudes de foliado ya leídas (lo declarado), en este navegador: una cerrada se vuelve a
+ * pedir sólo si cambió o pasó un mes (`solicitudesParaLeer`).
+ */
+const CLAVE_SOLICITUDES = "vector-cad-solicitudes";
+function leerSolicitudes(): Record<string, SolicitudGuardada> {
+  try {
+    const v = JSON.parse(localStorage.getItem(CLAVE_SOLICITUDES) ?? "{}");
+    return v && typeof v === "object" ? (v as Record<string, SolicitudGuardada>) : {};
+  } catch {
+    return {};
+  }
+}
+function guardarSolicitudes(g: Record<string, SolicitudGuardada>) {
+  try {
+    localStorage.setItem(CLAVE_SOLICITUDES, JSON.stringify(g));
+  } catch {
+    /* sin almacenamiento, la próxima conexión vuelve a pedirlas */
+  }
+}
+
+/**
+ * Los vuelos que ya se declararon: están en solicitudes de foliado y no en la lista de ingresados.
+ * `completo` es si se tienen todas las solicitudes; si no (extensión vieja, un pedido que falló,
+ * más de las que se piden por conexión), el backend no desmarca nada.
+ */
+async function leerDeclarados(t: TransporteCad): Promise<{ vuelos: VueloEnElCad[]; completo: boolean }> {
+  const vacio = { vuelos: [] as VueloEnElCad[], completo: false };
+  // Una extensión anterior a la 1.5.0 no tiene estas lecturas: no se le pide (no se pide de más).
+  if (t === "extension" && compararVersion(document.documentElement.dataset.vectorCadExtension ?? "", VERSION_MINIMA_DECLARADOS) < 0) return vacio;
+  const d = await leerDelCad<Record<string, unknown>>(t, "SolicitudFoliado/GetDatosFoliado", { tipoFoliado: "TM" });
+  if (!d.ok) return vacio;
+  const o = ((d.datos as { data?: Record<string, unknown> } | null)?.data ?? d.datos) as Record<string, unknown> | null;
+  if (!o || !Array.isArray(o.solicitudesHistorial)) return vacio;
+  const historial = o.solicitudesHistorial as SolicitudDelHistorial[];
+  const enTramite = Number(o.solicitudFoliadoID) > 0 ? Number(o.solicitudFoliadoID) : null;
+  const guardadas = leerSolicitudes();
+  const ahora = new Date();
+  const { ids, completo } = solicitudesParaLeer(historial, enTramite, guardadas, ahora);
+  let fallo = false;
+  for (const id of ids) {
+    const r = await leerDelCad<unknown>(t, "FoliadoGestion/GetTramiteFoliado", { id: String(id) });
+    if (!r.ok) {
+      fallo = true;
+      continue;
+    }
+    const h = historial.find((x) => Number(x.solicitudFoliadoID) === id) ?? { solicitudFoliadoID: id };
+    guardadas[String(id)] = { firma: firmaDeSolicitud(h), cuando: ahora.toISOString(), vuelos: vuelosDeSolicitud(r.datos) };
+  }
+  // Sólo se guardan las del historial: lo que ya no está allá se olvida.
+  const vigentes = new Set([...historial.map((h) => String(h.solicitudFoliadoID)), ...(enTramite ? [String(enTramite)] : [])]);
+  const guardar: Record<string, SolicitudGuardada> = {};
+  for (const [k, g] of Object.entries(guardadas)) if (vigentes.has(k)) guardar[k] = g;
+  guardarSolicitudes(guardar);
+  const vuelos = Object.values(guardar).flatMap((g) => g.vuelos ?? []);
+  return { vuelos, completo: completo && !fallo };
+}
+
+/**
  * En cada conexión (Federico, 2026-11-04): los vuelos marcados como pasados contra lo que dice
  * el CAD. Lo de la lista (horarios, matrícula, lugares, tiempo) se compara siempre, sin pedir
  * nada más; el detalle (aterrizajes, día y noche, finalidad, cargo, tipo) se pide de a dos y
@@ -176,9 +240,18 @@ export function fuenteEnlace(t: TransporteCad): FuenteCad {
     return { ok: true, datos: listas };
   }
 
-  async function leerVuelos(): Promise<Leido<VueloEnElCad[]>> {
+  /** Sólo la lista de ingresados (para ver el vuelo recién creado). */
+  async function leerIngresados(): Promise<Leido<VueloEnElCad[]>> {
     const r = await leerDelCad<{ dataSource?: VueloEnElCad[] }>(t, "GetPagedList", PAGINA_DE_VUELOS);
     return r.ok ? { ok: true, datos: r.datos?.dataSource ?? [] } : { ok: false, error: r.error };
+  }
+
+  /** Los ingresados y los ya declarados juntos (`con_declarados`: si no se leyeron todos, falso). */
+  async function leerVuelos(): Promise<Leido<VueloEnElCad[]> & { conDeclarados?: boolean }> {
+    const r = await leerDelCad<{ dataSource?: VueloEnElCad[] }>(t, "GetPagedList", PAGINA_DE_VUELOS);
+    if (!r.ok) return { ok: false, error: r.error };
+    const dec = await leerDeclarados(t);
+    return { ok: true, datos: unirConDeclarados(r.datos?.dataSource ?? [], dec.vuelos), conDeclarados: dec.completo };
   }
 
   return {
@@ -188,7 +261,7 @@ export function fuenteEnlace(t: TransporteCad): FuenteCad {
       if (!v.ok) return v;
       // Primero Vector se pone de acuerdo con el CAD (estados, borrados allá, cargados a mano),
       // y después se arma el panel con lo que quedó: los borrados ya vuelven como por pasar.
-      const c = await conciliarConElCad(v.datos);
+      const c = await conciliarConElCad(v.datos, v.conDeclarados === true);
       const vector = await datosDeVectorParaElCad();
       if (!vector) return { ok: false, error: "No pudimos leer tus vuelos de Vector. Probá de nuevo." };
       const datos = armarPanelCad(vector, [], l.datos, v.datos, memoria);
@@ -209,7 +282,7 @@ export function fuenteEnlace(t: TransporteCad): FuenteCad {
       if (!r.ok) return { ok: false, mensaje: r.sinCad ? r.error : `${r.error} Fijate en el CAD si quedó antes de mandarlo de nuevo.` };
       if (!r.datos.aceptado) return { ok: false, mensaje: r.datos.mensaje };
       // El id sale de la lista del CAD: el mismo criterio que para los que ya estaban.
-      const v = await leerVuelos();
+      const v = await leerIngresados();
       const cadId = v.ok ? yaEstaEnElCad(armado.borrador, v.datos) : null;
       if (cadId) await marcarEnElCad([{ vectorId: armado.borrador.vectorId, cadId, autoridad: armado.autoridad }]);
       return { ok: true, mensaje: cadId ? "Cargado en el CAD" : "Cargado en el CAD (no pudimos anotarlo en Vector todavía)", cadId: cadId ?? undefined };

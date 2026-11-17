@@ -45,6 +45,22 @@ if (!process.env.SIN_SEMILLA) {
   sembrar({ ...base, tipoVueloID: "2", cargoID: "1", fechaHoraSalida: "2025-11-05T13:00:00Z", fechaHoraLlegada: "2025-11-05T14:12:00Z", horasDia: 1.2, horasNoche: 0, aterrizajes: 2, finalidadID: "71", origenID: "101", destinoID: "104", matriculaAvion: "LV-QQQ", Discriminaciones: [] });
 }
 
+// Lo ya declarado (2026-11-17): al hacer la DDJJ los vuelos pasan a una solicitud de foliado y
+// salen de `GetPagedList` (sólo ingresados). Se leen de `GetDatosFoliado` y `GetTramiteFoliado`,
+// con la forma del real. Con SIN_DECLARADOS=1 el historial viene vacío.
+const declarados = [
+  // el mismo avión y hora que un vuelo de Vector, para que se vuelva a ligar solo
+  ["2026-05-17T14:25:00", "2026-05-17T16:00:00", "LV-S024", "GEZ", "SRDR"],
+  ["2026-06-03T13:00:00", "2026-06-03T14:30:00", "LV-S024", "FDO", "SADF"],
+  ["2026-06-10T15:10:00", "2026-06-10T16:20:00", "LV-S114", "FDO", "SADF"],
+].map(([salida, llegada, matriculaAeronave, anac, oaci], k) => ({
+  vueloID: 933627 + k, tipo: "LOCAL", tipoId: 1, anac_Origen: anac, anac_Dest: anac, oaci_Origen: oaci, oaci_Dest: oaci,
+  origen: `${anac} / ${oaci}`, destino: `${anac} / ${oaci}`, salida, llegada, aerDia: 1.5, aerNoche: 0, travDia: 0, travNoche: 0,
+  estadoVueloId: 3, estadoVuelo: "DECLARADO", marcaAeronave: "TECNAM", modeloAeronave: "P92", matriculaAeronave,
+  nombreSim: "-", marcaSim: "-", tipoSim: "-", nivelSim: "-", horasVoladas: 1.5, discriminaciones: [],
+}));
+const solicitudCerrada = { solicitudFoliadoID: 8779, fecha: "2026-11-16T16:32:10", cantidadVuelos: declarados.length, cantidadHoras: 4.5, estadoID: 4 };
+
 createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
   let crudo = ""; for await (const p of req) crudo += p;
@@ -54,6 +70,17 @@ createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
   if (req.method === "OPTIONS") { res.writeHead(204); return res.end(); }
   const json = (code, body) => { res.writeHead(code, { "Content-Type": "application/json" }); res.end(JSON.stringify(body)); };
+  if (url.pathname === "/foliadoweb/api/SolicitudFoliado/GetDatosFoliado") {
+    if (url.searchParams.get("tipoFoliado") !== "TM") return json(400, { message: "tipoFoliado" });
+    return json(200, {
+      solicitudesHistorial: process.env.SIN_DECLARADOS ? [] : [solicitudCerrada], tieneFoliadoEnTramite: false, solicitudFoliadoID: 0, ultimoFoliadoID: 8779,
+    });
+  }
+  if (url.pathname === "/foliadoweb/api/FoliadoGestion/GetTramiteFoliado") {
+    if (url.searchParams.get("id") !== "8779") return json(404, { message: "No existe" });
+    console.log("GetTramiteFoliado 8779");
+    return json(200, { solicitudFoliadoID: 8779, estadoFoliadoId: 4, tiempoVuelo: 4.5, detalleVuelos: declarados });
+  }
   const api = url.pathname.replace("/foliadoweb/api/VueloTripulante/", "");
   if (url.pathname === "/" || url.pathname === "/vuelotripulante") {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });

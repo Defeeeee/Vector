@@ -4,7 +4,7 @@
  * que necesita, de a un pedido; acá se hace cada pedido con la sesión del piloto en esta
  * pestaña, como lo haría el formulario del CAD.
  *
- * **Lista blanca:** las lecturas del panel, "Crear" y **corregir un vuelo pendiente de DDJJ**:
+ * **Lista blanca:** las lecturas del panel (y, desde la 1.5.0, las dos de lo ya declarado: `LECTURAS_FOLIADO`), "Crear" y **corregir un vuelo pendiente de DDJJ**:
  * la autoridad (`accion: "autoridad"`, 3.18.0) o los campos de `CAMPOS_EDITABLES`
  * (`accion: "editar"`, 3.19.0), siempre armado acá sobre el `Get` del propio CAD
  * (`editar-vuelo.ts`). Nada de la declaración jurada: ésa la hace el piloto en el CAD.
@@ -22,6 +22,13 @@ const LECTURAS = new Set([
   "GetSimuladoresListItem",
   "GetModelosPorSimuladorListItem",
 ]);
+
+/** Las dos lecturas de lo declarado (extensión 1.5.0): rutas exactas bajo `/foliadoweb/api/`. */
+export const API_FOLIADO = "/foliadoweb/api/";
+const LECTURAS_FOLIADO: Record<string, (params: Record<string, string>) => URLSearchParams | null> = {
+  "SolicitudFoliado/GetDatosFoliado": (p) => (p.tipoFoliado === "TM" ? new URLSearchParams({ tipoFoliado: "TM" }) : null),
+  "FoliadoGestion/GetTramiteFoliado": (p) => (/^\d{1,12}$/.test(p.id ?? "") ? new URLSearchParams({ id: p.id }) : null),
+};
 
 export interface PedidoCad {
   tipo: "vector-cad:pedido";
@@ -57,10 +64,15 @@ export async function atender(p: PedidoCad): Promise<RespuestaCad> {
     if (p.accion === "ping") return r(true, { datos: { cad: location.origin } });
 
     if (p.accion === "leer") {
-      if (!p.ruta || !LECTURAS.has(p.ruta)) return r(false, { error: "Ese pedido no está permitido." });
-      const q = new URLSearchParams();
-      for (const [k, v] of Object.entries(p.params ?? {})) if (typeof v === "string") q.set(k, v);
-      const res = await fetch(`${API_CAD}${p.ruta}${q.size ? `?${q}` : ""}`, { credentials: "include", headers: { Accept: "application/json" } });
+      const foliado = p.ruta && Object.prototype.hasOwnProperty.call(LECTURAS_FOLIADO, p.ruta) ? LECTURAS_FOLIADO[p.ruta] : null;
+      if (!p.ruta || (!foliado && !LECTURAS.has(p.ruta))) return r(false, { error: "Ese pedido no está permitido." });
+      let q = new URLSearchParams();
+      if (foliado) {
+        const validado = foliado(p.params ?? {});
+        if (!validado) return r(false, { error: "Ese pedido no está permitido." });
+        q = validado;
+      } else for (const [k, v] of Object.entries(p.params ?? {})) if (typeof v === "string") q.set(k, v);
+      const res = await fetch(`${foliado ? API_FOLIADO : API_CAD}${p.ruta}${q.size ? `?${q}` : ""}`, { credentials: "include", headers: { Accept: "application/json" } });
       if (res.status === 401 || res.status === 403 || res.redirected) return r(false, { error: "sesion" });
       if (!res.ok) return r(false, { error: `El CAD contestó ${res.status}.` });
       try {

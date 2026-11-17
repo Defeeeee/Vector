@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.44.1",
+    fecha: "2026-11-17",
+    titulo: "El CAD, después de la DDJJ",
+    novedades: [
+      {
+        icono: "libro",
+        titulo: "Lo declarado en el CAD ya no vuelve a «por pasar»",
+        texto: "Después de hacer la declaración jurada, tus vuelos salían de la lista del CAD que leía Vector y volvían a aparecer como no cargados. Ahora Vector lee también lo declarado: tus vuelos se vuelven a ligar solos en la próxima conexión. Bajá la extensión nueva (1.5.0) cuando Vector te la ofrezca; el marcador se actualiza solo.",
+        href: "/dashboard/history/cad",
+        cta: "Pasar al CAD",
+      },
+    ],
+  },
+  {
     version: "3.44.0",
     fecha: "2026-11-17",
     titulo: "El plan de vuelo, más prolijo",

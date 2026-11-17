@@ -19,11 +19,12 @@ describe("estadoExtension", () => {
   it("la que se baja hoy tiene puente", () => {
     expect(estadoExtension(VERSION_EXTENSION)).toBe("al-dia");
   });
-  it("la 1.3.0 sirve en el dominio viejo: no se la apura a actualizar", () => {
-    expect(VERSION_EXTENSION).toBe("1.4.0");
-    expect(estadoExtension("1.3.0")).toBe("al-dia");
-    expect(estadoExtension("1.2.0")).toBe("vieja");
-    expect(compararVersion(VERSION_SIN_AVISO, VERSION_EXTENSION)).toBeLessThan(0);
+  it("la 1.4.0 ya no es la última: la 1.5.0 lee lo declarado", () => {
+    expect(VERSION_EXTENSION).toBe("1.5.0");
+    expect(estadoExtension("1.5.0")).toBe("al-dia");
+    expect(estadoExtension("1.4.0")).toBe("vieja");
+    expect(estadoExtension("1.0.1")).toBe("sin-puente");
+    expect(compararVersion(VERSION_SIN_AVISO, VERSION_EXTENSION)).toBe(0);
   });
 });
 

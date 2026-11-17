@@ -20,7 +20,12 @@ export const VERSION_MINIMA_EDICION = "1.3.0";
  * No cambia lo que hace: una 1.3.0 sirve en el dominio viejo, así que no se avisa "hay una nueva"
  * (`VERSION_SIN_AVISO`). En el dominio nuevo no corre y Vector la ve como "falta".
  */
-export const VERSION_SIN_AVISO = "1.3.0";
+export const VERSION_SIN_AVISO = "1.5.0";
+/**
+ * Desde la 1.5.0 la extensión lee las solicitudes de foliado (lo ya declarado). Sin eso Vector
+ * no desmarca nada (`con_declarados`), y como la 1.4.0 ya no es la última, se avisa que hay una nueva.
+ */
+export const VERSION_MINIMA_DECLARADOS = "1.5.0";
 
 /** -1, 0 o 1, número por número ("1.10.0" > "1.9.2"). Lo que no es número cuenta como 0. */
 export function compararVersion(a: string, b: string): number {

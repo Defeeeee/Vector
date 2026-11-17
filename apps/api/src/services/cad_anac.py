@@ -635,7 +635,7 @@ def _al_minuto(v: Any) -> str:
     return d.strftime("%Y-%m-%dT%H:%M")
 
 
-def conciliar(vuelos: list, cad: list, ahora: str) -> list:
+def conciliar(vuelos: list, cad: list, ahora: str, desmarcar: bool = True) -> list:
     """
     Lo que hay que cambiar en Vector para que diga lo mismo que el CAD. `vuelos`: dicts con
     `id`, `takeoff`, `matricula`, `es_simulador`, `cad_vuelo_id`, `cad_estado`, `cad_omitido`.
@@ -643,12 +643,14 @@ def conciliar(vuelos: list, cad: list, ahora: str) -> list:
 
     - Un vuelo marcado cuyo id sigue en el CAD: se le actualiza el estado ("PENDIENTE DE DDJJ"…).
     - Uno marcado que ya no está: se desmarca, **sólo con la lista entera** (ni vacía, que puede
-      ser una lectura fallida, ni llena hasta el tope, que puede estar cortada).
+      ser una lectura fallida, ni llena hasta el tope, que puede estar cortada) y con
+      `desmarcar` (la lista trae también lo declarado: al declarar, los vuelos pasan a una
+      solicitud de foliado y salen de la lista de ingresados; sin leerlas, parecerían borrados).
     - Uno sin marcar (y no omitido) que coincide con uno del CAD sin dueño, misma salida al
       minuto y misma matrícula (un simulador no tiene matrícula en el CAD): se marca. Sólo si la
       coincidencia es única: marcar el vuelo equivocado lo sacaría de "Pasar al CAD".
     """
-    completa = 0 < len(cad) < TOPE_LISTA
+    completa = desmarcar and 0 < len(cad) < TOPE_LISTA
     por_id = {}
     for c in cad:
         try:

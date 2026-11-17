@@ -336,8 +336,10 @@ export async function datosDeVectorParaElCad(): Promise<VuelosParaElCad | null> 
 /**
  * Pone a Vector de acuerdo con la lista del CAD que leyó la extensión (`POST /cad/conciliar`
  * del backend, la misma `conciliar` de la sincronización): estados, borrados y cargados a mano.
+ * `conDeclarados`: la lista trae también lo ya declarado (solicitudes de foliado) y está entera;
+ * sin eso el backend no desmarca ningún vuelo (lo declarado sale de la lista de ingresados).
  */
-export async function conciliarConElCad(lista: VueloEnElCad[]): Promise<ResultadoSincronizacion> {
+export async function conciliarConElCad(lista: VueloEnElCad[], conDeclarados = false): Promise<ResultadoSincronizacion> {
   try {
     if (!Array.isArray(lista)) return { sincronizado: false, motivo: "error" };
     const vuelos = lista
@@ -349,7 +351,7 @@ export async function conciliarConElCad(lista: VueloEnElCad[]): Promise<Resultad
       matricula: v.matricula == null ? null : String(v.matricula).slice(0, 20),
       estadoDesc: String((v as unknown as Record<string, unknown>).estadoDesc ?? "").slice(0, 60),
     }));
-    const r = await apiFetch("/cad/conciliar", { method: "POST", body: JSON.stringify({ vuelos }) });
+    const r = await apiFetch("/cad/conciliar", { method: "POST", body: JSON.stringify({ vuelos, con_declarados: conDeclarados === true }) });
     if (!r.ok) return { sincronizado: false, motivo: "error", error: await detalleDeError(r, "No pudimos anotar el estado del CAD.") };
     const res = (await r.json()) as ResultadoSincronizacion;
     // Siempre: aunque no cambie ningún vuelo, cambia "Estado del CAD de …" (migración 038).

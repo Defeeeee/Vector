@@ -575,6 +575,7 @@ importa es el del backend (`request_max_body_size`, 30 MB).
     ` MGI (…)`. El CAD no manda CSP ni COOP.
   - **El mismo vuelo con un día de diferencia** (mismo avión y hora) no se manda ni se trae:
     queda para revisar (`mismoVueloOtroDia`). Pasó con 4 vuelos reales de Federico.
+  - **Lo declarado también se lee** (3.44.1, extensión 1.5.0): después de la DDJJ los vuelos salen de `GetPagedList` (sólo «ingresados»). Vector lee además `SolicitudFoliado/GetDatosFoliado?tipoFoliado=TM` (`solicitudesHistorial`) y `FoliadoGestion/GetTramiteFoliado?id=` de cada solicitud (`detalleVuelos`, `vueloID` = `vueloTripulanteID`), como mucho 3 por conexión y las cerradas guardadas en el `localStorage`, y concilia con la unión. **`conciliar` sólo desmarca con `con_declarados`**: sin la lista completa (extensión vieja, una lectura fallida) no desmarca nada. Lo declarado no se compara ni se edita.
   - **"Ignorar" y "Ya foliado"** sacan un vuelo de la lista (`flights.cad_omitido`, migración
     031), con "Deshacer".
   - **"Traer a Vector"** (del CAD a la bitácora, `TRAER_DEL_CAD`): lee `Get?id=` de cada

@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.44.1 — El CAD, después de la DDJJ
+
+_17 de noviembre de 2026_
+
+- **Lo declarado en el CAD ya no vuelve a «por pasar»** — Después de hacer la declaración jurada, tus vuelos salían de la lista del CAD que leía Vector y volvían a aparecer como no cargados. Ahora Vector lee también lo declarado: tus vuelos se vuelven a ligar solos en la próxima conexión. Bajá la extensión nueva (1.5.0) cuando Vector te la ofrezca; el marcador se actualiza solo.
+
 ## v3.44.0 — El plan de vuelo, más prolijo
 
 _17 de noviembre de 2026_

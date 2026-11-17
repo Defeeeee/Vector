@@ -77,6 +77,14 @@ export interface VueloEnElCad {
   origenDesc?: string | null;
   destinoDesc?: string | null;
   estadoDesc?: string | null;
+  /**
+   * Viene de una solicitud de foliado (`vueloDeclaradoComoFila`), no de la lista de ingresados:
+   * ya está declarado y **no se toca** (ni diferencias ni "Actualizar en el CAD").
+   */
+  declarado?: boolean;
+  fechaLlegada?: string | null;
+  /** El simulador de la sesión (`nombreSim`), si es una. */
+  simulador?: string | null;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1403,6 +1411,7 @@ export function diferenciasConElCad(
   detalle: Record<string, unknown> | null,
   finalidades: ItemCad[]
 ): DiferenciaCad[] {
+  if (fila.declarado) return []; // lo declarado no se toca ni se revisa
   const d = { ...fila, ...(detalle ?? {}) };
   const difs: DiferenciaCad[] = [];
   const agregar = (campo: CampoRevisado, enVector: string, enElCad: string) =>
@@ -1503,6 +1512,7 @@ export function anomaliasConElCad(
   for (const b of marcados) {
     const fila = porId.get(b.cadId);
     if (!fila) continue; // borrado del CAD: lo resuelve `borradosDelCad`
+    if (fila.declarado) continue; // lo declarado no se toca
     const detalle = detalles.get(b.cadId) ?? null;
     let difs = diferenciasConElCad(b, fila, detalle, finalidades);
     if (!detalle) difs = [...difs, ...(anteriores.get(b.cadId) ?? []).filter((x) => CAMPOS_DEL_DETALLE.includes(x.campo))];
@@ -1569,11 +1579,114 @@ export function paraLeerEnDetalle(
     return ahora.getTime() - Date.parse(g.cuando) > DIAS_REVISION * 864e5 ? 2 : null;
   };
   const ordenados = marcados
-    .filter((b) => porId.has(b.cadId))
+    .filter((b) => porId.has(b.cadId) && !porId.get(b.cadId)?.declarado)
     .map((b) => ({ b, c: clase(b) }))
     .filter((x): x is { b: BorradorCad & { cadId: number }; c: number } => x.c !== null)
     .sort((x, y) => x.c - y.c || y.b.fechaHoraSalida.localeCompare(x.b.fechaHoraSalida));
   const cambiados = ordenados.filter((x) => x.c === 0).slice(0, TOPE_CAMBIADOS);
   const rutina = ordenados.filter((x) => x.c !== 0).slice(0, tope);
   return [...cambiados, ...rutina].map((x) => x.b.cadId);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Lo ya declarado: las solicitudes de foliado (2026-11-17)                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Al hacer la declaración jurada, los vuelos pasan a una **solicitud de foliado** y salen de la
+ * lista de ingresados (`GetPagedList` con `mostrarIngresados=true&solicitudFoliadoId=null`).
+ * Vector los lee de `SolicitudFoliado/GetDatosFoliado` (el historial) y
+ * `FoliadoGestion/GetTramiteFoliado` (los vuelos de cada una) para no creerlos borrados.
+ */
+export interface SolicitudDelHistorial {
+  solicitudFoliadoID: number;
+  estadoID?: number | null;
+  cantidadVuelos?: number | null;
+}
+
+/** Lo que se guarda de una solicitud ya leída, en este navegador. */
+export interface SolicitudGuardada {
+  /** `estadoID|cantidadVuelos`: si cambia, se vuelve a pedir. */
+  firma: string;
+  /** ISO. */
+  cuando: string;
+  vuelos: VueloEnElCad[];
+}
+
+export const DIAS_SOLICITUD_CERRADA = 30;
+export const TOPE_SOLICITUDES_POR_CONEXION = 3;
+
+export function firmaDeSolicitud(s: SolicitudDelHistorial): string {
+  return `${s.estadoID ?? ""}|${s.cantidadVuelos ?? ""}`;
+}
+
+/**
+ * Qué solicitudes pedirle al CAD en esta conexión: la que está en trámite (siempre, puede
+ * cambiar), las nunca leídas, las que cambiaron de estado o de cantidad de vuelos y las leídas
+ * hace más de `DIAS_SOLICITUD_CERRADA`; las más nuevas primero y como mucho `tope`.
+ * `completo` es si con lo guardado más lo que se pide alcanza para tener **todas** (si no,
+ * la lista no está entera y no se desmarca nada).
+ */
+export function solicitudesParaLeer(
+  historial: SolicitudDelHistorial[],
+  enTramiteId: number | null,
+  guardadas: Record<string, SolicitudGuardada>,
+  ahora: Date,
+  tope = TOPE_SOLICITUDES_POR_CONEXION
+): { ids: number[]; completo: boolean } {
+  const porId = new Map<number, SolicitudDelHistorial>();
+  for (const h of historial) if (Number.isSafeInteger(Number(h?.solicitudFoliadoID)) && Number(h.solicitudFoliadoID) > 0) porId.set(Number(h.solicitudFoliadoID), { ...h, solicitudFoliadoID: Number(h.solicitudFoliadoID) });
+  if (enTramiteId && enTramiteId > 0 && !porId.has(enTramiteId)) porId.set(enTramiteId, { solicitudFoliadoID: enTramiteId });
+  const hace = (g: SolicitudGuardada) => ahora.getTime() - Date.parse(g.cuando);
+  const faltan = [...porId.values()]
+    .filter((h) => {
+      if (h.solicitudFoliadoID === enTramiteId) return true;
+      const g = guardadas[String(h.solicitudFoliadoID)];
+      return !g || g.firma !== firmaDeSolicitud(h) || !(hace(g) <= DIAS_SOLICITUD_CERRADA * 864e5);
+    })
+    .sort((a, b) => b.solicitudFoliadoID - a.solicitudFoliadoID);
+  const ids = faltan.slice(0, tope).map((h) => h.solicitudFoliadoID);
+  // Con lo que está guardado y vigente alcanza si no queda ninguna sin leer (aunque una guardada
+  // venza, sigue sirviendo para saber qué vuelos hay: la vieja se vuelve a pedir, no se descarta).
+  const sinNada = faltan.filter((h) => !ids.includes(h.solicitudFoliadoID) && !guardadas[String(h.solicitudFoliadoID)]);
+  return { ids, completo: sinNada.length === 0 };
+}
+
+/**
+ * Un vuelo de `detalleVuelos` de `GetTramiteFoliado` con la forma de una fila de la lista de
+ * ingresados (`VueloEnElCad`), marcado `declarado`. Sin id o sin salida, `null`. Un simulador
+ * (`nombreSim` distinto de "-") no tiene matrícula en el CAD.
+ */
+export function vueloDeclaradoComoFila(d: Record<string, unknown>): VueloEnElCad | null {
+  const id = Number(d?.vueloID);
+  const salida = typeof d?.salida === "string" ? d.salida.slice(0, 19) : "";
+  if (!Number.isSafeInteger(id) || id <= 0 || !salida) return null;
+  const texto = (v: unknown) => (typeof v === "string" && v.trim() && v.trim() !== "-" ? v.trim() : null);
+  const sim = texto(d.nombreSim);
+  const lugar = (anac: unknown, oaci: unknown, entero: unknown) => texto(anac) ?? texto(oaci) ?? texto(entero);
+  return {
+    vueloTripulanteID: id,
+    fechaSalida: salida,
+    fechaLlegada: typeof d.llegada === "string" ? d.llegada.slice(0, 19) : null,
+    matricula: sim ? null : texto(d.matriculaAeronave),
+    origenDesc: lugar(d.anac_Origen, d.oaci_Origen, d.origen),
+    destinoDesc: lugar(d.anac_Dest, d.oaci_Dest, d.destino),
+    estadoDesc: texto(d.estadoVuelo) ?? "DECLARADO",
+    declarado: true,
+    simulador: sim,
+  };
+}
+
+/** Los vuelos de lo leído de `GetTramiteFoliado` (con o sin el envoltorio `data`). */
+export function vuelosDeSolicitud(datos: unknown): VueloEnElCad[] {
+  const o = (datos as { data?: unknown } | null)?.data ?? datos;
+  const lista = (o as { detalleVuelos?: unknown } | null)?.detalleVuelos;
+  if (!Array.isArray(lista)) return [];
+  return lista.map((d) => vueloDeclaradoComoFila(d as Record<string, unknown>)).filter((v): v is VueloEnElCad => !!v);
+}
+
+/** Los ingresados más los declarados, sin repetir ids (si un vuelo está en los dos, manda la lista de ingresados). */
+export function unirConDeclarados(ingresados: VueloEnElCad[], declarados: VueloEnElCad[]): VueloEnElCad[] {
+  const ids = new Set(ingresados.map((v) => Number(v.vueloTripulanteID)));
+  return [...ingresados, ...declarados.filter((v) => !ids.has(Number(v.vueloTripulanteID)))];
 }
