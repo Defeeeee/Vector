@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.47.0 — La llegada que se corrige sola
+
+_17 de noviembre de 2026_
+
+- **Tu familia ve una llegada más real** — En el link de tu vuelo y en Vector Tracker, la hora de llegada se corrige sola con tu velocidad real y lo que te falta de la ruta, y avisa si vas más tarde o más temprano de lo previsto (contado desde que despegaste, no desde la hora del plan). Sin señal, queda la última con la hora de los últimos datos. Además, tu firma sale mejor ubicada en el plan de vuelo, la demora, la cancelación y la modificación.
+
 ## v3.46.1 — La ficha y el plan nuevo, sin señal
 
 _17 de noviembre de 2026_

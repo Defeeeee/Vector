@@ -217,8 +217,9 @@ check("la última posición dice de dónde salió", v["ultima"]["fuente"] == "gp
 check("los puntos con nombre", vista_publica({**fila, "puntos": [[-34.45, -58.59, "SADF", "San Fernando"]]}, T0)["puntos"] == [[-34.45, -58.59, "SADF", "San Fernando"]])
 check("la hora de inicio", v["inicio"] == T0.isoformat())
 check("el avión, sin matrícula", v["avion"] == {"tipo": "Cessna 152", "icao": "C152"})
-CLAVES_PUBLICAS = {"nombre", "ruta", "puntos", "avion", "inicio", "estado", "fase", "salida_prevista", "con_adsb", "ultima", "recorrido", "ahora", "ruta_orientativa", "aterrizo_at", "aterrizo_en", "aterrizo_sin_ver"}
+CLAVES_PUBLICAS = {"nombre", "ruta", "puntos", "avion", "inicio", "estado", "fase", "salida_prevista", "duracion_prevista_min", "con_adsb", "ultima", "recorrido", "ahora", "ruta_orientativa", "aterrizo_at", "aterrizo_en", "aterrizo_sin_ver"}
 check("las claves son exactamente las permitidas", set(v) == CLAVES_PUBLICAS)
+check("la duración prevista sale como entero o None", v["duracion_prevista_min"] is None and vista_publica({**fila, "duracion_prevista_min": 95}, T0)["duracion_prevista_min"] == 95 and vista_publica({**fila, "duracion_prevista_min": "x"}, T0)["duracion_prevista_min"] is None)
 check("las claves de la última posición", set(v["ultima"]) == {"lat", "lon", "alt_ft", "gs_kt", "track", "hora", "fuente"})
 # La matrícula: sólo con el interruptor prendido. Apagado no sale aunque la fila la tuviera.
 apagado_con_dato = vista_publica({**fila, "avion_matricula": "LV-ABC", "mostrar_matricula": False}, T0)

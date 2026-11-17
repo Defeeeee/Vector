@@ -17,7 +17,8 @@ import {
   horaArgentinaConDia,
   horaUtc,
   ktAKmh,
-  llegadaEstimada,
+  estimarLlegada,
+  type LlegadaDelVuelo,
   nmAKm,
   nombreDePunto,
   textoDeAterrizaje,
@@ -85,6 +86,7 @@ export default function SeguimientoVivo({ token, inicial, enTracker = false }: {
   const [suelto, setSuelto] = useState(false);
   const [centrar, setCentrar] = useState(0);
   const [encuadrar, setEncuadrar] = useState(0);
+  const [llegadaMostrada, setLlegadaMostrada] = useState<string | null>(null);
   const recibidoEn = useRef<number | null>(null);
   const preguntando = useRef(false);
   const visitante = useRef<string | null>(null);
@@ -160,9 +162,12 @@ export default function SeguimientoVivo({ token, inicial, enTracker = false }: {
   const voladoNm = useMemo(() => recorridoNm(datos.recorrido, u), [datos.recorrido, u]);
   const vertical = useMemo(() => velocidadVertical(datos.recorrido, u), [datos.recorrido, u]);
   const perfil = useMemo(() => puntosDePerfil(datos.recorrido, u), [datos.recorrido, u]);
-  const llegada = llegadaEstimada({ faltaNm: avance?.faltaNm ?? null, gsKt: u?.gs_kt ?? null, horaUltima: u?.hora ?? null, ahora });
-  const llegadaTexto = horaArgentinaConDia(llegada, ahora);
-  const quedaS = llegada ? Math.max(0, (Date.parse(llegada) - Date.parse(ahora)) / 1000) : null;
+  // La llegada se corrige sola con la velocidad real (`estimarLlegada`); la hora mostrada no salta por menos de 2 min.
+  const llegada = estimarLlegada(datos, ahora, { mostrada: llegadaMostrada });
+  const llegadaIso = llegada.tipo === "estimada" || llegada.tipo === "congelada" ? llegada.iso : null;
+  if (llegadaIso !== llegadaMostrada) setLlegadaMostrada(llegadaIso);
+  const llegadaTexto = llegada.texto;
+  const quedaS = llegada.iso && (llegada.tipo === "estimada") ? Math.max(0, (Date.parse(llegada.iso) - Date.parse(ahora)) / 1000) : null;
   // Un seguimiento desde un plan existe desde antes de la salida: "duró" desde que se creó no dice nada.
   const dePlan = Boolean(datos.salida_prevista);
   const salidaTexto = textoSalida(datos.salida_prevista, ahora);
@@ -248,6 +253,7 @@ export default function SeguimientoVivo({ token, inicial, enTracker = false }: {
         {estado.clave === "antes_de_salir" && (
           <div className="mt-3 border-t border-white/10 pt-3">
             {salidaTexto && <p className="text-lg font-bold text-white">{salidaTexto}</p>}
+            {llegada.tipo === "prevista" && llegadaTexto && <p className="mt-0.5 text-sm text-white/80">Llegada prevista a las {llegadaTexto}</p>}
             <p className="mt-1 text-sm text-white/80">
               {u ? "El avión está en tierra. " : "Todavía no se lo ve. "}Cuando despegue, aparece en el mapa con las posiciones ADS-B.
             </p>
@@ -280,10 +286,10 @@ export default function SeguimientoVivo({ token, inicial, enTracker = false }: {
             />
             <Cifra rotulo="Velocidad" valor={u.gs_kt !== null ? String(Math.round(u.gs_kt)) : "—"} unidad="kt" sub={u.gs_kt !== null ? `${Math.round(ktAKmh(u.gs_kt))} km/h` : "sin dato"} />
             <Cifra
-              rotulo={terminado ? "Última pos." : "Llegada"}
-              valor={terminado ? (hace ?? "—") : (llegadaTexto?.replace(" hs", "").replace(" de mañana", "") ?? "—")}
-              sub={terminado ? "" : llegadaTexto ? `${llegadaTexto.includes("mañana") ? "mañana · " : ""}en ${duracion(quedaS ?? 0)}` : avance ? "sin estimar" : "sin ruta"}
-              chico={terminado}
+              rotulo={llegada.tipo === "real" ? "Aterrizó" : terminado ? "Última pos." : llegada.tipo === "prevista" ? "Llegada prevista" : "Llegada"}
+              valor={llegada.tipo === "real" || !terminado ? (llegadaTexto?.replace(" hs", "").replace(" de mañana", "") ?? "—") : (hace ?? "—")}
+              sub={subDeLlegada(llegada, quedaS, Boolean(avance), terminado)}
+              chico={terminado && llegada.tipo !== "real"}
             />
           </div>
         ) : estado.clave === "antes_de_salir" || estado.clave === "sin_datos" ? null : (
@@ -410,6 +416,23 @@ function Bloque({ titulo, children }: { titulo: string; children: React.ReactNod
       {children}
     </section>
   );
+}
+
+/** La línea de abajo de la cifra de llegada: cuánto falta, cuánto se corrió de lo previsto o desde cuándo no hay datos. */
+function subDeLlegada(l: LlegadaDelVuelo, quedaS: number | null, hayRuta: boolean, terminado: boolean): string {
+  const mañana = l.texto?.includes("mañana") ? "mañana · " : "";
+  switch (l.tipo) {
+    case "real":
+      return `${mañana}hora real`;
+    case "estimada":
+      return `${mañana}en ${duracion(quedaS ?? 0)}${l.diferencia ? ` · ${l.diferencia}` : ""}`;
+    case "congelada":
+      return `${mañana}sin datos desde las ${l.sinDatosDesde ?? "—"}${l.diferencia ? ` · ${l.diferencia}` : ""}`;
+    case "prevista":
+      return `${mañana}según el plan`;
+    default:
+      return terminado ? "" : hayRuta ? "sin estimar" : "sin ruta";
+  }
 }
 
 function Cifra({ rotulo: r, valor, unidad, sub, chico }: { rotulo: string; valor: string; unidad?: string; sub: string; chico?: boolean }) {

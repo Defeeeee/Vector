@@ -1,4 +1,4 @@
-import { avanceSobreRuta, estadoMostrado, horaArgentinaConDia, llegadaEstimada, normalizar } from "@/lib/seguimiento-calculos";
+import { estadoMostrado, estimarLlegada, horaArgentinaConDia, normalizar } from "@/lib/seguimiento-calculos";
 import { tokenValido, type SeguimientoPublico } from "@/lib/seguimiento";
 import { estadoDeAvisos, type EstadoAvisos } from "@/lib/push";
 
@@ -81,10 +81,11 @@ export function tarjetaDeVuelo(v: VueloDelBackend): TarjetaDeVuelo {
     case "en_seguimiento": {
       grupo = "aire";
       titulo = "En el aire";
-      const avance = u ? avanceSobreRuta(v.puntos, u) : null;
-      const llegada = llegadaEstimada({ faltaNm: avance?.faltaNm ?? null, gsKt: u?.gs_kt ?? null, horaUltima: u?.hora ?? null, ahora });
-      const h = horaArgentinaConDia(llegada, ahora);
-      detalle = h ? `Llega aproximadamente a las ${h}` : "Todavía no se puede estimar la llegada.";
+      // Sin estado entre pedidos (se escribe en el server): se redondea a 5 min para que no salte.
+      const l = estimarLlegada(v, ahora, { redondear5: true });
+      if (l.tipo === "estimada") detalle = `Llega aproximadamente a las ${l.texto}${l.diferencia ? ` (${l.diferencia})` : ""}`;
+      else if (l.tipo === "prevista") detalle = `Llegada prevista a las ${l.texto}`;
+      else detalle = "Todavía no se puede estimar la llegada.";
       break;
     }
     case "en_tierra":
@@ -95,20 +96,27 @@ export function tarjetaDeVuelo(v: VueloDelBackend): TarjetaDeVuelo {
     case "sin_datos":
       grupo = "aire";
       titulo = "Sin señal por ahora";
-      detalle = "No llegó una posición nueva. Es normal un rato; aparece sola cuando vuelve.";
+      {
+        const l = estimarLlegada(v, ahora, { redondear5: true });
+        detalle =
+          l.tipo === "congelada"
+            ? `Sin datos desde las ${l.sinDatosDesde}. Con lo último que se vio, llegaba a las ${l.texto}. Aparece sola cuando vuelve la señal.`
+            : "No llegó una posición nueva. Es normal un rato; aparece sola cuando vuelve.";
+      }
       break;
     case "antes_de_salir":
     case "esperando": {
       grupo = "proximo";
       titulo = estado.clave === "esperando" ? "Esperando la primera posición" : "Todavía no salió";
       const h = horaArgentinaConDia(v.salida_prevista ?? null, ahora);
-      detalle = h ? `Sale a las ${h}` : "";
+      const prev = estimarLlegada(v, ahora, { redondear5: true });
+      detalle = h ? `Sale a las ${h}${prev.tipo === "prevista" ? ` · llegada prevista a las ${prev.texto}` : ""}` : "";
       break;
     }
     case "aterrizo":
       grupo = "termino";
       titulo = "Aterrizó";
-      detalle = "El vuelo terminó.";
+      detalle = v.aterrizo_at ? `Aterrizó a las ${horaArgentinaConDia(v.aterrizo_at, ahora)}.` : "El vuelo terminó.";
       break;
     default:
       grupo = "termino";

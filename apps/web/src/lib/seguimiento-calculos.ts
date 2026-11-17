@@ -193,6 +193,174 @@ export function llegadaEstimada(opts: {
   return new Date(t + (faltaNm / gsKt) * 3600_000).toISOString();
 }
 
+/* ------------------------------------------------------------------ llegada que se corrige sola --- */
+
+/** La GS se suaviza con lo que pasó en los últimos 10 min. */
+export const VENTANA_GS_S = 600;
+/** Los primeros 3 min después de despegar (ascenso a velocidad de ascenso) no entran en la GS suavizada. */
+export const ASCENSO_INICIAL_S = 180;
+/** Entre dos posiciones seguidas, más que esto es un corte: ese par no mide velocidad. */
+export const HUECO_MAXIMO_S = 120;
+/** Mínimo de pares de posiciones para la mediana; con menos se usa la GS de la última posición. */
+export const MIN_PARES_GS = 3;
+/** Más que esto sin posición nueva (en el aire) es un corte: la llegada queda congelada. */
+export const CORTE_LLEGADA_S = 300;
+/** La hora mostrada no cambia si la nueva difiere menos que esto: que no salte. */
+export const HISTERESIS_LLEGADA_S = 120;
+/** Desde esta diferencia con la llegada prevista, se dice "N min más tarde / antes de lo previsto". */
+export const DIFERENCIA_PREVISTA_MIN = 10;
+
+/**
+ * La velocidad sobre el suelo "de crucero" de lo que se vio: la **mediana** de la GS entre posiciones
+ * consecutivas de los últimos 10 min. La GS se calcula de la distancia y el tiempo entre puntos del
+ * recorrido (el recorrido público no trae la GS de cada muestra; así sirve igual para el GPS y ADS-B),
+ * y ya incluye el viento. Quedan afuera: los pares con un corte (más de 2 min entre puntos), los que
+ * están en tierra (menos de 30 kt) y los primeros 3 min desde el despegue. Con menos de 3 pares se usa
+ * la GS de la última posición. Nunca baja de 40 kt (`GS_MINIMA_ETA_KT`); si ni eso hay, `null`.
+ */
+export function gsSuavizadaKt(recorrido: PuntoRecorrido[], ultima: { lat: number; lon: number; gs_kt: number | null; hora: string | null } | null): number | null {
+  const pts: { lat: number; lon: number; t: number }[] = [];
+  for (const p of recorrido) if (p[3] !== null) pts.push({ lat: p[0], lon: p[1], t: p[3] });
+  const tUlt = ultima?.hora ? Date.parse(ultima.hora) / 1000 : NaN;
+  if (ultima && !Number.isNaN(tUlt) && (pts.length === 0 || tUlt > pts[pts.length - 1].t)) pts.push({ lat: ultima.lat, lon: ultima.lon, t: tUlt });
+  pts.sort((a, b) => a.t - b.t);
+  const pares: { t0: number; t1: number; kt: number }[] = [];
+  for (let i = 1; i < pts.length; i++) {
+    const dt = pts[i].t - pts[i - 1].t;
+    if (dt < 3 || dt > HUECO_MAXIMO_S) continue;
+    pares.push({ t0: pts[i - 1].t, t1: pts[i].t, kt: (dist(pts[i - 1], pts[i]) / dt) * 3600 });
+  }
+  const despegue = pares.find((p) => p.kt >= GS_EN_TIERRA_KT)?.t0 ?? null;
+  const fin = pts.length ? pts[pts.length - 1].t : NaN;
+  const validos =
+    despegue === null || Number.isNaN(fin)
+      ? []
+      : pares.filter((p) => p.kt >= GS_EN_TIERRA_KT && p.t1 >= fin - VENTANA_GS_S && p.t0 >= despegue + ASCENSO_INICIAL_S).map((p) => p.kt);
+  if (validos.length >= MIN_PARES_GS) {
+    validos.sort((a, b) => a - b);
+    const m = validos.length >> 1;
+    const mediana = validos.length % 2 ? validos[m] : (validos[m - 1] + validos[m]) / 2;
+    return Math.max(GS_MINIMA_ETA_KT, mediana);
+  }
+  const gs = ultima?.gs_kt ?? null;
+  return gs !== null && gs >= GS_MINIMA_ETA_KT ? gs : null;
+}
+
+export type TipoDeLlegada = "prevista" | "estimada" | "congelada" | "real" | "ninguna";
+
+export interface LlegadaDelVuelo {
+  tipo: TipoDeLlegada;
+  /** ISO de la llegada (o del aterrizaje real); `null` si no hay. */
+  iso: string | null;
+  /** "14:35 hs" (con "de mañana" si cruza la medianoche), o `null`. */
+  texto: string | null;
+  /** "10:49" (hora argentina de la última posición) si la llegada quedó congelada por un corte. */
+  sinDatosDesde: string | null;
+  /** "15 min más tarde de lo previsto" / "10 min antes de lo previsto", o `null` si no difiere 10 min o más. */
+  diferencia: string | null;
+}
+
+const SIN_LLEGADA: LlegadaDelVuelo = { tipo: "ninguna", iso: null, texto: null, sinDatosDesde: null, diferencia: null };
+
+/** La llegada prevista: la salida prevista más la duración prevista, o `null` si falta alguna. */
+export function llegadaPrevista(d: Pick<SeguimientoPublico, "salida_prevista" | "duracion_prevista_min">): string | null {
+  const s = d.salida_prevista ? Date.parse(d.salida_prevista) : NaN;
+  const min = d.duracion_prevista_min;
+  if (Number.isNaN(s) || typeof min !== "number" || !(min > 0)) return null;
+  return new Date(s + min * 60_000).toISOString();
+}
+
+/**
+ * Cuándo despegó de verdad, según el recorrido: el primer par de puntos seguidos que ya va a
+ * velocidad de vuelo. `null` si no se ve.
+ */
+export function despegueReal(recorrido: PuntoRecorrido[]): string | null {
+  const pts: { lat: number; lon: number; t: number }[] = [];
+  for (const p of recorrido) if (p[3] !== null) pts.push({ lat: p[0], lon: p[1], t: p[3] });
+  pts.sort((a, b) => a.t - b.t);
+  for (let i = 1; i < pts.length; i++) {
+    const dt = pts[i].t - pts[i - 1].t;
+    if (dt < 3 || dt > HUECO_MAXIMO_S) continue;
+    if ((dist(pts[i - 1], pts[i]) / dt) * 3600 >= GS_EN_TIERRA_KT) return new Date(pts[i - 1].t * 1000).toISOString();
+  }
+  return null;
+}
+
+/**
+ * Que la hora no salte: si la nueva difiere menos de 2 min de la que se mostraba, se queda la que se
+ * mostraba. `mostrada` es lo que el cliente guardó de la vuelta anterior.
+ */
+export function estabilizarLlegada(nueva: string | null, mostrada: string | null | undefined): string | null {
+  if (!nueva || !mostrada) return nueva;
+  const a = Date.parse(nueva);
+  const b = Date.parse(mostrada);
+  if (Number.isNaN(a) || Number.isNaN(b)) return nueva;
+  return Math.abs(a - b) < HISTERESIS_LLEGADA_S * 1000 ? mostrada : nueva;
+}
+
+const aMultiplo5 = (iso: string): string => {
+  const t = Date.parse(iso);
+  return new Date(Math.round(t / 300_000) * 300_000).toISOString();
+};
+
+/**
+ * La llegada que ve quien sigue el vuelo (invariante 1: horas a mano, UTC−3; invariante 2: sin datos no se inventa).
+ *
+ * - **Aterrizó:** la hora real (`aterrizo_at`).
+ * - **Antes de despegar** (o sin posiciones, o sin poder medir la velocidad): la **prevista**, salida
+ *   prevista más duración prevista, si hay las dos; si no, nada.
+ * - **En el aire:** la **estimada** = hora de la última posición + lo que falta **siguiendo la ruta**
+ *   (`avanceSobreRuta`; sin ruta cargada, el tramo directo al destino si el vuelo es orientativo) / la GS
+ *   suavizada (`gsSuavizadaKt`). Está anclada a la hora de la posición, así que no se corre sola entre
+ *   una posición y la siguiente.
+ * - **Corte:** pasados 5 min de la última posición queda la última estimada, congelada, con "sin datos desde las hh:mm".
+ * - `diferencia`: si la estimada difiere 10 min o más de la prevista.
+ * - `opts.mostrada`: la hora que se mostraba antes (histéresis de 2 min). `opts.redondear5`: para lugares sin
+ *   estado (la lista del tracker, escrita en el server), redondea a 5 min.
+ */
+export function estimarLlegada(
+  d: Pick<SeguimientoPublico, "estado" | "puntos" | "ultima" | "recorrido" | "salida_prevista" | "duracion_prevista_min"> & Partial<Pick<SeguimientoPublico, "fase" | "aterrizo_at">>,
+  ahora: string,
+  opts: { mostrada?: string | null; redondear5?: boolean } = {}
+): LlegadaDelVuelo {
+  const real = d.aterrizo_at ?? null;
+  if (d.fase === "aterrizo" || real) {
+    return real ? { tipo: "real", iso: real, texto: horaArgentinaConDia(real, ahora), sinDatosDesde: null, diferencia: null } : SIN_LLEGADA;
+  }
+  if (d.estado !== "en_vuelo") return SIN_LLEGADA;
+  const prevista = llegadaPrevista(d);
+  const comoPrevista = (): LlegadaDelVuelo => {
+    if (!prevista) return SIN_LLEGADA;
+    const iso = opts.redondear5 ? aMultiplo5(prevista) : prevista;
+    return { tipo: "prevista", iso, texto: horaArgentinaConDia(iso, ahora), sinDatosDesde: null, diferencia: null };
+  };
+  const u = d.ultima;
+  if (d.fase === "antes_de_salir" || !u || !u.hora) return comoPrevista();
+  const avance = avanceSobreRuta(d.puntos, u);
+  const gs = gsSuavizadaKt(d.recorrido, u);
+  const tUlt = Date.parse(u.hora);
+  if (!avance || gs === null || Number.isNaN(tUlt)) return comoPrevista();
+  let iso = new Date(tUlt + (avance.faltaNm / gs) * 3600_000).toISOString();
+  if (opts.redondear5) iso = aMultiplo5(iso);
+  else iso = estabilizarLlegada(iso, opts.mostrada) ?? iso;
+  const sinS = segundosSinDatos(u.hora, ahora);
+  const congelada = sinS !== null && sinS > CORTE_LLEGADA_S;
+  // La diferencia se mide contra el despegue **real** más la duración prevista: si salió tarde, el
+  // vuelo no "va tarde" (eso asustaría a la familia sin motivo); lo que importa es si tarda más de lo
+  // previsto en el aire. Si no se ve el despegue, contra la salida prevista.
+  let diferencia: string | null = null;
+  const salioA = despegueReal(d.recorrido);
+  const referencia =
+    salioA && typeof d.duracion_prevista_min === "number" && d.duracion_prevista_min > 0
+      ? new Date(Date.parse(salioA) + d.duracion_prevista_min * 60_000).toISOString()
+      : prevista;
+  if (referencia) {
+    const difS = (Date.parse(iso) - Date.parse(referencia)) / 1000;
+    if (Math.abs(difS) >= DIFERENCIA_PREVISTA_MIN * 60) diferencia = `${duracion(Math.abs(difS))} ${difS > 0 ? "más tarde" : "antes"} de lo previsto`;
+  }
+  return { tipo: congelada ? "congelada" : "estimada", iso, texto: horaArgentinaConDia(iso, ahora), sinDatosDesde: congelada ? horaArgentina(u.hora) : null, diferencia };
+}
+
 /* ------------------------------------------------------------------ vertical --- */
 
 export type Tendencia = "subiendo" | "bajando" | "nivelado";
@@ -356,6 +524,7 @@ export function normalizar(d: SeguimientoPublico): SeguimientoPublico {
     recorrido: (d.recorrido ?? []).map((p) => [p[0], p[1], p[2] ?? null, p[3] ?? null, p[4] ?? "gps"] as PuntoRecorrido),
     fase: d.fase,
     salida_prevista: d.salida_prevista ?? null,
+    duracion_prevista_min: d.duracion_prevista_min ?? null,
     ruta_orientativa: d.ruta_orientativa ?? false,
     aterrizo_at: d.aterrizo_at ?? null,
     aterrizo_en: d.aterrizo_en ?? null,

@@ -4,6 +4,9 @@ import {
   duracion,
   estadoMostrado,
   horaArgentina,
+  estabilizarLlegada,
+  estimarLlegada,
+  gsSuavizadaKt,
   horaArgentinaConDia,
   horaUtc,
   llegadaEstimada,
@@ -307,3 +310,152 @@ describe("dónde aterrizó (migración 057)", () => {
     expect(n.aterrizo_sin_ver).toBe(false);
   });
 });
+
+describe("llegada que se corrige sola", () => {
+  // Meridiano -58: un grado de latitud = 60 NM. Ruta de 180 NM hacia el sur.
+  const ruta: PuntoPublico[] = [[-34, -58, "AAAA", "Uno"], [-37, -58, "BBBB", "Dos"]];
+  const t0 = 1_800_000_000;
+  const iso = (s: number) => new Date((t0 + s) * 1000).toISOString();
+  /** Vuelo a `gs` kt hacia el sur desde el despegue en t0 (un punto cada 10 s), hasta `hastaS`. */
+  const vuelo = (gs: number, hastaS: number): PuntoRecorrido[] => {
+    const out: PuntoRecorrido[] = [];
+    for (let s = 0; s <= hastaS; s += 10) out.push([-34 - (gs * s) / 3600 / 60, -58, 3000, t0 + s, "adsb"]);
+    return out;
+  };
+  const dato = (gs: number, hastaS: number, extra: Partial<SeguimientoPublico> = {}) => {
+    const rec = vuelo(gs, hastaS);
+    const p = rec[rec.length - 1];
+    return {
+      estado: "en_vuelo" as const,
+      fase: "volando" as const,
+      puntos: ruta,
+      recorrido: rec,
+      ultima: { lat: p[0], lon: p[1], alt_ft: 3000, gs_kt: gs, track: 180, hora: iso(hastaS), fuente: "adsb" as const },
+      // Prevista: sale en t0 y 120 min de duración (180 NM a 90 kt).
+      salida_prevista: iso(0),
+      duracion_prevista_min: 120,
+      ...extra,
+    };
+  };
+
+  it("la GS suavizada es la mediana de los últimos 10 min", () => {
+    const d = dato(80, 1200);
+    expect(gsSuavizadaKt(d.recorrido, d.ultima)).toBeCloseTo(80, 0);
+  });
+
+  it("con viento de frente (GS 80 en vez de 95) la llegada se corre", () => {
+    // A los 20 min voló 26,7 NM; faltan 153,3 NM: a 80 kt son 115 min; a 95 serían 97 min.
+    const d = dato(80, 1200);
+    const l = estimarLlegada(d, iso(1210));
+    expect(l.tipo).toBe("estimada");
+    const min = (Date.parse(l.iso!) - Date.parse(iso(1200))) / 60_000;
+    expect(min).toBeCloseTo(115, 0);
+    // Prevista: t0+120 min. Estimada: t0+20+115 = 135 min -> 15 min más tarde.
+    expect(l.diferencia).toBe("15 min más tarde de lo previsto");
+  });
+
+  it("si difiere menos de 10 min de lo previsto, no dice nada", () => {
+    const d = dato(90, 1200);
+    expect(estimarLlegada(d, iso(1210)).diferencia).toBeNull();
+  });
+
+  it("más rápido que lo previsto: 'antes de lo previsto'", () => {
+    const d = dato(120, 1200);
+    expect(estimarLlegada(d, iso(1210)).diferencia).toMatch(/antes de lo previsto$/);
+  });
+
+  it("los primeros minutos (ascenso) no cuentan: con menos de 3 pares usa la GS de la última posición", () => {
+    const d = dato(80, 200);
+    expect(gsSuavizadaKt(d.recorrido, d.ultima)).toBe(80);
+    expect(gsSuavizadaKt(d.recorrido, { ...d.ultima!, gs_kt: 30 })).toBeNull();
+  });
+
+  it("el piso de velocidad: nunca por debajo de 40 kt", () => {
+    const d = dato(35, 1200);
+    // Pares en 35 kt están por encima de la GS de tierra (30) pero por debajo del piso.
+    expect(gsSuavizadaKt(d.recorrido, d.ultima)).toBe(40);
+  });
+
+  it("un corte congela la llegada y dice desde cuándo no hay datos", () => {
+    const d = dato(80, 1200);
+    const fresca = estimarLlegada(d, iso(1210));
+    const corte = estimarLlegada(d, iso(1200 + 301));
+    expect(corte.tipo).toBe("congelada");
+    expect(corte.iso).toBe(fresca.iso);
+    expect(corte.sinDatosDesde).toBe(horaArgentina(iso(1200)));
+    // Y a los 4 min de la última posición todavía es una estimada.
+    expect(estimarLlegada(d, iso(1200 + 240)).tipo).toBe("estimada");
+  });
+
+  it("los huecos de más de 2 min no miden velocidad", () => {
+    const rec = vuelo(80, 600);
+    rec.push([-34 - (80 * 1200) / 3600 / 60, -58, 3000, t0 + 1200, "adsb"]); // 10 min sin nada y un salto
+    const ult = rec[rec.length - 1];
+    const g = gsSuavizadaKt(rec, { lat: ult[0], lon: ult[1], gs_kt: 80, hora: iso(1200) });
+    expect(g).toBeCloseTo(80, 0);
+  });
+
+  it("antes de despegar: la prevista, salida más duración", () => {
+    const l = estimarLlegada({ estado: "en_vuelo", fase: "antes_de_salir", puntos: ruta, recorrido: [], ultima: null, salida_prevista: iso(0), duracion_prevista_min: 90 }, iso(-600));
+    expect(l.tipo).toBe("prevista");
+    expect(l.iso).toBe(iso(5400));
+  });
+
+  it("sin salida o sin duración prevista y sin posiciones: no hay llegada", () => {
+    const l = estimarLlegada({ estado: "en_vuelo", fase: "esperando", puntos: ruta, recorrido: [], ultima: null, salida_prevista: null, duracion_prevista_min: null }, iso(0));
+    expect(l.tipo).toBe("ninguna");
+  });
+
+  it("sin destino (una sola punta) no hay llegada estimada", () => {
+    const d = dato(80, 1200, { puntos: [ruta[0]], salida_prevista: null, duracion_prevista_min: null });
+    expect(estimarLlegada(d, iso(1210)).tipo).toBe("ninguna");
+  });
+
+  it("sin ruta cargada (orientativa) usa la distancia directa al destino", () => {
+    const d = dato(80, 1200, { ruta_orientativa: true, salida_prevista: null, duracion_prevista_min: null });
+    const l = estimarLlegada(d, iso(1210));
+    expect(l.tipo).toBe("estimada");
+    expect((Date.parse(l.iso!) - Date.parse(iso(1200))) / 60_000).toBeCloseTo(115, 0);
+    expect(l.diferencia).toBeNull();
+  });
+
+  it("aterrizó: la hora real", () => {
+    const l = estimarLlegada({ ...dato(80, 1200), estado: "terminado", fase: "aterrizo", aterrizo_at: iso(6000) }, iso(7000));
+    expect(l.tipo).toBe("real");
+    expect(l.iso).toBe(iso(6000));
+  });
+
+  it("histéresis: la hora mostrada no cambia por menos de 2 min", () => {
+    const mostrada = "2026-11-11T16:00:00.000Z";
+    expect(estabilizarLlegada("2026-11-11T16:01:30.000Z", mostrada)).toBe(mostrada);
+    expect(estabilizarLlegada("2026-11-11T16:02:00.000Z", mostrada)).toBe("2026-11-11T16:02:00.000Z");
+    expect(estabilizarLlegada("2026-11-11T15:55:00.000Z", mostrada)).toBe("2026-11-11T15:55:00.000Z");
+    expect(estabilizarLlegada("2026-11-11T16:01:00.000Z", null)).toBe("2026-11-11T16:01:00.000Z");
+    const d = dato(80, 1200);
+    const base = estimarLlegada(d, iso(1210));
+    const cerca = new Date(Date.parse(base.iso!) - 60_000).toISOString();
+    expect(estimarLlegada(d, iso(1210), { mostrada: cerca }).iso).toBe(cerca);
+  });
+
+  it("redondear a 5 min (la lista del tracker)", () => {
+    const l = estimarLlegada(dato(80, 1200), iso(1210), { redondear5: true });
+    expect(Date.parse(l.iso!) % 300_000).toBe(0);
+  });
+});
+
+describe("despegueReal", () => {
+  it("es el primer par de puntos a velocidad de vuelo", async () => {
+    const { despegueReal } = await import("./seguimiento-calculos");
+    const t0 = Date.parse("2026-11-16T12:00:00Z") / 1000;
+    // 2 puntos quietos y después 95 kt hacia el sur (1 NM = 1/60 de grado de latitud).
+    const rec = [
+      [-34.6, -58.6, 0, t0],
+      [-34.6, -58.6, 0, t0 + 60],
+      [-34.6 - 95 / 60 / 60, -58.6, 500, t0 + 120],
+      [-34.6 - (95 * 2) / 60 / 60, -58.6, 1000, t0 + 180],
+    ] as unknown as Parameters<typeof despegueReal>[0];
+    expect(despegueReal(rec)).toBe(new Date((t0 + 60) * 1000).toISOString());
+    expect(despegueReal([])).toBeNull();
+  });
+});
+

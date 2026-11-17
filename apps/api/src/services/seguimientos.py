@@ -1229,6 +1229,15 @@ def _lugar_publico(lugar: Any) -> Optional[Dict[str, str]]:
     return {"codigo": codigo, "nombre": nombre} if codigo or nombre else None
 
 
+def _duracion_publica(v: Any) -> Optional[int]:
+    """Minutos de duración prevista, o `None` si no es un entero razonable (hasta 24 h)."""
+    try:
+        n = int(v)
+    except (TypeError, ValueError):
+        return None
+    return n if 0 < n <= 24 * 60 else None
+
+
 def vista_publica(fila: Dict[str, Any], ahora: datetime, adsb: Any = None) -> Dict[str, Any]:
     """
     **Lo único que ve quien abre el link.** Campo por campo, no "la fila menos algunos": un
@@ -1264,6 +1273,8 @@ def vista_publica(fila: Dict[str, Any], ahora: datetime, adsb: Any = None) -> Di
         # Migración 045: en qué está el vuelo, la salida prevista de un plan y si hay respaldo ADS-B.
         "fase": evaluacion["fase"],
         "salida_prevista": salida.astimezone(timezone.utc).isoformat() if salida else None,
+        # La duración prevista (plan o sin plan), para la llegada "prevista" antes de despegar; la web la corrige en el aire.
+        "duracion_prevista_min": _duracion_publica(fila.get("duracion_prevista_min")),
         # Migración 057: cuándo y **dónde** aterrizó (cualquier aeródromo, no sólo el destino), o que no se
         # vio dónde (el avión volvió a aparecer en el aire más tarde: estaba fuera de la cobertura de ADS-B).
         "aterrizo_at": aterrizo.astimezone(timezone.utc).isoformat() if aterrizo else None,

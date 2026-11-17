@@ -691,7 +691,7 @@ _leer_adsb = leer_adsb
 COLUMNAS_VISTA = (
     "nombre,ruta,puntos,created_at,avion_tipo,avion_icao,avion_matricula,mostrar_matricula,vence_at,terminado_at,"
     "ultima_lat,ultima_lon,ultima_alt_ft,ultima_gs_kt,ultima_track,ultima_at,recorrido,vistas,vistos_total,"
-    "matricula_adsb,salida_prevista,aterrizo_at,ruta_orientativa,id,user_id,desde_tramo_at,aterrizo_en,aterrizo_sin_ver"
+    "matricula_adsb,salida_prevista,duracion_prevista_min,aterrizo_at,ruta_orientativa,id,user_id,desde_tramo_at,aterrizo_en,aterrizo_sin_ver"
 )
 
 

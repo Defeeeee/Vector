@@ -60,6 +60,8 @@ export interface SeguimientoPublico {
   fase?: FaseDelVuelo;
   /** ISO: la salida prevista de un seguimiento desde un plan de vuelo (la EOBT vigente), o `null`/ausente si es del Mapa. */
   salida_prevista?: string | null;
+  /** Minutos de duración prevista (plan o vuelo sin plan): con la salida prevista da la llegada "prevista". Un backend anterior no la manda. */
+  duracion_prevista_min?: number | null;
   /**
    * Migración 055: el piloto no cargó la ruta (compartió un vuelo "sin plan"): los puntos son sólo el
    * origen y el destino, y la línea del mapa entre ellos es directa y orientativa.

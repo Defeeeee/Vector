@@ -96,12 +96,14 @@ const LETRAS = {
 };
 
 /**
- * La firma va arriba del rótulo impreso "Firma del Comandante de la aeronave", en la caja
- * "Espacio reservado para requisitos adicionales" (y de 22 a 60 pt). Arranca a la derecha
- * del texto "RESERVED…" (que termina en x ≈ 348) y puede pisar un poco la línea de arriba,
- * como una firma de verdad. Con la tinta recortada (`recortarFirmaPng`) ocupa casi toda.
+ * La firma va **centrada sobre el rótulo** "Firma del Comandante de la aeronave" (x ≈ 428 pt), desde el
+ * fondo del recuadro (y ≈ 25) hasta **abajo de la línea gruesa** de arriba (y ≈ 60): el trazo puede
+ * cruzar el rótulo, como en papel (Federico: "puede cruzar el texto que dice firma del PIC"), pero no
+ * el borde. A la derecha del texto "Space reserved…" (termina en x ≈ 348 pt). 3.46.2: la caja de la
+ * 3.44.0 subía hasta 65 pt y quedaba corrida a la derecha ("la firma del fpl no queda bien"). Las de la
+ * demora, la cancelación y la modificación ocupan su celda entera, cruzando "FIRMA / Signature".
  */
-const FIRMA: Caja = [352, 31, 568, 65];
+const FIRMA: Caja = [300, 25, 556, 59];
 
 interface Fuentes {
   normal: PDFFont;
@@ -373,7 +375,7 @@ const DLA: FormularioMensaje = {
     c16altn: [579, 540, 715, 566],
     nombre: [8, 795, 384, 826],
     licencia: [390, 802, 594, 826],
-    firma: [600, 782, 882, 830],
+    firma: [605, 784, 880, 826],
   },
   renglones: [622, 644, 666, 688, 710, 732, 754].map((y) => [y, y + 22]),
 };
@@ -397,7 +399,7 @@ const CNL: FormularioMensaje = {
     c16altn: [562, 506, 699, 533],
     nombre: [8, 795, 380, 836],
     licencia: [382, 816, 580, 840],
-    firma: [582, 792, 867, 840],
+    firma: [587, 791, 865, 832],
   },
   renglones: [589, 614, 636, 658, 680, 702, 724, 746, 768].map((y, i, a) => [y, a[i + 1] ?? 790]),
 };
@@ -437,7 +439,7 @@ const CHG: FormularioMensaje = {
     c16altn: [559, 507, 696, 534],
     nombre: [8, 806, 375, 846],
     licencia: [379, 826, 577, 846],
-    firma: [581, 800, 864, 845],
+    firma: [586, 802, 862, 833],
   },
   renglones: [[590, 612], [612, 634], [634, 656]],
   renglonesEnmienda: [[722, 744], [744, 766], [766, 786], [786, 806]],
