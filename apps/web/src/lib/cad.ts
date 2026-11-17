@@ -165,6 +165,8 @@ export interface AvionVector {
   registration: string;
   type_acft?: string | null;
   potencia_hp?: number | null;
+  /** `false` = agregado solo desde el libro importado (migración 059): faltan datos del avión. */
+  datos_completos?: boolean | null;
   is_simulator?: boolean | null;
   cad_simulador?: SimuladorCad | null;
 }
@@ -298,6 +300,7 @@ export function borradorCad(
   else if (unDecimal(horasDia + horasNoche) !== horas)
     problema = `Las horas de día y de noche (${unDecimal(horasDia + horasNoche).toFixed(1)}) no dan lo que va de la salida a la llegada (${horas.toFixed(1)}).`;
   else if (!avion?.registration) problema = "No tiene avión.";
+  else if (avion.datos_completos === false && !avion.is_simulator) problema = `Completá los datos de ${avion.registration} en el Hangar: lo agregamos desde tu libro con matrícula y modelo.`;
   else if (!clase) problema = "Al avión le falta la clase (MONT-T, MULT-T…) en el Hangar.";
   else if (!finalidad) problema = `La finalidad "${f.purpose ?? ""}" no tiene par en el CAD.`;
   else if (!origen.codigo) problema = "No tiene ruta.";

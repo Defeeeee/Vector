@@ -16,10 +16,12 @@ interface AircraftCardProps {
   aircraft: Aircraft;
   /** La checklist asignada (id y nombre), si tiene: se asigna desde Herramientas → Checklists. */
   checklist?: { id: string; nombre: string } | null;
+  /** Abrir directo en edición (el link de "Completá los datos de LV-ABC"). */
+  abrirEditando?: boolean;
 }
 
-export default function AircraftCard({ aircraft, checklist }: AircraftCardProps) {
-  const [isEditing, setIsEditing] = useState(false);
+export default function AircraftCard({ aircraft, checklist, abrirEditando = false }: AircraftCardProps) {
+  const [isEditing, setIsEditing] = useState(abrirEditando);
   const [isPending, startTransition] = useTransition();
   const { notificar } = useAvisos();
 
@@ -81,7 +83,7 @@ export default function AircraftCard({ aircraft, checklist }: AircraftCardProps)
               <div className="relative">
                 <select
                   name="type_acft"
-                  defaultValue={aircraft.type_acft}
+                  defaultValue={aircraft.type_acft || "MONT-T"}
                   className="w-full bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-zinc-900/20 dark:focus:ring-white/20 transition-all uppercase appearance-none"
                 >
                   <option value="MONT-T" className="dark:bg-zinc-900">MONT-T (Monomotor Terrestre)</option>
@@ -171,9 +173,9 @@ export default function AircraftCard({ aircraft, checklist }: AircraftCardProps)
               <span className="mx-1.5 text-zinc-300 dark:text-zinc-700">/</span>
             </>
           )}
-          {aircraft.type}
+          {aircraft.type || "Sin modelo"}
           <span className="mx-1.5 text-zinc-300 dark:text-zinc-700">/</span>
-          {aircraft.icao}
+          {aircraft.icao || "sin tipo OACI"}
           {aircraft.type_acft && (
             <>
               <span className="mx-1.5 text-zinc-300 dark:text-zinc-700">/</span>
@@ -191,6 +193,10 @@ export default function AircraftCard({ aircraft, checklist }: AircraftCardProps)
             {aircraft.fuel_burn_lph && <span>{aircraft.fuel_burn_lph} L/h</span>}
             {aircraft.fuel_capacity_l && <span>{aircraft.fuel_capacity_l} L</span>}
           </p>
+        )}
+
+        {aircraft.datos_completos === false && !aircraft.is_simulator && (
+          <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-aviation-cyan mt-2">Completá el tipo OACI y la categoría</p>
         )}
 
         {checklist && (

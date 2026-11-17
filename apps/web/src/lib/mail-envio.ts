@@ -18,7 +18,7 @@ import { SITIO_URL } from "./sitio";
 const API_URL = process.env.API_URL || "http://127.0.0.1:7477/api";
 const APP_URL = SITIO_URL;
 
-export type TipoMail = "primer-vuelo" | "resumen-mensual" | "briefing" | "novedades" | "plan-por-registrar";
+export type TipoMail = "primer-vuelo" | "resumen-mensual" | "briefing" | "novedades" | "plan-por-registrar" | "importacion-libro";
 
 export interface MailConSeguimiento {
   para: string;

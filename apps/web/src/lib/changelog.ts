@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.49.0",
+    fecha: "2026-11-17",
+    titulo: "Subí tu libro y andate",
+    novedades: [
+      {
+        icono: "libro",
+        titulo: "Importá tu libro entero, sin esperar",
+        texto: "Subí el PDF o las fotos de tu libro de papel (hasta 120 páginas) y cerrá la página: Vector lo lee en segundo plano y te manda un mail cuando está listo para revisar. Los aviones de tu libro que no están en tu Hangar se agregan solos con matrícula y modelo, y te avisamos para que completes el resto de sus datos.",
+        href: "/dashboard/log-flight/import",
+        cta: "Importar mi libro",
+      },
+    ],
+  },
+  {
     version: "3.48.0",
     fecha: "2026-11-17",
     titulo: "Tu mapa",

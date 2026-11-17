@@ -6,6 +6,7 @@ import ProfileForm from "@/components/dashboard/ProfileForm";
 import AircraftCard from "@/components/dashboard/AircraftCard";
 import FlightPackCard from "@/components/dashboard/FlightPackCard";
 import AircraftForm from "@/components/dashboard/AircraftForm";
+import AvionesIncompletos from "@/components/dashboard/AvionesIncompletos";
 import FlightPackForm from "@/components/dashboard/FlightPackForm";
 import DocumentsManager from "@/components/dashboard/DocumentsManager";
 import LogbooksManager from "@/components/dashboard/LogbooksManager";
@@ -69,7 +70,8 @@ async function getSettingsData() {
   return { profile: profiles[0] || null, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, checklists };
 }
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ editar?: string }> }) {
+  const { editar } = await searchParams;
   const { profile, aircraft, packs, documents, logbooks, flights, perfilPublico, bloqueados, clavePush, checklists } =
     await getSettingsData();
   const cma = documents.find(doc => doc.kind === "cma");
@@ -77,6 +79,8 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <PageHeader eyebrow="Tu perfil, tu libro, tus aviones y tus packs" title="Hangar" />
+
+      <AvionesIncompletos aviones={aircraft} />
 
 
       {/* Logbooks — above aircraft and packs because a flight has to land in a
@@ -170,7 +174,7 @@ export default async function SettingsPage() {
       {/* Aircraft + Packs side by side on wide screens */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 md:gap-10 items-start">
         {/* Aircraft Management Section */}
-        <section className="space-y-4 md:space-y-6 lg:border-t lg:border-white/10 lg:pt-9">
+        <section id="aeronaves" className="space-y-4 md:space-y-6 lg:border-t lg:border-white/10 lg:pt-9">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 dark:bg-white flex lg:hidden items-center justify-center shadow-lg">
@@ -186,7 +190,7 @@ export default async function SettingsPage() {
           <div className="grid grid-cols-2 gap-3 md:gap-4">
             {aircraft.length > 0 ? (
               aircraft.map(ac => (
-                <AircraftCard key={ac.id} aircraft={ac} checklist={checklists.find((c) => c.id === ac.checklist_id) ?? null} />
+                <AircraftCard key={ac.id} aircraft={ac} abrirEditando={editar === ac.id} checklist={checklists.find((c) => c.id === ac.checklist_id) ?? null} />
               ))
             ) : (
               <div className="col-span-full bg-white dark:bg-carbon p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] text-center border border-dashed border-zinc-200 dark:border-white/10 shadow-sm dark:shadow-none hover:shadow-md dark:hover:bg-white/[0.04] transition-all">

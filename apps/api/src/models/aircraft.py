@@ -66,6 +66,10 @@ class Aircraft(BaseModel):
     cad_simulador: Optional[Dict[str, Any]] = None
     #: La checklist asignada a este avión (migración 054). Se asigna desde `/checklists`.
     checklist_id: Optional[UUID] = None
+    #: `false` = lo agregamos solo desde el libro importado (migración 059), con matrícula y
+    #: modelo: faltan el tipo OACI y la categoría, que completa el piloto en el Hangar. Se apaga
+    #: sola al guardarlos (`controllers/aircraft.py`). Un avión sin este dato es uno completo.
+    datos_completos: bool = True
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -97,11 +101,40 @@ class AircraftCreate(BaseModel):
     #: Lo fijo del avión para el plan de vuelo (migración 024): casilla 10,
     #: NAV/PBN/PER/OPR, color, ELT, observación fija. Lo arma y lo lee el frontend.
     plan_vuelo: Optional[Dict[str, Any]] = None
+    #: `false` sólo desde el importador del libro (migración 059); el formulario del Hangar no lo manda.
+    datos_completos: bool = True
 
     @field_validator("plan_vuelo")
     @classmethod
     def _plan_vuelo(cls, v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         return validar_perfil_avion(v)
+
+
+class AvionDelLibro(BaseModel):
+    """Un avión leído del libro de vuelo: lo mínimo, y el resto lo completa el piloto."""
+
+    registration: str = Field(min_length=1, max_length=16)
+    #: Marca y modelo como figura en el libro ("Cessna 152"). Puede venir vacío.
+    type: str = Field(default="", max_length=80)
+    #: Sólo si se deduce con seguridad del modelo; si no, vacío.
+    icao: str = Field(default="", max_length=8)
+    type_acft: Optional[str] = Field(default=None, max_length=8)
+
+    @field_validator("registration", "type", "icao")
+    @classmethod
+    def _limpiar(cls, v: str) -> str:
+        return " ".join((v or "").split())
+
+    @field_validator("type_acft")
+    @classmethod
+    def _categoria(cls, v: Optional[str]) -> Optional[str]:
+        v = (v or "").strip().upper()
+        return v if v in {"MONT-T", "MULT-T", "MONT-H", "MULT-H"} else None
+
+
+class AvionesDelLibro(BaseModel):
+    aviones: list[AvionDelLibro] = Field(min_length=1, max_length=30)
+
 
 class AircraftUpdate(BaseModel):
     registration: Optional[str] = None

@@ -82,6 +82,14 @@ def armar_aviso(
         }
     elif tipo == "comentario":
         aviso = {"titulo": f"{nombre} comentó tu publicación", "cuerpo": _recortar(texto, 120), "url": ACTIVIDAD}
+    elif tipo == "aviones_del_libro":
+        # Nada de la bitácora: sólo cuántos. `texto` trae la cantidad.
+        n = int(texto) if (texto or "").isdigit() else 1
+        aviso = {
+            "titulo": "Agregamos 1 avión de tu libro" if n == 1 else f"Agregamos {n} aviones de tu libro",
+            "cuerpo": "Completá sus datos en el Hangar.",
+            "url": "/dashboard/settings",
+        }
     elif tipo == "reporte":
         aviso = {"titulo": "Nuevo reporte en la red", "cuerpo": _recortar(texto, 120), "url": "/dashboard"}
     else:

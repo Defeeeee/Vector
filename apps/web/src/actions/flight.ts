@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 import { esErrorDeRedirect } from "@/lib/redirect-error";
 import { esClaveValida } from "@/lib/cola-sin-senal";
+import { createHash } from "node:crypto";
 import { certificanteDelFormulario } from "@/lib/firmas-libro";
 import { revalidarLoQueCambiaUnVuelo } from "@/lib/revalidar-vuelo";
 
@@ -361,6 +362,8 @@ export async function updateAircraft(formData: FormData) {
     }
 
     revalidatePath("/dashboard/settings");
+    // La banda "Completá los datos" del inicio se va cuando el avión queda completo (migración 059).
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (e: any) {
     if (esErrorDeRedirect(e)) throw e;
@@ -387,7 +390,18 @@ export async function deleteAircraft(id: string) {
   }
 }
 
-export async function bulkLogFlights(flights: any[]) {
+/**
+ * Una clave estable para cada vuelo de una importación del libro (3.48.2): el mismo vuelo de la
+ * misma importación da siempre la misma `clave_cliente`, así que si «Importar» se corta a mitad de
+ * camino y se reintenta, el backend devuelve los vuelos ya guardados en vez de duplicarlos
+ * (`POST /flights` es idempotente por clave desde la migración 058). Formato UUID a partir de SHA-1.
+ */
+function claveDeImportacion(base: string, vuelo: string): string {
+  const h = createHash("sha1").update(`${base}:${vuelo}`).digest("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-${((parseInt(h.slice(16, 18), 16) & 0x3f) | 0x80).toString(16)}${h.slice(18, 20)}-${h.slice(20, 32)}`;
+}
+
+export async function bulkLogFlights(flights: any[], claveBase?: string) {
   try {
     for (const f of flights) {
       const aircraft_id = f.aircraft_id;
@@ -433,6 +447,7 @@ export async function bulkLogFlights(flights: any[]) {
         discount_type: f.discount_type || null,
         discount_amount: getNumber(f.discount_amount),
         purpose: f.purpose || "VP",
+        ...(claveBase && typeof f.id === "string" ? { clave_cliente: claveDeImportacion(claveBase, f.id) } : {}),
       };
 
       const response = await apiFetch("/flights", {

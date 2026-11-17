@@ -1,18 +1,39 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Upload, FileText, CheckCircle, AlertCircle, Trash2, Calendar, Plane, Route, Clock, ChevronRight, RefreshCw, Layers } from "lucide-react";
+import Link from "next/link";
 import { Aircraft } from "@/types";
 import { bulkLogFlights } from "@/actions/flight";
+import { cerrarImportacion, crearAvionesDelLibro } from "@/actions/importacion";
 import { useRouter } from "next/navigation";
 import { comprimirImagen } from "@/lib/imagen-cliente";
 import { mensajeDeError } from "@/lib/error-de-red";
+import {
+  avionesATildados, avionesNuevos, avisoDeFallidos, esSimuladorLeido, normalizarMatricula, TOPE_FOTOS, vueloSinAvion,
+  type AvionNuevo, type Rango, type VueloLeido,
+} from "@/lib/importar-libro";
 
-/** Hasta cuántas fotos de hojas por vez: las mismas que acepta `/api/parse-logbook`. */
-const MAX_FOTOS = 12;
+/** Lo que el backend sabe de una importación (`/importaciones-libro`). El resultado sólo viene al abrir una. */
+export interface Importacion {
+  id: string;
+  estado: "subido" | "procesando" | "listo" | "error" | "importado" | "descartado";
+  paginas_total: number;
+  paginas_leidas: number;
+  lotes_fallidos: Rango[];
+  error: string | null;
+  creado_at: string;
+  resultado?: { vuelos?: VueloLeido[] } | null;
+}
 
 interface LogbookImportClientProps {
   aircraftList: Aircraft[];
+  /** La que se abrió con `?importacion=`. */
+  importacion: Importacion | null;
+  /** Se pidió una por id (aunque no exista). */
+  pedida: boolean;
+  /** Las demás en curso o esperando revisión. */
+  otras: Importacion[];
 }
 
 interface ParsedFlight {
@@ -20,6 +41,8 @@ interface ParsedFlight {
   date: string;
   aircraft_registration: string;
   aircraft_id: string; // linked hangar aircraft id
+  /** Si el vuelo va a un avión que se agrega al importar: su clave (matrícula normalizada). */
+  nuevo_clave?: string;
   route: string;
   duration: number;
   takeoff: string;
@@ -41,34 +64,67 @@ interface ParsedFlight {
   sim_pil_en_inst?: number;
 }
 
-export default function LogbookImportClient({ aircraftList }: LogbookImportClientProps) {
+const fechaCorta = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
+
+function estadoEnPalabras(o: Importacion): string {
+  if (o.estado === "listo") return "Listo para revisar";
+  if (o.estado === "error") return "No se pudo leer";
+  return `Leyendo ${o.paginas_leidas} de ${o.paginas_total} hojas`;
+}
+
+export default function LogbookImportClient({ aircraftList, importacion, pedida, otras }: LogbookImportClientProps) {
+  return (
+    <div className="space-y-8">
+      {otras.length > 0 && (
+        <section className="space-y-2 border-t border-white/10 pt-4">
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-zinc-500">Tus libros en proceso</p>
+          {otras.map((o) => (
+            <Link key={o.id} href={`/dashboard/log-flight/import?importacion=${o.id}`} className="flex items-center justify-between gap-3 py-2 text-sm font-semibold text-zinc-200 hover:text-white">
+              <span>Libro subido el {fechaCorta(o.creado_at)}</span>
+              <span className={`font-mono text-[11px] uppercase tracking-[0.1em] ${o.estado === "listo" ? "text-aviation-cyan" : o.estado === "error" ? "text-red-400" : "text-zinc-400"}`}>{estadoEnPalabras(o)}</span>
+            </Link>
+          ))}
+        </section>
+      )}
+
+      {!importacion && !pedida && <SubirLibro />}
+      {!importacion && pedida && (
+        <div className="space-y-4">
+          <p className="text-sm text-zinc-400">No encontramos esa importación. Puede que ya la hayas importado o descartado.</p>
+          <Link href="/dashboard/log-flight/import" className="text-sm font-semibold text-aviation-cyan underline underline-offset-4">Subir un libro</Link>
+        </div>
+      )}
+      {importacion && (importacion.estado === "subido" || importacion.estado === "procesando") && <LeyendoLibro inicial={importacion} />}
+      {importacion && importacion.estado === "error" && <LecturaFallida importacion={importacion} />}
+      {importacion && (importacion.estado === "importado" || importacion.estado === "descartado") && (
+        <div className="space-y-4">
+          <p className="text-sm text-zinc-400">Esta importación ya está {importacion.estado === "importado" ? "importada" : "descartada"}.</p>
+          <Link href="/dashboard/log-flight/import" className="text-sm font-semibold text-aviation-cyan underline underline-offset-4">Subir un libro</Link>
+        </div>
+      )}
+      {importacion && importacion.estado === "listo" && <Revision importacion={importacion} aircraftList={aircraftList} />}
+    </div>
+  );
+}
+
+/** Elegir el PDF o las fotos y mandarlos: el server los lee en segundo plano. */
+function SubirLibro() {
   const router = useRouter();
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  // O fotos de las hojas del libro de papel (2.28.0), en lugar del PDF.
   const [fotos, setFotos] = useState<File[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingStep, setLoadingStep] = useState("");
+  const [subiendo, setSubiendo] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [parsedFlights, setParsedFlights] = useState<ParsedFlight[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle drag events
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
   };
 
-  /**
-   * Un PDF, o fotos de las hojas. Si viene un PDF, gana el PDF; si no, las fotos (hasta
-   * `MAX_FOTOS`). Del teléfono, el selector ofrece la cámara y la galería.
-   */
+  /** Un PDF, o fotos de las hojas (hasta `TOPE_FOTOS` por libro). Si viene un PDF, gana el PDF. */
   const elegir = (lista: FileList | null) => {
     const archivos = Array.from(lista ?? []);
     const pdf = archivos.find((f) => f.type === "application/pdf");
@@ -79,155 +135,286 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
       setError(null);
     } else if (imagenes.length) {
       setFile(null);
-      setFotos(imagenes.slice(0, MAX_FOTOS));
-      setError(imagenes.length > MAX_FOTOS ? `Tomamos las primeras ${MAX_FOTOS} fotos: subí las demás después.` : null);
+      setFotos(imagenes.slice(0, TOPE_FOTOS));
+      setError(imagenes.length > TOPE_FOTOS ? `Tomamos las primeras ${TOPE_FOTOS} fotos: subí las demás en otro libro.` : null);
     } else {
       setError("Subí el libro en PDF, o fotos de las hojas.");
     }
   };
 
-  // Handle drop
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    elegir(e.dataTransfer.files);
-  };
-
-  // Handle file input select
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    elegir(e.target.files);
-  };
-
-  const onButtonClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  // Parse the PDF logbook using Gemini
-  const handleUploadAndParse = async () => {
+  const subir = async () => {
     if (!file && fotos.length === 0) return;
-
-    setLoading(true);
     setError(null);
-    setLoadingStep(file ? "Subiendo el PDF..." : "Preparando las fotos...");
-
     try {
       const formData = new FormData();
-      if (file) formData.append("file", file);
-      else {
-        // Achicadas en el navegador: una foto de teléfono pesa 4–8 MB. A 2400 px la letra a
-        // mano se sigue leyendo, y la ubicación GPS no sale del teléfono (el canvas no copia el EXIF).
+      if (file) {
+        setSubiendo("Subiendo el PDF…");
+        formData.append("file", file);
+      } else {
+        // Achicadas en el navegador: una foto de teléfono pesa 4–8 MB. A 2400 px la letra a mano
+        // se sigue leyendo, y la ubicación GPS no sale del teléfono (el canvas no copia el EXIF).
         for (const [k, f] of fotos.entries()) {
-          setLoadingStep(`Preparando la foto ${k + 1} de ${fotos.length}...`);
+          setSubiendo(`Preparando la foto ${k + 1} de ${fotos.length}…`);
           formData.append("fotos", await comprimirImagen(f, 2400, 0.85));
         }
+        setSubiendo("Subiendo las fotos…");
       }
-
-      setLoadingStep(file ? "Leyendo las páginas del libro..." : `Leyendo ${fotos.length === 1 ? "la hoja" : `las ${fotos.length} hojas`}...`);
-      const res = await fetch("/api/parse-logbook", {
-        method: "POST",
-        body: formData
-      });
-
+      const res = await fetch("/api/importar-libro", { method: "POST", body: formData });
       if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || "No se pudo leer el libro. Probá de nuevo.");
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || "No se pudo subir el libro. Probá de nuevo.");
       }
-
-      setLoadingStep("Estructurando lista de vuelos...");
-      const data = await res.json();
-      
-      if (!data.flights || !Array.isArray(data.flights)) {
-        throw new Error("No se encontraron registros de vuelos en el formato esperado.");
-      }
-
-      // Map parsed aircraft registrations to existing hangar aircraft IDs
-      const mapped: ParsedFlight[] = data.flights.map((f: any, idx: number) => {
-        const regClean = (f.aircraft_registration || "").trim().toUpperCase();
-        // Try finding matching aircraft in the pilot's hangar list
-        const match = aircraftList.find(ac => 
-          ac.registration.trim().toUpperCase() === regClean ||
-          ac.registration.trim().toUpperCase().replace(/[^A-Z0-9]/g, "") === regClean.replace(/[^A-Z0-9]/g, "")
-        );
-
-        return {
-          id: `flight-temp-${idx}-${Date.now()}`,
-          date: f.date || "",
-          aircraft_registration: f.aircraft_registration || "",
-          aircraft_id: match ? match.id : "", // pre-select if matched, otherwise let user pick
-          route: f.route || "",
-          duration: typeof f.duration === "number" ? f.duration : parseFloat(f.duration) || 0,
-          takeoff: f.takeoff || "",
-          landing: f.landing || "",
-          landings: typeof f.landings === "number" ? f.landings : parseInt(f.landings, 10) || 1,
-          purpose: f.purpose || "VP",
-          pic_day_loc: f.pic_day_loc || undefined,
-          pic_day_tra: f.pic_day_tra || undefined,
-          pic_night_loc: f.pic_night_loc || undefined,
-          pic_night_tra: f.pic_night_tra || undefined,
-          sic_day_loc: f.sic_day_loc || undefined,
-          sic_day_tra: f.sic_day_tra || undefined,
-          sic_night_loc: f.sic_night_loc || undefined,
-          sic_night_tra: f.sic_night_tra || undefined,
-          imc_pil: f.imc_pil || undefined,
-          imc_cop: f.imc_cop || undefined,
-          capota: f.capota || undefined,
-          sim_instructor: f.sim_instructor || undefined,
-          sim_pil_en_inst: f.sim_pil_en_inst || undefined
-        };
-      });
-
-      setParsedFlights(mapped);
+      const { id } = await res.json();
+      router.replace(`/dashboard/log-flight/import?importacion=${id}`);
+      router.refresh();
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Ocurrió un error inesperado al analizar el libro de vuelo.");
-    } finally {
-      setLoading(false);
-      setLoadingStep("");
+      setError(mensajeDeError(err, "No se pudo subir el libro. Probá de nuevo.", navigator.onLine));
+      setSubiendo("");
     }
   };
 
-  // Update a single flight field in state
+  return (
+    <div className="space-y-6">
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-5 rounded-2xl flex items-start space-x-3 text-xs font-bold leading-relaxed">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+      <div
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setDragActive(false);
+          elegir(e.dataTransfer.files);
+        }}
+        className={`border-2 border-dashed rounded-[2rem] p-10 md:p-16 text-center transition-all ${
+          dragActive ? "border-zinc-950 bg-zinc-50 dark:border-white dark:bg-white/5" : "border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20 bg-white dark:bg-carbon"
+        }`}
+      >
+        <input ref={fileInputRef} type="file" accept=".pdf,application/pdf,image/*" multiple onChange={(e) => elegir(e.target.files)} className="hidden" />
+
+        <div className="max-w-md mx-auto space-y-6 flex flex-col items-center">
+          <div className="w-16 h-16 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl flex items-center justify-center text-zinc-400 dark:text-zinc-500">
+            <Upload className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-base font-bold text-zinc-900 dark:text-white">Tu libro en PDF, o fotos de las hojas</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium">
+              Sin tope de 12: hasta 120 páginas de PDF u {TOPE_FOTOS} fotos por libro. Lo subís, lo leemos en segundo plano y te mandamos un mail cuando esté listo para revisar. No hace falta que te quedes acá.
+            </p>
+          </div>
+
+          {file ? (
+            <div className="flex items-center space-x-3 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-5 py-3.5 rounded-xl w-full justify-center">
+              <FileText className="w-5 h-5 text-zinc-400" />
+              <span className="text-xs font-mono font-bold truncate text-zinc-900 dark:text-white">{file.name}</span>
+              <span className="text-[10px] font-mono text-zinc-400">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+            </div>
+          ) : fotos.length > 0 ? (
+            <div className="flex items-center space-x-3 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-5 py-3.5 rounded-xl w-full justify-center">
+              <Layers className="w-5 h-5 text-zinc-400" />
+              <span className="text-xs font-bold text-zinc-900 dark:text-white">{fotos.length === 1 ? "1 foto" : `${fotos.length} fotos`} de hojas</span>
+            </div>
+          ) : null}
+
+          {subiendo ? (
+            <p className="flex items-center gap-2 text-sm font-semibold text-zinc-300">
+              <RefreshCw className="w-4 h-4 animate-spin" /> {subiendo}
+            </p>
+          ) : (
+            <div className="flex gap-4 w-full">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 border border-zinc-200 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-900 dark:text-white font-semibold text-sm py-4 rounded-2xl transition-all active:scale-[0.98]"
+              >
+                {file || fotos.length ? "Cambiar" : "Elegir PDF o fotos"}
+              </button>
+              {(file || fotos.length > 0) && (
+                <button
+                  type="button"
+                  onClick={subir}
+                  className="flex-1 bg-aviation-cyan text-noche hover:bg-sky-300 font-semibold text-sm py-4 rounded-full transition-all active:scale-[0.98]"
+                >
+                  Subir el libro
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** "Estamos leyendo tu libro": la barra avanza sola (se pregunta el estado cada 5 s, sin escribir nada). */
+function LeyendoLibro({ inicial }: { inicial: Importacion }) {
+  const router = useRouter();
+  const [estado, setEstado] = useState(inicial);
+
+  useEffect(() => {
+    let vivo = true;
+    const preguntar = async () => {
+      try {
+        const res = await fetch(`/api/importar-libro/${inicial.id}`, { cache: "no-store" });
+        if (!res.ok || !vivo) return;
+        const nuevo = (await res.json()) as Importacion;
+        if (!vivo) return;
+        setEstado((e) => ({ ...e, ...nuevo }));
+        if (nuevo.estado !== "subido" && nuevo.estado !== "procesando") router.refresh();
+      } catch {
+        // Sin red: se vuelve a preguntar en 5 s.
+      }
+    };
+    const t = setInterval(preguntar, 5000);
+    return () => {
+      vivo = false;
+      clearInterval(t);
+    };
+  }, [inicial.id, router]);
+
+  const pct = estado.paginas_total > 0 ? Math.min(100, Math.round((estado.paginas_leidas / estado.paginas_total) * 100)) : 0;
+  return (
+    <div className="space-y-6 border-t border-white/10 pt-8 max-w-xl">
+      <div className="flex items-center gap-3">
+        <RefreshCw className="w-5 h-5 animate-spin text-aviation-cyan" />
+        <h3 className="text-base font-bold text-white">Estamos leyendo tu libro</h3>
+      </div>
+      <p className="text-sm leading-relaxed text-zinc-400">
+        Te mandamos un mail a la dirección de tu cuenta cuando esté listo. Podés cerrar esta página: lo que leamos queda guardado y no se importa nada hasta que lo revises.
+      </p>
+      <div className="space-y-2">
+        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+          <div className="h-full bg-aviation-cyan rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+        </div>
+        <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-zinc-500">
+          {estado.paginas_leidas === 0 ? "Empezando…" : `Leídas ${estado.paginas_leidas} de ${estado.paginas_total} hojas`}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function LecturaFallida({ importacion }: { importacion: Importacion }) {
+  const router = useRouter();
+  const [ocupado, setOcupado] = useState(false);
+  return (
+    <div className="space-y-5 max-w-xl">
+      <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-5 rounded-2xl flex items-start space-x-3 text-xs font-bold leading-relaxed">
+        <AlertCircle className="w-5 h-5 shrink-0" />
+        <span>{importacion.error || "No pudimos leer tu libro."} Probá con otro PDF o con fotos de las hojas, de frente y con buena luz.</span>
+      </div>
+      <button
+        type="button"
+        disabled={ocupado}
+        onClick={async () => {
+          setOcupado(true);
+          await cerrarImportacion(importacion.id, "descartado");
+          router.replace("/dashboard/log-flight/import");
+          router.refresh();
+        }}
+        className="bg-aviation-cyan text-noche hover:bg-sky-300 disabled:opacity-50 font-semibold text-sm px-8 py-3.5 rounded-full"
+      >
+        Subir otro libro
+      </button>
+    </div>
+  );
+}
+
+/** La revisión de siempre —vuelos y aviones—, con lo que leyó el server. Nada se importa sin confirmar. */
+function Revision({ importacion, aircraftList }: { importacion: Importacion; aircraftList: Aircraft[] }) {
+  const router = useRouter();
+  const leidos = importacion.resultado?.vuelos ?? [];
+  const [aCrear, setACrear] = useState<AvionNuevo[]>(() => avionesNuevos(leidos, aircraftList.map((a) => a.registration)));
+  const [parsedFlights, setParsedFlights] = useState<ParsedFlight[]>(() =>
+    leidos.map((f, idx) => {
+      const regClean = String(f.aircraft_registration ?? "").trim().toUpperCase();
+      const match = aircraftList.find((ac) => normalizarMatricula(ac.registration) === normalizarMatricula(regClean));
+      const num = (x: unknown) => (typeof x === "number" && x ? x : undefined);
+      return {
+        id: `flight-temp-${idx}`,
+        date: String(f.date ?? ""),
+        aircraft_registration: String(f.aircraft_registration ?? ""),
+        aircraft_id: match ? match.id : "",
+        nuevo_clave: !match && !esSimuladorLeido(regClean) ? normalizarMatricula(regClean) : undefined,
+        route: String(f.route ?? ""),
+        duration: typeof f.duration === "number" ? f.duration : parseFloat(String(f.duration)) || 0,
+        takeoff: String(f.takeoff ?? ""),
+        landing: String(f.landing ?? ""),
+        landings: typeof f.landings === "number" ? f.landings : parseInt(String(f.landings), 10) || 1,
+        purpose: String(f.purpose || "VP"),
+        pic_day_loc: num(f.pic_day_loc),
+        pic_day_tra: num(f.pic_day_tra),
+        pic_night_loc: num(f.pic_night_loc),
+        pic_night_tra: num(f.pic_night_tra),
+        sic_day_loc: num(f.sic_day_loc),
+        sic_day_tra: num(f.sic_day_tra),
+        sic_night_loc: num(f.sic_night_loc),
+        sic_night_tra: num(f.sic_night_tra),
+        imc_pil: num(f.imc_pil),
+        imc_cop: num(f.imc_cop),
+        capota: num(f.capota),
+        sim_instructor: num(f.sim_instructor),
+        sim_pil_en_inst: num(f.sim_pil_en_inst),
+      };
+    })
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const aviso = avisoDeFallidos(importacion.lotes_fallidos ?? []);
+
   const handleUpdateField = (id: string, field: keyof ParsedFlight, value: any) => {
-    setParsedFlights(prev =>
-      prev.map(f => {
-        if (f.id === id) {
-          const updated = { ...f, [field]: value };
-          // If aircraft is changed from select dropdown, update registration reference text
-          if (field === "aircraft_id") {
-            const selectedAc = aircraftList.find(ac => ac.id === value);
-            if (selectedAc) {
-              updated.aircraft_registration = selectedAc.registration;
-            }
-          }
-          return updated;
-        }
-        return f;
+    setParsedFlights((prev) => prev.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
+  };
+
+  /** Un avión del Hangar, uno a crear (`nuevo:<clave>`) o ninguno. */
+  const elegirAvion = (id: string, valor: string) => {
+    setParsedFlights((prev) =>
+      prev.map((f) => {
+        if (f.id !== id) return f;
+        if (valor.startsWith("nuevo:")) return { ...f, aircraft_id: "", nuevo_clave: valor.slice(6) };
+        const ac = aircraftList.find((a) => a.id === valor);
+        return { ...f, aircraft_id: valor, nuevo_clave: undefined, aircraft_registration: ac ? ac.registration : f.aircraft_registration };
       })
     );
   };
 
-  // Remove a flight draft from review list
-  const handleRemoveFlight = (id: string) => {
-    setParsedFlights(prev => prev.filter(f => f.id !== id));
-  };
+  const cambiarAvion = (clave: string, cambios: Partial<AvionNuevo>) => setACrear((prev) => prev.map((a) => (a.clave === clave ? { ...a, ...cambios } : a)));
 
-  // Submit reviewed flights to database via bulk server action
+  const handleRemoveFlight = (id: string) => setParsedFlights((prev) => prev.filter((f) => f.id !== id));
+
   const handleConfirmImport = async () => {
-    const unlinkedFlight = parsedFlights.find(f => !f.aircraft_id);
-    if (unlinkedFlight) {
-      setError(`El vuelo con ruta '${unlinkedFlight.route}' no tiene un avión asociado. Por favor selecciona un avión del hangar.`);
+    const sinAvion = parsedFlights.find((f) => vueloSinAvion(f, aCrear));
+    if (sinAvion) {
+      setError(`El vuelo con ruta '${sinAvion.route}' no tiene un avión asociado. Elegí uno del Hangar o tildá el avión para agregarlo.`);
       return;
     }
-
     setIsSubmitting(true);
     setError(null);
-
     try {
-      const res = await bulkLogFlights(parsedFlights);
-      if (res.error) {
-        throw new Error(res.error);
+      // 1) Los aviones tildados, primero: con sus ids ya se pueden guardar los vuelos.
+      const tildados = avionesATildados(aCrear).filter((a) => parsedFlights.some((f) => !f.aircraft_id && f.nuevo_clave === a.clave));
+      const ids: Record<string, string> = {};
+      if (tildados.length) {
+        const r = await crearAvionesDelLibro(tildados.map((a) => ({ registration: a.registration.trim(), type: a.type.trim(), icao: a.icao.trim(), type_acft: a.type_acft })));
+        if ("error" in r) throw new Error(r.error);
+        for (const a of tildados) {
+          const id = r.ids[normalizarMatricula(a.registration)];
+          if (!id) throw new Error(`No pudimos agregar ${a.registration} a tu Hangar.`);
+          ids[a.clave] = id;
+        }
       }
+      // 2) Los vuelos, ya con avión.
+      const paraGuardar = parsedFlights.map((f) => (f.aircraft_id ? f : { ...f, aircraft_id: ids[f.nuevo_clave ?? ""] ?? "" }));
+      // Con la importación como base, un reintento no duplica vuelos (clave estable por vuelo).
+      const res = await bulkLogFlights(paraGuardar, importacion.id);
+      if (res.error) throw new Error(res.error);
+      await cerrarImportacion(importacion.id, "importado");
       router.push("/dashboard/history");
     } catch (err: any) {
       setError(mensajeDeError(err, "Ocurrió un error al registrar los vuelos en la bitácora.", navigator.onLine));
@@ -236,162 +423,91 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
     }
   };
 
+  const descartar = async () => {
+    setIsSubmitting(true);
+    await cerrarImportacion(importacion.id, "descartado");
+    router.replace("/dashboard/log-flight/import");
+    router.refresh();
+  };
+
+  if (parsedFlights.length === 0) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-zinc-400">No quedan vuelos para importar.</p>
+        <button type="button" onClick={descartar} className="text-sm font-semibold text-aviation-cyan underline underline-offset-4">Descartar y subir otro libro</button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      {/* Errors Banner */}
+    <div className="space-y-6">
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-5 rounded-2xl flex items-start space-x-3 text-xs font-bold leading-relaxed">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <span>{error}</span>
         </div>
       )}
-
-      {/* STEP 1: Upload and file selection */}
-      {parsedFlights.length === 0 && !loading && (
-        <div 
-          onDragEnter={handleDrag} 
-          onDragLeave={handleDrag} 
-          onDragOver={handleDrag} 
-          onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-[2rem] p-10 md:p-16 text-center transition-all ${
-            dragActive 
-              ? "border-zinc-950 bg-zinc-50 dark:border-white dark:bg-white/5" 
-              : "border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20 bg-white dark:bg-carbon"
-          }`}
-        >
-          <input 
-            ref={fileInputRef}
-            type="file" 
-            accept=".pdf,application/pdf,image/*"
-            multiple
-            onChange={handleFileChange}
-            className="hidden"
-          />
-
-          <div className="max-w-md mx-auto space-y-6 flex flex-col items-center">
-            <div className="w-16 h-16 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl flex items-center justify-center text-zinc-400 dark:text-zinc-500">
-              <Upload className="w-8 h-8" />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white">
-                Tu libro en PDF, o fotos de las hojas
-              </h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium">
-                Desde el teléfono, sacale una foto a cada hoja, de frente y con buena luz (hasta {MAX_FOTOS} por vez). O arrastrá el PDF escaneado acá.
-              </p>
-            </div>
-
-            {file ? (
-              <div className="flex items-center space-x-3 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-5 py-3.5 rounded-xl w-full justify-center">
-                <FileText className="w-5 h-5 text-zinc-400" />
-                <span className="text-xs font-mono font-bold truncate text-zinc-900 dark:text-white">{file.name}</span>
-                <span className="text-[10px] font-mono text-zinc-400">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-              </div>
-            ) : fotos.length > 0 ? (
-              <div className="flex items-center space-x-3 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-5 py-3.5 rounded-xl w-full justify-center">
-                <Layers className="w-5 h-5 text-zinc-400" />
-                <span className="text-xs font-bold text-zinc-900 dark:text-white">
-                  {fotos.length === 1 ? "1 foto" : `${fotos.length} fotos`} de hojas
-                </span>
-              </div>
-            ) : null}
-
-            <div className="flex gap-4 w-full">
-              <button
-                type="button"
-                onClick={onButtonClick}
-                className="flex-1 border border-zinc-200 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-900 dark:text-white font-semibold text-sm py-4 rounded-2xl transition-all active:scale-[0.98]"
-              >
-                {file || fotos.length ? "Cambiar" : "Elegir PDF o fotos"}
-              </button>
-
-              {(file || fotos.length > 0) && (
-                <button
-                  type="button"
-                  onClick={handleUploadAndParse}
-                  className="flex-1 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 font-semibold text-sm py-4 rounded-2xl transition-all active:scale-[0.98]"
-                >
-                  {file ? "Leer el PDF" : fotos.length === 1 ? "Leer la hoja" : "Leer las hojas"}
-                </button>
-              )}
-            </div>
-          </div>
+      {aviso && (
+        <div className="border-y border-amber-500/30 bg-amber-500/[0.06] px-1 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-amber-300 leading-relaxed">
+          {aviso}
         </div>
       )}
 
-      {/* Loading analysis states */}
-      {loading && (
-        <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] p-10 md:p-16 flex flex-col items-center justify-center space-y-6 text-center shadow-cal dark:shadow-none min-h-[300px]">
-          <RefreshCw className="w-8 h-8 animate-spin text-zinc-400" />
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-zinc-900 dark:text-white">
-              Procesando libro de vuelo
-            </h4>
-            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-              {loadingStep}
-            </p>
-          </div>
-          <div className="w-full max-w-xs h-1.5 bg-zinc-100 dark:bg-white/5 rounded-full overflow-hidden relative">
-            <div className="absolute top-0 bottom-0 left-0 bg-zinc-900 dark:bg-white animate-pulse w-3/4 rounded-full" />
-          </div>
-        </div>
+      {aCrear.length > 0 && (
+        <section className="space-y-3 border-t border-white/10 pt-4">
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-zinc-400">Aviones de tu libro que no están en tu Hangar · se agregan al importar</p>
+          {aCrear.map((a) => (
+            <div key={a.clave} className="flex flex-wrap items-center gap-3 py-1">
+              <input type="checkbox" checked={a.crear} onChange={(e) => cambiarAvion(a.clave, { crear: e.target.checked })} className="h-4 w-4 accent-cyan-400" aria-label={`Agregar ${a.registration}`} />
+              <input value={a.registration} onChange={(e) => cambiarAvion(a.clave, { registration: e.target.value.toUpperCase() })} disabled={!a.crear} className="w-28 bg-transparent border border-white/10 rounded-lg px-2 py-1.5 text-xs font-bold uppercase text-zinc-100 outline-none focus:border-white/30 disabled:opacity-40" aria-label="Matrícula" />
+              <input value={a.type} placeholder="Marca y modelo" onChange={(e) => cambiarAvion(a.clave, { type: e.target.value })} disabled={!a.crear} className="w-44 bg-transparent border border-white/10 rounded-lg px-2 py-1.5 text-xs font-bold text-zinc-100 outline-none focus:border-white/30 disabled:opacity-40" aria-label="Marca y modelo" />
+              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-zinc-500">{a.vuelos} {a.vuelos === 1 ? "vuelo" : "vuelos"}</span>
+            </div>
+          ))}
+          <p className="text-xs leading-relaxed text-zinc-500">Los agregamos con matrícula y modelo; después te pedimos completar el resto desde el Hangar. Si apagás uno, sus vuelos te piden elegir un avión a mano.</p>
+        </section>
       )}
 
-      {/* STEP 2: Review and edit list of flights */}
-      {parsedFlights.length > 0 && !loading && (
-        <div className="space-y-6">
-          
-          {/* Header Action Summary Bar */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] p-6 shadow-sm gap-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center shadow-sm">
-                <CheckCircle className="w-6 h-6" />
-              </div>
-              <div className="space-y-0.5">
-                <h4 className="text-sm font-bold text-zinc-900 dark:text-white leading-none">
-                  Vuelos extraídos ({parsedFlights.length})
-                </h4>
-                <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 leading-none">
-                  Revisa los datos y asocia las aeronaves desconocidas
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3 w-full md:w-auto self-stretch md:self-auto">
-              <button
-                type="button"
-                onClick={() => {
-                  setParsedFlights([]);
-                  setFile(null);
-                  setFotos([]);
-                  setError(null);
-                }}
-                className="flex-1 md:flex-none border border-zinc-200 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-900 dark:text-white font-semibold text-sm px-6 py-3.5 rounded-xl transition-all active:scale-[0.98]"
-              >
-                Volver a subir
-              </button>
-
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handleConfirmImport}
-                className="bg-aviation-cyan text-noche hover:bg-sky-300 flex-1 md:flex-none disabled:opacity-50 disabled:pointer-events-none font-semibold text-sm px-8 py-3.5 transition-all active:scale-[0.98] flex items-center justify-center space-x-2 rounded-full"
-              >
-                {isSubmitting ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Guardando...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Confirmar e importar</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] p-6 shadow-sm gap-4">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center shadow-sm">
+            <CheckCircle className="w-6 h-6" />
           </div>
+          <div className="space-y-0.5">
+            <h4 className="text-sm font-bold text-zinc-900 dark:text-white leading-none">Vuelos extraídos ({parsedFlights.length})</h4>
+            <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 leading-none">Revisá los datos: nada se guarda hasta que confirmes</p>
+          </div>
+        </div>
+
+        <div className="flex gap-3 w-full md:w-auto self-stretch md:self-auto">
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={descartar}
+            className="flex-1 md:flex-none border border-zinc-200 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-900 dark:text-white font-semibold text-sm px-6 py-3.5 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50"
+          >
+            Descartar
+          </button>
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={handleConfirmImport}
+            className="bg-aviation-cyan text-noche hover:bg-sky-300 flex-1 md:flex-none disabled:opacity-50 disabled:pointer-events-none font-semibold text-sm px-8 py-3.5 transition-all active:scale-[0.98] flex items-center justify-center space-x-2 rounded-full"
+          >
+            {isSubmitting ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Guardando...</span>
+              </>
+            ) : (
+              <>
+                <span>Confirmar e importar</span>
+                <ChevronRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </div>
+      </div>
 
           {/* Large review table wrapper */}
           <div className="bg-white dark:bg-carbon border border-zinc-200 dark:border-white/10 rounded-[2rem] overflow-hidden shadow-cal dark:shadow-none">
@@ -411,7 +527,7 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-white/5 text-xs">
                   {parsedFlights.map((flight) => {
-                    const hasUnmatchedAc = !flight.aircraft_id;
+                    const hasUnmatchedAc = vueloSinAvion(flight, aCrear);
                     
                     return (
                       <tr 
@@ -434,8 +550,8 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
                         <td className="px-6 py-4 space-y-1.5">
                           <div className="flex items-center space-x-2">
                             <select
-                              value={flight.aircraft_id}
-                              onChange={(e) => handleUpdateField(flight.id, "aircraft_id", e.target.value)}
+                              value={flight.aircraft_id || (flight.nuevo_clave ? `nuevo:${flight.nuevo_clave}` : "")}
+                              onChange={(e) => elegirAvion(flight.id, e.target.value)}
                               className={`bg-white dark:bg-zinc-900 border ${
                                 hasUnmatchedAc 
                                   ? "border-amber-500 focus:border-amber-600 focus:dark:border-amber-500/50" 
@@ -446,6 +562,11 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
                               {aircraftList.map((ac) => (
                                 <option key={ac.id} value={ac.id}>
                                   {ac.registration} ({ac.icao})
+                                </option>
+                              ))}
+                              {aCrear.filter((a) => a.crear).map((a) => (
+                                <option key={a.clave} value={`nuevo:${a.clave}`}>
+                                  {a.registration} (nuevo)
                                 </option>
                               ))}
                             </select>
@@ -545,8 +666,6 @@ export default function LogbookImportClient({ aircraftList }: LogbookImportClien
             </div>
           </div>
 
-        </div>
-      )}
 
     </div>
   );

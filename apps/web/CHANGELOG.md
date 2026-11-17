@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.49.0 — Subí tu libro y andate
+
+_17 de noviembre de 2026_
+
+- **Importá tu libro entero, sin esperar** — Subí el PDF o las fotos de tu libro de papel (hasta 120 páginas) y cerrá la página: Vector lo lee en segundo plano y te manda un mail cuando está listo para revisar. Los aviones de tu libro que no están en tu Hangar se agregan solos con matrícula y modelo, y te avisamos para que completes el resto de sus datos.
+
 ## v3.48.0 — Tu mapa
 
 _17 de noviembre de 2026_

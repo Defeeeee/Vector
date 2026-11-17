@@ -88,6 +88,11 @@ describe("las horas, como las cuenta el CAD", () => {
 });
 
 describe("el vuelo de Vector, armado para el CAD", () => {
+  it("un avión agregado desde el libro y sin completar se marca para revisar, nunca se manda mal", () => {
+    const b = borradorCad(LUJAN_MORON, { ...ECHO, datos_completos: false }, lugar);
+    expect(b.problema).toBe("Completá los datos de LVS100 en el Hangar: lo agregamos desde tu libro con matrícula y modelo.");
+    expect(borradorCad(LUJAN_MORON, { ...ECHO, datos_completos: true }, lugar).problema).toBeNull();
+  });
   it("una travesía: tipo 2, piloto, horas de día, Luján con su código ANAC", () => {
     const b = borradorCad(LUJAN_MORON, ECHO, lugar);
     expect(b).toMatchObject({

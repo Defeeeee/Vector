@@ -143,6 +143,12 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: "dummy-key"
         run: python test_flights_clave_cliente.py
 
+      - name: Importar el libro en segundo plano (migración 059)
+        env:
+          SUPABASE_URL: "https://dummy.supabase.co"
+          SUPABASE_PUBLISHABLE_KEY: "dummy-key"
+        run: python test_importaciones_libro.py
+
       # Offline: arma su propio árbol de PDF en un directorio temporal. Lo que
       # importa de verdad es que no se pueda escapar de la carpeta configurada
       # con `../` en la categoría o el nombre de archivo.

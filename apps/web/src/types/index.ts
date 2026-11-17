@@ -91,6 +91,11 @@ export interface Aircraft {
   /** Si es un simulador: cuál es en el CAD de ANAC, su clase y su modelo (migración 036). */
   cad_simulador?: import("@/lib/cad").SimuladorCad | null;
   /** La checklist asignada a este avión (migración 054). Ver `lib/checklist.ts`. */
+  /**
+   * `false` = lo agregamos solo desde el libro importado (migración 059), con matrícula y modelo;
+   * faltan el tipo OACI y la categoría. Ausente o `true` = completo.
+   */
+  datos_completos?: boolean;
   checklist_id?: string | null;
 }
 

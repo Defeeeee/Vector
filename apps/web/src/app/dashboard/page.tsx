@@ -19,6 +19,7 @@ import { estadoOnboarding } from "@/lib/onboarding";
 import { soloVolados } from "@/lib/simulador";
 import { costosPorVuelo, gastoDelMes } from "@/lib/costos";
 import PendientesDdjj from "@/components/dashboard/cad/PendientesDdjj";
+import AvionesIncompletos from "@/components/dashboard/AvionesIncompletos";
 import { cuantosPendientesDeDdjj, leidoDelCad } from "@/lib/cad";
 import InicioEscritorio, { type FajaVuelo, type ItemChequeo, type Queda } from "@/components/dashboard/InicioEscritorio";
 import { recencyByClass, recencyWindowDays } from "@/lib/recency";
@@ -281,6 +282,9 @@ export default async function Dashboard() {
       <Suspense fallback={null}>
         <PlanesParaRegistrar vuelos={(bitacora as Flight[]).map((v) => ({ date: v.date, route: v.route }))} />
       </Suspense>
+
+      {/* Aviones que se agregaron solos desde el libro importado, con matrícula y modelo (migración 059). */}
+      {disponible("aircraft") && <AvionesIncompletos aviones={aircraft} />}
 
       {/* Vuelos que están en el CAD sin la declaración jurada (lo sabe la sincronización, 037):
           la DDJJ es lo único del CAD que Vector no hace, así que lo recuerda. */}
