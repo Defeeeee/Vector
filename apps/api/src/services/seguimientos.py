@@ -36,9 +36,14 @@ from src.services.aerodromos import mas_cercano
 
 #: Cuánto dura un seguimiento si el piloto no toca Terminar.
 HORAS_DE_VIDA = 12
-#: Cuánto se sigue viendo después de terminar o vencer ("El vuelo terminó" con la última
-#: posición, para que la familia vea dónde quedó). Pasado esto es un 404.
-GRACIA_DESPUES_DE_TERMINAR = timedelta(hours=2)
+#: Cuánto se sigue viendo el link después de terminar o vencer ("El vuelo terminó" con la última
+#: posición y el recorrido, para que la familia vea dónde quedó y lo pueda volver a mirar). Pasado
+#: esto es un 404. Una semana desde la 3.45.1 (Federico: "quiero que duren 1 semana"); hasta ahí,
+#: 2 h. Mirarlo no lee ADS-B posterior al vuelo: la ventana corta en su fin (`ventana_adsb`).
+GRACIA_DESPUES_DE_TERMINAR = timedelta(days=7)
+#: En el inicio de Vector Tracker, los vuelos que terminaron hace poco (para que "aterrizó" no
+#: desaparezca de golpe). No es lo mismo que la vida del link: una semana ahí sería ruido.
+TRACKER_TERMINADOS_RECIENTES = timedelta(hours=2)
 #: No se acepta más de una posición cada tanto: el teléfono manda cada ~15 s, esto es el piso.
 SEGUNDOS_ENTRE_POSICIONES = 10
 #: Cuántos puntos guarda el recorrido; al pasarse se ralea a la mitad.
@@ -345,6 +350,15 @@ def visible(fila: Dict[str, Any], ahora: datetime) -> bool:
         return True
     desde = _fecha(fila.get("terminado_at")) if estado == "terminado" else _fecha(fila.get("vence_at"))
     return desde is not None and ahora < desde + GRACIA_DESPUES_DE_TERMINAR
+
+
+def reciente_para_el_tracker(fila: Dict[str, Any], ahora: datetime) -> bool:
+    """¿Va en la lista del inicio de Vector Tracker? En vuelo, o terminado/vencido hace menos de `TRACKER_TERMINADOS_RECIENTES`."""
+    estado = estado_de(fila, ahora)
+    if estado == "en_vuelo":
+        return True
+    desde = _fecha(fila.get("terminado_at")) if estado == "terminado" else _fecha(fila.get("vence_at"))
+    return desde is not None and ahora < desde + TRACKER_TERMINADOS_RECIENTES
 
 
 def puede_aceptar_posicion(ultima_at: Any, ahora: datetime) -> bool:

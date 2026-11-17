@@ -37,7 +37,7 @@ from src.services.seguidores import (
     token_con_forma,
     vence_la_invitacion,
 )
-from src.services.seguimientos import GRACIA_DESPUES_DE_TERMINAR, esta_activo, nombre_de_pila, visible
+from src.services.seguimientos import TRACKER_TERMINADOS_RECIENTES, esta_activo, nombre_de_pila, reciente_para_el_tracker, visible
 from src.supabase_client import SupabaseManager
 
 #: Cuántos vuelos como mucho se leen para un seguidor.
@@ -295,7 +295,7 @@ class TrackerController(Controller):
     async def vuelos(self, request: Request) -> List[Dict[str, Any]]:
         """
         **Sólo los vuelos que el piloto le asignó a esta cuenta**: los que siguen activos y, por
-        `GRACIA_DESPUES_DE_TERMINAR`, los que terminaron hace poco (para que "aterrizó" no desaparezca de golpe).
+        `TRACKER_TERMINADOS_RECIENTES`, los que terminaron hace poco (para que "aterrizó" no desaparezca de golpe).
         Cada uno es lo que ve el link público (`vista_publica`, con ADS-B) más `token` y `piloto` (nombre de pila y @).
         En el aire primero.
         """
@@ -312,7 +312,7 @@ class TrackerController(Controller):
                 cliente.table("seguimientos_en_vivo")
                 .select(f"token,{COLUMNAS_VISTA}")
                 .in_("id", asignados)
-                .gte("vence_at", (ahora - GRACIA_DESPUES_DE_TERMINAR).isoformat())
+                .gte("vence_at", (ahora - TRACKER_TERMINADOS_RECIENTES).isoformat())
                 .order("created_at", desc=True)
                 .limit(TOPE_VUELOS)
                 .execute()
@@ -322,7 +322,9 @@ class TrackerController(Controller):
             perfiles = _perfiles_de_pilotos(cliente, sorted({f["user_id"] for f in filas}))
             salida: List[Dict[str, Any]] = []
             for f in filas:
-                if not visible(f, ahora):
+                # En la lista del tracker, sólo lo que sigue en marcha o terminó hace poco (el link
+                # en sí se sigue viendo una semana, `GRACIA_DESPUES_DE_TERMINAR`).
+                if not visible(f, ahora) or not reciente_para_el_tracker(f, ahora):
                     continue
                 try:
                     vista = leer_vista(cliente, f, ahora, f["token"])

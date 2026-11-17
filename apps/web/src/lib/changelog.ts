@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.45.1",
+    fecha: "2026-11-17",
+    titulo: "Los links de seguimiento duran una semana",
+    novedades: [
+      {
+        icono: "compartir",
+        titulo: "El link de tu vuelo se ve una semana",
+        texto: "Después de que el vuelo termina, el link que compartiste sigue abriendo una semana, con el recorrido y dónde terminó, así tu familia lo puede volver a mirar. Antes se apagaba a las 2 horas.",
+        href: "/dashboard/mapa/compartir",
+        cta: "Compartir tu vuelo",
+      },
+    ],
+  },
+  {
     version: "3.45.0",
     fecha: "2026-11-17",
     titulo: "Vector sin señal, y el seguimiento más listo",

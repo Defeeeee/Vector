@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.45.1 — Los links de seguimiento duran una semana
+
+_17 de noviembre de 2026_
+
+- **El link de tu vuelo se ve una semana** — Después de que el vuelo termina, el link que compartiste sigue abriendo una semana, con el recorrido y dónde terminó, así tu familia lo puede volver a mirar. Antes se apagaba a las 2 horas.
+
 ## v3.45.0 — Vector sin señal, y el seguimiento más listo
 
 _17 de noviembre de 2026_

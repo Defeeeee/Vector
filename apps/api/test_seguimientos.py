@@ -14,6 +14,7 @@ from src.services.seguimientos import (
     AvionCompartido,
     DIAS_DE_RETENCION,
     GRACIA_DESPUES_DE_TERMINAR,
+    reciente_para_el_tracker,
     MatriculaVisible,
     PosicionEnVivo,
     RutaNueva,
@@ -142,7 +143,9 @@ check("una terminada no acepta posiciones", not esta_activo(terminada, T0 + time
 check("se ve en vuelo", visible(viva, T0 + timedelta(hours=5)))
 check("terminada se sigue viendo un rato", visible(terminada, T0 + timedelta(hours=1) + GRACIA_DESPUES_DE_TERMINAR - timedelta(minutes=1)))
 check("y después es un 404", not visible(terminada, T0 + timedelta(hours=1) + GRACIA_DESPUES_DE_TERMINAR))
-check("vencida sin terminar: la misma gracia desde que venció", visible(viva, T0 + timedelta(hours=13)) and not visible(viva, T0 + timedelta(hours=14, seconds=1)))
+check("el link se sigue viendo una semana después de terminar", GRACIA_DESPUES_DE_TERMINAR == timedelta(days=7) and visible(terminada, T0 + timedelta(days=6)))
+check("pero en el inicio del tracker sólo un rato", reciente_para_el_tracker(terminada, T0 + timedelta(hours=2)) and not reciente_para_el_tracker(terminada, T0 + timedelta(hours=4)))
+check("vencida sin terminar: la misma gracia desde que venció", visible(viva, T0 + timedelta(hours=13)) and visible(viva, T0 + timedelta(hours=12) + GRACIA_DESPUES_DE_TERMINAR - timedelta(seconds=1)) and not visible(viva, T0 + timedelta(hours=12) + GRACIA_DESPUES_DE_TERMINAR + timedelta(seconds=1)))
 check("con la hora tal como la devuelve Supabase", estado_de({"vence_at": "2026-11-11T20:00:00.5+00:00", "terminado_at": None}, T0) == "en_vuelo")
 check("sin fecha de vencimiento: vencido", estado_de({"vence_at": None, "terminado_at": None}, T0) == "vencido")
 
