@@ -1910,6 +1910,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.49.3",
+    fecha: "2026-11-18",
+    motivo: "Los designadores OACI del importador, revisados contra el Doc 8643 oficial: ECHO (Tecnam P92), SIRA (P2002), ASTO (Astore), TWEN (P2010), P06T, TOBA, PA30, B350; y se corrigen tres que estaban mal (el P2008 es P208, no P2008; el P2002 es SIRA; el P92 es ECHO).",
+  },
+  {
     version: "3.49.2",
     fecha: "2026-11-18",
     motivo: "Importar el libro cortaba con «Invalid time value»: 7 vuelos leídos con la hora de un dígito (9:05) armaban una fecha inválida, y para entonces ya se habían creado los aviones. Ahora se normalizan las horas, se revisan fecha y horario de cada fila antes de crear nada, el modelo escrito como designador OACI (C150, PA30, B350) completa el OACI y el selector muestra el tipo cuando falta.",

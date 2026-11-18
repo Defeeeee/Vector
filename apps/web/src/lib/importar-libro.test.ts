@@ -67,7 +67,7 @@ describe("aviones nuevos", () => {
     const r = avionesNuevos(vuelos, ["LV-HAN"]);
     expect(r.map((a) => a.clave)).toEqual(["LVABC", "LVXYZ"]);
     expect(r[0]).toMatchObject({ registration: "LV-ABC", type: "Cessna 152", icao: "C152", type_acft: "MONT-T", vuelos: 3, crear: true });
-    expect(r[1]).toMatchObject({ type: "Tecnam P2008", icao: "P2008", vuelos: 1 });
+    expect(r[1]).toMatchObject({ type: "Tecnam P2008", icao: "P208", vuelos: 1 });
   });
   it("no crea los que ya están (aunque se escriban distinto) ni los simuladores", () => {
     expect(avionesNuevos(vuelos, ["lv abc", "LVXYZ", "LV-HAN"])).toEqual([]);
@@ -133,6 +133,11 @@ describe("lo que cortaba la importación de Berni", () => {
     expect(icaoDeModelo("C150")).toEqual({ icao: "C150", type_acft: "MONT-T" });
     expect(icaoDeModelo("PA30")).toEqual({ icao: "PA30", type_acft: "MULT-T" });
     expect(icaoDeModelo("Cessna 150")).toEqual({ icao: "C150", type_acft: "MONT-T" });
-    expect(icaoDeModelo("ECHO")).toBeNull();
+    expect(icaoDeModelo("ECHO")).toEqual({ icao: "ECHO", type_acft: "MONT-T" });
+    expect(icaoDeModelo("SIRA")?.icao).toBe("SIRA");
+    expect(icaoDeModelo("ASTO")?.icao).toBe("ASTO");
+    expect(icaoDeModelo("TWEN")?.icao).toBe("TWEN");
+    expect(icaoDeModelo("Tecnam P2008")?.icao).toBe("P208");
+    expect(icaoDeModelo("Tecnam P2002 Sierra")?.icao).toBe("SIRA");
   });
 });

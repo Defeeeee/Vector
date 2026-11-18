@@ -186,27 +186,36 @@ export interface AvionNuevo {
  * ambiguo ("Cessna 172" puede ser C172 en cualquier variante, pero un "Piper" a secas no),
  * queda vacío y lo completa el piloto. La categoría de los monomotores terrestres también.
  */
+// Los designadores, contra la lista oficial de OACI (Doc 8643, doc8643.icao.int, bajada el 2026-11-18):
+// ojo que el Tecnam P2008 es P208, el P2002 es SIRA, el P92 es ECHO y el TB-10 es TOBA.
 const MODELOS: { patron: RegExp; icao: string; categoria: string }[] = [
-  // El designador OACI escrito tal cual, como lo anotan muchos libros (y el CAD): C150, PA30, B350…
+  // El designador escrito tal cual, como lo anotan muchos libros (y el CAD): C150, ECHO, B350…
   ...([["C150", "MONT-T"], ["C152", "MONT-T"], ["C172", "MONT-T"], ["C182", "MONT-T"], ["C206", "MONT-T"], ["C208", "MONT-T"], ["PA11", "MONT-T"], ["PA18", "MONT-T"],
-    ["PA22", "MONT-T"], ["P28A", "MONT-T"], ["PA38", "MONT-T"], ["P2008", "MONT-T"], ["P2002", "MONT-T"], ["P92", "MONT-T"], ["TB10", "MONT-T"],
-    ["PA30", "MULT-T"], ["PA34", "MULT-T"], ["PA44", "MULT-T"], ["B350", "MULT-T"]] as const).map(([icao, categoria]) => ({ patron: new RegExp(`^${icao}$`, "i"), icao, categoria })),
+    ["PA22", "MONT-T"], ["P28A", "MONT-T"], ["PA38", "MONT-T"], ["P208", "MONT-T"], ["SIRA", "MONT-T"], ["ECHO", "MONT-T"], ["ASTO", "MONT-T"], ["TWEN", "MONT-T"],
+    ["TOBA", "MONT-T"], ["PA30", "MULT-T"], ["PA34", "MULT-T"], ["PA44", "MULT-T"], ["P06T", "MULT-T"], ["B350", "MULT-T"]] as const)
+    .map(([icao, categoria]) => ({ patron: new RegExp(`^${icao}$`, "i"), icao, categoria })),
   { patron: /\b(?:cessna\s*)?150\b/i, icao: "C150", categoria: "MONT-T" },
   { patron: /\b(?:cessna\s*)?152\b/i, icao: "C152", categoria: "MONT-T" },
   { patron: /\b(?:cessna\s*)?172\b/i, icao: "C172", categoria: "MONT-T" },
   { patron: /\b(?:cessna\s*)?182\b/i, icao: "C182", categoria: "MONT-T" },
   { patron: /\b(?:cessna\s*)?206\b/i, icao: "C206", categoria: "MONT-T" },
   { patron: /\b(?:cessna\s*)?208\b/i, icao: "C208", categoria: "MONT-T" },
-  { patron: /\bp\s*-?\s*2008\b/i, icao: "P2008", categoria: "MONT-T" },
-  { patron: /\bp\s*-?\s*2002\b/i, icao: "P2002", categoria: "MONT-T" },
-  { patron: /\bp\s*-?\s*92\b/i, icao: "P92", categoria: "MONT-T" },
+  { patron: /\bp\s*-?\s*2008\b/i, icao: "P208", categoria: "MONT-T" },
+  { patron: /\bp\s*-?\s*2002\b|\bsierra\b/i, icao: "SIRA", categoria: "MONT-T" },
+  { patron: /\bp\s*-?\s*92\b|\becho\b/i, icao: "ECHO", categoria: "MONT-T" },
+  { patron: /\bastore\b/i, icao: "ASTO", categoria: "MONT-T" },
+  { patron: /\bp\s*-?\s*2010\b/i, icao: "TWEN", categoria: "MONT-T" },
+  { patron: /\bp\s*-?\s*2006\s*t?\b/i, icao: "P06T", categoria: "MULT-T" },
   { patron: /\bpa\s*-?\s*11\b/i, icao: "PA11", categoria: "MONT-T" },
   { patron: /\bpa\s*-?\s*18\b/i, icao: "PA18", categoria: "MONT-T" },
+  { patron: /\bpa\s*-?\s*22\b|tri-?pacer/i, icao: "PA22", categoria: "MONT-T" },
   { patron: /\bpa\s*-?\s*28\b|cherokee|warrior|archer/i, icao: "P28A", categoria: "MONT-T" },
   { patron: /\bpa\s*-?\s*38\b|tomahawk/i, icao: "PA38", categoria: "MONT-T" },
-  { patron: /\btb\s*-?\s*10\b/i, icao: "TB10", categoria: "MONT-T" },
+  { patron: /\btb\s*-?\s*10\b|tobago/i, icao: "TOBA", categoria: "MONT-T" },
+  { patron: /\bpa\s*-?\s*30\b|twin comanche/i, icao: "PA30", categoria: "MULT-T" },
   { patron: /\bpa\s*-?\s*34\b|seneca/i, icao: "PA34", categoria: "MULT-T" },
   { patron: /\bpa\s*-?\s*44\b|seminole/i, icao: "PA44", categoria: "MULT-T" },
+  { patron: /king\s*air\s*350|\bb\s*-?\s*300\b/i, icao: "B350", categoria: "MULT-T" },
 ];
 
 export function icaoDeModelo(modelo: string | null | undefined): { icao: string; type_acft: string } | null {
