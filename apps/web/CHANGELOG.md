@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.51.0 — Tu libro digital, leído al pie de la letra
+
+_18 de noviembre de 2026_
+
+- **Si tu libro es un PDF de planilla, Vector lo lee exacto** — Muchos pilotos llevan el libro en una planilla con la hoja de ANAC y la exportan a PDF. Ahora Vector lee ese texto columna por columna (de día o de noche, sobre aeródromo o en travesía, capota, adiestrador) en vez de mirar la imagen, y coteja cada hoja con sus totales: si algo no cierra, te dice en qué hoja y qué columna.
+
 ## v3.50.0 — Tu examen cuenta como repaso
 
 _18 de noviembre de 2026_

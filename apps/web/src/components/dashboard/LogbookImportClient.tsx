@@ -25,7 +25,7 @@ export interface Importacion {
   lotes_fallidos: Rango[];
   error: string | null;
   creado_at: string;
-  resultado?: { vuelos?: VueloLeido[] } | null;
+  resultado?: { vuelos?: VueloLeido[]; diferencias?: string[] } | null;
 }
 
 interface LogbookImportClientProps {
@@ -483,6 +483,12 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
           <AlertCircle className="w-5 h-5 shrink-0" />
           <span>{error}</span>
         </div>
+      )}
+      {(importacion.resultado?.diferencias?.length ?? 0) > 0 && (
+        <section className="space-y-1 border-y border-amber-500/30 bg-amber-500/[0.06] px-1 py-3">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-amber-300">Lo leído no coincide con los totales de tu libro</p>
+          {importacion.resultado!.diferencias!.map((d) => <p key={d} className="text-xs leading-relaxed text-zinc-300">{d}</p>)}
+        </section>
       )}
       {sinDesgloseN > 0 && (
         <section className="space-y-2 border-y border-amber-500/30 bg-amber-500/[0.06] px-1 py-3">

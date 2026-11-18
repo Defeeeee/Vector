@@ -23,6 +23,9 @@ module.exports = {
   turbopack: { root: RAIZ_MONOREPO },
   outputFileTracingRoot: RAIZ_MONOREPO,
   allowedDevOrigins: ["100.78.13.108"],
+  // pdf.js en el servidor (leer el texto de un libro digital, `importar-libro-servidor.ts`): sin empaquetar,
+  // para que cargue su worker de Node como espera.
+  serverExternalPackages: ["pdfjs-dist"],
   env: {
     NEXT_PUBLIC_APP_VERSION: version,
   },

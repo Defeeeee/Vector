@@ -18,6 +18,7 @@ import path from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { carpetaDeDatos } from "@/lib/madhel-descargado";
 import { getAirport } from "@/lib/airports";
+import { leerLibroDigital, type ItemTexto } from "@/lib/libro-digital";
 import { leerHojasConGemini, type ParteArchivo } from "@/lib/leer-libro-gemini";
 import {
   avionesNuevos, corregirLectura, esFilaDeTotales, lotesPendientes, partirEnLotes, textoDeHojas, TAM_LOTE_FOTOS, TAM_LOTE_PDF, unirLotes, unirRangos,
@@ -70,7 +71,7 @@ interface FilaImportacion {
   estado: string;
   paginas_total: number;
   lotes_fallidos: Rango[];
-  resultado: { vuelos?: VueloLeido[]; aviones?: unknown[] } | null;
+  resultado: { vuelos?: VueloLeido[]; aviones?: unknown[]; diferencias?: string[] } | null;
   aviso_enviado_at: string | null;
   email: string | null;
   first_name: string | null;
@@ -144,6 +145,21 @@ export async function procesarImportacion(id: string): Promise<void> {
       await avanzar(id, { estado: "error", error: "No pudimos abrir el PDF." });
       await avisarDeNuevo(id);
       return;
+    }
+
+    // Un PDF digital (exportado de una planilla con la hoja de ANAC) se lee del texto, exacto y
+    // cotejado con los totales de cada hoja. Si no tiene esa forma, lo lee el lector de imágenes.
+    if (meta.tipo === "pdf") {
+      const digital = await leerPdfDigital(await fs.readFile(path.join(dir, "libro.pdf"))).catch((err) => {
+        console.error(`importar-libro ${id}: lectura del texto`, err instanceof Error ? err.message : err);
+        return null;
+      });
+      if (digital) {
+        const aviones = avionesNuevos(digital.vuelos, fila.matriculas ?? []);
+        const seguro = await avanzar(id, { estado: "listo", paginas_leidas: meta.hojas, lotes_fallidos: [], resultado: { vuelos: digital.vuelos, aviones, diferencias: digital.diferencias } });
+        if (seguro) await avisarDeNuevo(id);
+        return;
+      }
     }
 
     const lotes = lotesDe(meta);
@@ -273,4 +289,20 @@ export async function barrerImportaciones(): Promise<ResultadoBarrido> {
 function coordsDeAerodromo(cod: string): [number, number] | null {
   const a = cod ? getAirport(cod) : null;
   return a && typeof a.lat === "number" && typeof a.lon === "number" && Number.isFinite(a.lat) && Number.isFinite(a.lon) ? [a.lat, a.lon] : null;
+}
+
+/** El texto de cada hoja del PDF (con su posición), leído con pdf.js; null si no es un libro digital. */
+async function leerPdfDigital(bytes: Buffer): Promise<{ vuelos: VueloLeido[]; diferencias: string[] } | null> {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(bytes), verbosity: 0 }).promise;
+  try {
+    const hojas: ItemTexto[][] = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const contenido = await (await doc.getPage(i)).getTextContent();
+      hojas.push(contenido.items.flatMap((it) => ("str" in it && it.str.trim() ? [{ s: it.str, x: it.transform[4], y: it.transform[5] }] : [])));
+    }
+    return leerLibroDigital(hojas);
+  } finally {
+    await doc.cleanup();
+  }
 }

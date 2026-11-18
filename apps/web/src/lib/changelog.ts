@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.51.0",
+    fecha: "2026-11-18",
+    titulo: "Tu libro digital, leído al pie de la letra",
+    novedades: [
+      {
+        icono: "libro",
+        titulo: "Si tu libro es un PDF de planilla, Vector lo lee exacto",
+        texto: "Muchos pilotos llevan el libro en una planilla con la hoja de ANAC y la exportan a PDF. Ahora Vector lee ese texto columna por columna (de día o de noche, sobre aeródromo o en travesía, capota, adiestrador) en vez de mirar la imagen, y coteja cada hoja con sus totales: si algo no cierra, te dice en qué hoja y qué columna.",
+        href: "/dashboard/log-flight/import",
+        cta: "Importar mi libro",
+      },
+    ],
+  },
+  {
     version: "3.50.0",
     fecha: "2026-11-18",
     titulo: "Tu examen cuenta como repaso",
