@@ -9,9 +9,10 @@ import { cerrarImportacion, crearAvionesDelLibro } from "@/actions/importacion";
 import { useRouter } from "next/navigation";
 import { comprimirImagen } from "@/lib/imagen-cliente";
 import { mensajeDeError } from "@/lib/error-de-red";
+import { normalizarHoraTipeada } from "@/lib/horarios";
 import {
   avionesATildados, avionesNuevos, avisoDeFallidos, claveDeSimulador, comoSesionDeSimulador, esSimuladorLeido, normalizarMatricula,
-  simuladorDelHangar, simuladoresNuevos, TOPE_FOTOS, vueloSinAvion,
+  problemaDeFila, simuladorDelHangar, simuladoresNuevos, TOPE_FOTOS, vueloSinAvion,
   type AvionNuevo, type Rango, type VueloLeido,
 } from "@/lib/importar-libro";
 
@@ -348,8 +349,8 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
         nuevo_clave: match ? undefined : sim ? claveDeSimulador(f.aircraft_model) : normalizarMatricula(regClean),
         route: String(f.route ?? ""),
         duration: typeof f.duration === "number" ? f.duration : parseFloat(String(f.duration)) || 0,
-        takeoff: String(f.takeoff ?? ""),
-        landing: String(f.landing ?? ""),
+        takeoff: normalizarHoraTipeada(String(f.takeoff ?? "")),
+        landing: normalizarHoraTipeada(String(f.landing ?? "")),
         landings: typeof f.landings === "number" ? f.landings : parseInt(String(f.landings), 10) || 1,
         purpose: String(f.purpose || "VP"),
         pic_day_loc: num(f.pic_day_loc),
@@ -393,6 +394,15 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
   const handleRemoveFlight = (id: string) => setParsedFlights((prev) => prev.filter((f) => f.id !== id));
 
   const handleConfirmImport = async () => {
+    // Antes de crear aviones: una fila que no se puede guardar cortaba la importación a mitad de camino.
+    const conProblema = parsedFlights.filter((f) => problemaDeFila(f));
+    if (conProblema.length) {
+      const p = conProblema[0];
+      setError(conProblema.length === 1
+        ? `El vuelo del ${p.date || "(sin fecha)"} (${p.route}) tiene mal ${problemaDeFila(p)}. Corregilo en la fila marcada en rojo.`
+        : `${conProblema.length} vuelos tienen mal la fecha o el horario (el primero, del ${p.date || "(sin fecha)"}). Corregilos en las filas marcadas en rojo.`);
+      return;
+    }
     const sinAvion = parsedFlights.filter((f) => vueloSinAvion(f, aCrear));
     if (sinAvion.length) {
       setError(sinAvion.length === 1
@@ -419,6 +429,7 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
       // Las sesiones de simulador se guardan como las guarda el formulario: duración 0 y las horas en instrucción.
       const sims = new Set([...aircraftList.filter((a) => a.is_simulator).map((a) => a.id), ...tildados.filter((a) => a.simulador).map((a) => ids[a.clave])]);
       const paraGuardar = parsedFlights
+        .map((f) => ({ ...f, takeoff: normalizarHoraTipeada(f.takeoff), landing: normalizarHoraTipeada(f.landing) }))
         .map((f) => (f.aircraft_id ? f : { ...f, aircraft_id: ids[f.nuevo_clave ?? ""] ?? "" }))
         .map((f) => (sims.has(f.aircraft_id) ? comoSesionDeSimulador(f) : f));
       // Con la importación como base, un reintento no duplica vuelos (clave estable por vuelo).
@@ -539,12 +550,13 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
                 <tbody className="divide-y divide-zinc-100 dark:divide-white/5 text-xs">
                   {parsedFlights.map((flight) => {
                     const hasUnmatchedAc = vueloSinAvion(flight, aCrear);
+                    const problema = problemaDeFila(flight);
                     
                     return (
                       <tr 
                         key={flight.id} 
                         className={`hover:bg-zinc-50/50 dark:hover:bg-white/[0.01] transition-colors ${
-                          hasUnmatchedAc ? "bg-amber-500/[0.03] dark:bg-amber-500/[0.01]" : ""
+                          problema ? "bg-red-500/[0.06]" : hasUnmatchedAc ? "bg-amber-500/[0.03] dark:bg-amber-500/[0.01]" : ""
                         }`}
                       >
                         {/* Date field */}
@@ -572,7 +584,7 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
                               <option value="" disabled className="text-zinc-400">Seleccionar avión...</option>
                               {aircraftList.map((ac) => (
                                 <option key={ac.id} value={ac.id}>
-                                  {ac.registration} ({ac.icao})
+                                  {ac.registration} ({ac.icao || ac.type || "sin tipo"}{ac.is_simulator ? " · simulador" : ""})
                                 </option>
                               ))}
                               {aCrear.filter((a) => a.crear).map((a) => (
@@ -608,7 +620,8 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
                               placeholder="HH:MM"
                               value={flight.takeoff}
                               onChange={(e) => handleUpdateField(flight.id, "takeoff", e.target.value)}
-                              className="bg-transparent border border-zinc-200 dark:border-white/10 focus:border-zinc-400 focus:dark:border-white/30 rounded-lg px-1.5 py-1 text-xs font-bold w-12 text-center outline-none text-zinc-800 dark:text-zinc-200"
+                              onBlur={(e) => handleUpdateField(flight.id, "takeoff", normalizarHoraTipeada(e.target.value))}
+                              className={`bg-transparent border ${problema === "el horario" ? "border-red-500" : "border-zinc-200 dark:border-white/10"} focus:border-zinc-400 focus:dark:border-white/30 rounded-lg px-1.5 py-1 text-xs font-bold w-12 text-center outline-none text-zinc-800 dark:text-zinc-200`}
                             />
                             <span className="text-zinc-400">/</span>
                             <input 
@@ -616,7 +629,8 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
                               placeholder="HH:MM"
                               value={flight.landing}
                               onChange={(e) => handleUpdateField(flight.id, "landing", e.target.value)}
-                              className="bg-transparent border border-zinc-200 dark:border-white/10 focus:border-zinc-400 focus:dark:border-white/30 rounded-lg px-1.5 py-1 text-xs font-bold w-12 text-center outline-none text-zinc-800 dark:text-zinc-200"
+                              onBlur={(e) => handleUpdateField(flight.id, "landing", normalizarHoraTipeada(e.target.value))}
+                              className={`bg-transparent border ${problema === "el horario" ? "border-red-500" : "border-zinc-200 dark:border-white/10"} focus:border-zinc-400 focus:dark:border-white/30 rounded-lg px-1.5 py-1 text-xs font-bold w-12 text-center outline-none text-zinc-800 dark:text-zinc-200`}
                             />
                           </div>
                         </td>

@@ -7,6 +7,8 @@
  * donde quedó. Lo que falla se dice (invariante 2: no decir "listo" si faltó algo).
  */
 
+import { esHora, normalizarHoraTipeada } from "./horarios";
+
 export const TAM_LOTE_PDF = 3;
 export const TAM_LOTE_FOTOS = 4;
 /** Tope por libro. */
@@ -185,6 +187,10 @@ export interface AvionNuevo {
  * queda vacío y lo completa el piloto. La categoría de los monomotores terrestres también.
  */
 const MODELOS: { patron: RegExp; icao: string; categoria: string }[] = [
+  // El designador OACI escrito tal cual, como lo anotan muchos libros (y el CAD): C150, PA30, B350…
+  ...([["C150", "MONT-T"], ["C152", "MONT-T"], ["C172", "MONT-T"], ["C182", "MONT-T"], ["C206", "MONT-T"], ["C208", "MONT-T"], ["PA11", "MONT-T"], ["PA18", "MONT-T"],
+    ["PA22", "MONT-T"], ["P28A", "MONT-T"], ["PA38", "MONT-T"], ["P2008", "MONT-T"], ["P2002", "MONT-T"], ["P92", "MONT-T"], ["TB10", "MONT-T"],
+    ["PA30", "MULT-T"], ["PA34", "MULT-T"], ["PA44", "MULT-T"], ["B350", "MULT-T"]] as const).map(([icao, categoria]) => ({ patron: new RegExp(`^${icao}$`, "i"), icao, categoria })),
   { patron: /\b(?:cessna\s*)?150\b/i, icao: "C150", categoria: "MONT-T" },
   { patron: /\b(?:cessna\s*)?152\b/i, icao: "C152", categoria: "MONT-T" },
   { patron: /\b(?:cessna\s*)?172\b/i, icao: "C172", categoria: "MONT-T" },
@@ -208,7 +214,8 @@ export function icaoDeModelo(modelo: string | null | undefined): { icao: string;
   if (!m) return null;
   // Si el texto encaja con más de un modelo, no se sabe.
   const hallados = MODELOS.filter((x) => x.patron.test(m));
-  if (hallados.length !== 1) return null;
+  const icaos = new Set(hallados.map((x) => x.icao));
+  if (icaos.size !== 1) return null;
   return { icao: hallados[0].icao, type_acft: hallados[0].categoria };
 }
 
@@ -336,4 +343,12 @@ export function comoSesionDeSimulador<T extends HorasDeFila>(f: T): T {
     sic_day_loc: undefined, sic_day_tra: undefined, sic_night_loc: undefined, sic_night_tra: undefined,
     imc_pil: undefined, imc_cop: undefined, capota: undefined,
   };
+}
+
+/** Qué le falta a una fila para poder guardarse (fecha y horarios), o null si está bien. */
+export function problemaDeFila(f: { date: string; takeoff: string; landing: string }): string | null {
+  const d = new Date(`${f.date}T00:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(f.date) || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== f.date) return "la fecha";
+  if (!esHora(normalizarHoraTipeada(f.takeoff)) || !esHora(normalizarHoraTipeada(f.landing))) return "el horario";
+  return null;
 }

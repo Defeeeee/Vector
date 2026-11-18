@@ -172,8 +172,12 @@ export function filtrarHoraTipeada(texto: string): string {
  */
 export function horariosDelVuelo(fecha: string, salida: string, llegada: string): { takeoff_dt: string; landing_dt: string } {
   const aIso = (d: Date) => d.toISOString().split(".")[0] + "Z";
-  const despegue = new Date(`${fecha}T${salida}:00Z`);
-  let aterrizaje = new Date(`${fecha}T${llegada}:00Z`);
+  // "9:05" (un libro importado lo trae así) armaba "T9:05:00Z", que no es una fecha: "Invalid time value".
+  const s = normalizarHoraTipeada(String(salida ?? "")), l = normalizarHoraTipeada(String(llegada ?? ""));
+  if (!esHora(s) || !esHora(l)) throw new Error(`El vuelo del ${fecha} tiene un horario inválido (${salida} / ${llegada}).`);
+  const despegue = new Date(`${fecha}T${s}:00Z`);
+  let aterrizaje = new Date(`${fecha}T${l}:00Z`);
+  if (Number.isNaN(despegue.getTime())) throw new Error(`La fecha del vuelo no es válida (${fecha}).`);
   if (aterrizaje.getTime() <= despegue.getTime()) aterrizaje = new Date(aterrizaje.getTime() + 86_400_000);
   return { takeoff_dt: aIso(despegue), landing_dt: aIso(aterrizaje) };
 }

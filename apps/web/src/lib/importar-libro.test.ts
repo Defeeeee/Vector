@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  avionesNuevos, claveDeSimulador, comoSesionDeSimulador, simuladorDelHangar, simuladoresNuevos, deduplicar, icaoDeModelo, lotesPendientes, normalizarMatricula, parsearVuelos, partirEnLotes,
+  avionesNuevos, claveDeSimulador, comoSesionDeSimulador, problemaDeFila, simuladorDelHangar, simuladoresNuevos, deduplicar, icaoDeModelo, lotesPendientes, normalizarMatricula, parsearVuelos, partirEnLotes,
   textoDeFallidos, textoDeProgreso, unirLotes, unirRangos, vueloSinAvion, avisoDeFallidos, esSimuladorLeido, type VueloLeido,
 } from "./importar-libro";
 
@@ -115,5 +115,24 @@ describe("simuladores del libro (filas sin matrícula)", () => {
     const f = comoSesionDeSimulador({ duration: 1.8, pic_day_loc: 1.8, imc_pil: 1.8 });
     expect(f).toMatchObject({ duration: 0, sim_pil_en_inst: 1.8, pic_day_loc: undefined, imc_pil: undefined });
     expect(comoSesionDeSimulador({ duration: 1.5, sim_instructor: 1.5 })).toMatchObject({ duration: 0, sim_instructor: 1.5, sim_pil_en_inst: undefined });
+  });
+});
+
+describe("lo que cortaba la importación de Berni", () => {
+  it("una hora de un dígito ya no rompe el armado del vuelo", async () => {
+    const { horariosDelVuelo } = await import("./horarios");
+    expect(horariosDelVuelo("2025-03-11", "9:05", "10:40")).toEqual({ takeoff_dt: "2025-03-11T09:05:00Z", landing_dt: "2025-03-11T10:40:00Z" });
+    expect(() => horariosDelVuelo("2025-03-11", "25:00", "10:40")).toThrow(/horario inválido/);
+  });
+  it("la fila con fecha u horario imposible se marca antes de guardar", () => {
+    expect(problemaDeFila({ date: "2025-03-11", takeoff: "9:05", landing: "10:40" })).toBeNull();
+    expect(problemaDeFila({ date: "2025-02-30", takeoff: "09:05", landing: "10:40" })).toBe("la fecha");
+    expect(problemaDeFila({ date: "2025-03-11", takeoff: "9", landing: "10:40" })).toBe("el horario");
+  });
+  it("lee el modelo escrito como designador OACI", () => {
+    expect(icaoDeModelo("C150")).toEqual({ icao: "C150", type_acft: "MONT-T" });
+    expect(icaoDeModelo("PA30")).toEqual({ icao: "PA30", type_acft: "MULT-T" });
+    expect(icaoDeModelo("Cessna 150")).toEqual({ icao: "C150", type_acft: "MONT-T" });
+    expect(icaoDeModelo("ECHO")).toBeNull();
   });
 });

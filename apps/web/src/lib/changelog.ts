@@ -1910,6 +1910,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.49.2",
+    fecha: "2026-11-18",
+    motivo: "Importar el libro cortaba con «Invalid time value»: 7 vuelos leídos con la hora de un dígito (9:05) armaban una fecha inválida, y para entonces ya se habían creado los aviones. Ahora se normalizan las horas, se revisan fecha y horario de cada fila antes de crear nada, el modelo escrito como designador OACI (C150, PA30, B350) completa el OACI y el selector muestra el tipo cuando falta.",
+  },
+  {
     version: "3.49.1",
     fecha: "2026-11-17",
     motivo: "El importador no dejaba importar un libro con sesiones de simulador: las filas sin matrícula leída pedían un avión del Hangar y quien no tenía un simulador cargado quedaba trabado. Ahora propone crear el simulador (uno por modelo, marcado como simulador) y guarda esas filas como el formulario: duración 0 y las horas en instrucción en simulador.",
