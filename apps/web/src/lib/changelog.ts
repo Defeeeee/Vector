@@ -1931,6 +1931,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.50.1",
+    fecha: "2026-11-18",
+    motivo: "Al importar, el lector a veces ponía la clase (MONT-T) en el modelo del avión y el Hangar quedaba sin OACI; ahora la clase no cuenta como modelo (se usa como categoría) y el prompt lo aclara. Y un avión del libro que trae modelo, OACI y clase ya no se marca incompleto.",
+  },
+  {
     version: "3.49.4",
     fecha: "2026-11-18",
     motivo: "Importar un libro grande mostraba «An unexpected response was received from the server» aunque los vuelos se guardaban: 180 vuelos en un solo pedido tardaban más de los 100 s que espera Cloudflare. Ahora se guardan en tandas de 20, con «Guardando N de M».",

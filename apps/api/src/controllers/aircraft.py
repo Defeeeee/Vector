@@ -103,8 +103,9 @@ class AircraftController(Controller):
                         "type": a.type,
                         "type_acft": a.type_acft,
                         "is_simulator": a.is_simulator,
-                        "datos_completos": False,
                     }
+                    # Si el libro trajo todo (modelo, OACI y clase), ya está completo: no se lo pide.
+                    insertar["datos_completos"] = datos_completos(insertar)
                     fila = supabase_client.table("aircraft").insert(insertar).execute().data[0]
                     por_clave[clave] = fila
                     nuevos += 1

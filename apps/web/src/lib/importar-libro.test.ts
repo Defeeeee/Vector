@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  avionesNuevos, claveDeSimulador, comoSesionDeSimulador, problemaDeFila, sinDesglose, faltaDesglose, conDesglose, desgloseSupuesto, resumenDesglose, simuladorDelHangar, simuladoresNuevos, deduplicar, icaoDeModelo, lotesPendientes, normalizarMatricula, parsearVuelos, partirEnLotes,
+  avionesNuevos, claveDeSimulador, comoSesionDeSimulador, esClase, problemaDeFila, sinDesglose, faltaDesglose, conDesglose, desgloseSupuesto, resumenDesglose, simuladorDelHangar, simuladoresNuevos, deduplicar, icaoDeModelo, lotesPendientes, normalizarMatricula, parsearVuelos, partirEnLotes,
   textoDeFallidos, textoDeProgreso, unirLotes, unirRangos, vueloSinAvion, avisoDeFallidos, esSimuladorLeido, type VueloLeido,
 } from "./importar-libro";
 
@@ -158,5 +158,14 @@ describe("el desglose leído", () => {
     expect(desgloseSupuesto({ route: "SADF SADF", duration: 1.2 })).toEqual({ pic_day_loc: 1.2 });
     expect(desgloseSupuesto({ route: "SADF - SAAR", duration: 2 })).toEqual({ pic_day_tra: 2 });
     expect(resumenDesglose({ pic_day_loc: 1.2, pic_night_tra: 0.5 })).toBe("Piloto día local 1,2 · Piloto noche travesía 0,5");
+  });
+});
+
+describe("la clase leída como modelo", () => {
+  it("MONT-T no es un modelo: queda como clase y el modelo sale de otros vuelos", () => {
+    const v = (m: string): VueloLeido => ({ date: "2025-03-11", aircraft_registration: "LV-S024", aircraft_model: m, route: "SADF SADF", duration: 1 });
+    expect(esClase("MONT-T")).toBe(true);
+    expect(avionesNuevos([v("MONT-T"), v("MONT-T"), v("ASTO")], [])[0]).toMatchObject({ type: "ASTO", icao: "ASTO", type_acft: "MONT-T" });
+    expect(avionesNuevos([v("MONT-T")], [])[0]).toMatchObject({ type: "", icao: "", type_acft: "MONT-T" });
   });
 });

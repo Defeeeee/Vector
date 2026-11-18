@@ -234,15 +234,17 @@ export function icaoDeModelo(modelo: string | null | undefined): { icao: string;
  */
 export function avionesNuevos(vuelos: VueloLeido[], hangar: string[]): AvionNuevo[] {
   const conocidas = new Set(hangar.map(normalizarMatricula));
-  const porClave = new Map<string, { registration: string; cuenta: Map<string, number>; regs: Map<string, number>; vuelos: number }>();
+  const porClave = new Map<string, { registration: string; cuenta: Map<string, number>; clases: Map<string, number>; regs: Map<string, number>; vuelos: number }>();
   for (const v of vuelos) {
     if (esSimuladorLeido(v.aircraft_registration)) continue;
     const clave = normalizarMatricula(v.aircraft_registration);
     if (conocidas.has(clave)) continue;
-    const e = porClave.get(clave) ?? { registration: "", cuenta: new Map(), regs: new Map(), vuelos: 0 };
+    const e = porClave.get(clave) ?? { registration: "", cuenta: new Map(), clases: new Map(), regs: new Map(), vuelos: 0 };
     e.vuelos++;
     const modelo = (v.aircraft_model ?? "").trim();
-    if (modelo) e.cuenta.set(modelo, (e.cuenta.get(modelo) ?? 0) + 1);
+    // El lector a veces pone la clase (MONT-T) en el modelo: no es un modelo, pero dice la clase.
+    if (esClase(modelo)) e.clases.set(modelo.toUpperCase(), (e.clases.get(modelo.toUpperCase()) ?? 0) + 1);
+    else if (modelo) e.cuenta.set(modelo, (e.cuenta.get(modelo) ?? 0) + 1);
     const reg = String(v.aircraft_registration ?? "").trim().toUpperCase();
     e.regs.set(reg, (e.regs.get(reg) ?? 0) + 1);
     porClave.set(clave, e);
@@ -257,7 +259,7 @@ export function avionesNuevos(vuelos: VueloLeido[], hangar: string[]): AvionNuev
         registration: masFrecuente(e.regs) || clave,
         type,
         icao: deducido?.icao ?? "",
-        type_acft: deducido?.type_acft ?? null,
+        type_acft: deducido?.type_acft ?? (masFrecuente(e.clases) || null),
         vuelos: e.vuelos,
         crear: true,
       };
@@ -404,4 +406,9 @@ export function desgloseSupuesto(v: { route?: string; duration?: number | string
   const lugares = String(v.route ?? "").toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean);
   const local = lugares.length < 2 || lugares[0] === lugares[lugares.length - 1];
   return { [local ? "pic_day_loc" : "pic_day_tra"]: Number(v.duration) || 0 };
+}
+
+/** La clase del libro (MONT-T, MULT-T, MONT-H, MULT-H), que el lector a veces confunde con el modelo. */
+export function esClase(s: string | null | undefined): boolean {
+  return /^(MONT|MULT)-?[TH]$/i.test((s ?? "").trim());
 }

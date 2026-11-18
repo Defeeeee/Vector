@@ -26,7 +26,7 @@ export const PARAMETROS_LECTURA: GenerateContentConfig = {
       properties: {
         date: { type: Type.STRING, description: "Fecha del vuelo en formato YYYY-MM-DD (ej: 2026-06-30)" },
         aircraft_registration: { type: Type.STRING, description: "Matrícula de la aeronave (ej. LV-S153, N12345). Vacía si es un simulador" },
-        aircraft_model: { type: Type.STRING, description: "Marca y modelo de la aeronave tal como figura en el libro (ej. Cessna 152, Tecnam P2008, Piper PA-11). Vacío si no se lee" },
+        aircraft_model: { type: Type.STRING, description: "Marca y modelo de la aeronave, o su designador, tal como figura en el libro (ej. Cessna 152, Tecnam P2008, ECHO, PA30). No la clase (MONT-T, MULT-T): eso es otra columna. Vacío si no se lee" },
         route: { type: Type.STRING, description: "Ruta del vuelo (ej. SADF - SAAK o SADF/SAAK)" },
         duration: { type: Type.NUMBER, description: "Duración en horas decimales (ej. 1.2, 0.8, 1.5)" },
         takeoff: { type: Type.STRING, description: "Hora de salida como figura en el libro (UTC), formato HH:MM (ej. 14:30)" },

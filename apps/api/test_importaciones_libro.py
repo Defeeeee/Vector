@@ -135,7 +135,7 @@ base = Base(aircraft=aviones)
 ac.enviar_aviso = lambda uid, aviso: ahora_av.append(aviso)
 A = ac.AircraftController
 cc = A(owner=None)
-pedidos = AvionesDelLibro(aviones=[AvionDelLibro(registration="lv abc", type="Cessna 152"), AvionDelLibro(registration="LV-XYZ", type="Tecnam P2008", icao="P2008", type_acft="MONT-T")])
+pedidos = AvionesDelLibro(aviones=[AvionDelLibro(registration="lv abc", type="Cessna 152"), AvionDelLibro(registration="LV-XYZ", type="Tecnam P2008", type_acft="MONT-T")])
 res = corre(A.crear_desde_libro.fn(cc, pedido(YO), base, pedidos))
 check("no duplica uno que ya está (misma matrícula normalizada)", len(aviones) == 2 and str(res[0].id) == aviones[0]["id"])
 check("crea el que falta, incompleto", res[1].registration == "LV-XYZ" and res[1].datos_completos is False)
@@ -147,6 +147,8 @@ check("la categoría inválida se descarta", AvionDelLibro(registration="X", typ
 
 sim = corre(A.crear_desde_libro.fn(cc, pedido(YO), base, AvionesDelLibro(aviones=[AvionDelLibro(registration="SIM B350", type="B350", is_simulator=True)])))
 check("un simulador del libro se crea marcado como simulador", sim[0].is_simulator is True and aviones[-1]["is_simulator"] is True)
+completo = corre(A.crear_desde_libro.fn(cc, pedido(YO), base, AvionesDelLibro(aviones=[AvionDelLibro(registration="LV-HUS", type="C150", icao="C150", type_acft="MONT-T")])))
+check("un avión con todo del libro no se marca incompleto", completo[0].datos_completos is True)
 
 # Completarlo desde el Hangar lo apaga.
 from src.models.aircraft import AircraftUpdate
