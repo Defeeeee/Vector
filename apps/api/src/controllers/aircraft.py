@@ -102,7 +102,7 @@ class AircraftController(Controller):
                         "icao": a.icao.upper(),
                         "type": a.type,
                         "type_acft": a.type_acft,
-                        "is_simulator": False,
+                        "is_simulator": a.is_simulator,
                         "datos_completos": False,
                     }
                     fila = supabase_client.table("aircraft").insert(insertar).execute().data[0]

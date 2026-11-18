@@ -119,6 +119,8 @@ class AvionDelLibro(BaseModel):
     #: Sólo si se deduce con seguridad del modelo; si no, vacío.
     icao: str = Field(default="", max_length=8)
     type_acft: Optional[str] = Field(default=None, max_length=8)
+    #: Una sesión de simulador del libro (fila sin matrícula): el equipo se crea marcado.
+    is_simulator: bool = False
 
     @field_validator("registration", "type", "icao")
     @classmethod

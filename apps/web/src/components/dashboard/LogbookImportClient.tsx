@@ -10,7 +10,8 @@ import { useRouter } from "next/navigation";
 import { comprimirImagen } from "@/lib/imagen-cliente";
 import { mensajeDeError } from "@/lib/error-de-red";
 import {
-  avionesATildados, avionesNuevos, avisoDeFallidos, esSimuladorLeido, normalizarMatricula, TOPE_FOTOS, vueloSinAvion,
+  avionesATildados, avionesNuevos, avisoDeFallidos, claveDeSimulador, comoSesionDeSimulador, esSimuladorLeido, normalizarMatricula,
+  simuladorDelHangar, simuladoresNuevos, TOPE_FOTOS, vueloSinAvion,
   type AvionNuevo, type Rango, type VueloLeido,
 } from "@/lib/importar-libro";
 
@@ -330,18 +331,21 @@ function LecturaFallida({ importacion }: { importacion: Importacion }) {
 function Revision({ importacion, aircraftList }: { importacion: Importacion; aircraftList: Aircraft[] }) {
   const router = useRouter();
   const leidos = importacion.resultado?.vuelos ?? [];
-  const [aCrear, setACrear] = useState<AvionNuevo[]>(() => avionesNuevos(leidos, aircraftList.map((a) => a.registration)));
+  const [aCrear, setACrear] = useState<AvionNuevo[]>(() => [...avionesNuevos(leidos, aircraftList.map((a) => a.registration)), ...simuladoresNuevos(leidos, aircraftList)]);
   const [parsedFlights, setParsedFlights] = useState<ParsedFlight[]>(() =>
     leidos.map((f, idx) => {
       const regClean = String(f.aircraft_registration ?? "").trim().toUpperCase();
-      const match = aircraftList.find((ac) => normalizarMatricula(ac.registration) === normalizarMatricula(regClean));
+      const sim = esSimuladorLeido(regClean);
+      const match = sim
+        ? aircraftList.find((ac) => ac.id === simuladorDelHangar(f.aircraft_model, aircraftList))
+        : aircraftList.find((ac) => normalizarMatricula(ac.registration) === normalizarMatricula(regClean));
       const num = (x: unknown) => (typeof x === "number" && x ? x : undefined);
       return {
         id: `flight-temp-${idx}`,
         date: String(f.date ?? ""),
         aircraft_registration: String(f.aircraft_registration ?? ""),
         aircraft_id: match ? match.id : "",
-        nuevo_clave: !match && !esSimuladorLeido(regClean) ? normalizarMatricula(regClean) : undefined,
+        nuevo_clave: match ? undefined : sim ? claveDeSimulador(f.aircraft_model) : normalizarMatricula(regClean),
         route: String(f.route ?? ""),
         duration: typeof f.duration === "number" ? f.duration : parseFloat(String(f.duration)) || 0,
         takeoff: String(f.takeoff ?? ""),
@@ -389,9 +393,11 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
   const handleRemoveFlight = (id: string) => setParsedFlights((prev) => prev.filter((f) => f.id !== id));
 
   const handleConfirmImport = async () => {
-    const sinAvion = parsedFlights.find((f) => vueloSinAvion(f, aCrear));
-    if (sinAvion) {
-      setError(`El vuelo con ruta '${sinAvion.route}' no tiene un avión asociado. Elegí uno del Hangar o tildá el avión para agregarlo.`);
+    const sinAvion = parsedFlights.filter((f) => vueloSinAvion(f, aCrear));
+    if (sinAvion.length) {
+      setError(sinAvion.length === 1
+        ? `El vuelo del ${sinAvion[0].date} (${sinAvion[0].route}) no tiene avión. Elegí uno en la lista, marcado en amarillo.`
+        : `${sinAvion.length} vuelos no tienen avión (el primero, del ${sinAvion[0].date}). Elegí uno en cada fila marcada en amarillo.`);
       return;
     }
     setIsSubmitting(true);
@@ -401,7 +407,7 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
       const tildados = avionesATildados(aCrear).filter((a) => parsedFlights.some((f) => !f.aircraft_id && f.nuevo_clave === a.clave));
       const ids: Record<string, string> = {};
       if (tildados.length) {
-        const r = await crearAvionesDelLibro(tildados.map((a) => ({ registration: a.registration.trim(), type: a.type.trim(), icao: a.icao.trim(), type_acft: a.type_acft })));
+        const r = await crearAvionesDelLibro(tildados.map((a) => ({ registration: a.registration.trim(), type: a.type.trim(), icao: a.icao.trim(), type_acft: a.type_acft, is_simulator: !!a.simulador })));
         if ("error" in r) throw new Error(r.error);
         for (const a of tildados) {
           const id = r.ids[normalizarMatricula(a.registration)];
@@ -410,7 +416,11 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
         }
       }
       // 2) Los vuelos, ya con avión.
-      const paraGuardar = parsedFlights.map((f) => (f.aircraft_id ? f : { ...f, aircraft_id: ids[f.nuevo_clave ?? ""] ?? "" }));
+      // Las sesiones de simulador se guardan como las guarda el formulario: duración 0 y las horas en instrucción.
+      const sims = new Set([...aircraftList.filter((a) => a.is_simulator).map((a) => a.id), ...tildados.filter((a) => a.simulador).map((a) => ids[a.clave])]);
+      const paraGuardar = parsedFlights
+        .map((f) => (f.aircraft_id ? f : { ...f, aircraft_id: ids[f.nuevo_clave ?? ""] ?? "" }))
+        .map((f) => (sims.has(f.aircraft_id) ? comoSesionDeSimulador(f) : f));
       // Con la importación como base, un reintento no duplica vuelos (clave estable por vuelo).
       const res = await bulkLogFlights(paraGuardar, importacion.id);
       if (res.error) throw new Error(res.error);
@@ -460,11 +470,12 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
             <div key={a.clave} className="flex flex-wrap items-center gap-3 py-1">
               <input type="checkbox" checked={a.crear} onChange={(e) => cambiarAvion(a.clave, { crear: e.target.checked })} className="h-4 w-4 accent-cyan-400" aria-label={`Agregar ${a.registration}`} />
               <input value={a.registration} onChange={(e) => cambiarAvion(a.clave, { registration: e.target.value.toUpperCase() })} disabled={!a.crear} className="w-28 bg-transparent border border-white/10 rounded-lg px-2 py-1.5 text-xs font-bold uppercase text-zinc-100 outline-none focus:border-white/30 disabled:opacity-40" aria-label="Matrícula" />
+              {a.simulador && <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-aviation-cyan">Simulador</span>}
               <input value={a.type} placeholder="Marca y modelo" onChange={(e) => cambiarAvion(a.clave, { type: e.target.value })} disabled={!a.crear} className="w-44 bg-transparent border border-white/10 rounded-lg px-2 py-1.5 text-xs font-bold text-zinc-100 outline-none focus:border-white/30 disabled:opacity-40" aria-label="Marca y modelo" />
               <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-zinc-500">{a.vuelos} {a.vuelos === 1 ? "vuelo" : "vuelos"}</span>
             </div>
           ))}
-          <p className="text-xs leading-relaxed text-zinc-500">Los agregamos con matrícula y modelo; después te pedimos completar el resto desde el Hangar. Si apagás uno, sus vuelos te piden elegir un avión a mano.</p>
+          <p className="text-xs leading-relaxed text-zinc-500">Los agregamos con matrícula y modelo; después te pedimos completar el resto desde el Hangar. Si apagás uno, sus vuelos te piden elegir un avión a mano. Las filas sin matrícula son sesiones de simulador: van a un simulador del Hangar y sus horas, a instrucción en simulador, no a horas de vuelo.</p>
         </section>
       )}
 
@@ -566,7 +577,7 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
                               ))}
                               {aCrear.filter((a) => a.crear).map((a) => (
                                 <option key={a.clave} value={`nuevo:${a.clave}`}>
-                                  {a.registration} (nuevo)
+                                  {a.registration} ({a.simulador ? "simulador nuevo" : "nuevo"})
                                 </option>
                               ))}
                             </select>

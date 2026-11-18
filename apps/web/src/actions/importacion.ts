@@ -11,6 +11,8 @@ export interface AvionParaCrear {
   type: string;
   icao: string;
   type_acft: string | null;
+  /** Un simulador del libro (una fila sin matrícula). */
+  is_simulator?: boolean;
 }
 
 /**

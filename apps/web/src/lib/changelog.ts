@@ -1910,6 +1910,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.49.1",
+    fecha: "2026-11-17",
+    motivo: "El importador no dejaba importar un libro con sesiones de simulador: las filas sin matrícula leída pedían un avión del Hangar y quien no tenía un simulador cargado quedaba trabado. Ahora propone crear el simulador (uno por modelo, marcado como simulador) y guarda esas filas como el formulario: duración 0 y las horas en instrucción en simulador.",
+  },
+  {
     version: "3.48.1",
     fecha: "2026-11-17",
     motivo: "Las respuestas de la oficina ARO no se clasificaban con Gemini: se le pedía un plazo de 8 s y Google exige 10 como mínimo (400). Ahora 12 s, y \`conEspera\` nunca baja de 10 s.",

@@ -145,6 +145,9 @@ check("GET trae datos_completos", Aircraft(**aviones[1]).datos_completos is Fals
 check("completo = modelo, OACI y categoría", not ac.datos_completos(aviones[1] | {"icao": ""}) and ac.datos_completos(aviones[1] | {"icao": "P208"}))
 check("la categoría inválida se descarta", AvionDelLibro(registration="X", type_acft="otra").type_acft is None)
 
+sim = corre(A.crear_desde_libro.fn(cc, pedido(YO), base, AvionesDelLibro(aviones=[AvionDelLibro(registration="SIM B350", type="B350", is_simulator=True)])))
+check("un simulador del libro se crea marcado como simulador", sim[0].is_simulator is True and aviones[-1]["is_simulator"] is True)
+
 # Completarlo desde el Hangar lo apaga.
 from src.models.aircraft import AircraftUpdate
 r2 = corre(A.update_aircraft.fn(cc, pedido(YO), base, __import__("uuid").UUID(aviones[1]["id"]), AircraftUpdate(icao="P2008", type_acft="MONT-T", type="Tecnam P2008")))

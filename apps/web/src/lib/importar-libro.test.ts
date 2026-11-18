@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  avionesNuevos, deduplicar, icaoDeModelo, lotesPendientes, normalizarMatricula, parsearVuelos, partirEnLotes,
-  textoDeFallidos, textoDeProgreso, unirLotes, unirRangos, vueloSinAvion, avisoDeFallidos, esSimuladorLeido,
+  avionesNuevos, claveDeSimulador, comoSesionDeSimulador, simuladorDelHangar, simuladoresNuevos, deduplicar, icaoDeModelo, lotesPendientes, normalizarMatricula, parsearVuelos, partirEnLotes,
+  textoDeFallidos, textoDeProgreso, unirLotes, unirRangos, vueloSinAvion, avisoDeFallidos, esSimuladorLeido, type VueloLeido,
 } from "./importar-libro";
 
 const v = (o: Record<string, unknown> = {}) => ({ date: "2026-05-01", aircraft_registration: "LV-ABC", aircraft_model: "Cessna 152", route: "SADF SADF", takeoff: "14:00", landing: "15:00", duration: 1, ...o });
@@ -94,5 +94,26 @@ describe("un vuelo con avión a crear no bloquea", () => {
   it("uno ya asignado a un avión del Hangar no bloquea; uno sin nada sí", () => {
     expect(vueloSinAvion({ aircraft_id: "x" }, [])).toBe(false);
     expect(vueloSinAvion({ aircraft_id: "" }, [a])).toBe(true);
+  });
+});
+
+describe("simuladores del libro (filas sin matrícula)", () => {
+  const v = (o: Partial<VueloLeido>): VueloLeido => ({ date: "2025-03-11", aircraft_registration: "", route: "ASG ASG", takeoff: "13:05", landing: "14:55", duration: 1.8, ...o });
+  const libro = [v({ aircraft_model: "B350" }), v({ aircraft_model: "B350" }), v({ aircraft_model: "C172", route: "GEO SIMULADORES" }), v({ aircraft_registration: "LV-S024", aircraft_model: "ASTO" })];
+  it("propone un simulador por modelo, con una matrícula a corregir", () => {
+    const r = simuladoresNuevos(libro, []);
+    expect(r.map((a) => [a.clave, a.registration, a.vuelos, a.simulador])).toEqual([["SIM-B350", "SIM B350", 2, true], ["SIM-C172", "SIM C172", 1, true]]);
+  });
+  it("usa el simulador del Hangar si hay uno de ese modelo", () => {
+    const hangar = [{ id: "s1", registration: "LV-ASG", type: "Simulador B350", is_simulator: true }, { id: "a1", registration: "LV-S024", type: "ASTO" }];
+    expect(simuladorDelHangar("B350", hangar)).toBe("s1");
+    expect(simuladorDelHangar("C172", hangar)).toBeUndefined();
+    expect(simuladoresNuevos(libro, hangar).map((a) => a.clave)).toEqual(["SIM-C172"]);
+    expect(claveDeSimulador("")).toBe("SIM-X");
+  });
+  it("la sesión se guarda como el formulario: duración 0 y las horas en instrucción", () => {
+    const f = comoSesionDeSimulador({ duration: 1.8, pic_day_loc: 1.8, imc_pil: 1.8 });
+    expect(f).toMatchObject({ duration: 0, sim_pil_en_inst: 1.8, pic_day_loc: undefined, imc_pil: undefined });
+    expect(comoSesionDeSimulador({ duration: 1.5, sim_instructor: 1.5 })).toMatchObject({ duration: 0, sim_instructor: 1.5, sim_pil_en_inst: undefined });
   });
 });

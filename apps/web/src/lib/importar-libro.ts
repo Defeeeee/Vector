@@ -175,6 +175,8 @@ export interface AvionNuevo {
   vuelos: number;
   /** Tildado = se agrega al importar. */
   crear: boolean;
+  /** Un simulador leído sin matrícula: se agrega al Hangar marcado como simulador. */
+  simulador?: boolean;
 }
 
 /**
@@ -263,4 +265,75 @@ export function vueloSinAvion(v: VueloParaAvion, aCrear: AvionNuevo[]): boolean 
 /** Los aviones a crear que el piloto dejó tildados y con matrícula. */
 export function avionesATildados(aCrear: AvionNuevo[]): AvionNuevo[] {
   return aCrear.filter((a) => a.crear && normalizarMatricula(a.registration));
+}
+
+// ── Simuladores ──────────────────────────────────────────────────────────────────────────────────
+// Un renglón sin matrícula leída es, casi siempre, una sesión de simulador: en el libro se anota
+// el equipo por el lugar o el modelo ("ASG ASG" en un B350, "GEO SIMULADORES" en un C172) y el
+// lector no encuentra una matrícula. Hasta la 3.49.1 esos renglones sólo dejaban elegir un avión
+// del Hangar, y quien no tenía un simulador cargado no podía importar el libro.
+
+/** La clave de un simulador leído, por su modelo: un equipo por modelo. */
+export function claveDeSimulador(modelo: string | null | undefined): string {
+  return `SIM-${normalizarMatricula(modelo) || "X"}`;
+}
+
+export interface EquipoDelHangar {
+  id: string;
+  registration: string;
+  type?: string | null;
+  is_simulator?: boolean | null;
+}
+
+/** El simulador del Hangar para ese modelo, si hay uno solo que encaja. */
+export function simuladorDelHangar(modelo: string | null | undefined, hangar: EquipoDelHangar[]): string | undefined {
+  const sims = hangar.filter((a) => a.is_simulator);
+  const m = normalizarMatricula(modelo);
+  const mismos = m ? sims.filter((a) => normalizarMatricula(a.type).includes(m)) : [];
+  if (mismos.length === 1) return mismos[0].id;
+  if (!m && sims.length === 1) return sims[0].id;
+  return undefined;
+}
+
+/** Los simuladores del libro que no están en el Hangar: uno por modelo, con una matrícula a corregir. */
+export function simuladoresNuevos(vuelos: VueloLeido[], hangar: EquipoDelHangar[]): AvionNuevo[] {
+  const conocidas = new Set(hangar.map((a) => normalizarMatricula(a.registration)));
+  const porClave = new Map<string, AvionNuevo>();
+  for (const v of vuelos) {
+    if (!esSimuladorLeido(v.aircraft_registration)) continue;
+    const modelo = (v.aircraft_model ?? "").trim();
+    if (simuladorDelHangar(modelo, hangar)) continue;
+    const clave = claveDeSimulador(modelo);
+    const leida = String(v.aircraft_registration ?? "").trim().toUpperCase();
+    const registration = (leida.startsWith("SIM") ? leida : `SIM ${modelo.toUpperCase()}`.trim()).slice(0, 16);
+    if (conocidas.has(normalizarMatricula(registration))) continue;
+    const e = porClave.get(clave);
+    if (e) { e.vuelos++; continue; }
+    const deducido = icaoDeModelo(modelo);
+    porClave.set(clave, { clave, registration, type: modelo, icao: deducido?.icao ?? "", type_acft: deducido?.type_acft ?? null, vuelos: 1, crear: true, simulador: true });
+  }
+  return [...porClave.values()].sort((a, b) => b.vuelos - a.vuelos || a.clave.localeCompare(b.clave));
+}
+
+export interface HorasDeFila {
+  duration: number;
+  pic_day_loc?: number; pic_day_tra?: number; pic_night_loc?: number; pic_night_tra?: number;
+  sic_day_loc?: number; sic_day_tra?: number; sic_night_loc?: number; sic_night_tra?: number;
+  imc_pil?: number; imc_cop?: number; capota?: number;
+  sim_instructor?: number; sim_pil_en_inst?: number;
+}
+
+/**
+ * Una fila importada que va a un simulador, como la guarda el formulario (`lib/simulador.ts`):
+ * duración en cero y las horas en instrucción terrestre (piloto, salvo que el libro las tenga
+ * como instructor). Lo demás de la fila no existe en una sesión de simulador.
+ */
+export function comoSesionDeSimulador<T extends HorasDeFila>(f: T): T {
+  const pil = f.sim_pil_en_inst || (f.sim_instructor ? undefined : f.duration || undefined);
+  return {
+    ...f, duration: 0, sim_pil_en_inst: pil,
+    pic_day_loc: undefined, pic_day_tra: undefined, pic_night_loc: undefined, pic_night_tra: undefined,
+    sic_day_loc: undefined, sic_day_tra: undefined, sic_night_loc: undefined, sic_night_tra: undefined,
+    imc_pil: undefined, imc_cop: undefined, capota: undefined,
+  };
 }
