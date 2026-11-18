@@ -1910,6 +1910,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.49.4",
+    fecha: "2026-11-18",
+    motivo: "Importar un libro grande mostraba «An unexpected response was received from the server» aunque los vuelos se guardaban: 180 vuelos en un solo pedido tardaban más de los 100 s que espera Cloudflare. Ahora se guardan en tandas de 20, con «Guardando N de M».",
+  },
+  {
     version: "3.49.3",
     fecha: "2026-11-18",
     motivo: "Los designadores OACI del importador, revisados contra el Doc 8643 oficial: ECHO (Tecnam P92), SIRA (P2002), ASTO (Astore), TWEN (P2010), P06T, TOBA, PA30, B350; y se corrigen tres que estaban mal (el P2008 es P208, no P2008; el P2002 es SIRA; el P92 es ECHO).",

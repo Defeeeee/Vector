@@ -329,6 +329,9 @@ function LecturaFallida({ importacion }: { importacion: Importacion }) {
 }
 
 /** La revisión de siempre —vuelos y aviones—, con lo que leyó el server. Nada se importa sin confirmar. */
+/** Cuántos vuelos van en cada pedido al guardar: cada uno es un POST al backend, de a uno. */
+const TANDA_DE_VUELOS = 20;
+
 function Revision({ importacion, aircraftList }: { importacion: Importacion; aircraftList: Aircraft[] }) {
   const router = useRouter();
   const leidos = importacion.resultado?.vuelos ?? [];
@@ -370,6 +373,7 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
     })
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [guardados, setGuardados] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const aviso = avisoDeFallidos(importacion.lotes_fallidos ?? []);
 
@@ -433,14 +437,21 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
         .map((f) => (f.aircraft_id ? f : { ...f, aircraft_id: ids[f.nuevo_clave ?? ""] ?? "" }))
         .map((f) => (sims.has(f.aircraft_id) ? comoSesionDeSimulador(f) : f));
       // Con la importación como base, un reintento no duplica vuelos (clave estable por vuelo).
-      const res = await bulkLogFlights(paraGuardar, importacion.id);
-      if (res.error) throw new Error(res.error);
+      // Por tandas: 180 vuelos en un solo pedido tardaban más de los 100 s que Cloudflare espera y la
+      // pantalla mostraba un error aunque el servidor terminara (le pasó a Berni el 2026-11-18).
+      for (let i = 0; i < paraGuardar.length; i += TANDA_DE_VUELOS) {
+        setGuardados(i);
+        const res = await bulkLogFlights(paraGuardar.slice(i, i + TANDA_DE_VUELOS), importacion.id);
+        if (res.error) throw new Error(res.error);
+      }
+      setGuardados(paraGuardar.length);
       await cerrarImportacion(importacion.id, "importado");
       router.push("/dashboard/history");
     } catch (err: any) {
       setError(mensajeDeError(err, "Ocurrió un error al registrar los vuelos en la bitácora.", navigator.onLine));
     } finally {
       setIsSubmitting(false);
+      setGuardados(null);
     }
   };
 
@@ -519,7 +530,7 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
             {isSubmitting ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Guardando...</span>
+                <span>{guardados !== null && parsedFlights.length > TANDA_DE_VUELOS ? `Guardando ${guardados} de ${parsedFlights.length}…` : "Guardando..."}</span>
               </>
             ) : (
               <>
