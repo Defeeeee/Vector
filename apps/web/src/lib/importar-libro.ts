@@ -7,7 +7,8 @@
  * donde quedó. Lo que falla se dice (invariante 2: no decir "listo" si faltó algo).
  */
 
-import { esHora, normalizarHoraTipeada } from "./horarios";
+import { esHora, horariosDelVuelo, normalizarHoraTipeada } from "./horarios";
+import { alturaDelSol } from "./sol";
 
 export const TAM_LOTE_PDF = 3;
 export const TAM_LOTE_FOTOS = 4;
@@ -411,4 +412,52 @@ export function desgloseSupuesto(v: { route?: string; duration?: number | string
 /** La clase del libro (MONT-T, MULT-T, MONT-H, MULT-H), que el lector a veces confunde con el modelo. */
 export function esClase(s: string | null | undefined): boolean {
   return /^(MONT|MULT)-?[TH]$/i.test((s ?? "").trim());
+}
+
+// ── Lo que el lector confunde, corregido con reglas que no dependen de él ─────────────────────────
+// (Berni, 2026-11-18: la capota leída como horas de simulador, y vuelos de día leídos como nocturnos.)
+
+const DIA_NOCHE: [string, string][] = [["pic_day_loc", "pic_night_loc"], ["pic_day_tra", "pic_night_tra"], ["sic_day_loc", "sic_night_loc"], ["sic_day_tra", "sic_night_tra"]];
+
+/**
+ * Corrige una fila leída:
+ * - **Capota:** un avión de verdad no tiene horas de simulador. Si el lector las puso ahí y la capota
+ *   está vacía, son de capota (el libro de ANAC tiene las dos columnas juntas, en la discriminación).
+ * - **Día o noche:** si el sol estaba arriba del horizonte al despegar y al aterrizar, el vuelo fue de
+ *   día con cualquier definición de noche, y lo leído como nocturno pasa a diurno. Al revés, con el sol
+ *   a más de 6° bajo el horizonte en las dos puntas (pasado el crepúsculo civil), lo diurno pasa a
+ *   nocturno. Un vuelo que cruza la puesta o la salida del sol no se toca: ahí manda lo leído.
+ * `coordsDe` da [lat, lon] de un código de aeródromo (null si no se conoce).
+ */
+export function corregirLectura(v: VueloLeido, coordsDe: (cod: string) => [number, number] | null): VueloLeido & { correcciones?: string[] } {
+  const out: VueloLeido & { correcciones?: string[] } = { ...v };
+  const correcciones: string[] = [];
+  const num = (k: string) => Number(out[k]) || 0;
+  if (!esSimuladorLeido(v.aircraft_registration) && num("sim_pil_en_inst") > 0 && num("capota") === 0) {
+    out.capota = num("sim_pil_en_inst");
+    delete out.sim_pil_en_inst;
+    correcciones.push("capota");
+  }
+  const noche = DIA_NOCHE.some(([, n]) => num(n) > 0), dia = DIA_NOCHE.some(([d]) => num(d) > 0);
+  if ((noche || dia) && !(noche && dia)) {
+    const lugares = String(v.route ?? "").toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean);
+    const desde = coordsDe(lugares[0] ?? "") ?? coordsDe(lugares[lugares.length - 1] ?? "");
+    const hasta = coordsDe(lugares[lugares.length - 1] ?? "") ?? desde;
+    if (desde && hasta && v.date && v.takeoff && v.landing) {
+      try {
+        const { takeoff_dt, landing_dt } = horariosDelVuelo(String(v.date), String(v.takeoff), String(v.landing));
+        const a1 = alturaDelSol(new Date(takeoff_dt), ...desde), a2 = alturaDelSol(new Date(landing_dt), ...hasta);
+        const pasar = (de: 0 | 1) => DIA_NOCHE.forEach((par) => {
+          const [o, d] = [par[de], par[1 - de]];
+          if (num(o) > 0) { out[d] = num(d) + num(o); delete out[o]; }
+        });
+        if (noche && a1 > 0 && a2 > 0) { pasar(1); correcciones.push("día"); }
+        else if (dia && a1 < -6 && a2 < -6) { pasar(0); correcciones.push("noche"); }
+      } catch {
+        // un horario que no se entiende se revisa en la pantalla (`problemaDeFila`)
+      }
+    }
+  }
+  if (correcciones.length) out.correcciones = correcciones;
+  return out;
 }

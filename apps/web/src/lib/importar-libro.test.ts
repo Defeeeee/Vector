@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  avionesNuevos, claveDeSimulador, comoSesionDeSimulador, esClase, problemaDeFila, sinDesglose, faltaDesglose, conDesglose, desgloseSupuesto, resumenDesglose, simuladorDelHangar, simuladoresNuevos, deduplicar, icaoDeModelo, lotesPendientes, normalizarMatricula, parsearVuelos, partirEnLotes,
+  avionesNuevos, claveDeSimulador, comoSesionDeSimulador, corregirLectura, esClase, problemaDeFila, sinDesglose, faltaDesglose, conDesglose, desgloseSupuesto, resumenDesglose, simuladorDelHangar, simuladoresNuevos, deduplicar, icaoDeModelo, lotesPendientes, normalizarMatricula, parsearVuelos, partirEnLotes,
   textoDeFallidos, textoDeProgreso, unirLotes, unirRangos, vueloSinAvion, avisoDeFallidos, esSimuladorLeido, type VueloLeido,
 } from "./importar-libro";
 
@@ -167,5 +167,25 @@ describe("la clase leída como modelo", () => {
     expect(esClase("MONT-T")).toBe(true);
     expect(avionesNuevos([v("MONT-T"), v("MONT-T"), v("ASTO")], [])[0]).toMatchObject({ type: "ASTO", icao: "ASTO", type_acft: "MONT-T" });
     expect(avionesNuevos([v("MONT-T")], [])[0]).toMatchObject({ type: "", icao: "", type_acft: "MONT-T" });
+  });
+});
+
+describe("corregirLectura", () => {
+  const coords = (c: string): [number, number] | null => (c === "SADF" ? [-34.453, -58.589] : c === "SAAK" ? [-34.18, -58.247] : null);
+  const v = (o: Partial<VueloLeido>): VueloLeido => ({ date: "2025-07-06", aircraft_registration: "LV-S114", route: "SADF SADF", duration: 1, takeoff: "19:50", landing: "20:50", ...o });
+  it("la noche con el sol arriba pasa a día", () => {
+    const r = corregirLectura(v({ pic_night_loc: 1 }), coords);
+    expect(r).toMatchObject({ pic_day_loc: 1, correcciones: ["día"] });
+    expect(r.pic_night_loc).toBeUndefined();
+  });
+  it("lo diurno con el sol bien abajo pasa a noche; lo que cruza la puesta no se toca", () => {
+    expect(corregirLectura(v({ takeoff: "23:00", landing: "23:50", pic_day_loc: 0.8 }), coords)).toMatchObject({ pic_night_loc: 0.8 });
+    expect(corregirLectura(v({ takeoff: "20:40", landing: "21:40", pic_night_loc: 1 }), coords).correcciones).toBeUndefined();
+  });
+  it("las horas de simulador en un avión son de capota", () => {
+    const r = corregirLectura(v({ takeoff: "15:00", landing: "16:30", pic_day_loc: 1.5, sim_pil_en_inst: 1.2 }), coords);
+    expect(r).toMatchObject({ capota: 1.2, correcciones: ["capota"] });
+    expect(r.sim_pil_en_inst).toBeUndefined();
+    expect(corregirLectura(v({ aircraft_registration: "", sim_pil_en_inst: 1.2 }), coords).capota).toBeUndefined();
   });
 });

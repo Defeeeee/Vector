@@ -1931,6 +1931,11 @@ export const CHANGELOG: VersionPublicada[] = [
  */
 export const VERSIONES_SIN_NOVEDADES: { version: string; fecha: string; motivo: string }[] = [
   {
+    version: "3.50.2",
+    fecha: "2026-11-18",
+    motivo: "El importador leía la capota como horas de simulador y vuelos de día como nocturnos. Ahora el lector lee el encabezado de cada columna, y al terminar se corrige: horas de simulador en un avión pasan a capota, y lo nocturno con el sol arriba en el despegue y el aterrizaje pasa a diurno (y lo diurno con el sol más de 6° abajo, a nocturno). Los vuelos que cruzan la puesta no se tocan.",
+  },
+  {
     version: "3.50.1",
     fecha: "2026-11-18",
     motivo: "Al importar, el lector a veces ponía la clase (MONT-T) en el modelo del avión y el Hangar quedaba sin OACI; ahora la clase no cuenta como modelo (se usa como categoría) y el prompt lo aclara. Y un avión del libro que trae modelo, OACI y clase ya no se marca incompleto.",

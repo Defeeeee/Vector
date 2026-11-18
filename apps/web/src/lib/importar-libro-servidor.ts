@@ -17,9 +17,10 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { carpetaDeDatos } from "@/lib/madhel-descargado";
+import { getAirport } from "@/lib/airports";
 import { leerHojasConGemini, type ParteArchivo } from "@/lib/leer-libro-gemini";
 import {
-  avionesNuevos, esFilaDeTotales, lotesPendientes, partirEnLotes, textoDeHojas, TAM_LOTE_FOTOS, TAM_LOTE_PDF, unirLotes, unirRangos,
+  avionesNuevos, corregirLectura, esFilaDeTotales, lotesPendientes, partirEnLotes, textoDeHojas, TAM_LOTE_FOTOS, TAM_LOTE_PDF, unirLotes, unirRangos,
   type Rango, type VueloLeido,
 } from "@/lib/importar-libro";
 import { armarMensajeImportacion } from "@/lib/importar-libro-mail";
@@ -172,7 +173,9 @@ export async function procesarImportacion(id: string): Promise<void> {
 
     const porLote: VueloLeido[][] = [];
     for (let i = 0; i < lotes.length; i++) porLote.push((await leerLoteGuardado(dir, i))?.vuelos ?? []);
-    const vuelos = unirLotes(porLote);
+    // La capota leída como simulador y el día leído como noche (o al revés) se corrigen acá, con el
+    // horario y la posición del sol: la revisión ya los muestra bien (`corregirLectura`).
+    const vuelos = unirLotes(porLote).map((v) => corregirLectura(v, coordsDeAerodromo));
     const fallidos = await rangosFallidos(dir, lotes, new Set(lotes.map((_, i) => i)));
     const aviones = avionesNuevos(vuelos, fila.matriculas ?? []);
 
@@ -264,4 +267,10 @@ export async function barrerImportaciones(): Promise<ResultadoBarrido> {
     }
   }
   return { retomadas: ids, borradas };
+}
+
+/** [lat, lon] de un aeródromo por su indicador OACI o su designador ANAC. */
+function coordsDeAerodromo(cod: string): [number, number] | null {
+  const a = cod ? getAirport(cod) : null;
+  return a && typeof a.lat === "number" && typeof a.lon === "number" && Number.isFinite(a.lat) && Number.isFinite(a.lon) ? [a.lat, a.lon] : null;
 }
