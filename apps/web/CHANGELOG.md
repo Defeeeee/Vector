@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.52.0 — Tu libro en una planilla
+
+_18 de noviembre de 2026_
+
+- **Importá tu libro desde Excel o CSV, armado como sea** — Si llevás el libro en una planilla, subila tal cual (.xlsx o .csv): no hace falta que tenga las columnas de ANAC ni en ese orden. Vector entiende los encabezados (Matr., PIC, Noche, XC, Capota…), convierte las fechas y las horas, y te muestra los vuelos para revisar antes de importar.
+
 ## v3.51.0 — Tu libro digital, leído al pie de la letra
 
 _18 de noviembre de 2026_

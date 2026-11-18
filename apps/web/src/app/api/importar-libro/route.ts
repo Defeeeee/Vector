@@ -5,10 +5,14 @@ import { PDFDocument } from "pdf-lib";
 import { getSessionToken } from "@/actions/auth";
 import { apiFetch } from "@/lib/api";
 import { TOPE_BYTES_LIBRO, TOPE_FOTOS, TOPE_PAGINAS_PDF } from "@/lib/importar-libro";
+import { leerCsv, leerXlsx, lotesDePlanilla, type LotePlanilla } from "@/lib/planilla";
 import { borrarImportacion, carpetaDeImportacion, procesarImportacion, type MetaImportacion } from "@/lib/importar-libro-servidor";
 
 // Esperar a Gemini lote por lote puede llevar minutos: sólo importa donde el hosting corta la función.
 export const maxDuration = 300;
+
+/** Lotes de 80 filas: 40 son unos 3.000 vuelos. */
+const TOPE_LOTES_PLANILLA = 40;
 
 const TIPOS_FOTO: Record<string, string> = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp" };
 
@@ -47,6 +51,22 @@ export async function POST(req: NextRequest) {
       escribir = async (dir) => {
         for (const [i, f] of fotos.entries()) await fs.writeFile(path.join(dir, nombres[i]), Buffer.from(await f.arrayBuffer()));
       };
+    } else if (file && typeof file !== "string" && /\.(xlsx|csv|xls)$/i.test(file.name)) {
+      // Una planilla de cualquier formato: se pasa a texto acá (así se sabe ya si se puede leer) y
+      // Gemini la lee por lotes de filas, cada uno con el encabezado de su hoja (`lib/planilla.ts`).
+      if (/\.xls$/i.test(file.name)) return NextResponse.json({ error: "El formato .xls viejo no se puede leer: guardá la planilla como .xlsx o .csv y subila de nuevo." }, { status: 400 });
+      if (file.size > TOPE_BYTES_LIBRO) return NextResponse.json({ error: "La planilla pesa demasiado (máximo 60 MB)." }, { status: 413 });
+      const bytes = Buffer.from(await file.arrayBuffer());
+      let lotes: LotePlanilla[];
+      try {
+        lotes = lotesDePlanilla(/\.csv$/i.test(file.name) ? leerCsv(bytes.toString("utf8")) : leerXlsx(bytes));
+      } catch {
+        return NextResponse.json({ error: "No pudimos abrir la planilla. Probá guardándola como .csv." }, { status: 400 });
+      }
+      if (lotes.length === 0) return NextResponse.json({ error: "La planilla está vacía." }, { status: 400 });
+      if (lotes.length > TOPE_LOTES_PLANILLA) return NextResponse.json({ error: "La planilla es muy larga para leerla de una vez: subila en dos partes." }, { status: 400 });
+      meta = { tipo: "planilla", hojas: lotes.length, archivos: ["planilla.json"] };
+      escribir = async (dir) => fs.writeFile(path.join(dir, "planilla.json"), JSON.stringify(lotes));
     } else {
       if (!file || typeof file === "string") return NextResponse.json({ error: "No se subió ningún archivo." }, { status: 400 });
       if (file.size > TOPE_BYTES_LIBRO) return NextResponse.json({ error: "El PDF pesa demasiado (máximo 60 MB)." }, { status: 413 });

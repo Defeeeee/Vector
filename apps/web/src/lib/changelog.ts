@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.52.0",
+    fecha: "2026-11-18",
+    titulo: "Tu libro en una planilla",
+    novedades: [
+      {
+        icono: "libro",
+        titulo: "Importá tu libro desde Excel o CSV, armado como sea",
+        texto: "Si llevás el libro en una planilla, subila tal cual (.xlsx o .csv): no hace falta que tenga las columnas de ANAC ni en ese orden. Vector entiende los encabezados (Matr., PIC, Noche, XC, Capota…), convierte las fechas y las horas, y te muestra los vuelos para revisar antes de importar.",
+        href: "/dashboard/log-flight/import",
+        cta: "Importar mi planilla",
+      },
+    ],
+  },
+  {
     version: "3.51.0",
     fecha: "2026-11-18",
     titulo: "Tu libro digital, leído al pie de la letra",

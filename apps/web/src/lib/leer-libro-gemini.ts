@@ -91,3 +91,22 @@ export async function leerHojasConGemini(partes: ParteArchivo[], descripcion: st
   }
   return vuelos;
 }
+
+const PROMPT_PLANILLA = `Esto es parte de una planilla (Excel, Google Sheets o CSV) donde un piloto argentino lleva su libro de vuelo.
+Las columnas pueden tener **cualquier nombre, en cualquier orden y en cualquier idioma**: deducí qué es cada una por su encabezado y por los datos (por ejemplo "Matr.", "Avión" o "Registration" son la matrícula; "Desde/Hasta", "Origen/Destino" o "Ruta" son la ruta; "PIC", "Piloto al mando" o "P1" son horas de piloto; "Noche", "Nocturno" o "Night" son horas de noche; "XC", "Travesía" o "Cross country" son travesía; "Capota", "Hood" o "Simulated instrument" son capota; "IMC" o "Actual instrument" son instrumentos real; "Sim", "FSTD" o "Adiestrador" son simulador).
+Extraé **un vuelo por cada fila de datos de "Filas a leer"**, con los campos del esquema. Reglas:
+- Fecha (date) en YYYY-MM-DD. Si viene como 05/03/2025, es día/mes/año (formato argentino) salvo que la planilla deje claro otro orden.
+- La duración (duration) en horas decimales: 1:30 son 1.5. Si no hay una columna de total, es la suma de las horas de piloto y copiloto de esa fila.
+- Horas de salida y llegada (takeoff, landing) en HH:MM tal como figuran.
+- El desglose: piloto o copiloto, de día o de noche, local (sobre el aeródromo, sale y llega al mismo) o travesía, cada número en su campo. Si la planilla sólo dice "PIC" y "Noche", el tiempo de noche va en pic_night_* y el resto en pic_day_*; local o travesía según la ruta.
+- La capota va en capota y el simulador sólo en los campos de simulador (una fila de simulador no tiene matrícula: dejala vacía y poné el modelo del equipo en aircraft_model).
+- Ignorá filas vacías, de totales, de subtotales o de "transporte". No inventes vuelos ni completes datos que no estén.`;
+
+/** Lee un lote de filas de una planilla (ver `lib/planilla.ts`). */
+export async function leerPlanillaConGemini(texto: string): Promise<VueloLeido[]> {
+  if (!process.env.GEMINI_API_KEY) throw new Error("Gemini API Key no configurada");
+  const result = await generarConRespaldo(genAI, PARAMETROS_LECTURA, [`${PROMPT_PLANILLA}\n\n${texto}`], ESPERA_LOTE_MS);
+  const vuelos = parsearVuelos(result.text ?? "");
+  if (!vuelos) throw new Error("No pudimos entender la lectura de la planilla. Probá de nuevo.");
+  return vuelos.map((v) => ({ ...v, fuente: "planilla" }));
+}

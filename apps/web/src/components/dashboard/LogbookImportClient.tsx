@@ -129,7 +129,7 @@ function SubirLibro() {
   /** Un PDF, o fotos de las hojas (hasta `TOPE_FOTOS` por libro). Si viene un PDF, gana el PDF. */
   const elegir = (lista: FileList | null) => {
     const archivos = Array.from(lista ?? []);
-    const pdf = archivos.find((f) => f.type === "application/pdf");
+    const pdf = archivos.find((f) => f.type === "application/pdf" || /\.(xlsx|csv)$/i.test(f.name));
     const imagenes = archivos.filter((f) => f.type.startsWith("image/"));
     if (pdf) {
       setFile(pdf);
@@ -140,7 +140,7 @@ function SubirLibro() {
       setFotos(imagenes.slice(0, TOPE_FOTOS));
       setError(imagenes.length > TOPE_FOTOS ? `Tomamos las primeras ${TOPE_FOTOS} fotos: subí las demás en otro libro.` : null);
     } else {
-      setError("Subí el libro en PDF, o fotos de las hojas.");
+      setError(archivos.some((f) => /\.xls$/i.test(f.name)) ? "El .xls viejo no se puede leer: guardá la planilla como .xlsx o .csv." : "Subí el libro en PDF, una planilla (.xlsx o .csv) o fotos de las hojas.");
     }
   };
 
@@ -150,7 +150,7 @@ function SubirLibro() {
     try {
       const formData = new FormData();
       if (file) {
-        setSubiendo("Subiendo el PDF…");
+        setSubiendo(/\.(xlsx|csv)$/i.test(file.name) ? "Subiendo la planilla…" : "Subiendo el PDF…");
         formData.append("file", file);
       } else {
         // Achicadas en el navegador: una foto de teléfono pesa 4–8 MB. A 2400 px la letra a mano
@@ -197,7 +197,7 @@ function SubirLibro() {
           dragActive ? "border-zinc-950 bg-zinc-50 dark:border-white dark:bg-white/5" : "border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20 bg-white dark:bg-carbon"
         }`}
       >
-        <input ref={fileInputRef} type="file" accept=".pdf,application/pdf,image/*" multiple onChange={(e) => elegir(e.target.files)} className="hidden" />
+        <input ref={fileInputRef} type="file" accept=".pdf,application/pdf,.xlsx,.csv,text/csv,image/*" multiple onChange={(e) => elegir(e.target.files)} className="hidden" />
 
         <div className="max-w-md mx-auto space-y-6 flex flex-col items-center">
           <div className="w-16 h-16 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl flex items-center justify-center text-zinc-400 dark:text-zinc-500">
@@ -205,7 +205,7 @@ function SubirLibro() {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-base font-bold text-zinc-900 dark:text-white">Tu libro en PDF, o fotos de las hojas</h3>
+            <h3 className="text-base font-bold text-zinc-900 dark:text-white">Tu libro en PDF, en una planilla (Excel o CSV) o en fotos de las hojas</h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium">
               Sin tope de 12: hasta 120 páginas de PDF u {TOPE_FOTOS} fotos por libro. Lo subís, lo leemos en segundo plano y te mandamos un mail cuando esté listo para revisar. No hace falta que te quedes acá.
             </p>
@@ -235,7 +235,7 @@ function SubirLibro() {
                 onClick={() => fileInputRef.current?.click()}
                 className="flex-1 border border-zinc-200 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-900 dark:text-white font-semibold text-sm py-4 rounded-2xl transition-all active:scale-[0.98]"
               >
-                {file || fotos.length ? "Cambiar" : "Elegir PDF o fotos"}
+                {file || fotos.length ? "Cambiar" : "Elegir PDF, planilla o fotos"}
               </button>
               {(file || fotos.length > 0) && (
                 <button

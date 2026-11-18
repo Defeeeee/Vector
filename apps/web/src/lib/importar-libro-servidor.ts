@@ -19,7 +19,8 @@ import { PDFDocument } from "pdf-lib";
 import { carpetaDeDatos } from "@/lib/madhel-descargado";
 import { getAirport } from "@/lib/airports";
 import { leerLibroDigital, type ItemTexto } from "@/lib/libro-digital";
-import { leerHojasConGemini, type ParteArchivo } from "@/lib/leer-libro-gemini";
+import { leerHojasConGemini, leerPlanillaConGemini, type ParteArchivo } from "@/lib/leer-libro-gemini";
+import { textoDelLote, type LotePlanilla } from "@/lib/planilla";
 import {
   avionesNuevos, corregirLectura, esFilaDeTotales, lotesPendientes, partirEnLotes, textoDeHojas, TAM_LOTE_FOTOS, TAM_LOTE_PDF, unirLotes, unirRangos,
   type Rango, type VueloLeido,
@@ -32,8 +33,8 @@ import { SITIO_URL } from "@/lib/sitio";
 const API_URL = process.env.API_URL || "http://127.0.0.1:7477/api";
 
 export interface MetaImportacion {
-  tipo: "pdf" | "fotos";
-  /** Hojas: páginas del PDF o cantidad de fotos. */
+  tipo: "pdf" | "fotos" | "planilla";
+  /** Hojas: páginas del PDF, cantidad de fotos o lotes de filas de la planilla (`planilla.json`). */
   hojas: number;
   /** Nombres de archivo de las fotos, en orden. */
   archivos: string[];
@@ -111,7 +112,7 @@ async function partesDelLote(dir: string, meta: MetaImportacion, rango: Rango, p
 }
 
 export function lotesDe(meta: MetaImportacion): Rango[] {
-  return partirEnLotes(meta.hojas, meta.tipo === "pdf" ? TAM_LOTE_PDF : TAM_LOTE_FOTOS);
+  return partirEnLotes(meta.hojas, meta.tipo === "pdf" ? TAM_LOTE_PDF : meta.tipo === "fotos" ? TAM_LOTE_FOTOS : 1);
 }
 
 /** Lee lo que falta del libro, une y deja el trabajo 'listo' (o 'error') y avisa. */
@@ -163,6 +164,7 @@ export async function procesarImportacion(id: string): Promise<void> {
     }
 
     const lotes = lotesDe(meta);
+    const planilla: LotePlanilla[] = meta.tipo === "planilla" ? JSON.parse(await fs.readFile(path.join(dir, "planilla.json"), "utf8")) : [];
     const hechos = new Set<number>();
     for (let i = 0; i < lotes.length; i++) if (await leerLoteGuardado(dir, i)) hechos.add(i);
 
@@ -172,8 +174,12 @@ export async function procesarImportacion(id: string): Promise<void> {
       // Un reintento: Google a veces contesta saturado o corta la respuesta.
       for (let intento = 0; intento < 2; intento++) {
         try {
-          const partes = await partesDelLote(dir, meta, rango, pdf);
-          const vuelos = await leerHojasConGemini(partes, meta.tipo === "pdf" ? `un PDF con ${textoDeHojas(rango)} del libro` : `${partes.length === 1 ? "una foto de una hoja" : `${partes.length} fotos de hojas`} del libro de papel`, meta.tipo === "fotos");
+          let vuelos: VueloLeido[];
+          if (meta.tipo === "planilla") vuelos = await leerPlanillaConGemini(textoDelLote(planilla[rango.desde - 1]));
+          else {
+            const partes = await partesDelLote(dir, meta, rango, pdf);
+            vuelos = await leerHojasConGemini(partes, meta.tipo === "pdf" ? `un PDF con ${textoDeHojas(rango)} del libro` : `${partes.length === 1 ? "una foto de una hoja" : `${partes.length} fotos de hojas`} del libro de papel`, meta.tipo === "fotos");
+          }
           guardado = { vuelos: vuelos.filter((v) => !esFilaDeTotales(v)) };
           break;
         } catch (err) {
@@ -191,7 +197,8 @@ export async function procesarImportacion(id: string): Promise<void> {
     for (let i = 0; i < lotes.length; i++) porLote.push((await leerLoteGuardado(dir, i))?.vuelos ?? []);
     // La capota leída como simulador y el día leído como noche (o al revés) se corrigen acá, con el
     // horario y la posición del sol: la revisión ya los muestra bien (`corregirLectura`).
-    const vuelos = unirLotes(porLote).map((v) => corregirLectura(v, coordsDeAerodromo));
+    // Una planilla es texto exacto: no se le corrige nada con reglas pensadas para la imagen.
+    const vuelos = meta.tipo === "planilla" ? unirLotes(porLote) : unirLotes(porLote).map((v) => corregirLectura(v, coordsDeAerodromo));
     const fallidos = await rangosFallidos(dir, lotes, new Set(lotes.map((_, i) => i)));
     const aviones = avionesNuevos(vuelos, fila.matriculas ?? []);
 
