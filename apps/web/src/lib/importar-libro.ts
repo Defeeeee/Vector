@@ -361,3 +361,47 @@ export function problemaDeFila(f: { date: string; takeoff: string; landing: stri
   if (!esHora(normalizarHoraTipeada(f.takeoff)) || !esHora(normalizarHoraTipeada(f.landing))) return "el horario";
   return null;
 }
+
+const COLUMNAS_DESGLOSE = ["pic_day_loc", "pic_day_tra", "pic_night_loc", "pic_night_tra", "sic_day_loc", "sic_day_tra", "sic_night_loc", "sic_night_tra"] as const;
+
+/** Las horas del desglose de un vuelo (piloto o copiloto, día o noche, local o travesía). */
+export function sumaDesglose(v: Partial<Record<(typeof COLUMNAS_DESGLOSE)[number], unknown>>): number {
+  return COLUMNAS_DESGLOSE.reduce((s, k) => s + (typeof v[k] === "number" ? (v[k] as number) : Number(v[k]) || 0), 0);
+}
+
+/** Un vuelo (no simulador) con duración y sin una sola hora en el desglose. */
+export function sinDesglose(v: VueloLeido): boolean {
+  return !esSimuladorLeido(v.aircraft_registration) && (Number(v.duration) || 0) > 0 && sumaDesglose(v as never) === 0;
+}
+
+/** Cuántos vuelos de una lectura traen desglose. */
+export function conDesglose(vuelos: VueloLeido[]): number {
+  return vuelos.filter((v) => sumaDesglose(v as never) > 0).length;
+}
+
+/** Si a la mitad o más de los vuelos del lote les falta el desglose: vale una segunda lectura. */
+export function faltaDesglose(vuelos: VueloLeido[]): boolean {
+  const aviones = vuelos.filter((v) => !esSimuladorLeido(v.aircraft_registration) && (Number(v.duration) || 0) > 0);
+  return aviones.length > 0 && aviones.filter(sinDesglose).length * 2 >= aviones.length;
+}
+
+const NOMBRE_COLUMNA: Record<(typeof COLUMNAS_DESGLOSE)[number], string> = {
+  pic_day_loc: "Piloto día local", pic_day_tra: "Piloto día travesía", pic_night_loc: "Piloto noche local", pic_night_tra: "Piloto noche travesía",
+  sic_day_loc: "Copiloto día local", sic_day_tra: "Copiloto día travesía", sic_night_loc: "Copiloto noche local", sic_night_tra: "Copiloto noche travesía",
+};
+
+/** El desglose en palabras, para la revisión ("Piloto día local 1,2"). */
+export function resumenDesglose(v: Record<string, unknown>): string {
+  return COLUMNAS_DESGLOSE.filter((k) => Number(v[k]) > 0).map((k) => `${NOMBRE_COLUMNA[k]} ${String(Number(v[k])).replace(".", ",")}`).join(" · ");
+}
+
+/**
+ * Lo que se propone, **a pedido del piloto**, para un vuelo que llegó sin desglose: todo como
+ * piloto y de día; local si sale y llega al mismo lugar, travesía si no. Es una suposición y
+ * la pantalla lo dice: un vuelo nocturno o de copiloto se corrige a mano (o en el libro).
+ */
+export function desgloseSupuesto(v: { route?: string; duration?: number | string }): Partial<Record<(typeof COLUMNAS_DESGLOSE)[number], number>> {
+  const lugares = String(v.route ?? "").toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean);
+  const local = lugares.length < 2 || lugares[0] === lugares[lugares.length - 1];
+  return { [local ? "pic_day_loc" : "pic_day_tra"]: Number(v.duration) || 0 };
+}

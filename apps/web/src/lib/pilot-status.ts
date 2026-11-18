@@ -196,19 +196,31 @@ export function pilotStatus(
   // arriba. Hasta el 2026-09-24 las dos cosas decían "No podés actuar como piloto al
   // mando", y el alta nunca pide el repaso: era la primera respuesta que veía un
   // piloto nuevo en el inicio, afirmada sobre un dato que nadie le había pedido.
+  //
+  // 61.135(c): una prueba de pericia (un vuelo de la bitácora con finalidad EXA) en ese
+  // plazo reemplaza al repaso, sin cargar nada. Gana lo que venza más tarde.
   const repaso = documentos.find((d) => d.kind === "repaso_vuelo");
-  if (!repaso) {
-    return {
-      estado: "documento_faltante",
-      puede: "No podemos confirmar que puedas volar como piloto al mando.",
-      paraVolver: "Cargá tu repaso de vuelo en el Hangar.",
-      seccion: "61.135",
-      detalle:
-        "No tenés un repaso de vuelo cargado, así que no podemos saber si está vigente. " +
-        "Esto no dice que no puedas volar: dice que Vector no lo sabe.",
-    };
-  }
-  if (documentStatus(repaso.expiry_date, hoy).tone === "expired") {
+  const examen = repasoPorExamen(flights);
+  const repasoVigente = repaso && documentStatus(repaso.expiry_date, hoy).tone !== "expired";
+  const examenVigente = examen && documentStatus(examen.vence, hoy).tone !== "expired";
+  if (!repasoVigente && !examenVigente) {
+    if (!repaso) {
+      const dejaDeContar = examen
+        ? `Tu examen del ${ddmmaaaa(examen.fecha)} te eximió del repaso hasta el ${ddmmaaaa(examen.vence)} (61.135(c)). `
+        : "";
+      return {
+        estado: "documento_faltante",
+        puede: "No podemos confirmar que puedas volar como piloto al mando.",
+        paraVolver: "Cargá tu repaso de vuelo en el Hangar.",
+        seccion: "61.135",
+        detalle:
+          dejaDeContar +
+          "No tenés un repaso de vuelo cargado, así que no podemos saber si está vigente. " +
+          "El repaso no es la recencia de aterrizajes: es una instrucción con instructor, de 1 hora en " +
+          "tierra y 1 en vuelo, firmada en tu libro, cada 24 meses (o un examen de pericia en ese plazo). " +
+          "Esto no dice que no puedas volar: dice que Vector no lo sabe.",
+      };
+    }
     return {
       estado: "repaso_vencido",
       puede: "No podés actuar como piloto al mando.",
@@ -347,4 +359,25 @@ function estadoAlumno(documentos: PilotDocument[], hoy: Date, documentosDisponib
     detalle:
       "Solo, con su autorización. Sin pasajeros, con visibilidad de 5 km o más y en vuelo visual.",
   };
+}
+
+const ddmmaaaa = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+
+/**
+ * 61.135(c): "La persona que complete satisfactoriamente, dentro del período especificado en
+ * el párrafo (a) [los 24 meses anteriores al mes en que actúa como piloto al mando], una prueba
+ * de pericia en vuelo para una licencia de piloto o para una habilitación, no necesita el repaso".
+ *
+ * La prueba de pericia es el vuelo con finalidad **EXA** (examen, la del CAD). Vale hasta el
+ * último día del mes 24 después del mes del examen: rendido en agosto de 2024, cuenta para
+ * actuar hasta agosto de 2026 inclusive. Simuladores no: la prueba es "en vuelo".
+ */
+export function repasoPorExamen(flights: Flight[]): { fecha: string; vence: string } | null {
+  const fecha = flights
+    .filter((f) => String(f.purpose ?? "").toUpperCase() === "EXA" && (f.duration ?? 0) > 0)
+    .reduce<string | null>((acc, f) => (!acc || f.date > acc ? f.date : acc), null);
+  if (!fecha) return null;
+  const [y, m] = fecha.slice(0, 10).split("-").map(Number);
+  const fin = new Date(Date.UTC(y, m - 1 + 25, 0)); // último día del mes 24 después
+  return { fecha: fecha.slice(0, 10), vence: fin.toISOString().slice(0, 10) };
 }

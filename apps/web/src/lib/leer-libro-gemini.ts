@@ -5,7 +5,7 @@
  */
 import { GoogleGenAI, Type, type GenerateContentConfig } from "@google/genai";
 import { generarConRespaldo } from "@/lib/gemini";
-import { parsearVuelos, type VueloLeido } from "@/lib/importar-libro";
+import { conDesglose, faltaDesglose, parsearVuelos, type VueloLeido } from "@/lib/importar-libro";
 
 /** Un lote chico (3 páginas o 4 fotos) se lee en un minuto; esto deja margen para el respaldo. */
 export const ESPERA_LOTE_MS = 120_000;
@@ -64,9 +64,13 @@ Extrae todos los vuelos. Para cada uno:
 - Horas de salida (takeoff) y llegada (landing) en HH:MM, tal como figuran (UTC).
 - Aterrizajes (landings). Si no se detalla, 1.
 - Finalidad (purpose) con las siglas del libro: 'VP' vuelo privado, 'INST' instrucción recibida, 'I' instructor, 'ENT' entrenamiento, 'EXA' examen, 'ADAP' adaptación, 'ACR' acrobacia. Si no está claro, 'VP'.
-- Los tiempos del desglose (piloto o copiloto, día o noche, aeródromo o travesía, IMC, capota, simulador) en su columna, en horas decimales.
+- **El desglose, siempre que esté escrito.** El libro de ANAC tiene ocho columnas de tiempo de vuelo: PILOTO diurno (local / travesía), PILOTO nocturno (local / travesía), COPILOTO diurno (local / travesía) y COPILOTO nocturno (local / travesía). Cada renglón tiene su tiempo en una o más de esas columnas y **la suma da la duración**. Copiá cada número en su campo (pic_day_loc, pic_day_tra, pic_night_loc, pic_night_tra, sic_…). "Local" es sobre el aeródromo; "travesía" (o traslado), de un lugar a otro. Mirá en qué columna está escrito el número: no lo deduzcas de la ruta ni de la hora.
+- La discriminación (IMC real piloto o copiloto, capota, simulador) también en su columna, en horas decimales.
 No inventes vuelos ni completes datos que no se lean: si un campo no se lee, dejalo vacío o en 0. No cuentes como vuelos las filas de totales ("Totales a la página siguiente", "Totales página anterior").
 Procesá todas las páginas.`;
+
+const SEGUNDA_VUELTA = `
+En una lectura anterior de estas mismas hojas quedaron muchos vuelos sin desglose. En el libro cada renglón tiene el número escrito en alguna de las ocho columnas de PILOTO / COPILOTO (diurno o nocturno, local o travesía): buscalo renglón por renglón y completá esos campos.`;
 
 /** Lee las hojas y devuelve los vuelos. Si Gemini no contesta un JSON, un error claro. */
 export async function leerHojasConGemini(partes: ParteArchivo[], descripcion: string, hayFotos: boolean): Promise<VueloLeido[]> {
@@ -74,5 +78,16 @@ export async function leerHojasConGemini(partes: ParteArchivo[], descripcion: st
   const result = await generarConRespaldo(genAI, PARAMETROS_LECTURA, [...partes, armarPrompt(descripcion, hayFotos)], ESPERA_LOTE_MS);
   const vuelos = parsearVuelos(result.text ?? "");
   if (!vuelos) throw new Error("No pudimos entender la lectura de las hojas. Probá de nuevo.");
+  // Gemini a veces devuelve la duración y se saltea las columnas (Berni, 2026-11-18: 141 de 180 vuelos
+  // sin desglose). Si pasa en la mitad o más del lote, se lee una vez más pidiéndolo, y queda la
+  // lectura con más desglose. Una sola vuelta: es un pedido más por lote, sólo cuando hace falta.
+  if (!faltaDesglose(vuelos)) return vuelos;
+  try {
+    const otra = await generarConRespaldo(genAI, PARAMETROS_LECTURA, [...partes, armarPrompt(descripcion, hayFotos) + SEGUNDA_VUELTA], ESPERA_LOTE_MS);
+    const segunda = parsearVuelos(otra.text ?? "");
+    if (segunda && conDesglose(segunda) > conDesglose(vuelos)) return segunda;
+  } catch {
+    // La primera lectura sirve igual: el desglose se puede completar en la revisión.
+  }
   return vuelos;
 }

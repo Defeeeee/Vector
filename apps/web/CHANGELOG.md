@@ -6,6 +6,13 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.50.0 — Tu examen cuenta como repaso
+
+_18 de noviembre de 2026_
+
+- **Si rendiste hace menos de 2 años, no te pedimos el repaso** — Según la RAAC 61.135(c), una prueba de pericia para una licencia o habilitación reemplaza al repaso de vuelo por 24 meses. Vector la toma sola de tu vuelo de examen (finalidad EXA) y, si ya pasó el plazo, te dice hasta cuándo te cubrió. Y el aviso aclara qué es el repaso: no es la recencia de aterrizajes.
+- **El importador lee mejor el desglose** — Al importar tu libro, Vector busca el tiempo en las columnas de piloto o copiloto, de día o de noche, local o travesía, y vuelve a mirar las hojas si no lo encontró. En la revisión ves el desglose de cada vuelo, y los que llegaron sin él se pueden completar de una vez antes de importar.
+
 ## v3.49.0 — Subí tu libro y andate
 
 _17 de noviembre de 2026_

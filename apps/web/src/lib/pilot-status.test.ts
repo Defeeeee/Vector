@@ -76,6 +76,19 @@ describe("pilotStatus", () => {
     expect(r.seccion).toBe("61.135");
   });
 
+  it("un examen de los últimos 24 meses cuenta como repaso (61.135(c))", () => {
+    const examen = { ...vuelo("2025-03-10"), purpose: "EXA", duration: 1.1 } as Flight;
+    const r = pilotStatus([doc("cma", "2027-06-30")], [vigente()], [vuelo("2026-08-01"), examen], HOY);
+    expect(r.estado).toBe("vigente");
+  });
+
+  it("un examen viejo ya no exime, y el aviso lo dice", () => {
+    const examen = { ...vuelo("2024-05-10"), purpose: "EXA", duration: 1.1 } as Flight;
+    const r = pilotStatus([doc("cma", "2027-06-30")], [vigente()], [vuelo("2026-08-01"), examen], HOY);
+    expect(r.estado).toBe("documento_faltante");
+    expect(r.detalle).toContain("Tu examen del 10/05/2024 te eximió del repaso hasta el 31/05/2026");
+  });
+
   it("el CMA vencido bloquea todo", () => {
     const r = pilotStatus(
       [doc("cma", "2026-01-01", "Certificado Médico"), doc("repaso_vuelo", "2027-12-31")],
@@ -349,5 +362,14 @@ describe("pilotStatus de un alumno piloto (RAAC 61, Capítulo C)", () => {
 
   it("si no se pudieron leer los documentos, no afirma", () => {
     expect(pilotStatus([], [], [], HOY_A, false, { alumno: true }).estado).toBe("datos_no_disponibles");
+  });
+});
+
+describe("61.135(c): el examen reemplaza al repaso", () => {
+  it("vale hasta el último día del mes 24 después del examen", async () => {
+    const { repasoPorExamen } = await import("./pilot-status");
+    const f = (date: string, purpose: string) => ({ id: date, date, purpose, duration: 1.2 }) as never;
+    expect(repasoPorExamen([f("2024-08-14", "EXA"), f("2025-01-02", "VP")])).toEqual({ fecha: "2024-08-14", vence: "2026-08-31" });
+    expect(repasoPorExamen([f("2024-08-14", "VP")])).toBeNull();
   });
 });

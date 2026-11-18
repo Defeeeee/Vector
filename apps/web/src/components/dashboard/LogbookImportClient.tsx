@@ -12,7 +12,7 @@ import { mensajeDeError } from "@/lib/error-de-red";
 import { normalizarHoraTipeada } from "@/lib/horarios";
 import {
   avionesATildados, avionesNuevos, avisoDeFallidos, claveDeSimulador, comoSesionDeSimulador, esSimuladorLeido, normalizarMatricula,
-  problemaDeFila, simuladorDelHangar, simuladoresNuevos, TOPE_FOTOS, vueloSinAvion,
+  desgloseSupuesto, problemaDeFila, resumenDesglose, sinDesglose, simuladorDelHangar, simuladoresNuevos, TOPE_FOTOS, vueloSinAvion,
   type AvionNuevo, type Rango, type VueloLeido,
 } from "@/lib/importar-libro";
 
@@ -395,6 +395,11 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
 
   const cambiarAvion = (clave: string, cambios: Partial<AvionNuevo>) => setACrear((prev) => prev.map((a) => (a.clave === clave ? { ...a, ...cambios } : a)));
 
+  const esDeSimulador = (f: ParsedFlight) => !!f.nuevo_clave?.startsWith("SIM-") || !!aircraftList.find((a) => a.id === f.aircraft_id)?.is_simulator;
+  const sinDesgloseN = parsedFlights.filter((f) => !esDeSimulador(f) && sinDesglose(f as never)).length;
+  const completarDesglose = () =>
+    setParsedFlights((prev) => prev.map((f) => (!esDeSimulador(f) && sinDesglose(f as never) ? { ...f, ...desgloseSupuesto(f) } : f)));
+
   const handleRemoveFlight = (id: string) => setParsedFlights((prev) => prev.filter((f) => f.id !== id));
 
   const handleConfirmImport = async () => {
@@ -479,6 +484,19 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
           <span>{error}</span>
         </div>
       )}
+      {sinDesgloseN > 0 && (
+        <section className="space-y-2 border-y border-amber-500/30 bg-amber-500/[0.06] px-1 py-3">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-amber-300 leading-relaxed">
+            {sinDesgloseN} {sinDesgloseN === 1 ? "vuelo llegó" : "vuelos llegaron"} sin desglose (piloto o copiloto, día o noche, local o travesía): el lector no lo encontró en esas filas.
+          </p>
+          <p className="text-xs leading-relaxed text-zinc-400">
+            Se importan igual, pero la Auditoría te los va a marcar. Si casi todos fueron como piloto y de día, completalos así (local si salís y llegás al mismo aeródromo, travesía si no) y corregí después los de noche o de copiloto.
+          </p>
+          <button type="button" onClick={completarDesglose} className="rounded-full border border-amber-400/50 px-4 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/10">
+            Completar {sinDesgloseN} como piloto, de día
+          </button>
+        </section>
+      )}
       {aviso && (
         <div className="border-y border-amber-500/30 bg-amber-500/[0.06] px-1 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-amber-300 leading-relaxed">
           {aviso}
@@ -555,6 +573,7 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
                     <th className="px-6 py-4.5 text-center">Landings</th>
                     <th className="px-6 py-4.5">Total Hs</th>
                     <th className="px-6 py-4.5">Finalidad</th>
+                    <th className="px-6 py-4.5">Desglose</th>
                     <th className="px-6 py-4.5 text-center">Acción</th>
                   </tr>
                 </thead>
@@ -680,7 +699,19 @@ function Revision({ importacion, aircraftList }: { importacion: Importacion; air
                             <option value="ENT">ENT</option>
                             <option value="INST">INST</option>
                             <option value="EXA">EXA</option>
+                            <option value="ADAP">ADAP</option>
+                            <option value="I">I</option>
+                            <option value="ACR">ACR</option>
                           </select>
+                        </td>
+
+                        {/* Desglose (lo que se leyó de las columnas de piloto / copiloto) */}
+                        <td className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.06em] max-w-[220px]">
+                          {flight.nuevo_clave?.startsWith("SIM-") || esDeSimulador(flight)
+                            ? <span className="text-zinc-500">Simulador</span>
+                            : sinDesglose(flight as never)
+                              ? <span className="text-amber-400">Sin desglose</span>
+                              : <span className="text-zinc-300">{resumenDesglose(flight as never)}</span>}
                         </td>
 
                         {/* Remove button */}

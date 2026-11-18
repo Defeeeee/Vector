@@ -78,6 +78,27 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.50.0",
+    fecha: "2026-11-18",
+    titulo: "Tu examen cuenta como repaso",
+    novedades: [
+      {
+        icono: "reloj",
+        titulo: "Si rendiste hace menos de 2 años, no te pedimos el repaso",
+        texto: "Según la RAAC 61.135(c), una prueba de pericia para una licencia o habilitación reemplaza al repaso de vuelo por 24 meses. Vector la toma sola de tu vuelo de examen (finalidad EXA) y, si ya pasó el plazo, te dice hasta cuándo te cubrió. Y el aviso aclara qué es el repaso: no es la recencia de aterrizajes.",
+        href: "/dashboard",
+        cta: "Ver mi estado",
+      },
+      {
+        icono: "libro",
+        titulo: "El importador lee mejor el desglose",
+        texto: "Al importar tu libro, Vector busca el tiempo en las columnas de piloto o copiloto, de día o de noche, local o travesía, y vuelve a mirar las hojas si no lo encontró. En la revisión ves el desglose de cada vuelo, y los que llegaron sin él se pueden completar de una vez antes de importar.",
+        href: "/dashboard/log-flight/import",
+        cta: "Importar mi libro",
+      },
+    ],
+  },
+  {
     version: "3.49.0",
     fecha: "2026-11-17",
     titulo: "Subí tu libro y andate",

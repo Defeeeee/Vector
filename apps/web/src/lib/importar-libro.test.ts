@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  avionesNuevos, claveDeSimulador, comoSesionDeSimulador, problemaDeFila, simuladorDelHangar, simuladoresNuevos, deduplicar, icaoDeModelo, lotesPendientes, normalizarMatricula, parsearVuelos, partirEnLotes,
+  avionesNuevos, claveDeSimulador, comoSesionDeSimulador, problemaDeFila, sinDesglose, faltaDesglose, conDesglose, desgloseSupuesto, resumenDesglose, simuladorDelHangar, simuladoresNuevos, deduplicar, icaoDeModelo, lotesPendientes, normalizarMatricula, parsearVuelos, partirEnLotes,
   textoDeFallidos, textoDeProgreso, unirLotes, unirRangos, vueloSinAvion, avisoDeFallidos, esSimuladorLeido, type VueloLeido,
 } from "./importar-libro";
 
@@ -139,5 +139,24 @@ describe("lo que cortaba la importación de Berni", () => {
     expect(icaoDeModelo("TWEN")?.icao).toBe("TWEN");
     expect(icaoDeModelo("Tecnam P2008")?.icao).toBe("P208");
     expect(icaoDeModelo("Tecnam P2002 Sierra")?.icao).toBe("SIRA");
+  });
+});
+
+describe("el desglose leído", () => {
+  const v = (o: Partial<VueloLeido>): VueloLeido => ({ date: "2025-03-11", aircraft_registration: "LV-S114", route: "SADF SADF", duration: 1.2, ...o });
+  it("detecta el vuelo sin desglose, pero no el simulador", () => {
+    expect(sinDesglose(v({}))).toBe(true);
+    expect(sinDesglose(v({ pic_day_loc: 1.2 }))).toBe(false);
+    expect(sinDesglose(v({ aircraft_registration: "" }))).toBe(false);
+  });
+  it("pide una segunda lectura si falta en la mitad o más", () => {
+    expect(faltaDesglose([v({}), v({ pic_day_loc: 1.2 })])).toBe(true);
+    expect(faltaDesglose([v({}), v({ pic_day_loc: 1.2 }), v({ pic_day_tra: 0.8 })])).toBe(false);
+    expect(conDesglose([v({}), v({ sic_night_tra: 1 })])).toBe(1);
+  });
+  it("lo supuesto, a pedido: piloto de día, local o travesía según la ruta", () => {
+    expect(desgloseSupuesto({ route: "SADF SADF", duration: 1.2 })).toEqual({ pic_day_loc: 1.2 });
+    expect(desgloseSupuesto({ route: "SADF - SAAR", duration: 2 })).toEqual({ pic_day_tra: 2 });
+    expect(resumenDesglose({ pic_day_loc: 1.2, pic_night_tra: 0.5 })).toBe("Piloto día local 1,2 · Piloto noche travesía 0,5");
   });
 });
