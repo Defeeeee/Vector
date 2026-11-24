@@ -78,6 +78,20 @@ export interface VersionPublicada {
  */
 export const CHANGELOG: VersionPublicada[] = [
   {
+    version: "3.53.0",
+    fecha: "2026-11-24",
+    titulo: "Las fotos de tu libro, cotejadas hoja por hoja",
+    novedades: [
+      {
+        icono: "libro",
+        titulo: "Cada foto se coteja con los totales de su hoja",
+        texto: "Al importar tu libro desde fotos o un PDF escaneado, Vector lee cada hoja por separado, con sus totales del pie. Si lo leído no suma lo que dice la hoja, la vuelve a leer; y si igual no cierra, te dice qué hoja revisar antes de importar. También te avisa si parece faltar una hoja o si tu libro arranca con horas de antes.",
+        href: "/dashboard/log-flight/import",
+        cta: "Importar mi libro",
+      },
+    ],
+  },
+  {
     version: "3.52.0",
     fecha: "2026-11-18",
     titulo: "Tu libro en una planilla",

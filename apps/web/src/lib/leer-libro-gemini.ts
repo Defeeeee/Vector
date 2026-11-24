@@ -5,9 +5,10 @@
  */
 import { GoogleGenAI, Type, type GenerateContentConfig } from "@google/genai";
 import { generarConRespaldo } from "@/lib/gemini";
-import { conDesglose, faltaDesglose, parsearVuelos, type VueloLeido } from "@/lib/importar-libro";
+import { faltaDesglose, parsearVuelos, type VueloLeido } from "@/lib/importar-libro";
+import { cotejarHoja, hayHojasQueNoCierran, mejorLectura, parsearHojas, pedidoDeRelectura, textoDeCotejo, vuelosDeHoja, type HojaLeida } from "@/lib/cotejo-hojas";
 
-/** Un lote chico (3 páginas o 4 fotos) se lee en un minuto; esto deja margen para el respaldo. */
+/** Una hoja se lee en menos de un minuto; esto deja margen para el respaldo. */
 export const ESPERA_LOTE_MS = 120_000;
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
@@ -16,47 +17,85 @@ export interface ParteArchivo {
   inlineData: { data: string; mimeType: string };
 }
 
-export const PARAMETROS_LECTURA: GenerateContentConfig = {
-  responseMimeType: "application/json",
-  responseSchema: {
-    type: Type.ARRAY,
-    description: "Lista de vuelos extraídos del libro de vuelo PDF",
-    items: {
-      type: Type.OBJECT,
-      properties: {
-        date: { type: Type.STRING, description: "Fecha del vuelo en formato YYYY-MM-DD (ej: 2026-06-30)" },
-        aircraft_registration: { type: Type.STRING, description: "Matrícula de la aeronave (ej. LV-S153, N12345). Vacía si es un simulador" },
-        aircraft_model: { type: Type.STRING, description: "Marca y modelo de la aeronave, o su designador, tal como figura en el libro (ej. Cessna 152, Tecnam P2008, ECHO, PA30). No la clase (MONT-T, MULT-T): eso es otra columna. Vacío si no se lee" },
-        route: { type: Type.STRING, description: "Ruta del vuelo (ej. SADF - SAAK o SADF/SAAK)" },
-        duration: { type: Type.NUMBER, description: "Duración en horas decimales (ej. 1.2, 0.8, 1.5)" },
-        takeoff: { type: Type.STRING, description: "Hora de salida como figura en el libro (UTC), formato HH:MM (ej. 14:30)" },
-        landing: { type: Type.STRING, description: "Hora de llegada como figura en el libro (UTC), formato HH:MM (ej. 15:50)" },
-        landings: { type: Type.INTEGER, description: "Cantidad de aterrizajes. Por defecto poner 1 si no se especifica" },
-        purpose: { type: Type.STRING, description: "Código de finalidad (ej. VP, ENT, INST, EXA). Por defecto 'VP'" },
-        pic_day_loc: { type: Type.NUMBER, description: "Horas PIC Diurno Local (opcional)" },
-        pic_day_tra: { type: Type.NUMBER, description: "Horas PIC Diurno Traslado (opcional)" },
-        pic_night_loc: { type: Type.NUMBER, description: "Horas PIC Nocturno Local (opcional)" },
-        pic_night_tra: { type: Type.NUMBER, description: "Horas PIC Nocturno Traslado (opcional)" },
-        sic_day_loc: { type: Type.NUMBER, description: "Horas SIC Diurno Local (opcional)" },
-        sic_day_tra: { type: Type.NUMBER, description: "Horas SIC Diurno Traslado (opcional)" },
-        sic_night_loc: { type: Type.NUMBER, description: "Horas SIC Nocturno Local (opcional)" },
-        sic_night_tra: { type: Type.NUMBER, description: "Horas SIC Nocturno Traslado (opcional)" },
-        imc_pil: { type: Type.NUMBER, description: "Horas de vuelo en IMC Real Piloto (opcional)" },
-        imc_cop: { type: Type.NUMBER, description: "Horas de vuelo en IMC Real Copiloto (opcional)" },
-        capota: { type: Type.NUMBER, description: "Horas de vuelo bajo Capota/Instrumental Simulado (opcional)" },
-        sim_instructor: { type: Type.NUMBER, description: "Horas en Simulador como Instructor (opcional)" },
-        sim_pil_en_inst: { type: Type.NUMBER, description: "Horas en Simulador como Piloto en Instrucción (opcional)" }
-      },
-      required: ["date", "aircraft_registration", "route", "duration", "takeoff", "landing", "landings", "purpose"]
-    }
-  }
+/** Los campos de un vuelo, para Gemini. */
+const VUELO = {
+  type: Type.OBJECT,
+  properties: {
+    date: { type: Type.STRING, description: "Fecha del vuelo en formato YYYY-MM-DD (ej: 2026-06-30)" },
+    aircraft_registration: { type: Type.STRING, description: "Matrícula de la aeronave (ej. LV-S153, N12345). Vacía si es un simulador" },
+    aircraft_model: { type: Type.STRING, description: "Marca y modelo de la aeronave, o su designador, tal como figura en el libro (ej. Cessna 152, Tecnam P2008, ECHO, PA30). No la clase (MONT-T, MULT-T): eso es otra columna. Vacío si no se lee" },
+    route: { type: Type.STRING, description: "Ruta del vuelo (ej. SADF - SAAK o SADF/SAAK)" },
+    duration: { type: Type.NUMBER, description: "Duración en horas decimales (ej. 1.2, 0.8, 1.5)" },
+    takeoff: { type: Type.STRING, description: "Hora de salida como figura en el libro (UTC), formato HH:MM (ej. 14:30)" },
+    landing: { type: Type.STRING, description: "Hora de llegada como figura en el libro (UTC), formato HH:MM (ej. 15:50)" },
+    landings: { type: Type.INTEGER, description: "Cantidad de aterrizajes. Por defecto poner 1 si no se especifica" },
+    purpose: { type: Type.STRING, description: "Código de finalidad (ej. VP, ENT, INST, EXA). Por defecto 'VP'" },
+    pic_day_loc: { type: Type.NUMBER, description: "Horas PIC Diurno Local (opcional)" },
+    pic_day_tra: { type: Type.NUMBER, description: "Horas PIC Diurno Traslado (opcional)" },
+    pic_night_loc: { type: Type.NUMBER, description: "Horas PIC Nocturno Local (opcional)" },
+    pic_night_tra: { type: Type.NUMBER, description: "Horas PIC Nocturno Traslado (opcional)" },
+    sic_day_loc: { type: Type.NUMBER, description: "Horas SIC Diurno Local (opcional)" },
+    sic_day_tra: { type: Type.NUMBER, description: "Horas SIC Diurno Traslado (opcional)" },
+    sic_night_loc: { type: Type.NUMBER, description: "Horas SIC Nocturno Local (opcional)" },
+    sic_night_tra: { type: Type.NUMBER, description: "Horas SIC Nocturno Traslado (opcional)" },
+    imc_pil: { type: Type.NUMBER, description: "Horas de vuelo en IMC Real Piloto (opcional)" },
+    imc_cop: { type: Type.NUMBER, description: "Horas de vuelo en IMC Real Copiloto (opcional)" },
+    capota: { type: Type.NUMBER, description: "Horas de vuelo bajo Capota/Instrumental Simulado (opcional)" },
+    sim_instructor: { type: Type.NUMBER, description: "Horas en Simulador como Instructor (opcional)" },
+    sim_pil_en_inst: { type: Type.NUMBER, description: "Horas en Simulador como Piloto en Instrucción (opcional)" },
+  },
+  required: ["date", "aircraft_registration", "route", "duration", "takeoff", "landing", "landings", "purpose"],
 };
 
+/** Una lista de vuelos (la planilla). */
+export const PARAMETROS_LECTURA: GenerateContentConfig = {
+  responseMimeType: "application/json",
+  responseSchema: { type: Type.ARRAY, description: "Lista de vuelos", items: VUELO },
+};
+
+/** Las hojas, cada una con sus vuelos y lo que dicen sus totales, para cotejar (`cotejo-hojas.ts`). */
+const PARAMETROS_HOJAS: GenerateContentConfig = {
+  responseMimeType: "application/json",
+  responseSchema: {
+    type: Type.OBJECT,
+    properties: {
+      hojas: {
+        type: Type.ARRAY,
+        description: "Una entrada por hoja del libro, en el orden en que aparecen",
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            renglones: { type: Type.INTEGER, description: "Cuántos renglones de la hoja tienen un vuelo escrito (sin contar filas de totales ni renglones vacíos)" },
+            total_anterior: { type: Type.NUMBER, description: "Horas de vuelo de la fila 'Totales página anterior' (suma de las columnas de piloto y copiloto), en horas decimales. Vacío si no está escrita" },
+            total_hoja: { type: Type.NUMBER, description: "Horas de vuelo de la fila 'Total de la página' o 'Total de esta hoja', si existe, en horas decimales. Vacío si no existe" },
+            total_a_la_fecha: { type: Type.NUMBER, description: "Horas de vuelo de la fila 'Totales a la página siguiente' o 'Total a la fecha' (suma de las columnas de piloto y copiloto), en horas decimales. Vacío si no está escrita" },
+            vuelos: { type: Type.ARRAY, items: VUELO },
+          },
+          required: ["renglones", "vuelos"],
+        },
+      },
+    },
+    required: ["hojas"],
+  },
+};
+
+/**
+ * Con qué modelo se lee cada hoja. El plan gratis (`MODELOS_GEMINI`) da 500 pedidos por día al
+ * liviano y sólo 20 a los fuertes: la primera lectura va con el liviano y **las relecturas de una
+ * hoja que no cerró** suben a 3.8 Flash y después a 3.6 Flash. Si un fuerte agotó su cupo, la cadena
+ * sigue sola con el siguiente.
+ */
+const MODELO_HOJAS = 0;
+const MODELOS_RELECTURA = [1, 2];
 
 const armarPrompt = (descripcion: string, hayFotos: boolean) => `Analiza detalladamente este libro de vuelo de piloto (${descripcion}).
 Es, casi siempre, el libro de ANAC Argentina: cada renglón es un vuelo, con fecha (el año suele estar en el encabezado de la hoja), horas de salida y llegada en UTC, desde y hasta (un vuelo local lleva el mismo aeródromo en los dos), finalidad, aeronave (marca y modelo, matrícula), tiempos de vuelo sobre aeródromo o travesía, de día o de noche, como piloto o copiloto, aterrizajes y la discriminación (instrumentos, capota, simulador).
-${hayFotos ? "Las fotos pueden estar torcidas, con sombras o con letra a mano: leé con cuidado cada renglón. Si una hoja aparece en dos fotos, no repitas sus vuelos." : ""}
-Extrae todos los vuelos. Para cada uno:
+${hayFotos ? "Las fotos pueden estar torcidas, con sombras o con letra a mano: leé con cuidado cada renglón. Una hoja del libro puede ocupar las dos páginas abiertas (los datos del vuelo a la izquierda y los tiempos a la derecha): es una sola hoja, y cada renglón sigue de una página a la otra." : ""}
+Devolvé una entrada en "hojas" por cada hoja, en orden. En cada hoja:
+- **renglones**: contá cuántos renglones tienen un vuelo escrito, antes de leerlos.
+- **Los totales del pie**, en horas decimales (si están en horas y minutos, 85:20 son 85.33): total_anterior es la fila "Totales página anterior" (o "transporte"), total_a_la_fecha la de "Totales a la página siguiente" o "a la fecha", y total_hoja la de "Total de la página" si existe. En cada fila, sumá las columnas de tiempo de vuelo como PILOTO y COPILOTO (diurno y nocturno, local y travesía); no sumes capota, instrumentos ni simulador. Si una fila no está escrita, dejala vacía.
+- **vuelos**: todos los renglones con un vuelo, sin saltear ninguno.
+Para cada vuelo:
 - Fecha (date) en YYYY-MM-DD.
 - Matrícula de la aeronave (aircraft_registration) y su marca y modelo tal como figuran en el libro (aircraft_model, por ejemplo 'Cessna 152'). Un simulador no tiene matrícula: dejala vacía.
 - Ruta (route): desde y hasta, por ejemplo 'SADF SAAK'; un vuelo local, 'SADF SADF'.
@@ -66,30 +105,60 @@ Extrae todos los vuelos. Para cada uno:
 - Finalidad (purpose) con las siglas del libro: 'VP' vuelo privado, 'INST' instrucción recibida, 'I' instructor, 'ENT' entrenamiento, 'EXA' examen, 'ADAP' adaptación, 'ACR' acrobacia. Si no está claro, 'VP'.
 - **El desglose, siempre que esté escrito.** El libro de ANAC tiene ocho columnas de tiempo de vuelo: PILOTO diurno (local / travesía), PILOTO nocturno (local / travesía), COPILOTO diurno (local / travesía) y COPILOTO nocturno (local / travesía). Cada renglón tiene su tiempo en una o más de esas columnas y **la suma da la duración**. Copiá cada número en su campo (pic_day_loc, pic_day_tra, pic_night_loc, pic_night_tra, sic_…). "Local" es sobre el aeródromo; "travesía" (o traslado), de un lugar a otro. Mirá en qué columna está escrito el número, **leyendo el encabezado de cada columna en esa hoja** (no todos los libros las ponen en el mismo orden): no lo deduzcas de la ruta ni de la hora.
 - La discriminación también en su columna, en horas decimales: IMC real (piloto o copiloto), **capota** (instrumentos simulados en el avión, va en el campo capota) y **simulador** (sólo las sesiones en un simulador, sin matrícula). Las horas de capota de un vuelo en avión nunca van en los campos de simulador.
-No inventes vuelos ni completes datos que no se lean: si un campo no se lee, dejalo vacío o en 0. No cuentes como vuelos las filas de totales ("Totales a la página siguiente", "Totales página anterior").
-Procesá todas las páginas.`;
+No inventes vuelos ni completes datos que no se lean: si un campo no se lee, dejalo vacío o en 0. Las filas de totales no son vuelos.
+Antes de contestar, comprobá en cada hoja que la cantidad de vuelos sea la de renglones y que la suma de las duraciones dé total_a_la_fecha menos total_anterior (o total_hoja). Si no da, releé la hoja.`;
 
 const SEGUNDA_VUELTA = `
 En una lectura anterior de estas mismas hojas quedaron muchos vuelos sin desglose. En el libro cada renglón tiene el número escrito en alguna de las ocho columnas de PILOTO / COPILOTO (diurno o nocturno, local o travesía): buscalo renglón por renglón y completá esos campos.`;
 
-/** Lee las hojas y devuelve los vuelos. Si Gemini no contesta un JSON, un error claro. */
-export async function leerHojasConGemini(partes: ParteArchivo[], descripcion: string, hayFotos: boolean): Promise<VueloLeido[]> {
+async function leerUnaVez(parte: ParteArchivo, prompt: string, modelo: number): Promise<HojaLeida[] | null> {
+  const result = await generarConRespaldo(genAI, PARAMETROS_HOJAS, [parte, prompt], ESPERA_LOTE_MS, modelo);
+  return parsearHojas(result.text ?? "");
+}
+
+export interface LecturaDeParte {
+  hojas: HojaLeida[];
+  /** Lo que no cerró ni después de releer, para el piloto ("Foto 3: …"). */
+  diferencias: string[];
+}
+
+/**
+ * Lee **un** archivo (una foto, o una página de un PDF escaneado) y lo coteja con sus totales.
+ *
+ * - Si alguna hoja no cierra (la suma o la cantidad de renglones), se relee hasta dos veces con un
+ *   modelo más fuerte (con cupo chico: sólo para esto) y el pedido de lo que faltó, y queda la mejor lectura (`mejorLectura`).
+ * - Si la mitad o más de los vuelos vinieron sin desglose, la relectura también lo pide (Berni,
+ *   2026-11-18: 141 de 180 vuelos sin desglose); si es lo único que falta, con el liviano.
+ * - Lo que sigue sin cerrar va en `diferencias`: el piloto lo ve antes de confirmar.
+ */
+export async function leerParte(parte: ParteArchivo, nombre: string, descripcion: string, hayFotos: boolean): Promise<LecturaDeParte> {
   if (!process.env.GEMINI_API_KEY) throw new Error("Gemini API Key no configurada");
-  const result = await generarConRespaldo(genAI, PARAMETROS_LECTURA, [...partes, armarPrompt(descripcion, hayFotos)], ESPERA_LOTE_MS);
-  const vuelos = parsearVuelos(result.text ?? "");
-  if (!vuelos) throw new Error("No pudimos entender la lectura de las hojas. Probá de nuevo.");
-  // Gemini a veces devuelve la duración y se saltea las columnas (Berni, 2026-11-18: 141 de 180 vuelos
-  // sin desglose). Si pasa en la mitad o más del lote, se lee una vez más pidiéndolo, y queda la
-  // lectura con más desglose. Una sola vuelta: es un pedido más por lote, sólo cuando hace falta.
-  if (!faltaDesglose(vuelos)) return vuelos;
-  try {
-    const otra = await generarConRespaldo(genAI, PARAMETROS_LECTURA, [...partes, armarPrompt(descripcion, hayFotos) + SEGUNDA_VUELTA], ESPERA_LOTE_MS);
-    const segunda = parsearVuelos(otra.text ?? "");
-    if (segunda && conDesglose(segunda) > conDesglose(vuelos)) return segunda;
-  } catch {
-    // La primera lectura sirve igual: el desglose se puede completar en la revisión.
+  const base = armarPrompt(descripcion, hayFotos);
+  let mejor = await leerUnaVez(parte, base, MODELO_HOJAS);
+  if (!mejor) throw new Error("No pudimos entender la lectura de las hojas. Probá de nuevo.");
+  for (let vuelta = 1; vuelta <= 2; vuelta++) {
+    const vuelos = mejor.flatMap(vuelosDeHoja);
+    const noCierra = hayHojasQueNoCierran(mejor);
+    const sinDesglose = faltaDesglose(vuelos);
+    if (!noCierra && !sinDesglose) break;
+    try {
+      const otra = await leerUnaVez(parte, base + pedidoDeRelectura(mejor) + (sinDesglose ? SEGUNDA_VUELTA : ""), noCierra ? MODELOS_RELECTURA[vuelta - 1] : MODELO_HOJAS);
+      if (otra) mejor = mejorLectura(mejor, otra);
+    } catch {
+      // La lectura que hay sirve igual: lo que no cierre se avisa.
+    }
+    // Sólo faltaba el desglose: con una vuelta alcanza (se completa en la revisión).
+    if (!noCierra) break;
   }
-  return vuelos;
+  const varias = mejor.length > 1;
+  const diferencias = mejor.flatMap((h, i) => textoDeCotejo(varias ? `${nombre}, hoja ${i + 1}` : nombre, cotejarHoja(h)) ?? []);
+  return { hojas: mejor, diferencias };
+}
+
+/** Lee varias partes (de a una, en paralelo) y devuelve sólo los vuelos (`/api/parse-logbook`). */
+export async function leerHojasConGemini(partes: ParteArchivo[], descripcion: string, hayFotos: boolean): Promise<VueloLeido[]> {
+  const lecturas = await Promise.all(partes.map((p, i) => leerParte(p, `${hayFotos ? "Foto" : "Página"} ${i + 1}`, descripcion, hayFotos)));
+  return lecturas.flatMap((l) => l.hojas.flatMap(vuelosDeHoja));
 }
 
 const PROMPT_PLANILLA = `Esto es parte de una planilla (Excel, Google Sheets o CSV) donde un piloto argentino lleva su libro de vuelo.

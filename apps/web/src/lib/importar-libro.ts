@@ -2,8 +2,8 @@
  * Importar el libro de papel: la lógica pura (lotes, unir y deduplicar, aviones a crear).
  *
  * Un libro largo no entra en un solo pedido a Gemini: se lee de a poco, en segundo plano
- * (`lib/importar-libro-servidor.ts`), un PDF en tramos de 3 páginas y las fotos de a 4. Cada
- * lote se guarda al terminar, así que un deploy que corta el proceso se retoma desde el lote
+ * (`lib/importar-libro-servidor.ts`), un PDF en tramos de 3 páginas y las fotos de a 4; dentro del
+ * lote cada hoja se lee sola y se coteja con sus totales (`cotejo-hojas.ts`). Cada lote se guarda al terminar, así que un deploy que corta el proceso se retoma desde el lote
  * donde quedó. Lo que falla se dice (invariante 2: no decir "listo" si faltó algo).
  */
 
@@ -103,22 +103,31 @@ export function esSimuladorLeido(m: string | null | undefined): boolean {
 
 const hora = (h: unknown) => String(h ?? "").trim().replace(/^(\d):/, "0$1:");
 
-/** Misma fecha, matrícula, salida y ruta: es el mismo vuelo. */
+/** Misma fecha, matrícula, salida, llegada y ruta: es el mismo vuelo. */
 export function claveDeVuelo(v: VueloLeido): string {
   return [
     String(v.date ?? "").trim(),
     normalizarMatricula(v.aircraft_registration),
     hora(v.takeoff),
+    hora(v.landing),
     String(v.route ?? "").toUpperCase().replace(/[^A-Z0-9]/g, ""),
   ].join("|");
 }
 
-/** Saca los repetidos (una hoja que cayó en dos lotes), conservando el primero y el orden. */
+/**
+ * Saca los repetidos (una hoja que cayó en dos fotos), conservando el primero y el orden.
+ * **Sin hora de salida no se saca nada**: dos vuelos locales del mismo día en el mismo avión
+ * tendrían la misma clave, y perder un vuelo en silencio es peor que mostrar uno repetido.
+ */
 export function deduplicar<T extends VueloLeido>(vuelos: T[]): T[] {
   const vistos = new Set<string>();
   const salida: T[] = [];
   for (const v of vuelos) {
     const k = claveDeVuelo(v);
+    if (!/\d/.test(String(v.takeoff ?? ""))) {
+      salida.push(v);
+      continue;
+    }
     if (vistos.has(k)) continue;
     vistos.add(k);
     salida.push(v);

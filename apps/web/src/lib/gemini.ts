@@ -25,7 +25,12 @@ import type {
   PartListUnion,
 } from "@google/genai";
 
-export const MODELOS_GEMINI = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-2.5-flash"] as const;
+/**
+ * La cadena, en el orden en que se prueba. El proyecto está en el plan gratis (AI Studio,
+ * 2026-11-24): 3.5 Flash Lite da 15 pedidos por minuto y 500 por día; 3.8 Flash, 3.6 Flash y 2.5 Flash,
+ * 5 por minuto y **20 por día** cada uno. `gemini-3.5-flash` no tiene cupo gratis: se sacó de la cadena.
+ */
+export const MODELOS_GEMINI = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash", "gemini-2.5-flash"] as const;
 export const MODELO_GEMINI = MODELOS_GEMINI[0];
 
 /**
@@ -156,15 +161,19 @@ export function chatConRespaldo(
   };
 }
 
-/** Un pedido suelto (sin chat), con la misma cadena. */
+/**
+ * Un pedido suelto (sin chat), con la misma cadena. `desde` arranca la cadena en otro modelo: leer
+ * letra a mano pide uno más fuerte que el liviano del copiloto (`leer-libro-gemini.ts`).
+ */
 export async function generarConRespaldo(
   ai: ClienteGemini,
   config: GenerateContentConfig,
   contents: ContentListUnion,
   esperaMs = ESPERA_GEMINI_MS,
+  desde = 0,
 ): Promise<GenerateContentResponse> {
   config = conEspera(config, esperaMs);
-  for (let i = 0; ; i++) {
+  for (let i = Math.min(Math.max(desde, 0), MODELOS_GEMINI.length - 1); ; i++) {
     try {
       return await ai.models.generateContent({ model: MODELOS_GEMINI[i], config, contents });
     } catch (err) {

@@ -6,6 +6,12 @@ lo que se escriba acá se pierde en la próxima corrida.
 Sólo va lo que el piloto ve. Lo de adentro —tests, refactors, migraciones— está en
 la bitácora de `docs/bitacora/`.
 
+## v3.53.0 — Las fotos de tu libro, cotejadas hoja por hoja
+
+_24 de noviembre de 2026_
+
+- **Cada foto se coteja con los totales de su hoja** — Al importar tu libro desde fotos o un PDF escaneado, Vector lee cada hoja por separado, con sus totales del pie. Si lo leído no suma lo que dice la hoja, la vuelve a leer; y si igual no cierra, te dice qué hoja revisar antes de importar. También te avisa si parece faltar una hoja o si tu libro arranca con horas de antes.
+
 ## v3.52.0 — Tu libro en una planilla
 
 _18 de noviembre de 2026_

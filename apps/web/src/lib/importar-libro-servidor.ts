@@ -19,10 +19,11 @@ import { PDFDocument } from "pdf-lib";
 import { carpetaDeDatos } from "@/lib/madhel-descargado";
 import { getAirport } from "@/lib/airports";
 import { leerLibroDigital, type ItemTexto } from "@/lib/libro-digital";
-import { leerHojasConGemini, leerPlanillaConGemini, type ParteArchivo } from "@/lib/leer-libro-gemini";
+import { leerParte, leerPlanillaConGemini, type ParteArchivo } from "@/lib/leer-libro-gemini";
+import { avisosDelLibro, resumenDeHoja, vuelosDeHoja, type ResumenHoja } from "@/lib/cotejo-hojas";
 import { textoDelLote, type LotePlanilla } from "@/lib/planilla";
 import {
-  avionesNuevos, corregirLectura, esFilaDeTotales, lotesPendientes, partirEnLotes, textoDeHojas, TAM_LOTE_FOTOS, TAM_LOTE_PDF, unirLotes, unirRangos,
+  avionesNuevos, corregirLectura, esFilaDeTotales, lotesPendientes, partirEnLotes, TAM_LOTE_FOTOS, TAM_LOTE_PDF, unirLotes, unirRangos,
   type Rango, type VueloLeido,
 } from "@/lib/importar-libro";
 import { armarMensajeImportacion } from "@/lib/importar-libro-mail";
@@ -84,6 +85,10 @@ const archivoDeLote = (dir: string, n: number) => path.join(dir, `lote-${n}.json
 interface LoteGuardado {
   vuelos: VueloLeido[];
   fallo?: boolean;
+  /** Las hojas que no cierran con sus totales ni después de releerlas ("Foto 3: …"). */
+  diferencias?: string[];
+  /** Los totales de cada hoja, para ver al final si falta alguna (`avisosDelLibro`). */
+  hojas?: ResumenHoja[];
 }
 
 async function leerLoteGuardado(dir: string, n: number): Promise<LoteGuardado | null> {
@@ -94,14 +99,21 @@ async function leerLoteGuardado(dir: string, n: number): Promise<LoteGuardado | 
   }
 }
 
-/** Las partes que se le mandan a Gemini por lote: un PDF chico o las fotos del tramo. */
+/**
+ * Las partes del lote, **una por hoja**: cada página del PDF en su propio PDF, o cada foto. Cada
+ * una se lee y se coteja sola (`leerParte`), así se sabe qué hoja no cierra y se relee sólo ésa.
+ */
 async function partesDelLote(dir: string, meta: MetaImportacion, rango: Rango, pdf: PDFDocument | null): Promise<ParteArchivo[]> {
   if (meta.tipo === "pdf") {
     if (!pdf) throw new Error("Falta el PDF");
-    const tramo = await PDFDocument.create();
-    const paginas = await tramo.copyPages(pdf, Array.from({ length: rango.hasta - rango.desde + 1 }, (_, i) => rango.desde - 1 + i));
-    paginas.forEach((p) => tramo.addPage(p));
-    return [{ inlineData: { data: Buffer.from(await tramo.save()).toString("base64"), mimeType: "application/pdf" } }];
+    const partes: ParteArchivo[] = [];
+    for (let n = rango.desde; n <= rango.hasta; n++) {
+      const hoja = await PDFDocument.create();
+      const [pagina] = await hoja.copyPages(pdf, [n - 1]);
+      hoja.addPage(pagina);
+      partes.push({ inlineData: { data: Buffer.from(await hoja.save()).toString("base64"), mimeType: "application/pdf" } });
+    }
+    return partes;
   }
   const partes: ParteArchivo[] = [];
   for (const nombre of meta.archivos.slice(rango.desde - 1, rango.hasta)) {
@@ -174,13 +186,23 @@ export async function procesarImportacion(id: string): Promise<void> {
       // Un reintento: Google a veces contesta saturado o corta la respuesta.
       for (let intento = 0; intento < 2; intento++) {
         try {
-          let vuelos: VueloLeido[];
-          if (meta.tipo === "planilla") vuelos = await leerPlanillaConGemini(textoDelLote(planilla[rango.desde - 1]));
-          else {
+          if (meta.tipo === "planilla") {
+            const vuelos = await leerPlanillaConGemini(textoDelLote(planilla[rango.desde - 1]));
+            guardado = { vuelos: vuelos.filter((v) => !esFilaDeTotales(v)) };
+          } else {
+            // Cada hoja por separado y en paralelo: se coteja con sus totales y se relee si no cierra.
             const partes = await partesDelLote(dir, meta, rango, pdf);
-            vuelos = await leerHojasConGemini(partes, meta.tipo === "pdf" ? `un PDF con ${textoDeHojas(rango)} del libro` : `${partes.length === 1 ? "una foto de una hoja" : `${partes.length} fotos de hojas`} del libro de papel`, meta.tipo === "fotos");
+            const fotos = meta.tipo === "fotos";
+            const lecturas = await Promise.all(partes.map((parte, k) => {
+              const n = rango.desde + k;
+              return leerParte(parte, fotos ? `Foto ${n}` : `Página ${n}`, fotos ? "una foto de una hoja del libro de papel" : `la página ${n} de un PDF del libro`, fotos);
+            }));
+            guardado = {
+              vuelos: lecturas.flatMap((l) => l.hojas.flatMap(vuelosDeHoja)),
+              diferencias: lecturas.flatMap((l) => l.diferencias),
+              hojas: lecturas.flatMap((l, k) => l.hojas.map((h, j) => resumenDeHoja(`${fotos ? "La foto" : "La página"} ${rango.desde + k}${l.hojas.length > 1 ? ` (hoja ${j + 1})` : ""}`, h))),
+            };
           }
-          guardado = { vuelos: vuelos.filter((v) => !esFilaDeTotales(v)) };
           break;
         } catch (err) {
           console.error(`importar-libro ${id} lote ${i + 1} (intento ${intento + 1}):`, err instanceof Error ? err.message : err);
@@ -194,7 +216,15 @@ export async function procesarImportacion(id: string): Promise<void> {
     }
 
     const porLote: VueloLeido[][] = [];
-    for (let i = 0; i < lotes.length; i++) porLote.push((await leerLoteGuardado(dir, i))?.vuelos ?? []);
+    const diferencias: string[] = [];
+    const resumenes: ResumenHoja[] = [];
+    for (let i = 0; i < lotes.length; i++) {
+      const lote = await leerLoteGuardado(dir, i);
+      porLote.push(lote?.vuelos ?? []);
+      diferencias.push(...(lote?.diferencias ?? []));
+      resumenes.push(...(lote?.hojas ?? []));
+    }
+    diferencias.push(...avisosDelLibro(resumenes));
     // La capota leída como simulador y el día leído como noche (o al revés) se corrigen acá, con el
     // horario y la posición del sol: la revisión ya los muestra bien (`corregirLectura`).
     // Una planilla es texto exacto: no se le corrige nada con reglas pensadas para la imagen.
@@ -207,7 +237,7 @@ export async function procesarImportacion(id: string): Promise<void> {
       estado: nada ? "error" : "listo",
       paginas_leidas: meta.hojas,
       lotes_fallidos: fallidos,
-      resultado: { vuelos, aviones },
+      resultado: { vuelos, aviones, ...(diferencias.length ? { diferencias } : {}) },
       ...(nada ? { error: fallidos.length ? "No pudimos leer ninguna hoja del libro." : "No encontramos vuelos en el libro." } : {}),
     });
     if (seguro) await avisarDeNuevo(id);
